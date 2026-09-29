@@ -1,0 +1,653 @@
+{
+ "key": "profit",
+ "frozen": "2026-09-28",
+ "phase": "select",
+ "sel_end": 200012,
+ "spec": {
+  "chars": [
+   "cop_at"
+  ],
+  "side": "3.0",
+  "w": "vw_cap",
+  "min_n": 50,
+  "min_n_repl": 20,
+  "replicate": [
+   "jpn",
+   "gbr",
+   "deu",
+   "fra",
+   "can",
+   "aus",
+   "che",
+   "swe",
+   "nld",
+   "ita",
+   "esp",
+   "hkg",
+   "sgp",
+   "dnk",
+   "nor",
+   "bel",
+   "fin",
+   "aut",
+   "irl",
+   "prt",
+   "nzl",
+   "isr"
+  ],
+  "turn_ann": 0.5,
+  "side_note": "'3.0' = 特徴が大きい＝収益性が高い三分位（JKP direction +1）"
+ },
+ "rationale": "【規則】cop_at|vw_cap: 米国上場株を JKP が毎月 m−1 月末に組んだ三分位で見て、収益性の高い三分位（'3.0'）だけを上限つきの時価加重（JKP vw_cap＝NYSE の80%点で重みに上限）で買いだけで持つ。【なぜ】2001年より前に公表・理論の筋があった: (1) 株価＝将来の利益の割引であり、同じ値段なら収益性の高い会社ほど期待リターンが高い（Fama-French 2006「Profitability, investment and average returns」・配当割引モデルの恒等式）。(2) 売上総利益は会計の操作から遠く、事業の本当の稼ぐ力に近い（Novy-Marx 2013 はこれを売上総利益÷資産で示し、Ball ら 2015/2016 は営業利益・現金ベースへ広げた）。(3) 市場は高い収益性の持続を過小に見積もる（利益の持続性の過小評価・Sloan 1996 の系譜）。⚠ 論文の多くは2001年より後の公表（Novy-Marx 2013・FF 2015・Ball 2016）だが、使うデータと仮説の筋は2000年以前に揃っていた（FF 2006 の前段は1990年代の配当割引の議論）。【選定期間 195205〜200012（48.7年）】費用後の年率 16.75% 対 French 米国市場 12.47%、超過 +4.28%/年、t 6.35（Newey-West 5.44）、ぶれ 16.4% 対 14.7%、最大下落 -45.6% 対 -46.5%、転がる10年で勝った窓 39/39。市場に対するβ 1.08・CAPM のα +3.57%/年。部分期間: 〜1975 +4.15%/年（t 4.96）・1976-2000 +4.4%/年（t 4.19）・1986-2000 +3.58%/年（t 2.38）。JKP の上限つき市場（vw_cap）に対しては +4.02%/年。【選び方】事前登録どおり（選定期間の費用後の超過が +1%/年以上の変種の中で、費用後の超過の t が最大）。t の上位4: cop_at|vw_cap +4.28%（t 6.35） / gp+cop|vw_cap +3.39%（t 4.82） / asset3|vw_cap +2.98%（t 4.35） / all4|vw_cap +2.8%（t 4.31）。【他の市場（選定期間・参考・多くは1990年前後から）】先進国22か国のうち選定期間で測れた 15 か国で超過が正は 9。【予想】事前登録 r6 は「大型に効くので米国でも小さく勝つ」。この研究の第2回 qualvalue（割安×収益性）は不合格で、2026-09-26 の JKP の大型株（mega）の測定では収益性（GP/A・営業利益÷自己資本）が2007年以降も米国で効いていた——その後知恵があることを書いておく（事前登録 r6 の honesty と同じ）。⚠ cop_at は「営業利益 − 運転資本の発生主義の増分」で、発生主義の小ささ（第6回の accruals 系統）を中に含む＝二つの系統は独立ではない。⚠ 変種を固定する前に、三分位の平均の並び（directions() の表＝選定期間の数字）を見た。変種は4本×2重みの単独と、筋の決まった3つの組（4本・gp+cop・資産で割る3本）×2重みで、数字の刻みは振っていない。",
+ "n_variants_tried": 14,
+ "selection_stats": {
+  "from": 195205,
+  "to": 200012,
+  "years": 48.7,
+  "cagr": 16.75,
+  "bench_cagr": 12.47,
+  "excess": 4.28,
+  "ex_arith": 4.04,
+  "t": 6.35,
+  "t_nw": 5.44,
+  "vol": 16.4,
+  "bench_vol": 14.7,
+  "maxdd": -45.6,
+  "bench_maxdd": -46.5,
+  "sharpe": 0.71,
+  "bench_sharpe": 0.52,
+  "roll10_win": "39/39"
+ },
+ "implement": "楽天証券の米国株（成長投資枠＝NISA 可・レバレッジではない）で、米国上場の大型・中型株を年1回（決算が出そろった後）収益性（売上総利益÷総資産など）で並べ、上位3分の1を時価加重（1社の重みに上限＝JKP の vw_cap と同じく巨大株を抑える）で持つ。上位1/3は数百社になるので、個人は時価総額の大きい順に30〜50社へ絞る近似になる（回転は 50%/年と置いた）。ETF で近いもの: 楽天の海外ETF一覧（out/broker_lineup.json）で買える「質」の ETF（QUAL・SPHQ など）は収益性に負債・利益の安定などを混ぜた合成で、収益性だけの組とは別物＝この規則の成績の近似でしかない。純粋な売上総利益÷資産の ETF は米国上場にもほとんど無い",
+ "family_name": "収益性だけの良い側（売上総利益÷資産・現金営業利益÷資産・営業利益÷自己資本・営業利益÷資産の高い三分位）",
+ "lookahead_test": "(1) 切り詰め: JKP の脚のリターン・銘柄数・RF を 1965-12/1975-12/1985-12/1995-12/1999-12 で切って作り直しても、切った月までの規則のリターンと回転が完全一致（1e-15）。(2) 未来の毒: 切った月より後の脚のリターンと銘柄数を1か月ずらして壊しても、それより前は不変（後ろは変わる＝検査が空回りしていない）。(3) 別プロセスの切り口: EDGE_SEL_END=199012 と 200012 で別々に run() を回し、1990-12 までの規則・相手・RF・回転と他の市場（1990年で切っても24か月そろう can）の規則・相手・回転が完全一致（cop_at|vw_cap・gp+cop|vw_cap・gp_at|vw の3つ）。国の系列そのもの（24か月の足切りの前の build()）も22か国で 1990-12 まで完全一致（1990年以前に月があるのは jpn 23・gbr 10・can 89・aus 2 か月）（scratchpad の lookahead_profit.py・lookahead_profit_ctry.py）。(4) 月合わせ: 月 m の総リターン = 月 m の JKP 脚の超過の平均 + 月 m の RF。月 m に持つかは月 m の行の n（JKP が m−1 月末に組んだ時点の数）だけで決める。側（'3.0'）・特徴・重みは spec の定数で、データから平均・分位・標準化を一切推定しない。JKP は月末 t の特徴で組み t+1 のリターンを出し、会計値は公表まで（年次は4か月以上）遅らせて使う（JKP 2023 の作り方）",
+ "lookahead_result": {
+  "truncate": true,
+  "poison_future": true,
+  "constants": true,
+  "month_align_maxdiff": 1.3877787807814457e-17,
+  "ok": true
+ },
+ "directions": {
+  "gp_at|vw_cap": {
+   "good_side": "3.0",
+   "corr_factor_vs_3minus1": 1.0,
+   "months": 602,
+   "mean_excess_pct_yr": {
+    "1.0": 7.16,
+    "2.0": 8.31,
+    "3.0": 10.29
+   }
+  },
+  "gp_at|vw": {
+   "good_side": "3.0",
+   "corr_factor_vs_3minus1": 1.0,
+   "months": 602,
+   "mean_excess_pct_yr": {
+    "1.0": 6.96,
+    "2.0": 7.68,
+    "3.0": 9.44
+   }
+  },
+  "cop_at|vw_cap": {
+   "good_side": "3.0",
+   "corr_factor_vs_3minus1": 1.0,
+   "months": 590,
+   "mean_excess_pct_yr": {
+    "1.0": 4.84,
+    "2.0": 8.5,
+    "3.0": 11.54
+   }
+  },
+  "cop_at|vw": {
+   "good_side": "3.0",
+   "corr_factor_vs_3minus1": 1.0,
+   "months": 590,
+   "mean_excess_pct_yr": {
+    "1.0": 5.65,
+    "2.0": 6.73,
+    "3.0": 9.77
+   }
+  },
+  "ope_be|vw_cap": {
+   "good_side": "3.0",
+   "corr_factor_vs_3minus1": 1.0,
+   "months": 602,
+   "mean_excess_pct_yr": {
+    "1.0": 6.73,
+    "2.0": 8.18,
+    "3.0": 10.22
+   }
+  },
+  "ope_be|vw": {
+   "good_side": "3.0",
+   "corr_factor_vs_3minus1": 1.0,
+   "months": 602,
+   "mean_excess_pct_yr": {
+    "1.0": 6.05,
+    "2.0": 7.18,
+    "3.0": 9.45
+   }
+  },
+  "op_at|vw_cap": {
+   "good_side": "3.0",
+   "corr_factor_vs_3minus1": 1.0,
+   "months": 602,
+   "mean_excess_pct_yr": {
+    "1.0": 6.72,
+    "2.0": 8.4,
+    "3.0": 10.07
+   }
+  },
+  "op_at|vw": {
+   "good_side": "3.0",
+   "corr_factor_vs_3minus1": 1.0,
+   "months": 602,
+   "mean_excess_pct_yr": {
+    "1.0": 6.9,
+    "2.0": 7.43,
+    "3.0": 8.98
+   }
+  }
+ },
+ "variants_table": [
+  {
+   "name": "gp_at|vw_cap",
+   "from": 195105,
+   "excess": 2.32,
+   "t": 3.08,
+   "t_nw": 2.79,
+   "vol": 17.3,
+   "maxdd": -55.7,
+   "beta": 1.12,
+   "alpha_capm": 1.68,
+   "ex_vs_jkp_capped_mkt": 2.08,
+   "sub_periods": {
+    "〜1975": {
+     "excess": 2.46,
+     "t": 2.44
+    },
+    "1976-2000": {
+     "excess": 2.16,
+     "t": 1.96
+    },
+    "1986-2000": {
+     "excess": 1.51,
+     "t": 1.12
+    }
+   },
+   "turnover_yr": 0.5
+  },
+  {
+   "name": "cop_at|vw_cap",
+   "from": 195205,
+   "excess": 4.28,
+   "t": 6.35,
+   "t_nw": 5.44,
+   "vol": 16.4,
+   "maxdd": -45.6,
+   "beta": 1.08,
+   "alpha_capm": 3.57,
+   "ex_vs_jkp_capped_mkt": 4.02,
+   "sub_periods": {
+    "〜1975": {
+     "excess": 4.15,
+     "t": 4.96
+    },
+    "1976-2000": {
+     "excess": 4.4,
+     "t": 4.19
+    },
+    "1986-2000": {
+     "excess": 3.58,
+     "t": 2.38
+    }
+   },
+   "turnover_yr": 0.5
+  },
+  {
+   "name": "ope_be|vw_cap",
+   "from": 195105,
+   "excess": 2.07,
+   "t": 3.15,
+   "t_nw": 2.61,
+   "vol": 16.9,
+   "maxdd": -53.8,
+   "beta": 1.11,
+   "alpha_capm": 1.48,
+   "ex_vs_jkp_capped_mkt": 1.83,
+   "sub_periods": {
+    "〜1975": {
+     "excess": 2.01,
+     "t": 2.33
+    },
+    "1976-2000": {
+     "excess": 2.12,
+     "t": 2.14
+    },
+    "1986-2000": {
+     "excess": 1.07,
+     "t": 0.85
+    }
+   },
+   "turnover_yr": 0.5
+  },
+  {
+   "name": "op_at|vw_cap",
+   "from": 195105,
+   "excess": 2.06,
+   "t": 3.18,
+   "t_nw": 2.74,
+   "vol": 17.1,
+   "maxdd": -50.7,
+   "beta": 1.12,
+   "alpha_capm": 1.4,
+   "ex_vs_jkp_capped_mkt": 1.82,
+   "sub_periods": {
+    "〜1975": {
+     "excess": 2.08,
+     "t": 2.53
+    },
+    "1976-2000": {
+     "excess": 2.04,
+     "t": 2.05
+    },
+    "1986-2000": {
+     "excess": 1.87,
+     "t": 1.33
+    }
+   },
+   "turnover_yr": 0.5
+  },
+  {
+   "name": "all4|vw_cap",
+   "from": 195205,
+   "excess": 2.8,
+   "t": 4.31,
+   "t_nw": 3.82,
+   "vol": 16.8,
+   "maxdd": -51.5,
+   "beta": 1.11,
+   "alpha_capm": 2.12,
+   "ex_vs_jkp_capped_mkt": 2.54,
+   "sub_periods": {
+    "〜1975": {
+     "excess": 2.89,
+     "t": 3.27
+    },
+    "1976-2000": {
+     "excess": 2.7,
+     "t": 2.85
+    },
+    "1986-2000": {
+     "excess": 2.04,
+     "t": 1.61
+    }
+   },
+   "turnover_yr": 0.524
+  },
+  {
+   "name": "gp+cop|vw_cap",
+   "from": 195205,
+   "excess": 3.39,
+   "t": 4.82,
+   "t_nw": 4.36,
+   "vol": 16.8,
+   "maxdd": -50.8,
+   "beta": 1.1,
+   "alpha_capm": 2.69,
+   "ex_vs_jkp_capped_mkt": 3.13,
+   "sub_periods": {
+    "〜1975": {
+     "excess": 3.5,
+     "t": 3.8
+    },
+    "1976-2000": {
+     "excess": 3.29,
+     "t": 3.1
+    },
+    "1986-2000": {
+     "excess": 2.55,
+     "t": 1.76
+    }
+   },
+   "turnover_yr": 0.523
+  },
+  {
+   "name": "asset3|vw_cap",
+   "from": 195205,
+   "excess": 2.98,
+   "t": 4.35,
+   "t_nw": 3.92,
+   "vol": 16.9,
+   "maxdd": -50.8,
+   "beta": 1.11,
+   "alpha_capm": 2.29,
+   "ex_vs_jkp_capped_mkt": 2.73,
+   "sub_periods": {
+    "〜1975": {
+     "excess": 3.09,
+     "t": 3.47
+    },
+    "1976-2000": {
+     "excess": 2.87,
+     "t": 2.78
+    },
+    "1986-2000": {
+     "excess": 2.32,
+     "t": 1.62
+    }
+   },
+   "turnover_yr": 0.52
+  },
+  {
+   "name": "gp_at|vw",
+   "from": 195105,
+   "excess": 1.61,
+   "t": 2.4,
+   "t_nw": 2.05,
+   "vol": 16.0,
+   "maxdd": -51.1,
+   "beta": 1.04,
+   "alpha_capm": 1.45,
+   "ex_vs_jkp_capped_mkt": 1.38,
+   "sub_periods": {
+    "〜1975": {
+     "excess": 2.2,
+     "t": 2.25
+    },
+    "1976-2000": {
+     "excess": 1.01,
+     "t": 1.13
+    },
+    "1986-2000": {
+     "excess": 2.33,
+     "t": 1.85
+    }
+   },
+   "turnover_yr": 0.5
+  },
+  {
+   "name": "cop_at|vw",
+   "from": 195205,
+   "excess": 2.49,
+   "t": 3.55,
+   "t_nw": 3.32,
+   "vol": 15.2,
+   "maxdd": -42.3,
+   "beta": 0.99,
+   "alpha_capm": 2.49,
+   "ex_vs_jkp_capped_mkt": 2.23,
+   "sub_periods": {
+    "〜1975": {
+     "excess": 2.66,
+     "t": 2.34
+    },
+    "1976-2000": {
+     "excess": 2.31,
+     "t": 2.81
+    },
+    "1986-2000": {
+     "excess": 3.01,
+     "t": 2.84
+    }
+   },
+   "turnover_yr": 0.5
+  },
+  {
+   "name": "ope_be|vw",
+   "from": 195105,
+   "excess": 1.48,
+   "t": 2.62,
+   "t_nw": 2.38,
+   "vol": 15.6,
+   "maxdd": -48.6,
+   "beta": 1.03,
+   "alpha_capm": 1.34,
+   "ex_vs_jkp_capped_mkt": 1.25,
+   "sub_periods": {
+    "〜1975": {
+     "excess": 1.7,
+     "t": 2.12
+    },
+    "1976-2000": {
+     "excess": 1.25,
+     "t": 1.56
+    },
+    "1986-2000": {
+     "excess": 2.62,
+     "t": 2.43
+    }
+   },
+   "turnover_yr": 0.5
+  },
+  {
+   "name": "op_at|vw",
+   "from": 195105,
+   "excess": 1.08,
+   "t": 2.1,
+   "t_nw": 1.86,
+   "vol": 15.5,
+   "maxdd": -47.0,
+   "beta": 1.03,
+   "alpha_capm": 0.97,
+   "ex_vs_jkp_capped_mkt": 0.85,
+   "sub_periods": {
+    "〜1975": {
+     "excess": 1.47,
+     "t": 2.0
+    },
+    "1976-2000": {
+     "excess": 0.68,
+     "t": 0.97
+    },
+    "1986-2000": {
+     "excess": 2.13,
+     "t": 2.06
+    }
+   },
+   "turnover_yr": 0.5
+  },
+  {
+   "name": "all4|vw",
+   "from": 195205,
+   "excess": 1.8,
+   "t": 3.41,
+   "t_nw": 3.0,
+   "vol": 15.4,
+   "maxdd": -45.7,
+   "beta": 1.02,
+   "alpha_capm": 1.65,
+   "ex_vs_jkp_capped_mkt": 1.54,
+   "sub_periods": {
+    "〜1975": {
+     "excess": 2.26,
+     "t": 2.82
+    },
+    "1976-2000": {
+     "excess": 1.33,
+     "t": 1.95
+    },
+    "1986-2000": {
+     "excess": 2.54,
+     "t": 2.66
+    }
+   },
+   "turnover_yr": 0.526
+  },
+  {
+   "name": "gp+cop|vw",
+   "from": 195205,
+   "excess": 2.13,
+   "t": 3.61,
+   "t_nw": 3.16,
+   "vol": 15.4,
+   "maxdd": -44.7,
+   "beta": 1.02,
+   "alpha_capm": 2.02,
+   "ex_vs_jkp_capped_mkt": 1.88,
+   "sub_periods": {
+    "〜1975": {
+     "excess": 2.59,
+     "t": 2.87
+    },
+    "1976-2000": {
+     "excess": 1.68,
+     "t": 2.2
+    },
+    "1986-2000": {
+     "excess": 2.69,
+     "t": 2.49
+    }
+   },
+   "turnover_yr": 0.529
+  },
+  {
+   "name": "asset3|vw",
+   "from": 195205,
+   "excess": 1.84,
+   "t": 3.34,
+   "t_nw": 2.92,
+   "vol": 15.4,
+   "maxdd": -44.7,
+   "beta": 1.02,
+   "alpha_capm": 1.71,
+   "ex_vs_jkp_capped_mkt": 1.58,
+   "sub_periods": {
+    "〜1975": {
+     "excess": 2.33,
+     "t": 2.84
+    },
+    "1976-2000": {
+     "excess": 1.35,
+     "t": 1.85
+    },
+    "1986-2000": {
+     "excess": 2.5,
+     "t": 2.38
+    }
+   },
+   "turnover_yr": 0.526
+  }
+ ],
+ "markets": [
+  "jpn",
+  "gbr",
+  "deu",
+  "fra",
+  "can",
+  "aus",
+  "che",
+  "swe",
+  "nld",
+  "ita",
+  "esp",
+  "hkg",
+  "sgp",
+  "dnk",
+  "nor",
+  "bel",
+  "fin",
+  "aut",
+  "irl",
+  "prt",
+  "nzl",
+  "isr"
+ ],
+ "markets_selection_period": {
+  "jpn": {
+   "from": 198902,
+   "years": 11.9,
+   "excess": 2.85,
+   "t": 1.55
+  },
+  "gbr": {
+   "from": 199003,
+   "years": 10.8,
+   "excess": 2.77,
+   "t": 1.39
+  },
+  "deu": {
+   "from": 199105,
+   "years": 9.7,
+   "excess": 2.78,
+   "t": 1.09
+  },
+  "fra": {
+   "from": 199105,
+   "years": 9.7,
+   "excess": 3.18,
+   "t": 1.5
+  },
+  "can": {
+   "from": 198308,
+   "years": 17.4,
+   "excess": 2.09,
+   "t": 0.72
+  },
+  "aus": {
+   "from": 199011,
+   "years": 10.2,
+   "excess": -0.1,
+   "t": -0.01
+  },
+  "che": {
+   "from": 199308,
+   "years": 7.3,
+   "excess": -0.7,
+   "t": -0.27
+  },
+  "swe": {
+   "from": 199409,
+   "years": 3.8,
+   "excess": -10.66,
+   "t": 0.14
+  },
+  "nld": {
+   "from": 199105,
+   "years": 7.2,
+   "excess": 1.42,
+   "t": 0.55
+  },
+  "ita": {
+   "from": 199705,
+   "years": 3.7,
+   "excess": -1.75,
+   "t": -0.44
+  },
+  "esp": {
+   "from": 199311,
+   "years": 5.9,
+   "excess": -2.02,
+   "t": -0.32
+  },
+  "hkg": {
+   "from": 199407,
+   "years": 6.5,
+   "excess": 4.69,
+   "t": 0.31
+  },
+  "sgp": {
+   "from": 199405,
+   "years": 6.2,
+   "excess": 2.08,
+   "t": 0.27
+  },
+  "nor": {
+   "from": 199706,
+   "years": 2.8,
+   "excess": 0.58,
+   "t": 0.77
+  },
+  "fin": {
+   "from": 199805,
+   "years": 2.6,
+   "excess": -30.4,
+   "t": -2.4
+  }
+ },
+ "selection_note": "事前登録どおり（選定期間の費用後の超過が +1%/年以上の変種の中で、費用後の超過の t が最大）",
+ "benchmark": "French 米国市場（Mkt-RF＋RF・CRSP 全上場の上限なし時価加重）。他の国は JKP の国の mkt（vw＝上限なし・米ドル超過）＋French RF",
+ "cost_note": "片道の回転100%につき0.25%。回転は 50%/年（事前登録 r6: 会計の信号）＋等分の組は毎月等分へ戻す売買",
+ "markets_note": "国は JKP の3文字（run() の markets のキーと同じ）。三分位20社以上の月だけ・24か月未満の国は run() が落とす"
+}

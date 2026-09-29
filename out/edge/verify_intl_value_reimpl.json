@@ -1,0 +1,1736 @@
+{
+ "key": "intl_value",
+ "lens": "reimpl",
+ "asof": "2026-09-28",
+ "how": "fam_intl_value.py を読まずに、French の F-F_International_Countries.zip（harness.cached のキャッシュ・2026-02-13 版・1975-01〜2025-12）を自前の解析器で読み、spec の文言だけから規則を書き直した。統計は harness.stats（同じ式を自前でも計算して一致を確認）。EDGE_PHASE=holdout を自分のプロセスで立てた。スクリプトは scratchpad（ri_load.py / ri_rule.py / ri_sens.py / ri_more*.py / ri_etf*.py）",
+ "verdict": "弱まった",
+ "verdict_why": "計算そのものは完全に再現し、組み方の選び方（欠測・分母・Not Reqd/Required・Dollar/Local・国の時価加重）にも頑健。だが勝ちの中身は 2001-2007 と 2009 年に集中し、French のデータ源が切り替わった 2008 年以降（18年）は +1.76%/年・t 1.68 で線に届かない。買える形（EFV−EFA）は同じ窓で −0.37%/年で、French の紙の上の規則より年 1.7% 低い（t −3.7）",
+ "reproduction": {
+  "holdout_200101_202512": {
+   "mine": {
+    "from": 200101,
+    "to": 202512,
+    "cagr": 10.88,
+    "bench_cagr": 7.85,
+    "excess": 3.03,
+    "ex_arith": 3.12,
+    "t": 3.15,
+    "t_nw": 2.58,
+    "vol": 19.6,
+    "bench_vol": 17.8,
+    "maxdd": -65.4,
+    "bench_maxdd": -60.3
+   },
+   "reported": {
+    "cagr": 10.88,
+    "bench_cagr": 7.85,
+    "excess": 3.03,
+    "t": 3.15,
+    "t_nw": 2.58,
+    "vol": 19.6,
+    "bench_vol": 17.8,
+    "maxdd": -65.4,
+    "bench_maxdd": -60.3,
+    "countries_pos": "18/20"
+   },
+   "match": "完全一致（年率・超過・t・NW・ぶれ・最大下落・国別 18/20〔Malaysia は 2001-10 で終わるので検定期間は20か国〕）"
+  },
+  "select_197502_200012": {
+   "mine_spec_text": {
+    "from": 197502,
+    "to": 200012,
+    "cagr": 17.63,
+    "bench_cagr": 15.03,
+    "excess": 2.59,
+    "ex_arith": 2.22,
+    "t": 3.11,
+    "t_nw": 2.65,
+    "vol": 15.1,
+    "bench_vol": 15.3,
+    "maxdd": -22.1,
+    "bench_maxdd": -24.2
+   },
+   "reported": {
+    "excess": 2.59,
+    "ex_arith": 2.21,
+    "t": 3.04,
+    "t_nw": 2.54
+   },
+   "match": "超過・年率・ぶれ・最大下落は一致、t だけ 3.11 vs 3.04（NW 2.65 vs 2.54）でずれた"
+  },
+  "discrepancy_found": "spec の文言は「月 m−1 に High が無い特徴はその国の市場で代える（超過0）」だが、報告された数字（選定 t 3.04・NW 2.54・Austria 5.46/1.98・Norway 4.45/1.14）は「m に High があり、かつその High の系列が m より前に始まっていれば使う／無ければその特徴を外して残りで等分」でしか出ない（この規則で全て小数2桁まで一致）。該当するのは Austria の CE/P（1987-02〜1989-01）と Norway の CE/P（1977-01〜1986-01 の欠け）の選定期間だけで、2001年以降は欠けた特徴が1つも無い＝検定の数字には影響しない。先読みでもない（French の組み替えは前年末に決まる）。文言と実装の食い違いとして記録"
+ },
+ "sensitivity_holdout": {
+  "base (spec text: Mkt fallback)": {
+   "select_excess": 2.59,
+   "select_t": 3.11,
+   "hold_excess": 3.03,
+   "hold_t": 3.15,
+   "hold_t_nw": 2.58,
+   "hold_vol": [
+    19.6,
+    17.8
+   ],
+   "hold_maxdd": [
+    -65.4,
+    -60.3
+   ]
+  },
+  "fallback=drop char (reweight)": {
+   "select_excess": 2.6,
+   "select_t": 3.04,
+   "hold_excess": 3.03,
+   "hold_t": 3.15,
+   "hold_t_nw": 2.58,
+   "hold_vol": [
+    19.6,
+    17.8
+   ],
+   "hold_maxdd": [
+    -65.4,
+    -60.3
+   ]
+  },
+  "fallback=drop country": {
+   "select_excess": 2.67,
+   "select_t": 3.26,
+   "hold_excess": 3.03,
+   "hold_t": 3.15,
+   "hold_t_nw": 2.58,
+   "hold_vol": [
+    19.6,
+    17.8
+   ],
+   "hold_maxdd": [
+    -65.4,
+    -60.3
+   ]
+  },
+  "no m-1 availability check": {
+   "select_excess": 2.59,
+   "select_t": 3.11,
+   "hold_excess": 3.03,
+   "hold_t": 3.15,
+   "hold_t_nw": 2.58,
+   "hold_vol": [
+    19.6,
+    17.8
+   ],
+   "hold_maxdd": [
+    -65.4,
+    -60.3
+   ]
+  },
+  "fixed divisor 21, missing slot = US T-bill": {
+   "select_excess": 2.09,
+   "select_t": 2.86,
+   "hold_excess": 2.92,
+   "hold_t": 3.16,
+   "hold_t_nw": 2.58,
+   "hold_vol": [
+    18.7,
+    17.0
+   ],
+   "hold_maxdd": [
+    -63.4,
+    -58.3
+   ]
+  },
+  "fixed divisor 21, missing slot = 0": {
+   "select_excess": 2.07,
+   "select_t": 2.86,
+   "hold_excess": 2.91,
+   "hold_t": 3.16,
+   "hold_t_nw": 2.58,
+   "hold_vol": [
+    18.7,
+    17.0
+   ],
+   "hold_maxdd": [
+    -63.4,
+    -58.4
+   ]
+  },
+  "divisor 21, missing slot = EW market (strategy only)": {
+   "select_excess": 2.14,
+   "select_t": 2.86,
+   "hold_excess": 2.91,
+   "hold_t": 3.16,
+   "hold_t_nw": 2.58,
+   "hold_vol": [
+    19.5,
+    17.8
+   ],
+   "hold_maxdd": [
+    -65.2,
+    -60.3
+   ]
+  },
+  "balanced panel (14 ctry from 1975)": {
+   "select_excess": 2.96,
+   "select_t": 3.43,
+   "hold_excess": 2.6,
+   "hold_t": 2.98,
+   "hold_t_nw": 2.5,
+   "hold_vol": [
+    19.3,
+    17.9
+   ],
+   "hold_maxdd": [
+    -61.7,
+    -58.0
+   ]
+  },
+  "exclude Malaysia (20 ctry)": {
+   "select_excess": 2.45,
+   "select_t": 2.9,
+   "hold_excess": 3.04,
+   "hold_t": 3.14,
+   "hold_t_nw": 2.58,
+   "hold_vol": [
+    19.6,
+    17.9
+   ],
+   "hold_maxdd": [
+    -65.4,
+    -60.3
+   ]
+  },
+  "Required (strategy & bench Required)": {
+   "select_excess": 1.82,
+   "select_t": 1.93,
+   "hold_excess": 2.98,
+   "hold_t": 3.16,
+   "hold_t_nw": 2.49,
+   "hold_vol": [
+    19.5,
+    17.6
+   ],
+   "hold_maxdd": [
+    -64.8,
+    -60.0
+   ]
+  },
+  "Required strategy vs NotReqd bench": {
+   "select_excess": 1.69,
+   "select_t": 1.89,
+   "hold_excess": 3.38,
+   "hold_t": 3.47,
+   "hold_t_nw": 2.76,
+   "hold_vol": [
+    19.5,
+    17.8
+   ],
+   "hold_maxdd": [
+    -64.8,
+    -60.3
+   ]
+  },
+  "NotReqd strategy vs Required bench": {
+   "select_excess": 2.56,
+   "select_t": 2.72,
+   "hold_excess": 2.63,
+   "hold_t": 2.76,
+   "hold_t_nw": 2.27,
+   "hold_vol": [
+    19.6,
+    17.6
+   ],
+   "hold_maxdd": [
+    -65.4,
+    -60.0
+   ]
+  },
+  "Local currency (both)": {
+   "select_excess": 2.64,
+   "select_t": 3.15,
+   "hold_excess": 3.01,
+   "hold_t": 3.1,
+   "hold_t_nw": 2.55,
+   "hold_vol": [
+    15.7,
+    13.9
+   ],
+   "hold_maxdd": [
+    -59.1,
+    -53.2
+   ]
+  },
+  "Local + Required": {
+   "select_excess": 1.84,
+   "select_t": 1.96,
+   "hold_excess": 2.96,
+   "hold_t": 3.1,
+   "hold_t_nw": 2.45,
+   "hold_vol": [
+    15.6,
+    13.6
+   ],
+   "hold_maxdd": [
+    -58.4,
+    -52.8
+   ]
+  },
+  "chars=EP": {
+   "select_excess": 2.44,
+   "select_t": 2.74,
+   "hold_excess": 2.7,
+   "hold_t": 2.7,
+   "hold_t_nw": 2.36,
+   "hold_vol": [
+    20.2,
+    17.8
+   ],
+   "hold_maxdd": [
+    -68.0,
+    -60.3
+   ]
+  },
+  "chars=EP [Req]": {
+   "select_excess": 1.15,
+   "select_t": 1.18,
+   "hold_excess": 2.91,
+   "hold_t": 2.91,
+   "hold_t_nw": 2.49,
+   "hold_vol": [
+    20.3,
+    17.6
+   ],
+   "hold_maxdd": [
+    -67.5,
+    -60.0
+   ]
+  },
+  "chars=CEP": {
+   "select_excess": 2.92,
+   "select_t": 2.8,
+   "hold_excess": 3.29,
+   "hold_t": 3.26,
+   "hold_t_nw": 2.7,
+   "hold_vol": [
+    19.6,
+    17.8
+   ],
+   "hold_maxdd": [
+    -63.3,
+    -60.3
+   ]
+  },
+  "chars=CEP [Req]": {
+   "select_excess": 2.65,
+   "select_t": 2.45,
+   "hold_excess": 3.18,
+   "hold_t": 3.15,
+   "hold_t_nw": 2.56,
+   "hold_vol": [
+    19.6,
+    17.6
+   ],
+   "hold_maxdd": [
+    -63.0,
+    -60.0
+   ]
+  },
+  "chars=YLD": {
+   "select_excess": 2.33,
+   "select_t": 2.4,
+   "hold_excess": 3.05,
+   "hold_t": 2.92,
+   "hold_t_nw": 2.35,
+   "hold_vol": [
+    19.2,
+    17.8
+   ],
+   "hold_maxdd": [
+    -64.8,
+    -60.3
+   ]
+  },
+  "chars=YLD [Req]": {
+   "select_excess": 1.58,
+   "select_t": 1.57,
+   "hold_excess": 2.8,
+   "hold_t": 2.86,
+   "hold_t_nw": 2.14,
+   "hold_vol": [
+    18.9,
+    17.6
+   ],
+   "hold_maxdd": [
+    -63.7,
+    -60.0
+   ]
+  },
+  "chars=BM": {
+   "select_excess": 1.75,
+   "select_t": 1.65,
+   "hold_excess": 2.68,
+   "hold_t": 2.6,
+   "hold_t_nw": 2.1,
+   "hold_vol": [
+    20.9,
+    17.8
+   ],
+   "hold_maxdd": [
+    -66.0,
+    -60.3
+   ]
+  },
+  "chars=BM [Req]": {
+   "select_excess": 1.65,
+   "select_t": 1.44,
+   "hold_excess": 2.56,
+   "hold_t": 2.45,
+   "hold_t_nw": 1.99,
+   "hold_vol": [
+    20.6,
+    17.6
+   ],
+   "hold_maxdd": [
+    -65.9,
+    -60.0
+   ]
+  },
+  "chars=BM+EP+CEP+YLD": {
+   "select_excess": 2.39,
+   "select_t": 2.79,
+   "hold_excess": 2.95,
+   "hold_t": 3.09,
+   "hold_t_nw": 2.56,
+   "hold_vol": [
+    19.9,
+    17.8
+   ],
+   "hold_maxdd": [
+    -65.6,
+    -60.3
+   ]
+  },
+  "chars=BM+EP+CEP+YLD [Req]": {
+   "select_excess": 1.79,
+   "select_t": 1.85,
+   "hold_excess": 2.88,
+   "hold_t": 3.01,
+   "hold_t_nw": 2.4,
+   "hold_vol": [
+    19.8,
+    17.6
+   ],
+   "hold_maxdd": [
+    -65.0,
+    -60.0
+   ]
+  }
+ },
+ "cap_weighted_index_French_EAFE_plus_Canada_weights": {
+  "Ind_all.Dat|Not Reqd|Dollar": {
+   "select": {
+    "cagr": 16.69,
+    "bench_cagr": 13.49,
+    "excess": 3.2,
+    "ex_arith": 2.77,
+    "t": 2.86,
+    "t_nw": 2.82,
+    "vol": 16.2,
+    "bench_vol": 16.5,
+    "maxdd": -27.3,
+    "bench_maxdd": -29.4,
+    "roll10_win": "16/16"
+   },
+   "holdout": {
+    "cagr": 9.06,
+    "bench_cagr": 6.17,
+    "excess": 2.89,
+    "ex_arith": 2.89,
+    "t": 3.31,
+    "t_nw": 2.77,
+    "vol": 17.5,
+    "bench_vol": 16.3,
+    "maxdd": -58.0,
+    "bench_maxdd": -56.0,
+    "roll10_win": "14/16"
+   }
+  },
+  "Ind_all.Dat|Not Reqd|Local": {
+   "select": {
+    "cagr": 15.96,
+    "bench_cagr": 12.76,
+    "excess": 3.2,
+    "ex_arith": 2.82,
+    "t": 2.91,
+    "t_nw": 2.87,
+    "vol": 13.7,
+    "bench_vol": 13.8,
+    "maxdd": -31.8,
+    "bench_maxdd": -33.8,
+    "roll10_win": "16/16"
+   },
+   "holdout": {
+    "cagr": 8.79,
+    "bench_cagr": 5.91,
+    "excess": 2.88,
+    "ex_arith": 2.88,
+    "t": 3.29,
+    "t_nw": 2.76,
+    "vol": 14.7,
+    "bench_vol": 13.3,
+    "maxdd": -52.0,
+    "bench_maxdd": -49.7,
+    "roll10_win": "14/16"
+   }
+  },
+  "Ind_all.Dat|Required|Dollar": {
+   "select": {
+    "cagr": 16.13,
+    "bench_cagr": 12.83,
+    "excess": 3.3,
+    "ex_arith": 2.91,
+    "t": 2.97,
+    "t_nw": 2.63,
+    "vol": 16.1,
+    "bench_vol": 16.1,
+    "maxdd": -25.0,
+    "bench_maxdd": -26.6,
+    "roll10_win": "14/16"
+   },
+   "holdout": {
+    "cagr": 9.46,
+    "bench_cagr": 6.55,
+    "excess": 2.91,
+    "ex_arith": 2.93,
+    "t": 3.22,
+    "t_nw": 2.75,
+    "vol": 17.4,
+    "bench_vol": 16.1,
+    "maxdd": -57.4,
+    "bench_maxdd": -55.2,
+    "roll10_win": "13/16"
+   }
+  },
+  "Ind_all.Dat|Required|Local": {
+   "select": {
+    "cagr": 15.39,
+    "bench_cagr": 12.1,
+    "excess": 3.29,
+    "ex_arith": 2.93,
+    "t": 2.98,
+    "t_nw": 2.65,
+    "vol": 13.8,
+    "bench_vol": 13.7,
+    "maxdd": -29.7,
+    "bench_maxdd": -31.1,
+    "roll10_win": "14/16"
+   },
+   "holdout": {
+    "cagr": 9.21,
+    "bench_cagr": 6.31,
+    "excess": 2.9,
+    "ex_arith": 2.91,
+    "t": 3.2,
+    "t_nw": 2.73,
+    "vol": 14.5,
+    "bench_vol": 13.1,
+    "maxdd": -51.5,
+    "bench_maxdd": -49.0,
+    "roll10_win": "13/16"
+   }
+  },
+  "Ind_Eur_With_UK.Dat|Not Reqd|Dollar": {
+   "select": {
+    "cagr": 16.84,
+    "bench_cagr": 14.98,
+    "excess": 1.86,
+    "ex_arith": 1.64,
+    "t": 1.89,
+    "t_nw": 1.79,
+    "vol": 16.3,
+    "bench_vol": 16.1,
+    "maxdd": -29.5,
+    "bench_maxdd": -25.8,
+    "roll10_win": "15/16"
+   },
+   "holdout": {
+    "cagr": 8.41,
+    "bench_cagr": 6.06,
+    "excess": 2.35,
+    "ex_arith": 2.67,
+    "t": 2.3,
+    "t_nw": 2.39,
+    "vol": 20.4,
+    "bench_vol": 18.0,
+    "maxdd": -63.2,
+    "bench_maxdd": -58.2,
+    "roll10_win": "14/16"
+   }
+  },
+  "Ind_Eur_With_UK.Dat|Not Reqd|Local": {
+   "select": {
+    "cagr": 18.01,
+    "bench_cagr": 16.12,
+    "excess": 1.9,
+    "ex_arith": 1.69,
+    "t": 1.93,
+    "t_nw": 1.84,
+    "vol": 14.7,
+    "bench_vol": 14.3,
+    "maxdd": -27.7,
+    "bench_maxdd": -30.4,
+    "roll10_win": "15/16"
+   },
+   "holdout": {
+    "cagr": 7.65,
+    "bench_cagr": 5.32,
+    "excess": 2.33,
+    "ex_arith": 2.63,
+    "t": 2.26,
+    "t_nw": 2.35,
+    "vol": 17.2,
+    "bench_vol": 14.4,
+    "maxdd": -55.4,
+    "bench_maxdd": -49.5,
+    "roll10_win": "14/16"
+   }
+  },
+  "Ind_Eur_With_UK.Dat|Required|Dollar": {
+   "select": {
+    "cagr": 16.18,
+    "bench_cagr": 14.9,
+    "excess": 1.27,
+    "ex_arith": 1.19,
+    "t": 1.18,
+    "t_nw": 1.15,
+    "vol": 16.4,
+    "bench_vol": 15.9,
+    "maxdd": -30.5,
+    "bench_maxdd": -27.3,
+    "roll10_win": "12/16"
+   },
+   "holdout": {
+    "cagr": 9.03,
+    "bench_cagr": 6.59,
+    "excess": 2.44,
+    "ex_arith": 2.77,
+    "t": 2.29,
+    "t_nw": 2.43,
+    "vol": 20.1,
+    "bench_vol": 17.5,
+    "maxdd": -62.3,
+    "bench_maxdd": -57.3,
+    "roll10_win": "11/16"
+   }
+  },
+  "Ind_Eur_With_UK.Dat|Required|Local": {
+   "select": {
+    "cagr": 17.33,
+    "bench_cagr": 16.03,
+    "excess": 1.3,
+    "ex_arith": 1.22,
+    "t": 1.21,
+    "t_nw": 1.18,
+    "vol": 14.9,
+    "bench_vol": 14.2,
+    "maxdd": -27.8,
+    "bench_maxdd": -30.6,
+    "roll10_win": "13/16"
+   },
+   "holdout": {
+    "cagr": 8.23,
+    "bench_cagr": 5.8,
+    "excess": 2.43,
+    "ex_arith": 2.72,
+    "t": 2.25,
+    "t_nw": 2.38,
+    "vol": 16.7,
+    "bench_vol": 13.9,
+    "maxdd": -54.5,
+    "bench_maxdd": -48.5,
+    "roll10_win": "11/16"
+   }
+  },
+  "Ind_Eur_WOut_UK.Dat|Not Reqd|Dollar": {
+   "select": {
+    "cagr": 15.62,
+    "bench_cagr": 13.95,
+    "excess": 1.68,
+    "ex_arith": 1.49,
+    "t": 1.72,
+    "t_nw": 1.62,
+    "vol": 16.4,
+    "bench_vol": 16.2,
+    "maxdd": -34.2,
+    "bench_maxdd": -28.1,
+    "roll10_win": "14/16"
+   },
+   "holdout": {
+    "cagr": 8.55,
+    "bench_cagr": 6.4,
+    "excess": 2.15,
+    "ex_arith": 2.52,
+    "t": 2.12,
+    "t_nw": 2.27,
+    "vol": 21.4,
+    "bench_vol": 18.9,
+    "maxdd": -62.0,
+    "bench_maxdd": -57.4,
+    "roll10_win": "11/16"
+   }
+  },
+  "Ind_Eur_WOut_UK.Dat|Not Reqd|Local": {
+   "select": {
+    "cagr": 16.25,
+    "bench_cagr": 14.55,
+    "excess": 1.7,
+    "ex_arith": 1.52,
+    "t": 1.74,
+    "t_nw": 1.63,
+    "vol": 15.0,
+    "bench_vol": 14.8,
+    "maxdd": -29.5,
+    "bench_maxdd": -32.2,
+    "roll10_win": "14/16"
+   },
+   "holdout": {
+    "cagr": 7.23,
+    "bench_cagr": 5.1,
+    "excess": 2.12,
+    "ex_arith": 2.48,
+    "t": 2.08,
+    "t_nw": 2.24,
+    "vol": 18.2,
+    "bench_vol": 15.4,
+    "maxdd": -57.7,
+    "bench_maxdd": -52.8,
+    "roll10_win": "11/16"
+   }
+  },
+  "Ind_Eur_WOut_UK.Dat|Required|Dollar": {
+   "select": {
+    "cagr": 15.12,
+    "bench_cagr": 14.15,
+    "excess": 0.97,
+    "ex_arith": 0.95,
+    "t": 0.96,
+    "t_nw": 0.97,
+    "vol": 16.5,
+    "bench_vol": 15.9,
+    "maxdd": -37.9,
+    "bench_maxdd": -31.0,
+    "roll10_win": "12/16"
+   },
+   "holdout": {
+    "cagr": 8.8,
+    "bench_cagr": 6.95,
+    "excess": 1.86,
+    "ex_arith": 2.28,
+    "t": 1.8,
+    "t_nw": 2.06,
+    "vol": 21.1,
+    "bench_vol": 18.4,
+    "maxdd": -61.5,
+    "bench_maxdd": -56.7,
+    "roll10_win": "10/16"
+   }
+  },
+  "Ind_Eur_WOut_UK.Dat|Required|Local": {
+   "select": {
+    "cagr": 15.71,
+    "bench_cagr": 14.71,
+    "excess": 1.0,
+    "ex_arith": 0.96,
+    "t": 0.96,
+    "t_nw": 0.98,
+    "vol": 15.2,
+    "bench_vol": 14.6,
+    "maxdd": -29.1,
+    "bench_maxdd": -32.2,
+    "roll10_win": "12/16"
+   },
+   "holdout": {
+    "cagr": 7.46,
+    "bench_cagr": 5.63,
+    "excess": 1.83,
+    "ex_arith": 2.22,
+    "t": 1.76,
+    "t_nw": 2.02,
+    "vol": 17.9,
+    "bench_vol": 14.8,
+    "maxdd": -56.8,
+    "bench_maxdd": -51.5,
+    "roll10_win": "10/16"
+   }
+  },
+  "Ind_UK.Dat|Not Reqd|Dollar": {
+   "select": {
+    "cagr": 19.17,
+    "bench_cagr": 16.89,
+    "excess": 2.29,
+    "ex_arith": 2.04,
+    "t": 1.43,
+    "t_nw": 1.45,
+    "vol": 21.4,
+    "bench_vol": 21.0,
+    "maxdd": -40.9,
+    "bench_maxdd": -41.3,
+    "roll10_win": "14/16"
+   },
+   "holdout": {
+    "cagr": 7.95,
+    "bench_cagr": 5.37,
+    "excess": 2.58,
+    "ex_arith": 2.91,
+    "t": 2.16,
+    "t_nw": 2.19,
+    "vol": 19.7,
+    "bench_vol": 17.0,
+    "maxdd": -65.8,
+    "bench_maxdd": -59.7,
+    "roll10_win": "14/16"
+   }
+  },
+  "Ind_UK.Dat|Not Reqd|Local": {
+   "select": {
+    "cagr": 21.34,
+    "bench_cagr": 19.02,
+    "excess": 2.33,
+    "ex_arith": 2.12,
+    "t": 1.47,
+    "t_nw": 1.5,
+    "vol": 19.2,
+    "bench_vol": 18.3,
+    "maxdd": -32.1,
+    "bench_maxdd": -33.1,
+    "roll10_win": "14/16"
+   },
+   "holdout": {
+    "cagr": 8.37,
+    "bench_cagr": 5.77,
+    "excess": 2.6,
+    "ex_arith": 2.88,
+    "t": 2.15,
+    "t_nw": 2.16,
+    "vol": 16.5,
+    "bench_vol": 13.5,
+    "maxdd": -50.6,
+    "bench_maxdd": -41.7,
+    "roll10_win": "14/16"
+   }
+  },
+  "Ind_UK.Dat|Required|Dollar": {
+   "select": {
+    "cagr": 18.19,
+    "bench_cagr": 16.42,
+    "excess": 1.77,
+    "ex_arith": 1.69,
+    "t": 1.08,
+    "t_nw": 1.06,
+    "vol": 21.8,
+    "bench_vol": 21.0,
+    "maxdd": -40.4,
+    "bench_maxdd": -39.1,
+    "roll10_win": "11/16"
+   },
+   "holdout": {
+    "cagr": 8.9,
+    "bench_cagr": 5.68,
+    "excess": 3.22,
+    "ex_arith": 3.52,
+    "t": 2.51,
+    "t_nw": 2.35,
+    "vol": 19.4,
+    "bench_vol": 16.6,
+    "maxdd": -64.4,
+    "bench_maxdd": -58.5,
+    "roll10_win": "12/16"
+   }
+  },
+  "Ind_UK.Dat|Required|Local": {
+   "select": {
+    "cagr": 20.34,
+    "bench_cagr": 18.53,
+    "excess": 1.81,
+    "ex_arith": 1.76,
+    "t": 1.11,
+    "t_nw": 1.1,
+    "vol": 19.5,
+    "bench_vol": 18.2,
+    "maxdd": -32.0,
+    "bench_maxdd": -33.1,
+    "roll10_win": "11/16"
+   },
+   "holdout": {
+    "cagr": 9.31,
+    "bench_cagr": 6.07,
+    "excess": 3.24,
+    "ex_arith": 3.46,
+    "t": 2.47,
+    "t_nw": 2.3,
+    "vol": 16.1,
+    "bench_vol": 13.0,
+    "maxdd": -48.6,
+    "bench_maxdd": -40.1,
+    "roll10_win": "13/16"
+   }
+  },
+  "Ind_Asia_Pacific.Dat|Not Reqd|Dollar": {
+   "select": {
+    "cagr": 16.52,
+    "bench_cagr": 11.66,
+    "excess": 4.86,
+    "ex_arith": 4.24,
+    "t": 2.83,
+    "t_nw": 2.87,
+    "vol": 21.2,
+    "bench_vol": 21.5,
+    "maxdd": -39.5,
+    "bench_maxdd": -48.6,
+    "roll10_win": "16/16"
+   },
+   "holdout": {
+    "cagr": 8.7,
+    "bench_cagr": 5.61,
+    "excess": 3.09,
+    "ex_arith": 2.87,
+    "t": 3.35,
+    "t_nw": 2.6,
+    "vol": 14.8,
+    "bench_vol": 14.9,
+    "maxdd": -46.2,
+    "bench_maxdd": -49.6,
+    "roll10_win": "14/16"
+   }
+  },
+  "Ind_Asia_Pacific.Dat|Not Reqd|Local": {
+   "select": {
+    "cagr": 13.23,
+    "bench_cagr": 8.52,
+    "excess": 4.72,
+    "ex_arith": 4.26,
+    "t": 2.87,
+    "t_nw": 2.9,
+    "vol": 16.9,
+    "bench_vol": 17.0,
+    "maxdd": -44.6,
+    "bench_maxdd": -50.9,
+    "roll10_win": "16/16"
+   },
+   "holdout": {
+    "cagr": 9.34,
+    "bench_cagr": 6.22,
+    "excess": 3.12,
+    "ex_arith": 2.91,
+    "t": 3.4,
+    "t_nw": 2.63,
+    "vol": 13.8,
+    "bench_vol": 13.8,
+    "maxdd": -48.8,
+    "bench_maxdd": -52.2,
+    "roll10_win": "14/16"
+   }
+  },
+  "Ind_Asia_Pacific.Dat|Required|Dollar": {
+   "select": {
+    "cagr": 16.37,
+    "bench_cagr": 10.77,
+    "excess": 5.6,
+    "ex_arith": 5.0,
+    "t": 3.56,
+    "t_nw": 3.19,
+    "vol": 20.9,
+    "bench_vol": 20.8,
+    "maxdd": -38.7,
+    "bench_maxdd": -43.0,
+    "roll10_win": "16/16"
+   },
+   "holdout": {
+    "cagr": 8.95,
+    "bench_cagr": 5.83,
+    "excess": 3.13,
+    "ex_arith": 2.91,
+    "t": 3.35,
+    "t_nw": 2.56,
+    "vol": 14.7,
+    "bench_vol": 14.7,
+    "maxdd": -46.2,
+    "bench_maxdd": -49.2,
+    "roll10_win": "14/16"
+   }
+  },
+  "Ind_Asia_Pacific.Dat|Required|Local": {
+   "select": {
+    "cagr": 13.1,
+    "bench_cagr": 7.66,
+    "excess": 5.44,
+    "ex_arith": 4.99,
+    "t": 3.56,
+    "t_nw": 3.16,
+    "vol": 17.0,
+    "bench_vol": 16.8,
+    "maxdd": -42.4,
+    "bench_maxdd": -46.6,
+    "roll10_win": "16/16"
+   },
+   "holdout": {
+    "cagr": 9.64,
+    "bench_cagr": 6.49,
+    "excess": 3.15,
+    "ex_arith": 2.95,
+    "t": 3.38,
+    "t_nw": 2.59,
+    "vol": 13.8,
+    "bench_vol": 13.7,
+    "maxdd": -48.9,
+    "bench_maxdd": -51.3,
+    "roll10_win": "14/16"
+   }
+  },
+  "Ind_Scandanavia.Dat|Not Reqd|Dollar": {
+   "select": {
+    "cagr": 18.14,
+    "bench_cagr": 16.45,
+    "excess": 1.69,
+    "ex_arith": 1.78,
+    "t": 0.94,
+    "t_nw": 0.81,
+    "vol": 21.9,
+    "bench_vol": 20.2,
+    "maxdd": -41.1,
+    "bench_maxdd": -38.5,
+    "roll10_win": "14/16"
+   },
+   "holdout": {
+    "cagr": 12.68,
+    "bench_cagr": 7.48,
+    "excess": 5.2,
+    "ex_arith": 4.64,
+    "t": 2.65,
+    "t_nw": 2.27,
+    "vol": 21.4,
+    "bench_vol": 21.9,
+    "maxdd": -67.8,
+    "bench_maxdd": -64.2,
+    "roll10_win": "11/16"
+   }
+  },
+  "Ind_Scandanavia.Dat|Not Reqd|Local": {
+   "select": {
+    "cagr": 21.55,
+    "bench_cagr": 19.76,
+    "excess": 1.79,
+    "ex_arith": 1.91,
+    "t": 1.0,
+    "t_nw": 0.86,
+    "vol": 21.6,
+    "bench_vol": 19.6,
+    "maxdd": -40.1,
+    "bench_maxdd": -38.9,
+    "roll10_win": "14/16"
+   },
+   "holdout": {
+    "cagr": 12.33,
+    "bench_cagr": 7.13,
+    "excess": 5.2,
+    "ex_arith": 4.59,
+    "t": 2.63,
+    "t_nw": 2.26,
+    "vol": 16.5,
+    "bench_vol": 17.5,
+    "maxdd": -60.3,
+    "bench_maxdd": -54.3,
+    "roll10_win": "11/16"
+   }
+  },
+  "Ind_Scandanavia.Dat|Required|Dollar": {
+   "select": {
+    "cagr": 16.82,
+    "bench_cagr": 16.99,
+    "excess": -0.17,
+    "ex_arith": 0.29,
+    "t": 0.14,
+    "t_nw": 0.12,
+    "vol": 23.1,
+    "bench_vol": 21.0,
+    "maxdd": -48.6,
+    "bench_maxdd": -39.5,
+    "roll10_win": "11/16"
+   },
+   "holdout": {
+    "cagr": 12.82,
+    "bench_cagr": 7.61,
+    "excess": 5.21,
+    "ex_arith": 4.7,
+    "t": 2.61,
+    "t_nw": 2.24,
+    "vol": 21.5,
+    "bench_vol": 21.7,
+    "maxdd": -67.1,
+    "bench_maxdd": -64.4,
+    "roll10_win": "10/16"
+   }
+  },
+  "Ind_Scandanavia.Dat|Required|Local": {
+   "select": {
+    "cagr": 20.34,
+    "bench_cagr": 20.5,
+    "excess": -0.17,
+    "ex_arith": 0.33,
+    "t": 0.16,
+    "t_nw": 0.14,
+    "vol": 22.8,
+    "bench_vol": 20.5,
+    "maxdd": -43.7,
+    "bench_maxdd": -34.9,
+    "roll10_win": "11/16"
+   },
+   "holdout": {
+    "cagr": 12.48,
+    "bench_cagr": 7.27,
+    "excess": 5.21,
+    "ex_arith": 4.65,
+    "t": 2.59,
+    "t_nw": 2.22,
+    "vol": 16.8,
+    "bench_vol": 17.4,
+    "maxdd": -60.0,
+    "bench_maxdd": -54.5,
+    "roll10_win": "10/16"
+   }
+  }
+ },
+ "risk": {
+  "capm_vs_bench_USrf": {
+   "select": {
+    "alpha_pct_yr": 2.56,
+    "t_alpha": 3.58,
+    "beta": 0.961,
+    "beta_se": 0.013
+   },
+   "holdout": {
+    "alpha_pct_yr": 2.63,
+    "t_alpha": 2.7,
+    "beta": 1.065,
+    "beta_se": 0.016
+   }
+  },
+  "vol_matched_bench": {
+   "select": {
+    "k": 0.988,
+    "excess": 2.68,
+    "t": 3.28,
+    "maxdd": -22.1,
+    "bench_maxdd": -23.9
+   },
+   "holdout": {
+    "k": 1.099,
+    "excess": 2.6,
+    "t": 2.45,
+    "maxdd": -65.4,
+    "bench_maxdd": -64.2
+   }
+  },
+  "note": "検定期間の β 1.065。相手を同じぶれへ てこで揃えても +2.60%/年・t 2.45。事前登録のリスク区分は ぶれ 19.6 > 17.8×1.1=19.58・最大下落 −65.4 < −60.3−5=−65.3 で両方わずかに線の外＝『リスクを増やして勝つ』"
+ },
+ "concentration": {
+  "leave_one_country_out_holdout": {
+   "Austria": [
+    2.9,
+    2.95
+   ],
+   "Austrlia": [
+    3.1,
+    3.15
+   ],
+   "Belgium": [
+    3.08,
+    3.21
+   ],
+   "Canada": [
+    3.01,
+    3.09
+   ],
+   "Denmark": [
+    3.04,
+    3.2
+   ],
+   "Finland": [
+    2.76,
+    2.94
+   ],
+   "France": [
+    3.07,
+    3.18
+   ],
+   "Germany": [
+    3.08,
+    3.16
+   ],
+   "HongKong": [
+    2.93,
+    2.97
+   ],
+   "Ireland": [
+    2.92,
+    3.35
+   ],
+   "Italy": [
+    3.06,
+    3.14
+   ],
+   "Japan": [
+    3.02,
+    3.07
+   ],
+   "Malaysia": [
+    3.04,
+    3.14
+   ],
+   "Nethrlnd": [
+    3.11,
+    3.24
+   ],
+   "NewZland": [
+    3.23,
+    3.24
+   ],
+   "Norway": [
+    3.24,
+    3.3
+   ],
+   "Singapor": [
+    2.94,
+    3.0
+   ],
+   "Spain": [
+    2.99,
+    3.11
+   ],
+   "Sweden": [
+    2.93,
+    3.06
+   ],
+   "Swtzrlnd": [
+    3.15,
+    3.23
+   ],
+   "UK": [
+    3.06,
+    3.15
+   ]
+  },
+  "drop_best_countries_holdout": {
+   "top1:Finland": [
+    2.76,
+    2.94
+   ],
+   "top2:Finland,Ireland": [
+    2.63,
+    3.14
+   ],
+   "top3:Finland,Ireland,Austria": [
+    2.46,
+    2.89
+   ],
+   "top5:Finland,Ireland,Austria,Sweden,Singapor": [
+    2.14,
+    2.52
+   ],
+   "top8:Finland,Ireland,Austria,Sweden,Singapor,HongKong,Spain,Canada": [
+    1.68,
+    1.93
+   ]
+  },
+  "subperiods": {
+   "200101-200712": {
+    "excess": 6.67,
+    "t": 4.01,
+    "cagr": 21.39,
+    "bench": 14.72
+   },
+   "200801-201212": {
+    "excess": 2.97,
+    "t": 1.24,
+    "cagr": 0.42,
+    "bench": -2.55
+   },
+   "201301-201912": {
+    "excess": -0.16,
+    "t": -0.05,
+    "cagr": 7.36,
+    "bench": 7.53
+   },
+   "202001-202512": {
+    "excess": 2.93,
+    "t": 1.3,
+    "cagr": 12.51,
+    "bench": 9.58
+   },
+   "200101-201212": {
+    "excess": 4.98,
+    "t": 3.15,
+    "cagr": 12.17,
+    "bench": 7.18
+   },
+   "201301-202512": {
+    "excess": 1.24,
+    "t": 1.13,
+    "cagr": 9.71,
+    "bench": 8.47
+   },
+   "200901-202512": {
+    "excess": 2.29,
+    "t": 1.92,
+    "cagr": 12.14,
+    "bench": 9.85
+   },
+   "201501-202512": {
+    "excess": 1.45,
+    "t": 1.14,
+    "cagr": 9.77,
+    "bench": 8.32
+   }
+  },
+  "by_year_excess_pct": {
+   "2001": 12.17,
+   "2002": 13.04,
+   "2003": 8.56,
+   "2004": 4.75,
+   "2005": 0.98,
+   "2006": 3.61,
+   "2007": -0.02,
+   "2008": -2.65,
+   "2009": 25.17,
+   "2010": -0.25,
+   "2011": 3.37,
+   "2012": 0.91,
+   "2013": -0.66,
+   "2014": 0.63,
+   "2015": -2.83,
+   "2016": 4.05,
+   "2017": -0.23,
+   "2018": 0.26,
+   "2019": -2.7,
+   "2020": -10.99,
+   "2021": 7.22,
+   "2022": 6.14,
+   "2023": 3.71,
+   "2024": -1.14,
+   "2025": 15.6
+  },
+  "annual_observations": {
+   "mean_pct": 3.55,
+   "t": 2.44,
+   "median_pct": 0.98
+  },
+  "trimmed_months": {
+   "trim3each": [
+    2.81,
+    3.51
+   ],
+   "drop_top3": [
+    2.26,
+    2.64
+   ],
+   "trim6each": [
+    2.57,
+    3.55
+   ],
+   "drop_top6": [
+    1.7,
+    2.12
+   ],
+   "trim15each": [
+    2.24,
+    3.77
+   ],
+   "drop_top15": [
+    0.55,
+    0.77
+   ]
+  },
+  "month_stats": {
+   "median_pct": 0.146,
+   "share_positive": 0.563,
+   "n": 300
+  },
+  "roll5y": [
+   [
+    200101,
+    8.5
+   ],
+   [
+    200201,
+    6.54
+   ],
+   [
+    200301,
+    3.3
+   ],
+   [
+    200401,
+    0.37
+   ],
+   [
+    200501,
+    3.04
+   ],
+   [
+    200601,
+    2.79
+   ],
+   [
+    200701,
+    2.79
+   ],
+   [
+    200801,
+    2.97
+   ],
+   [
+    200901,
+    4.7
+   ],
+   [
+    201001,
+    0.96
+   ],
+   [
+    201101,
+    0.37
+   ],
+   [
+    201201,
+    0.39
+   ],
+   [
+    201301,
+    0.19
+   ],
+   [
+    201401,
+    0.35
+   ],
+   [
+    201501,
+    -0.25
+   ],
+   [
+    201601,
+    -1.86
+   ],
+   [
+    201701,
+    -1.38
+   ],
+   [
+    201801,
+    0.19
+   ],
+   [
+    201901,
+    0.83
+   ],
+   [
+    202001,
+    1.04
+   ],
+   [
+    202101,
+    5.85
+   ]
+  ],
+  "exclusions": {
+   "200301-202512 excl []": {
+    "excess": 2.05,
+    "ex_arith": 2.23,
+    "t": 2.22,
+    "t_nw": 1.98
+   },
+   "200101-202512 excl [2009]": {
+    "excess": 2.39,
+    "ex_arith": 2.38,
+    "t": 2.92,
+    "t_nw": 2.21
+   },
+   "200301-202512 excl [2009]": {
+    "excess": 1.32,
+    "ex_arith": 1.39,
+    "t": 1.75,
+    "t_nw": 1.53
+   },
+   "201001-202512 excl []": {
+    "excess": 1.3,
+    "ex_arith": 1.37,
+    "t": 1.35,
+    "t_nw": 1.22
+   },
+   "200101-202512 excl [2001, 2002, 2009, 2025]": {
+    "excess": 0.8,
+    "ex_arith": 0.93,
+    "t": 1.16,
+    "t_nw": 1.07
+   }
+  }
+ },
+ "data_source_break": {
+  "total_firms_by_year": {
+   "1975": 990,
+   "1976": 980,
+   "1977": 1046,
+   "1978": 1072,
+   "1979": 1067,
+   "1980": 1075,
+   "1981": 1058,
+   "1982": 906,
+   "1983": 1054,
+   "1984": 1059,
+   "1985": 1063,
+   "1986": 1067,
+   "1987": 1406,
+   "1988": 1555,
+   "1989": 1840,
+   "1990": 1856,
+   "1991": 1928,
+   "1992": 1925,
+   "1993": 1921,
+   "1994": 1997,
+   "1995": 2050,
+   "1996": 2024,
+   "1997": 2027,
+   "1998": 1965,
+   "1999": 1939,
+   "2000": 1827,
+   "2001": 1800,
+   "2002": 1692,
+   "2003": 2265,
+   "2004": 2041,
+   "2005": 2043,
+   "2006": 2059,
+   "2007": 1894,
+   "2008": 13337,
+   "2009": 12906,
+   "2010": 12477,
+   "2011": 12512,
+   "2012": 12413,
+   "2013": 12205,
+   "2014": 12136,
+   "2015": 12228,
+   "2016": 12305,
+   "2017": 12505,
+   "2018": 12881,
+   "2019": 13111,
+   "2020": 13108,
+   "2021": 13103,
+   "2022": 13599,
+   "2023": 13672,
+   "2024": 13383,
+   "2025": 12827
+  },
+  "firms_selected_countries": {
+   "Japan": {
+    "2000": 483,
+    "2007": 645,
+    "2008": 3026,
+    "2025": 3344
+   },
+   "UK": {
+    "2000": 211,
+    "2007": 204,
+    "2008": 1876,
+    "2025": 1088
+   },
+   "Germany": {
+    "2000": 98,
+    "2007": 89,
+    "2008": 980,
+    "2025": 629
+   },
+   "HongKong": {
+    "2000": 62,
+    "2007": 72,
+    "2008": 803,
+    "2025": 1149
+   },
+   "Singapor": {
+    "2000": 48,
+    "2007": 57,
+    "2008": 575,
+    "2025": 550
+   }
+  },
+  "split": {
+   "rule_200101-200712": {
+    "EW": [
+     6.67,
+     4.01,
+     2.88
+    ],
+    "capw": [
+     5.61,
+     3.45,
+     2.67
+    ]
+   },
+   "rule_200801-202512": {
+    "EW": [
+     1.76,
+     1.68,
+     1.49
+    ],
+    "capw": [
+     1.89,
+     1.9,
+     1.71
+    ]
+   },
+   "rule_2008-2025_excl2009_EW": [
+    0.84,
+    1.03
+   ]
+  },
+  "note": "French の国別の会社数は 2007年 1,894社 → 2008年 13,337社（7倍）へ跳ぶ＝2008年に元データの採り方が変わっている（大中型だけ→小型まで広い母集団）。検定期間の前半 2001-2007 は選定期間と同じ旧データで +6.67%/年・t 4.01、新データの 2008-2025 は +1.76%/年・t 1.68（時価加重版 +1.89・t 1.90）・2009年を除くと +0.84・t 1.03"
+ },
+ "investable_check": {
+  "pairs": {
+   "EFV-EFA": {
+    "from": 200510,
+    "to": 202512,
+    "etf_excess": -0.37,
+    "etf_t": -0.18,
+    "rule_EW_excess": 1.69,
+    "rule_EW_t": 1.76,
+    "rule_capw_excess": 1.82,
+    "rule_capw_t": 2.01,
+    "corr_monthly_excess_EW": 0.75,
+    "corr_monthly_excess_capw": 0.86
+   },
+   "EFV-EFG": {
+    "from": 200510,
+    "to": 202512,
+    "etf_excess": -0.37,
+    "etf_t": -0.08,
+    "rule_EW_excess": 1.69,
+    "rule_EW_t": 1.76,
+    "rule_capw_excess": 1.82,
+    "rule_capw_t": 2.01,
+    "corr_monthly_excess_EW": 0.76,
+    "corr_monthly_excess_capw": 0.88
+   },
+   "FNDF-SCHF": {
+    "from": 201310,
+    "to": 202512,
+    "etf_excess": 0.7,
+    "etf_t": 0.8,
+    "rule_EW_excess": 1.29,
+    "rule_EW_t": 1.13,
+    "rule_capw_excess": 1.4,
+    "rule_capw_t": 1.15,
+    "corr_monthly_excess_EW": 0.85,
+    "corr_monthly_excess_capw": 0.87
+   },
+   "IVLU-EFA": {
+    "from": 201509,
+    "to": 202512,
+    "etf_excess": 0.67,
+    "etf_t": 0.47,
+    "rule_EW_excess": 1.81,
+    "rule_EW_t": 1.3,
+    "rule_capw_excess": 1.91,
+    "rule_capw_t": 1.3,
+    "corr_monthly_excess_EW": 0.81,
+    "corr_monthly_excess_capw": 0.86
+   },
+   "IVAL-EFA": {
+    "from": 201502,
+    "to": 202512,
+    "etf_excess": -1.89,
+    "etf_t": -0.63,
+    "rule_EW_excess": 1.54,
+    "rule_EW_t": 1.18,
+    "rule_capw_excess": 1.63,
+    "rule_capw_t": 1.18,
+    "corr_monthly_excess_EW": 0.31,
+    "corr_monthly_excess_capw": 0.38
+   },
+   "FGD-EFA": {
+    "from": 200801,
+    "to": 202512,
+    "etf_excess": 1.18,
+    "etf_t": 0.81,
+    "rule_EW_excess": 1.76,
+    "rule_EW_t": 1.68,
+    "rule_capw_excess": 1.89,
+    "rule_capw_t": 1.9,
+    "corr_monthly_excess_EW": 0.55,
+    "corr_monthly_excess_capw": 0.6
+   },
+   "IDV-EFA": {
+    "from": 200708,
+    "to": 202512,
+    "etf_excess": 0.22,
+    "etf_t": 0.5,
+    "rule_EW_excess": 1.65,
+    "rule_EW_t": 1.63,
+    "rule_capw_excess": 1.82,
+    "rule_capw_t": 1.88,
+    "corr_monthly_excess_EW": 0.52,
+    "corr_monthly_excess_capw": 0.55
+   },
+   "DWX-EFA": {
+    "from": 200804,
+    "to": 202512,
+    "etf_excess": -2.58,
+    "etf_t": -1.1,
+    "rule_EW_excess": 1.68,
+    "rule_EW_t": 1.61,
+    "rule_capw_excess": 1.91,
+    "rule_capw_t": 1.89,
+    "corr_monthly_excess_EW": 0.41,
+    "corr_monthly_excess_capw": 0.39
+   },
+   "DFIV-EFA": {
+    "from": 202111,
+    "to": 202512,
+    "etf_excess": 6.34,
+    "etf_t": 1.88,
+    "rule_EW_excess": 5.47,
+    "rule_EW_t": 2.19,
+    "rule_capw_excess": 5.98,
+    "rule_capw_t": 2.09,
+    "corr_monthly_excess_EW": 0.83,
+    "corr_monthly_excess_capw": 0.88
+   },
+   "GVAL-EFA": {
+    "from": 201405,
+    "to": 202512,
+    "etf_excess": -1.83,
+    "etf_t": -0.35,
+    "rule_EW_excess": 1.32,
+    "rule_EW_t": 1.11,
+    "rule_capw_excess": 1.29,
+    "rule_capw_t": 1.03,
+    "corr_monthly_excess_EW": 0.62,
+    "corr_monthly_excess_capw": 0.55
+   }
+  },
+  "EFV_on_rule": {
+   "from": 200510,
+   "to": 202512,
+   "alpha_pct_yr": -1.69,
+   "t_alpha": -3.74,
+   "slope": 0.8
+  },
+  "French_mkt_vs_EFA": {
+   "french_cagr": 6.37,
+   "efa_cagr": 5.62
+  },
+  "French_high_vs_EFV": {
+   "french_high_cagr": 8.19,
+   "efv_cagr": 5.26
+  },
+  "note": "Yahoo の月次 adjclose（配当込み）。EFV（MSCI EAFE Value）−EFA は 2005-10〜2025-12 で −0.37%/年、同じ窓の規則は +1.69（国等加重）/+1.82（時価加重）。月次の超過の相関は 0.75/0.86 で同じ方向に動くが、EFV−EFA を規則の超過へ回帰すると 切片 −1.69%/年（t −3.74）・傾き 0.80。French の市場そのものが EFA を年 0.75% 上回る（経費と配当の源泉税が French に入っていない）ので、高配当に寄る High 側は源泉税の分だけさらに不利。FNDF−SCHF +0.70（規則 +1.29）・IVLU−EFA +0.67（+1.81）・IDV +0.22・FGD +1.18・DWX −2.58・IVAL −1.89"
+ },
+ "bottom_line": [
+  "再実装は報告値を完全に再現した（検定 +3.03%/年・t 3.15）。計算の誤りは無い",
+  "組み方の選び方では崩れない: 欠測・分母・国の集合・Required・Local・国の時価加重（French 自身の EAFE+カナダ加重の指数）で +2.6〜+3.4%/年・t 2.8〜3.5",
+  "崩れる方向の事実は二つ: (1) 勝ちは 2001-2007（旧データ・ITバブル崩壊の巻き戻し）と 2009年（1年で +25%）に集中し、2008年以降の新データでは t 1.68 (2) 買える先進国の割安ETFは同じ窓で紙の上の規則より年 1.7% 低く、EFV は EFA に負けた"
+ ]
+}

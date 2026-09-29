@@ -1,0 +1,533 @@
+{
+ "key": "lowbeta_lev",
+ "frozen": "2026-09-28",
+ "phase": "select",
+ "sel_end": 200012,
+ "spec": {
+  "source": "jkp_t1",
+  "window": 60,
+  "method": "beta",
+  "cap": 2.0,
+  "spread": 0.004,
+  "fee": 0.009
+ },
+ "rationale": "【規則】JKP 米国の betabab_1260d（Frazzini-Pedersen のベータ＝5年の相関×1年のぶれ）で組んだ三分位の低い側（時価加重）を、前月末までの直近60か月の月次超過リターンで推定したベータ β̂ で 1/β̂ 倍（下限1倍・上限2倍）に借りて持つ。月次で倍率を合わせ直す。【理由】Black (1972)・Frazzini & Pedersen (2014)：借入に制約のある投資家は高ベータ株を買ってリスクを取るので、高ベータ株が割高・低ベータ株が割安になり、証券市場線は理論より平たい。借入のできる者は低ベータ株を市場並みのベータまで借りて持てば、同じベータで市場より高いリターンが見込める。Baker, Bradley & Wurgler (2011) の「相対評価の運用者は低リスク株を避ける」も同じ向き。買いだけ＋借入なので空売りは要らない。【費用】事前登録どおり: 借りた分に短期金利＋0.4%/年、経費0.9%/年（信用取引の金利の上乗せの代わり）、売買は片道の回転1あたり0.25%。回転は、毎月組み替わる価格の信号として事前登録の200%/年×倍率＋前月の値動きでずれた倍率を戻す売買（実測で年3.2回転）。課題文の置き方（回転50%/年・経費なし）より厳しい側を採った。【選定期間の結果（193308〜200012・67.4年）】費用後の年率 14.09% 対 米国市場 11.97%、超過 +2.12%/年、t=2.11（Newey-West 1.55）、ぶれ 17.6% 対 16.1%、最大下落 -54.8% 対 -49.5%、転がる10年の勝ち 34/58。平均の倍率 1.46倍。部分期間: 1933-49 -0.59 / 1950-67 3.77 / 1968-84 3.2 / 1985-2000 2.02（%/年）。【選び方】38変種（French の BETA/VAR/RESVAR の五分位・十分位、JKP の5つの低リスクの特徴 × 推定窓36/60 × 倍率の決め方 β/ぶれ/FP分解）のうち、超過≥+1%/年で t が最大のもの。2位は同じ素材の FP 分解（+2.10%・t2.08）で、刃の上の一点ではない。French の低ベータ十分位（60か月）は1968-2000で +3.88%/年と大きいが期間が短く t=1.88。⚠ 同じ低リスクでも JKP の固有ぶれ・21日のぶれで組むと負け（−1%/年）＝効くのは「ベータ」で組んだときだけ。",
+ "n_variants_tried": 38,
+ "selection_stats": {
+  "from": 193308,
+  "to": 200012,
+  "years": 67.4,
+  "cagr": 14.09,
+  "bench_cagr": 11.97,
+  "excess": 2.12,
+  "ex_arith": 2.17,
+  "t": 2.11,
+  "t_nw": 1.55,
+  "vol": 17.6,
+  "bench_vol": 16.1,
+  "maxdd": -54.8,
+  "bench_maxdd": -49.5,
+  "sharpe": 0.62,
+  "bench_sharpe": 0.55,
+  "roll10_win": "34/58"
+ },
+ "implement": "証券会社の米国株信用取引（SBI・マネックス・楽天など。NISA では不可＝課税口座）で、米国の低ボラ／低ベータ株 ETF （例: iShares MSCI USA Min Vol〔USMV〕・Invesco S&P 500 Low Volatility〔SPLV〕）を 1/β 倍（上限2倍）まで買う。月末に過去の月次リターンから β を測り直し、倍率を合わせる。信用取引の金利は短期金利＋0.4%/年より高いのが普通なので、経費0.9%/年をその上乗せの代わりに引いてある。レバレッジ型の低ボラETFは日本の証券会社では買えない。",
+ "lookahead_test": "scratchpad の lookahead_lbl.py: 3素材×2規則×6つの切り月 c で (1) データを c で切り c+1 にでたらめな値を置いても、c+1 までの倍率・c までのリターンと回転・c+1 の回転が全期間の計算と一致 (2) 月 c の素材と市場のリターンを壊しても c までの倍率が不変（c+1 は動く＝検査が空回りしていない）。43,624点で食い違い0件。JKP の ret が米国の短期金利を引いた超過であることも確かめた（rf を足すと1963-2000の年率平均 12.58% ≈ French 低ベータ五分位 12.70%）。",
+ "variants_table": [
+  {
+   "name": "fr_beta_q/w36/beta",
+   "from": 196607,
+   "excess": 1.87,
+   "t": 1.19,
+   "excess_1968_2000": 2.36,
+   "L_mean": 1.39,
+   "turn_yr": 1.76
+  },
+  {
+   "name": "fr_beta_q/w36/vol",
+   "from": 196607,
+   "excess": 0.68,
+   "t": 0.41,
+   "excess_1968_2000": 1.12,
+   "L_mean": 1.23,
+   "turn_yr": 1.49
+  },
+  {
+   "name": "fr_beta_q/w60/beta",
+   "from": 196807,
+   "excess": 2.8,
+   "t": 1.63,
+   "excess_1968_2000": 2.8,
+   "L_mean": 1.38,
+   "turn_yr": 1.66
+  },
+  {
+   "name": "fr_beta_q/w60/vol",
+   "from": 196807,
+   "excess": 1.57,
+   "t": 0.92,
+   "excess_1968_2000": 1.57,
+   "L_mean": 1.23,
+   "turn_yr": 1.42
+  },
+  {
+   "name": "fr_beta_d/w36/beta",
+   "from": 196607,
+   "excess": 2.18,
+   "t": 1.23,
+   "excess_1968_2000": 2.88,
+   "L_mean": 1.55,
+   "turn_yr": 2.1
+  },
+  {
+   "name": "fr_beta_d/w36/vol",
+   "from": 196607,
+   "excess": 0.66,
+   "t": 0.33,
+   "excess_1968_2000": 1.25,
+   "L_mean": 1.26,
+   "turn_yr": 1.57
+  },
+  {
+   "name": "fr_beta_d/w60/beta",
+   "from": 196807,
+   "excess": 3.88,
+   "t": 1.88,
+   "excess_1968_2000": 3.88,
+   "L_mean": 1.56,
+   "turn_yr": 1.99
+  },
+  {
+   "name": "fr_beta_d/w60/vol",
+   "from": 196807,
+   "excess": 1.84,
+   "t": 0.89,
+   "excess_1968_2000": 1.84,
+   "L_mean": 1.26,
+   "turn_yr": 1.48
+  },
+  {
+   "name": "fr_var_q/w36/beta",
+   "from": 196607,
+   "excess": 0.67,
+   "t": 0.57,
+   "excess_1968_2000": 0.83,
+   "L_mean": 1.35,
+   "turn_yr": 2.99
+  },
+  {
+   "name": "fr_var_q/w36/vol",
+   "from": 196607,
+   "excess": 0.02,
+   "t": -0.0,
+   "excess_1968_2000": 0.17,
+   "L_mean": 1.24,
+   "turn_yr": 2.72
+  },
+  {
+   "name": "fr_var_q/w60/beta",
+   "from": 196807,
+   "excess": 1.07,
+   "t": 0.79,
+   "excess_1968_2000": 1.07,
+   "L_mean": 1.35,
+   "turn_yr": 2.94
+  },
+  {
+   "name": "fr_var_q/w60/vol",
+   "from": 196807,
+   "excess": 0.44,
+   "t": 0.28,
+   "excess_1968_2000": 0.44,
+   "L_mean": 1.25,
+   "turn_yr": 2.68
+  },
+  {
+   "name": "fr_var_d/w36/beta",
+   "from": 196607,
+   "excess": 0.67,
+   "t": 0.55,
+   "excess_1968_2000": 0.98,
+   "L_mean": 1.56,
+   "turn_yr": 3.62
+  },
+  {
+   "name": "fr_var_d/w36/vol",
+   "from": 196607,
+   "excess": -0.5,
+   "t": -0.27,
+   "excess_1968_2000": -0.2,
+   "L_mean": 1.29,
+   "turn_yr": 2.9
+  },
+  {
+   "name": "fr_var_d/w60/beta",
+   "from": 196807,
+   "excess": 1.45,
+   "t": 0.84,
+   "excess_1968_2000": 1.45,
+   "L_mean": 1.57,
+   "turn_yr": 3.55
+  },
+  {
+   "name": "fr_var_d/w60/vol",
+   "from": 196807,
+   "excess": 0.12,
+   "t": 0.04,
+   "excess_1968_2000": 0.12,
+   "L_mean": 1.3,
+   "turn_yr": 2.84
+  },
+  {
+   "name": "fr_resvar_q/w36/beta",
+   "from": 196607,
+   "excess": 0.53,
+   "t": 0.57,
+   "excess_1968_2000": 0.74,
+   "L_mean": 1.24,
+   "turn_yr": 2.69
+  },
+  {
+   "name": "fr_resvar_q/w36/vol",
+   "from": 196607,
+   "excess": 0.07,
+   "t": 0.05,
+   "excess_1968_2000": 0.28,
+   "L_mean": 1.17,
+   "turn_yr": 2.52
+  },
+  {
+   "name": "fr_resvar_q/w60/beta",
+   "from": 196807,
+   "excess": 0.87,
+   "t": 0.84,
+   "excess_1968_2000": 0.87,
+   "L_mean": 1.24,
+   "turn_yr": 2.64
+  },
+  {
+   "name": "fr_resvar_q/w60/vol",
+   "from": 196807,
+   "excess": 0.44,
+   "t": 0.39,
+   "excess_1968_2000": 0.44,
+   "L_mean": 1.18,
+   "turn_yr": 2.49
+  },
+  {
+   "name": "fr_resvar_d/w36/beta",
+   "from": 196607,
+   "excess": 1.22,
+   "t": 0.93,
+   "excess_1968_2000": 1.35,
+   "L_mean": 1.35,
+   "turn_yr": 3.01
+  },
+  {
+   "name": "fr_resvar_d/w36/vol",
+   "from": 196607,
+   "excess": 0.23,
+   "t": 0.15,
+   "excess_1968_2000": 0.36,
+   "L_mean": 1.22,
+   "turn_yr": 2.68
+  },
+  {
+   "name": "fr_resvar_d/w60/beta",
+   "from": 196807,
+   "excess": 1.65,
+   "t": 1.15,
+   "excess_1968_2000": 1.65,
+   "L_mean": 1.35,
+   "turn_yr": 2.95
+  },
+  {
+   "name": "fr_resvar_d/w60/vol",
+   "from": 196807,
+   "excess": 0.69,
+   "t": 0.45,
+   "excess_1968_2000": 0.69,
+   "L_mean": 1.23,
+   "turn_yr": 2.65
+  },
+  {
+   "name": "jkp_t1/w36/beta",
+   "from": 193108,
+   "excess": 1.39,
+   "t": 1.51,
+   "excess_1968_2000": 2.2,
+   "L_mean": 1.46,
+   "turn_yr": 3.3
+  },
+  {
+   "name": "jkp_t1/w36/vol",
+   "from": 193108,
+   "excess": 0.6,
+   "t": 0.6,
+   "excess_1968_2000": 1.2,
+   "L_mean": 1.33,
+   "turn_yr": 2.93
+  },
+  {
+   "name": "jkp_t1/w60/beta",
+   "from": 193308,
+   "excess": 2.12,
+   "t": 2.11,
+   "excess_1968_2000": 2.57,
+   "L_mean": 1.46,
+   "turn_yr": 3.21
+  },
+  {
+   "name": "jkp_t1/w60/vol",
+   "from": 193308,
+   "excess": 1.01,
+   "t": 1.02,
+   "excess_1968_2000": 1.39,
+   "L_mean": 1.32,
+   "turn_yr": 2.85
+  },
+  {
+   "name": "jkp_beta60/w36/beta",
+   "from": 193201,
+   "excess": 0.61,
+   "t": 0.84,
+   "excess_1968_2000": 0.6,
+   "L_mean": 1.37,
+   "turn_yr": 3.04
+  },
+  {
+   "name": "jkp_beta60/w60/beta",
+   "from": 193401,
+   "excess": 1.22,
+   "t": 1.43,
+   "excess_1968_2000": 1.15,
+   "L_mean": 1.36,
+   "turn_yr": 2.96
+  },
+  {
+   "name": "jkp_ivol252/w36/beta",
+   "from": 192907,
+   "excess": -0.98,
+   "t": -2.22,
+   "excess_1968_2000": -0.28,
+   "L_mean": 1.12,
+   "turn_yr": 2.34
+  },
+  {
+   "name": "jkp_ivol252/w60/beta",
+   "from": 193107,
+   "excess": -1.04,
+   "t": -2.28,
+   "excess_1968_2000": -0.2,
+   "L_mean": 1.11,
+   "turn_yr": 2.31
+  },
+  {
+   "name": "jkp_rvol21/w36/beta",
+   "from": 192907,
+   "excess": -0.91,
+   "t": -1.5,
+   "excess_1968_2000": -0.84,
+   "L_mean": 1.19,
+   "turn_yr": 4.91
+  },
+  {
+   "name": "jkp_rvol21/w60/beta",
+   "from": 193107,
+   "excess": -0.99,
+   "t": -1.55,
+   "excess_1968_2000": -0.73,
+   "L_mean": 1.19,
+   "turn_yr": 4.88
+  },
+  {
+   "name": "jkp_betadown/w60/beta",
+   "from": 193107,
+   "excess": -0.23,
+   "t": 0.05,
+   "excess_1968_2000": 0.19,
+   "L_mean": 1.37,
+   "turn_yr": 3.01
+  },
+  {
+   "name": "jkp_t1/w60/fp",
+   "from": 193308,
+   "excess": 2.1,
+   "t": 2.08,
+   "excess_1968_2000": 2.63,
+   "L_mean": 1.47,
+   "turn_yr": 3.38
+  },
+  {
+   "name": "fr_beta_q/w60/fp",
+   "from": 196807,
+   "excess": 2.7,
+   "t": 1.58,
+   "excess_1968_2000": 2.7,
+   "L_mean": 1.4,
+   "turn_yr": 1.88
+  },
+  {
+   "name": "fr_beta_d/w60/fp",
+   "from": 196807,
+   "excess": 3.75,
+   "t": 1.82,
+   "excess_1968_2000": 3.75,
+   "L_mean": 1.57,
+   "turn_yr": 2.26
+  }
+ ],
+ "markets": [
+  "jkp_aus",
+  "jkp_aut",
+  "jkp_bel",
+  "jkp_can",
+  "jkp_che",
+  "jkp_deu",
+  "jkp_dnk",
+  "jkp_esp",
+  "jkp_fin",
+  "jkp_fra",
+  "jkp_gbr",
+  "jkp_hkg",
+  "jkp_irl",
+  "jkp_isr",
+  "jkp_ita",
+  "jkp_jpn",
+  "jkp_nld",
+  "jkp_nor",
+  "jkp_nzl",
+  "jkp_prt",
+  "jkp_sgp",
+  "jkp_swe"
+ ],
+ "markets_note": "先進国22か国に同じ規則（betabab_1260d の三分位1・60か月β・1/β・上限2倍・同じ費用）を当てる。データの足りない国（ホールドアウトの段で24か月未満）は自動で外れる。選定の段で走ったのは18か国",
+ "selection_subperiods": {
+  "193308-194912": {
+   "excess": -0.59,
+   "t": -0.25
+  },
+  "195001-196712": {
+   "excess": 3.77,
+   "t": 2.0
+  },
+  "196801-198412": {
+   "excess": 3.2,
+   "t": 1.83
+  },
+  "198501-200012": {
+   "excess": 2.02,
+   "t": 0.69
+  }
+ },
+ "selection_replication_pre2001_info": {
+  "note": "選定の段のデータ（1992〜2000・短い）。規則の選択には使っていない。後半は各国のITバブル（フィンランドのノキア等）で低ベータが大きく負けた",
+  "positive": "8/18",
+  "by_market": {
+   "jkp_aus": {
+    "from": 199407,
+    "excess": 2.61,
+    "t": 1.0
+   },
+   "jkp_aut": {
+    "from": 199505,
+    "excess": -0.91,
+    "t": 0.1
+   },
+   "jkp_bel": {
+    "from": 199411,
+    "excess": 6.83,
+    "t": 1.27
+   },
+   "jkp_can": {
+    "from": 199202,
+    "excess": 2.95,
+    "t": 0.5
+   },
+   "jkp_che": {
+    "from": 199408,
+    "excess": -6.29,
+    "t": -0.96
+   },
+   "jkp_deu": {
+    "from": 199403,
+    "excess": -3.58,
+    "t": -0.43
+   },
+   "jkp_dnk": {
+    "from": 199411,
+    "excess": -9.53,
+    "t": -1.4
+   },
+   "jkp_esp": {
+    "from": 199408,
+    "excess": -9.36,
+    "t": -1.77
+   },
+   "jkp_fin": {
+    "from": 199611,
+    "excess": -52.37,
+    "t": -2.76
+   },
+   "jkp_fra": {
+    "from": 199403,
+    "excess": -4.9,
+    "t": -0.69
+   },
+   "jkp_gbr": {
+    "from": 199405,
+    "excess": 1.82,
+    "t": 0.51
+   },
+   "jkp_hkg": {
+    "from": 199408,
+    "excess": -5.18,
+    "t": -0.76
+   },
+   "jkp_ita": {
+    "from": 199403,
+    "excess": 4.06,
+    "t": 0.74
+   },
+   "jkp_jpn": {
+    "from": 199404,
+    "excess": 2.45,
+    "t": 0.55
+   },
+   "jkp_nld": {
+    "from": 199403,
+    "excess": -8.94,
+    "t": -1.45
+   },
+   "jkp_nor": {
+    "from": 199411,
+    "excess": 10.13,
+    "t": 1.67
+   },
+   "jkp_sgp": {
+    "from": 199409,
+    "excess": -2.45,
+    "t": -0.18
+   },
+   "jkp_swe": {
+    "from": 199409,
+    "excess": 4.98,
+    "t": 0.6
+   }
+  }
+ },
+ "cost_sensitivity_info": {
+  "prereg（採用）": {
+   "excess": 2.12,
+   "t": 2.11
+  },
+  "課題文の置き方（回転50%/年・経費なし・借入 rf+0.4%）": {
+   "excess": 3.77,
+   "t": 3.51
+  },
+  "費用なし（参考）": {
+   "excess": 4.27,
+   "t": 3.93
+  }
+ }
+}

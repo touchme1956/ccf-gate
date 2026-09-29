@@ -1,0 +1,295 @@
+{
+ "key": "payout",
+ "frozen": "2026-09-28",
+ "phase": "select",
+ "sel_end": 200012,
+ "spec": {
+  "chars": [
+   "chcsho_12m"
+  ],
+  "w": "vw_cap",
+  "sides": {
+   "chcsho_12m": "1.0"
+  },
+  "replicate": [
+   "aus",
+   "aut",
+   "bel",
+   "can",
+   "che",
+   "deu",
+   "dnk",
+   "esp",
+   "fin",
+   "fra",
+   "gbr",
+   "hkg",
+   "irl",
+   "isr",
+   "ita",
+   "jpn",
+   "nld",
+   "nor",
+   "nzl",
+   "prt",
+   "sgp",
+   "swe"
+  ],
+  "min_n_repl": 10
+ },
+ "rationale": "株数を12か月で減らした側（JKP chcsho_12m の下の三分位・vw_cap＝巨大株の重みを抑えた時価加重）を買いだけで持つ。経済的な理由は2001年より前に公表済み: 自社株買いを発表した会社はその後4年で市場に勝ち（Ikenberry・Lakonishok・Vermaelen 1995・経営者は自社が割安なときに買い戻す）、株式を発行した会社は負ける（Loughran・Ritter 1995 の新規・追加発行）。余った現金を返す会社は浪費しにくい（Jensen 1986 のフリーキャッシュフロー）。選定（〜2000-12・費用 回転50%/年×0.25%を引いた後・相手 French 米国市場）: 1927-01〜2000-12 の74年で 超過 +3.33%/年・t 5.13（NW 3.97）・ぶれ 21.1% vs 市場 19.3%・最大下落 -83.2% vs -83.7%・転がる10年の勝ち 60/65。前半 1927-1970 +3.52%/年（t 4.61）・1971-1985 +5.12（t 3.45）・1986-2000 +0.96（t 0.42）＝効きは1986年以降に小さくなっている。選び方は事前登録どおり（選定期間＝各変種のデータの始まり〜2000-12 の費用後の超過の t が最大・超過 ≥ +1%/年）。⚠ 結果を見る前は『4本がそろう 1971-11〜2000-12 の共通の窓』で比べるつもりだった（コードの COMMON_START）。その窓なら最大は eqnpo+chcsho|vw_cap（+3.40・t 2.56）で、この規則は +3.00・t 2.45 と僅差の3位。事前登録の字面（期間はデータの始まりから）に合わせてこちらを選んだ——74年の証拠で t が約2倍（5.13 vs 2.56）と大きいのが理由で、どちらを選んでも中身は同じ系統（株数を減らす）。",
+ "n_variants_tried": 14,
+ "selection_stats": {
+  "from": 192701,
+  "to": 200012,
+  "years": 74.0,
+  "cagr": 13.98,
+  "bench_cagr": 10.65,
+  "excess": 3.33,
+  "ex_arith": 3.34,
+  "t": 5.13,
+  "t_nw": 3.97,
+  "vol": 21.1,
+  "bench_vol": 19.3,
+  "maxdd": -83.2,
+  "bench_maxdd": -83.7,
+  "sharpe": 0.55,
+  "bench_sharpe": 0.43,
+  "roll10_win": "60/65"
+ },
+ "implement": "楽天証券の成長投資枠（NISA 可）で米国株の個別銘柄を買う形: 年に数回、米国上場の大型・中型株を直近12か月の発行済株式数の変化率で並べ、いちばん減らした1/3（自社株買いで株数を純減させた社）を時価加重（1社の重みに上限＝JKP の vw_cap と同じく巨大株を抑える）で持つ。回転は 50%/年前後と置いた。自社株買いの ETF（Invesco PKW〔Buyback Achievers＝12か月で株数5%以上減〕・Cambria SYLD）は楽天の海外ETFの一覧（out/broker_lineup.json）に無い＝ETF では実行できず、個別株を20〜50社持つ必要がある。配当利回りの側（VYM・HDV・DLN）は買えるが、それは別の変種で、選ばれた規則ではない",
+ "family_name": "株主への純還元（純還元・還元利回り・株数を減らす・配当利回りの良い側の三分位）",
+ "lookahead_test": "(1) 切り詰め: JKP の脚と RF を 1950-12/1975-12/1985-12/1995-12/1999-12 で切って作り直しても、切った月までの規則のリターンが完全一致 (2) ずらし: 切った月より後の JKP の値を1か月ずらして壊しても、それより前のリターンは不変（後ろは変わる＝検査が空回りしていない） (3) 側（信号）は spec の定数で、データから再推定しない (4) 月 m の総リターン = JKP の月 m の超過 + 月 m の RF（差の最大 1.4e-17）。JKP は月末 t の特徴で組み t+1 のリターンを出す（会計値は4か月以上遅らせる＝JKP 2023 の作り方）。良い側は選定期間（〜2000-12）の米国データで 因子 と 3.0−1.0 の相関の符号から決めた（chcsho_12m は −1.000 → 1.0 側）",
+ "directions": {
+  "eqnpo_me": {
+   "side": "3.0",
+   "corr": 1.0,
+   "months": 350
+  },
+  "eqpo_me": {
+   "side": "3.0",
+   "corr": 1.0,
+   "months": 350
+  },
+  "chcsho_12m": {
+   "side": "1.0",
+   "corr": -1.0,
+   "months": 888
+  },
+  "div12m_me": {
+   "side": "3.0",
+   "corr": 1.0,
+   "months": 889
+  }
+ },
+ "variants_table": [
+  {
+   "variant": "eqnpo_me|vw_cap",
+   "common_1971_11": {
+    "excess": 3.76,
+    "t": 2.5
+   },
+   "full_from": 197111,
+   "full": {
+    "excess": 3.76,
+    "t": 2.5
+   }
+  },
+  {
+   "variant": "eqpo_me|vw_cap",
+   "common_1971_11": {
+    "excess": 3.27,
+    "t": 2.0
+   },
+   "full_from": 197111,
+   "full": {
+    "excess": 3.27,
+    "t": 2.0
+   }
+  },
+  {
+   "variant": "chcsho_12m|vw_cap",
+   "common_1971_11": {
+    "excess": 3.0,
+    "t": 2.45
+   },
+   "full_from": 192701,
+   "full": {
+    "excess": 3.33,
+    "t": 5.13
+   }
+  },
+  {
+   "variant": "div12m_me|vw_cap",
+   "common_1971_11": {
+    "excess": 2.98,
+    "t": 1.61
+   },
+   "full_from": 192612,
+   "full": {
+    "excess": 1.81,
+    "t": 2.08
+   }
+  },
+  {
+   "variant": "all4|vw_cap",
+   "common_1971_11": {
+    "excess": 3.28,
+    "t": 2.21
+   },
+   "full_from": 197111,
+   "full": {
+    "excess": 3.28,
+    "t": 2.21
+   }
+  },
+  {
+   "variant": "eqnpo_me|vw",
+   "common_1971_11": {
+    "excess": 3.11,
+    "t": 2.18
+   },
+   "full_from": 197111,
+   "full": {
+    "excess": 3.11,
+    "t": 2.18
+   }
+  },
+  {
+   "variant": "eqpo_me|vw",
+   "common_1971_11": {
+    "excess": 3.15,
+    "t": 1.95
+   },
+   "full_from": 197111,
+   "full": {
+    "excess": 3.15,
+    "t": 1.95
+   }
+  },
+  {
+   "variant": "chcsho_12m|vw",
+   "common_1971_11": {
+    "excess": 2.04,
+    "t": 1.86
+   },
+   "full_from": 192701,
+   "full": {
+    "excess": 2.18,
+    "t": 3.26
+   }
+  },
+  {
+   "variant": "div12m_me|vw",
+   "common_1971_11": {
+    "excess": 2.34,
+    "t": 1.25
+   },
+   "full_from": 192612,
+   "full": {
+    "excess": 1.3,
+    "t": 1.44
+   }
+  },
+  {
+   "variant": "all4|vw",
+   "common_1971_11": {
+    "excess": 2.69,
+    "t": 1.89
+   },
+   "full_from": 197111,
+   "full": {
+    "excess": 2.69,
+    "t": 1.89
+   }
+  },
+  {
+   "variant": "eqnpo+chcsho|vw_cap",
+   "common_1971_11": {
+    "excess": 3.4,
+    "t": 2.56
+   },
+   "full_from": 197111,
+   "full": {
+    "excess": 3.4,
+    "t": 2.56
+   }
+  },
+  {
+   "variant": "eqnpo+div|vw_cap",
+   "common_1971_11": {
+    "excess": 3.38,
+    "t": 2.07
+   },
+   "full_from": 197111,
+   "full": {
+    "excess": 3.38,
+    "t": 2.07
+   }
+  },
+  {
+   "variant": "eqpo+chcsho|vw_cap",
+   "common_1971_11": {
+    "excess": 3.16,
+    "t": 2.32
+   },
+   "full_from": 197111,
+   "full": {
+    "excess": 3.16,
+    "t": 2.32
+   }
+  },
+  {
+   "variant": "eqnpo+eqpo+chcsho|vw_cap",
+   "common_1971_11": {
+    "excess": 3.37,
+    "t": 2.4
+   },
+   "full_from": 197111,
+   "full": {
+    "excess": 3.37,
+    "t": 2.4
+   }
+  }
+ ],
+ "selection_window_note": "選び方は full（各変種のデータの始まり〜2000-12）の t。common_1971_11 は4本がそろう窓での比較（参考）",
+ "subperiods": {
+  "192701-197010": {
+   "excess": 3.52,
+   "t": 4.61
+  },
+  "197111-198512": {
+   "excess": 5.12,
+   "t": 3.45
+  },
+  "198601-200012": {
+   "excess": 0.96,
+   "t": 0.42
+  }
+ },
+ "markets": [
+  "aus",
+  "aut",
+  "bel",
+  "can",
+  "che",
+  "deu",
+  "dnk",
+  "esp",
+  "fin",
+  "fra",
+  "gbr",
+  "hkg",
+  "irl",
+  "isr",
+  "ita",
+  "jpn",
+  "nld",
+  "nor",
+  "nzl",
+  "prt",
+  "sgp",
+  "swe"
+ ],
+ "markets_note": "国は JKP の3文字（aus・can…）で run() の markets のキーと同じ。相手はその国の JKP mkt(vw)+米国RF（米ドル）。脚の銘柄数が10未満の月は落とす。2000年以前は多くの国で自社株買いが制限されていて（日本は1994/2001・ドイツは1998に解禁）下の三分位が薄い＝選定期間の国の比較は雑音"
+}

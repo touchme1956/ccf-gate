@@ -1,0 +1,5128 @@
+{
+ "key": "levtrend",
+ "lens": "ndx（NASDAQ-100 へ当てる・実在の器 QLD/TQQQ）",
+ "as_of": "2026-09-28",
+ "question": "凍結した levtrend（前日の終値が200日平均の上なら3倍・下なら1倍・毎日リセット・借入 rf＋0.4%/年・経費0.9%/年・切替1回0.1%）を、この利用者が持っている NASDAQ-100 に当てると、1985-2000 と 2001〜 で持ちこたえるか。実在の器（QLD 2倍・TQQQ 3倍、1倍の側 QQQ）で、日本から現実に執行できる形・円・課税口座の税・楽天の手数料の後にも残るか",
+ "verdict": "弱まった",
+ "verdict_reason": "紙の上の見出しは NASDAQ-100 でも再現した: 2001-01〜2026-08 に 年率 16.93% vs 持ち続け 10.37%・超過 +6.56%/年・t2.41（QQQ の分配を足すと +7.61・t2.56）＝米国市場の検定（+6.34・t2.38）とほぼ同じ。1986-10〜2000-12 も +7.17・t2.10。実在の器でも税の前は勝つ（QLD 2006〜 +8.1〜+8.4%/年・t3.0〜3.1／TQQQ 2010〜 +16.7〜+19.0%/年・t3.0〜3.2・日本から執行できる B/C でも同程度）。だが壊れる箇所がはっきりある。(1) 勝ちは倍率（リスク）の分: 対数で測った t は 2001〜 1.00（分配込み 1.13）、シャープは持ち続けと同じ（0.53 vs 0.49）、同じ平均の倍率（2.47倍）を毎日持つだけとの差は 2001〜 +7.98%/年だが t0.53（対数 1.24）＝有意でなく、1986-2000 はむしろ −0.77%/年。実物の窓では TQQQ を持ちっぱなし（42.3%/年）が規則（38.4%）を上回った。(2) 下落: 2001〜 の最大下落は日次 −83.9%（持ち続け −70.5%）。2000-03-27 の天井からは −97.9%（底は 2008-11-20）で、天井の値を取り戻すのに 20.4年（1営業日遅れで 17.8年・持ち続け 15.6年）。2000年だけで −80.8%（入れ替え15回）。1987-10-19（NDX −15.1%）は1営業日遅れの版だと3倍で受けて −45%。(3) 区間: 2001-2007 は負け（−6.70%/年）、2008-15 は t1.22、勝ちは 2016年以降（+19.63%/年）に偏る。1986-94 は +0.30%/年（1営業日遅れなら −9.92）。(4) 税と手数料: NISA では買えない（課税口座）。較正した合成で 2001-01 から一括なら、税・手数料の後に NISA の QQQ に対し 100万円 −1.2〜+0.9%/年・1000万円 +2.9〜+4.8%/年。2000-03-27（天井）から 1000万円なら 1.97〜6.45%/年 vs NISA の QQQ 9.37%/年＝負け（口座が一時 9万円台〜26万円に縮み、小さい口座では手数料が上限22ドルに届かず毎回0.5〜1%取られ、損失は3年しか繰り越せない）。(5) 積立は大きく勝って見える（2010〜 TQQQ・税の後で NISA の QQQ の 3.3〜3.8倍、2001〜 合成で 3.7〜3.8倍）が、これは 2010〜2026 の NASDAQ-100 の上げ相場の一度きりの形。紙の上で 1986〜 の転がる10年積立にすると 規則が勝つのは 256/360 窓（1営業日遅れで 317/360）・最悪は持ち続けの 0.57倍（1998-09〜2008-08: 積んだ額の0.66倍 vs 1.14倍）・元本割れの窓は 53（持ち続け 10）。崩れてはいない（米国と同じ形で再現し、実物・円・税の後も長い窓では向きは正）が、見込める上乗せは始める時期と口座の大きさで −7〜+12%/年まで振れ、平均としての勝ちは統計でタイミングと見分けられない。規則の働きの主は最大下落を −98% から −84% へ浅くすること",
+ "method": {
+  "frozen_rule_untouched": "out/edge/spec_levtrend.json（L3・d200・外=1倍・delay0・spread0.004・fee0.009・cost0.001・warmup12か月）と night/edge/fam_levtrend.py は変えていない。紙の上は fam_levtrend._rule_on をそのまま呼び（信号・倍率・費用・入れ替えの数え方は凍結のまま）、指数だけを NASDAQ-100 に替えた。1営業日遅れの版は spec の delay=1 を上書きした別の実行",
+  "data": "Yahoo の日足（v8 chart・interval=1d・period1=0〜最新・adjclose）: ^NDX 1985-10-01〜2026-09-25（10,326日）・QQQ 1999-03-10〜・QLD 2006-06-21〜・TQQQ 2010-02-11〜・QQQM・JPY=X 1996-10-30〜・^IRX。harness.cached で out/_edge_cache/yhdp_{SYM}.json に取った。⚠ 指示の range=max は Yahoo が3か月刻みに間引いて返した（dataGranularity=3mo・^NDX 165点）ので使わず、period1/period2 で日次を取った（間引いた版のキャッシュは消した）。短期金利は French の日次 RF（〜2026-08-31）、以後は ^IRX/252",
+  "dividends": "^NDX は価格指数。主の紙の上は「価格だけ」（1986-2000 はこれしか無い）。2001〜 は QQQ の分配（分配日の 分配額÷前日の終値）を NDX の日次に足した版も出した＝NASDAQ-100 配当込みより経費の分（年0.2%前後）低い。^XNDX（配当込み）は Yahoo に無かった（1点だけ）",
+  "benchmark_paper": "NASDAQ-100 の持ち続け（同じ日次データを月へ複利でつないだ1倍）",
+  "real_products": "中＝QLD（2倍）または TQQQ（3倍）、外＝QQQ、相手＝同じ窓の QQQ の持ち続け（すべて adjclose・配当込み・経費込み）。信号は ^NDX の終値の200日平均（日 d の持ち高＝d−1日の終値 > d−1日までの200日の平均）。QQQ の adjclose で作った信号とも比べた",
+  "variants": {
+   "A": "前日の終値の信号で前日の終値に入れ替え（凍結と同じ delay0。日本からは原理的に不可能）",
+   "B": "1営業日遅れ（前日の終値の信号を当日の米国の終値で執行＝凍結の delay=1）",
+   "C": "前日の終値の信号を当日の米国の寄付きで執行（日本の夜に発注。夜間は旧の器・日中は新の器）"
+  },
+  "costs": "入れ替え1回に凍結の滑り 0.1%。紙の上の倍率の費用は凍結どおり（借入 rf＋0.4%・経費0.9%）。実物は実際の目減りが入っている",
+  "synthetic（事後・参考）": "3倍・2倍の実物は 2006/2010 より前に無い。2001〜 を実物に近い費用で見るため、L×(QQQ adjclose＋経費0.20%/年の足し戻し＝NDX 配当込みの代わり) −(L−1)×(rf＋0.4%) −(0.9%＋上乗せ) を毎日リセットで作り、上乗せを実物の持ち続けの年率に合わせて決めた（3倍 +0.894%/年・2倍 +0.647%/年）。1倍の側と相手は QQQ の実物",
+  "stats": "harness.stats（月次の算術の超過の t・Newey-West の t・幾何の年率の超過）。t_log_ref は事後の参考（月次の対数の超過の t）。最大下落は月次（harness）と日次",
+  "window_end": "主は 2026-08-31（French の日次 RF の最後の日）。実物だけ 2026-09-25 まで延ばした値を to_latest に併記",
+  "code": "scratchpad/levtrend_ndx/（fetch.py・common.py・paper.py・crisis.py・core.py・real.py・calib.py・synth_run.py・tax.py・extras.py・extras2.py・crisis_real.py・stress_detail.py・write.py）。repo には入れていない"
+ },
+ "data_checks": {
+  "^NDX": "1985-10-01〜2026-09-25・10,326日。前日比0の日 8日。5日を超える空白は 2001-09-11〜16（取引所の閉鎖）だけ。日次の最大の動き +18.8%（2001-01-03）/ −15.1%（1987-10-19）",
+  "adjclose の整合（close＋分配から作り直した日次との差 >0.2pt の日）": {
+   "QQQ": 0,
+   "QLD": 1,
+   "TQQQ": 0,
+   "QQQM": 0,
+   "読み": "Yahoo の close は分割を調整済み。QLD の分割6回・TQQQ の分割8回の日も adjclose は普通の動き＝壊れていない。作り直しは要らなかった"
+  },
+  "実物 vs L×QQQ の日次（差 >2pt の日）": {
+   "QLD": "16日（13日が 2007-10〜2008-10 の混乱期・2009-07-28/29 の1日ずれ・2020-03-13）",
+   "TQQQ": "3日（2010-05-21/24・2020-03-17）"
+  },
+  "信号: ^NDX と QQQ adjclose の200日平均": "2001-01〜2026-08 の 6,453日で 99.27% 一致・入れ替えはどちらも 175回。規則の成績の差は年0.3%前後（QLD A 8.39 vs 8.05・TQQQ A 19.04 vs 18.22）",
+  "取れなかったもの": [
+   "NASDAQ-100 の配当込み指数（^XNDX）の日次——Yahoo に無い。1999-03 以前の配当は足せていない（1986-2000 は価格だけ）",
+   "2倍の実物の 2006-06 以前・3倍の実物の 2010-02 以前（2000-2002 と 2008 の3倍）——商品が存在しない",
+   "国内のレバレッジ投信（楽天レバレッジNASDAQ-100・iFreeレバレッジ NASDAQ100 など）の日次の基準価額の長い系列——取っていない＝測っていない",
+   "NISA は 2014年以前に無い（今の制度を過去の窓に当てた仮定）"
+  ]
+ },
+ "paper_frozen_rule_on_NDX": {
+  "about": "凍結した規則をそのまま NASDAQ-100 に当てた（紙の上・凍結の費用モデル）。相手＝NASDAQ-100 の持ち続け。warmup 12か月のため最初の月は 1986-10",
+  "比較: 米国市場の検定（edge_results の値）": {
+   "from": 200101,
+   "to": 202608,
+   "cagr": 15.78,
+   "bench_cagr": 9.45,
+   "excess": 6.34,
+   "t": 2.38,
+   "vol": 34.2,
+   "bench_vol": 15.5,
+   "maxdd": -68.2,
+   "bench_maxdd": -50.2,
+   "sharpe": 0.55,
+   "bench_sharpe": 0.55
+  },
+  "results": {
+   "A 凍結どおり（delay0）・NDX 価格だけ": {
+    "1986-10〜2000-12（1985-2000）": {
+     "from": 198610,
+     "to": 200012,
+     "years": 14.2,
+     "cagr": 29.18,
+     "bench_cagr": 22.01,
+     "excess": 7.17,
+     "ex_arith": 26.55,
+     "t": 2.1,
+     "t_nw": 2.31,
+     "t_log_ref": 0.47,
+     "vol": 71.3,
+     "bench_vol": 26.4,
+     "maxdd": -86.1,
+     "bench_maxdd": -46.8,
+     "maxdd_daily": -89.2,
+     "maxdd_daily_span": [
+      20000327,
+      20001220
+     ],
+     "bench_maxdd_daily": -53.0,
+     "sharpe": 0.63,
+     "bench_sharpe": 0.7,
+     "roll10_win": "5/5",
+     "switches": 98,
+     "switches_per_year": 6.88,
+     "in_frac": 0.787
+    },
+    "2001-01〜2026-08（検定と同じ窓）": {
+     "from": 200101,
+     "to": 202608,
+     "years": 25.7,
+     "cagr": 16.93,
+     "bench_cagr": 10.37,
+     "excess": 6.56,
+     "ex_arith": 13.98,
+     "t": 2.41,
+     "t_nw": 2.44,
+     "t_log_ref": 1.0,
+     "vol": 46.0,
+     "bench_vol": 21.6,
+     "maxdd": -83.2,
+     "bench_maxdd": -67.9,
+     "maxdd_daily": -83.9,
+     "maxdd_daily_span": [
+      20010123,
+      20081120
+     ],
+     "bench_maxdd_daily": -70.5,
+     "sharpe": 0.53,
+     "bench_sharpe": 0.49,
+     "roll10_win": "12/16",
+     "switches": 175,
+     "switches_per_year": 6.82,
+     "in_frac": 0.737
+    },
+    "全期間 1986-10〜2026-08": {
+     "from": 198610,
+     "to": 202608,
+     "years": 39.9,
+     "cagr": 21.16,
+     "bench_cagr": 14.39,
+     "excess": 6.77,
+     "ex_arith": 18.47,
+     "t": 3.16,
+     "t_nw": 3.28,
+     "t_log_ref": 1.01,
+     "vol": 56.4,
+     "bench_vol": 23.5,
+     "maxdd": -97.4,
+     "bench_maxdd": -81.1,
+     "maxdd_daily": -97.9,
+     "maxdd_daily_span": [
+      20000327,
+      20081120
+     ],
+     "bench_maxdd_daily": -82.9,
+     "sharpe": 0.56,
+     "bench_sharpe": 0.57,
+     "roll10_win": "21/30",
+     "switches": 273,
+     "switches_per_year": 6.84,
+     "in_frac": 0.755
+    },
+    "2001-01〜2007-12": {
+     "from": 200101,
+     "to": 200712,
+     "years": 7.0,
+     "cagr": -8.34,
+     "bench_cagr": -1.65,
+     "excess": -6.7,
+     "ex_arith": -1.49,
+     "t": -0.15,
+     "t_nw": -0.16,
+     "t_log_ref": -0.72,
+     "vol": 43.4,
+     "bench_vol": 27.4,
+     "maxdd": -82.3,
+     "bench_maxdd": -67.9,
+     "maxdd_daily": -83.3,
+     "maxdd_daily_span": [
+      20010123,
+      20030213
+     ],
+     "bench_maxdd_daily": -70.5,
+     "sharpe": -0.05,
+     "bench_sharpe": -0.02,
+     "roll10_win": null,
+     "switches": 55,
+     "switches_per_year": 7.86,
+     "in_frac": 0.582
+    },
+    "2008-01〜2015-12": {
+     "from": 200801,
+     "to": 201512,
+     "years": 8.0,
+     "cagr": 15.28,
+     "bench_cagr": 10.38,
+     "excess": 4.91,
+     "ex_arith": 12.09,
+     "t": 1.22,
+     "t_nw": 1.35,
+     "t_log_ref": 0.43,
+     "vol": 43.6,
+     "bench_vol": 19.2,
+     "maxdd": -65.8,
+     "bench_maxdd": -46.4,
+     "maxdd_daily": -67.5,
+     "maxdd_daily_span": [
+      20080102,
+      20081120
+     ],
+     "bench_maxdd_daily": -50.3,
+     "sharpe": 0.54,
+     "bench_sharpe": 0.6,
+     "roll10_win": null,
+     "switches": 68,
+     "switches_per_year": 8.5,
+     "in_frac": 0.766
+    },
+    "2016-01〜2026-08": {
+     "from": 201601,
+     "to": 202608,
+     "years": 10.7,
+     "cagr": 38.66,
+     "bench_cagr": 19.03,
+     "excess": 19.63,
+     "ex_arith": 25.54,
+     "t": 2.58,
+     "t_nw": 2.95,
+     "t_log_ref": 1.56,
+     "vol": 49.0,
+     "bench_vol": 18.9,
+     "maxdd": -56.0,
+     "bench_maxdd": -33.0,
+     "maxdd_daily": -59.4,
+     "maxdd_daily_span": [
+      20211119,
+      20221228
+     ],
+     "bench_maxdd_daily": -35.6,
+     "sharpe": 0.87,
+     "bench_sharpe": 0.9,
+     "roll10_win": "1/1",
+     "switches": 52,
+     "switches_per_year": 4.88,
+     "in_frac": 0.816
+    },
+    "1986-10〜1994-12": {
+     "from": 198610,
+     "to": 199412,
+     "years": 8.2,
+     "cagr": 14.26,
+     "bench_cagr": 13.97,
+     "excess": 0.3,
+     "ex_arith": 10.58,
+     "t": 0.95,
+     "t_nw": 1.11,
+     "t_log_ref": 0.02,
+     "vol": 51.5,
+     "bench_vol": 22.3,
+     "maxdd": -58.4,
+     "bench_maxdd": -34.6,
+     "maxdd_daily": -60.6,
+     "maxdd_daily_span": [
+      19871005,
+      19901011
+     ],
+     "bench_maxdd_daily": -39.9,
+     "sharpe": 0.41,
+     "bench_sharpe": 0.47,
+     "roll10_win": null,
+     "switches": 61,
+     "switches_per_year": 7.39,
+     "in_frac": 0.695
+    },
+    "1995-01〜2000-12": {
+     "from": 199501,
+     "to": 200012,
+     "years": 6.0,
+     "cagr": 52.92,
+     "bench_cagr": 34.01,
+     "excess": 18.9,
+     "ex_arith": 48.51,
+     "t": 1.89,
+     "t_nw": 2.33,
+     "t_log_ref": 0.53,
+     "vol": 91.5,
+     "bench_vol": 31.1,
+     "maxdd": -86.1,
+     "bench_maxdd": -46.8,
+     "maxdd_daily": -89.2,
+     "maxdd_daily_span": [
+      20000327,
+      20001220
+     ],
+     "bench_maxdd_daily": -53.0,
+     "sharpe": 0.85,
+     "bench_sharpe": 0.94,
+     "roll10_win": null,
+     "switches": 37,
+     "switches_per_year": 6.17,
+     "in_frac": 0.914
+    },
+    "2006-07〜2026-08（QLDの窓）": {
+     "from": 200607,
+     "to": 202608,
+     "years": 20.2,
+     "cagr": 28.55,
+     "bench_cagr": 15.63,
+     "excess": 12.92,
+     "ex_arith": 19.49,
+     "t": 2.91,
+     "t_nw": 3.19,
+     "t_log_ref": 1.59,
+     "vol": 45.9,
+     "bench_vol": 18.6,
+     "maxdd": -73.7,
+     "bench_maxdd": -50.1,
+     "maxdd_daily": -75.1,
+     "maxdd_daily_span": [
+      20071031,
+      20081120
+     ],
+     "bench_maxdd_daily": -53.7,
+     "sharpe": 0.74,
+     "bench_sharpe": 0.79,
+     "roll10_win": "11/11",
+     "switches": 125,
+     "switches_per_year": 6.2,
+     "in_frac": 0.799
+    },
+    "2010-03〜2026-08（TQQQの窓）": {
+     "from": 201003,
+     "to": 202608,
+     "years": 16.5,
+     "cagr": 34.23,
+     "bench_cagr": 18.39,
+     "excess": 15.85,
+     "ex_arith": 21.99,
+     "t": 2.88,
+     "t_nw": 3.36,
+     "t_log_ref": 1.66,
+     "vol": 46.6,
+     "bench_vol": 17.6,
+     "maxdd": -56.0,
+     "bench_maxdd": -33.0,
+     "maxdd_daily": -59.4,
+     "maxdd_daily_span": [
+      20211119,
+      20221228
+     ],
+     "bench_maxdd_daily": -35.6,
+     "sharpe": 0.84,
+     "bench_sharpe": 0.97,
+     "roll10_win": "7/7",
+     "switches": 98,
+     "switches_per_year": 5.94,
+     "in_frac": 0.839
+    }
+   },
+   "B 1営業日遅れ（delay1）・NDX 価格だけ": {
+    "1986-10〜2000-12（1985-2000）": {
+     "from": 198610,
+     "to": 200012,
+     "years": 14.2,
+     "cagr": 24.81,
+     "bench_cagr": 22.01,
+     "excess": 2.8,
+     "ex_arith": 24.87,
+     "t": 1.92,
+     "t_nw": 2.03,
+     "t_log_ref": 0.17,
+     "vol": 72.9,
+     "bench_vol": 26.4,
+     "maxdd": -81.9,
+     "bench_maxdd": -46.8,
+     "maxdd_daily": -86.1,
+     "maxdd_daily_span": [
+      20000327,
+      20001220
+     ],
+     "bench_maxdd_daily": -53.0,
+     "sharpe": 0.59,
+     "bench_sharpe": 0.7,
+     "roll10_win": "3/5",
+     "switches": 98,
+     "switches_per_year": 6.88,
+     "in_frac": 0.787
+    },
+    "2001-01〜2026-08（検定と同じ窓）": {
+     "from": 200101,
+     "to": 202608,
+     "years": 25.7,
+     "cagr": 18.84,
+     "bench_cagr": 10.37,
+     "excess": 8.47,
+     "ex_arith": 15.32,
+     "t": 2.73,
+     "t_nw": 2.83,
+     "t_log_ref": 1.33,
+     "vol": 45.4,
+     "bench_vol": 21.6,
+     "maxdd": -76.3,
+     "bench_maxdd": -67.9,
+     "maxdd_daily": -78.0,
+     "maxdd_daily_span": [
+      20010123,
+      20021007
+     ],
+     "bench_maxdd_daily": -70.5,
+     "sharpe": 0.57,
+     "bench_sharpe": 0.49,
+     "roll10_win": "13/16",
+     "switches": 175,
+     "switches_per_year": 6.82,
+     "in_frac": 0.736
+    },
+    "全期間 1986-10〜2026-08": {
+     "from": 198610,
+     "to": 202608,
+     "years": 39.9,
+     "cagr": 20.94,
+     "bench_cagr": 14.39,
+     "excess": 6.55,
+     "ex_arith": 18.73,
+     "t": 3.2,
+     "t_nw": 3.31,
+     "t_log_ref": 0.95,
+     "vol": 56.8,
+     "bench_vol": 23.5,
+     "maxdd": -95.3,
+     "bench_maxdd": -81.1,
+     "maxdd_daily": -96.2,
+     "maxdd_daily_span": [
+      20000327,
+      20021007
+     ],
+     "bench_maxdd_daily": -82.9,
+     "sharpe": 0.56,
+     "bench_sharpe": 0.57,
+     "roll10_win": "24/30",
+     "switches": 273,
+     "switches_per_year": 6.84,
+     "in_frac": 0.755
+    },
+    "2001-01〜2007-12": {
+     "from": 200101,
+     "to": 200712,
+     "years": 7.0,
+     "cagr": -2.93,
+     "bench_cagr": -1.65,
+     "excess": -1.28,
+     "ex_arith": 3.85,
+     "t": 0.43,
+     "t_nw": 0.43,
+     "t_log_ref": -0.15,
+     "vol": 42.7,
+     "bench_vol": 27.4,
+     "maxdd": -76.3,
+     "bench_maxdd": -67.9,
+     "maxdd_daily": -78.0,
+     "maxdd_daily_span": [
+      20010123,
+      20021007
+     ],
+     "bench_maxdd_daily": -70.5,
+     "sharpe": 0.08,
+     "bench_sharpe": -0.02,
+     "roll10_win": null,
+     "switches": 55,
+     "switches_per_year": 7.86,
+     "in_frac": 0.581
+    },
+    "2008-01〜2015-12": {
+     "from": 200801,
+     "to": 201512,
+     "years": 8.0,
+     "cagr": 15.78,
+     "bench_cagr": 10.38,
+     "excess": 5.4,
+     "ex_arith": 12.71,
+     "t": 1.28,
+     "t_nw": 1.5,
+     "t_log_ref": 0.47,
+     "vol": 44.1,
+     "bench_vol": 19.2,
+     "maxdd": -59.5,
+     "bench_maxdd": -46.4,
+     "maxdd_daily": -61.6,
+     "maxdd_daily_span": [
+      20080102,
+      20081120
+     ],
+     "bench_maxdd_daily": -50.3,
+     "sharpe": 0.55,
+     "bench_sharpe": 0.6,
+     "roll10_win": null,
+     "switches": 68,
+     "switches_per_year": 8.5,
+     "in_frac": 0.766
+    },
+    "2016-01〜2026-08": {
+     "from": 201601,
+     "to": 202608,
+     "years": 10.7,
+     "cagr": 38.4,
+     "bench_cagr": 19.03,
+     "excess": 19.37,
+     "ex_arith": 24.8,
+     "t": 2.59,
+     "t_nw": 2.96,
+     "t_log_ref": 1.6,
+     "vol": 47.9,
+     "bench_vol": 18.9,
+     "maxdd": -54.5,
+     "bench_maxdd": -33.0,
+     "maxdd_daily": -60.2,
+     "maxdd_daily_span": [
+      20200219,
+      20200320
+     ],
+     "bench_maxdd_daily": -35.6,
+     "sharpe": 0.87,
+     "bench_sharpe": 0.9,
+     "roll10_win": "1/1",
+     "switches": 52,
+     "switches_per_year": 4.88,
+     "in_frac": 0.816
+    },
+    "1986-10〜1994-12": {
+     "from": 198610,
+     "to": 199412,
+     "years": 8.2,
+     "cagr": 4.05,
+     "bench_cagr": 13.97,
+     "excess": -9.92,
+     "ex_arith": 4.33,
+     "t": 0.36,
+     "t_nw": 0.42,
+     "t_log_ref": -0.68,
+     "vol": 54.2,
+     "bench_vol": 22.3,
+     "maxdd": -78.5,
+     "bench_maxdd": -34.6,
+     "maxdd_daily": -79.6,
+     "maxdd_daily_span": [
+      19871005,
+      19901011
+     ],
+     "bench_maxdd_daily": -39.9,
+     "sharpe": 0.27,
+     "bench_sharpe": 0.47,
+     "roll10_win": null,
+     "switches": 61,
+     "switches_per_year": 7.39,
+     "in_frac": 0.695
+    },
+    "1995-01〜2000-12": {
+     "from": 199501,
+     "to": 200012,
+     "years": 6.0,
+     "cagr": 60.28,
+     "bench_cagr": 34.01,
+     "excess": 26.27,
+     "ex_arith": 53.11,
+     "t": 2.06,
+     "t_nw": 2.66,
+     "t_log_ref": 0.73,
+     "vol": 92.0,
+     "bench_vol": 31.1,
+     "maxdd": -81.9,
+     "bench_maxdd": -46.8,
+     "maxdd_daily": -86.1,
+     "maxdd_daily_span": [
+      20000327,
+      20001220
+     ],
+     "bench_maxdd_daily": -53.0,
+     "sharpe": 0.9,
+     "bench_sharpe": 0.94,
+     "roll10_win": null,
+     "switches": 37,
+     "switches_per_year": 6.17,
+     "in_frac": 0.914
+    },
+    "2006-07〜2026-08（QLDの窓）": {
+     "from": 200607,
+     "to": 202608,
+     "years": 20.2,
+     "cagr": 29.06,
+     "bench_cagr": 15.63,
+     "excess": 13.43,
+     "ex_arith": 19.68,
+     "t": 3.0,
+     "t_nw": 3.33,
+     "t_log_ref": 1.68,
+     "vol": 45.5,
+     "bench_vol": 18.6,
+     "maxdd": -68.9,
+     "bench_maxdd": -50.1,
+     "maxdd_daily": -70.5,
+     "maxdd_daily_span": [
+      20071031,
+      20081120
+     ],
+     "bench_maxdd_daily": -53.7,
+     "sharpe": 0.76,
+     "bench_sharpe": 0.79,
+     "roll10_win": "11/11",
+     "switches": 125,
+     "switches_per_year": 6.2,
+     "in_frac": 0.799
+    },
+    "2010-03〜2026-08（TQQQの窓）": {
+     "from": 201003,
+     "to": 202608,
+     "years": 16.5,
+     "cagr": 32.83,
+     "bench_cagr": 18.39,
+     "excess": 14.44,
+     "ex_arith": 20.74,
+     "t": 2.75,
+     "t_nw": 3.11,
+     "t_log_ref": 1.54,
+     "vol": 46.3,
+     "bench_vol": 17.6,
+     "maxdd": -54.5,
+     "bench_maxdd": -33.0,
+     "maxdd_daily": -60.2,
+     "maxdd_daily_span": [
+      20200219,
+      20200320
+     ],
+     "bench_maxdd_daily": -35.6,
+     "sharpe": 0.82,
+     "bench_sharpe": 0.97,
+     "roll10_win": "7/7",
+     "switches": 98,
+     "switches_per_year": 5.94,
+     "in_frac": 0.839
+    }
+   },
+   "A 凍結どおり・NDX＋QQQ の分配（1999-04〜）": {
+    "2001-01〜2026-08（検定と同じ窓）": {
+     "from": 200101,
+     "to": 202608,
+     "years": 25.7,
+     "cagr": 18.72,
+     "bench_cagr": 11.11,
+     "excess": 7.61,
+     "ex_arith": 15.04,
+     "t": 2.56,
+     "t_nw": 2.59,
+     "t_log_ref": 1.13,
+     "vol": 46.4,
+     "bench_vol": 21.6,
+     "maxdd": -82.3,
+     "bench_maxdd": -67.9,
+     "maxdd_daily": -83.3,
+     "maxdd_daily_span": [
+      20010123,
+      20030213
+     ],
+     "bench_maxdd_daily": -70.5,
+     "sharpe": 0.56,
+     "bench_sharpe": 0.52,
+     "roll10_win": "12/16",
+     "switches": 173,
+     "switches_per_year": 6.74,
+     "in_frac": 0.743
+    },
+    "2001-01〜2007-12": {
+     "from": 200101,
+     "to": 200712,
+     "years": 7.0,
+     "cagr": -7.47,
+     "bench_cagr": -1.37,
+     "excess": -6.1,
+     "ex_arith": -0.81,
+     "t": -0.08,
+     "t_nw": -0.09,
+     "t_log_ref": -0.65,
+     "vol": 43.4,
+     "bench_vol": 27.4,
+     "maxdd": -82.3,
+     "bench_maxdd": -67.9,
+     "maxdd_daily": -83.3,
+     "maxdd_daily_span": [
+      20010123,
+      20030213
+     ],
+     "bench_maxdd_daily": -70.5,
+     "sharpe": -0.03,
+     "bench_sharpe": -0.01,
+     "roll10_win": null,
+     "switches": 55,
+     "switches_per_year": 7.86,
+     "in_frac": 0.586
+    },
+    "2008-01〜2015-12": {
+     "from": 200801,
+     "to": 201512,
+     "years": 8.0,
+     "cagr": 17.95,
+     "bench_cagr": 11.44,
+     "excess": 6.5,
+     "ex_arith": 13.82,
+     "t": 1.35,
+     "t_nw": 1.51,
+     "t_log_ref": 0.54,
+     "vol": 44.5,
+     "bench_vol": 19.2,
+     "maxdd": -65.3,
+     "bench_maxdd": -46.2,
+     "maxdd_daily": -67.2,
+     "maxdd_daily_span": [
+      20080102,
+      20081120
+     ],
+     "bench_maxdd_daily": -50.2,
+     "sharpe": 0.59,
+     "bench_sharpe": 0.65,
+     "roll10_win": null,
+     "switches": 68,
+     "switches_per_year": 8.5,
+     "in_frac": 0.776
+    },
+    "2016-01〜2026-08": {
+     "from": 201601,
+     "to": 202608,
+     "years": 10.7,
+     "cagr": 40.49,
+     "bench_cagr": 19.87,
+     "excess": 20.63,
+     "ex_arith": 26.35,
+     "t": 2.65,
+     "t_nw": 2.97,
+     "t_log_ref": 1.62,
+     "vol": 49.3,
+     "bench_vol": 18.8,
+     "maxdd": -55.0,
+     "bench_maxdd": -32.5,
+     "maxdd_daily": -58.7,
+     "maxdd_daily_span": [
+      20200219,
+      20200320
+     ],
+     "bench_maxdd_daily": -35.2,
+     "sharpe": 0.89,
+     "bench_sharpe": 0.94,
+     "roll10_win": "1/1",
+     "switches": 50,
+     "switches_per_year": 4.69,
+     "in_frac": 0.821
+    },
+    "2006-07〜2026-08（QLDの窓）": {
+     "from": 200607,
+     "to": 202608,
+     "years": 20.2,
+     "cagr": 30.71,
+     "bench_cagr": 16.53,
+     "excess": 14.18,
+     "ex_arith": 20.64,
+     "t": 3.04,
+     "t_nw": 3.32,
+     "t_log_ref": 1.7,
+     "vol": 46.4,
+     "bench_vol": 18.5,
+     "maxdd": -73.2,
+     "bench_maxdd": -49.9,
+     "maxdd_daily": -74.7,
+     "maxdd_daily_span": [
+      20071031,
+      20081120
+     ],
+     "bench_maxdd_daily": -53.6,
+     "sharpe": 0.78,
+     "bench_sharpe": 0.83,
+     "roll10_win": "11/11",
+     "switches": 123,
+     "switches_per_year": 6.1,
+     "in_frac": 0.806
+    },
+    "2010-03〜2026-08（TQQQの窓）": {
+     "from": 201003,
+     "to": 202608,
+     "years": 16.5,
+     "cagr": 36.65,
+     "bench_cagr": 19.41,
+     "excess": 17.24,
+     "ex_arith": 23.23,
+     "t": 3.0,
+     "t_nw": 3.45,
+     "t_log_ref": 1.75,
+     "vol": 47.2,
+     "bench_vol": 17.6,
+     "maxdd": -55.0,
+     "bench_maxdd": -32.5,
+     "maxdd_daily": -58.7,
+     "maxdd_daily_span": [
+      20200219,
+      20200320
+     ],
+     "bench_maxdd_daily": -35.2,
+     "sharpe": 0.87,
+     "bench_sharpe": 1.02,
+     "roll10_win": "7/7",
+     "switches": 98,
+     "switches_per_year": 5.94,
+     "in_frac": 0.847
+    }
+   },
+   "B 1営業日遅れ・NDX＋QQQ の分配": {
+    "2001-01〜2026-08（検定と同じ窓）": {
+     "from": 200101,
+     "to": 202608,
+     "years": 25.7,
+     "cagr": 19.95,
+     "bench_cagr": 11.11,
+     "excess": 8.85,
+     "ex_arith": 15.85,
+     "t": 2.77,
+     "t_nw": 2.83,
+     "t_log_ref": 1.35,
+     "vol": 46.0,
+     "bench_vol": 21.6,
+     "maxdd": -76.3,
+     "bench_maxdd": -67.9,
+     "maxdd_daily": -78.0,
+     "maxdd_daily_span": [
+      20010123,
+      20021007
+     ],
+     "bench_maxdd_daily": -70.5,
+     "sharpe": 0.59,
+     "bench_sharpe": 0.52,
+     "roll10_win": "15/16",
+     "switches": 173,
+     "switches_per_year": 6.74,
+     "in_frac": 0.743
+    },
+    "2001-01〜2007-12": {
+     "from": 200101,
+     "to": 200712,
+     "years": 7.0,
+     "cagr": -2.7,
+     "bench_cagr": -1.37,
+     "excess": -1.33,
+     "ex_arith": 3.97,
+     "t": 0.44,
+     "t_nw": 0.44,
+     "t_log_ref": -0.15,
+     "vol": 43.1,
+     "bench_vol": 27.4,
+     "maxdd": -76.3,
+     "bench_maxdd": -67.9,
+     "maxdd_daily": -78.0,
+     "maxdd_daily_span": [
+      20010123,
+      20021007
+     ],
+     "bench_maxdd_daily": -70.5,
+     "sharpe": 0.08,
+     "bench_sharpe": -0.01,
+     "roll10_win": null,
+     "switches": 55,
+     "switches_per_year": 7.86,
+     "in_frac": 0.586
+    },
+    "2008-01〜2015-12": {
+     "from": 200801,
+     "to": 201512,
+     "years": 8.0,
+     "cagr": 19.17,
+     "bench_cagr": 11.44,
+     "excess": 7.73,
+     "ex_arith": 14.88,
+     "t": 1.47,
+     "t_nw": 1.69,
+     "t_log_ref": 0.65,
+     "vol": 44.6,
+     "bench_vol": 19.2,
+     "maxdd": -59.5,
+     "bench_maxdd": -46.2,
+     "maxdd_daily": -61.8,
+     "maxdd_daily_span": [
+      20080102,
+      20081120
+     ],
+     "bench_maxdd_daily": -50.2,
+     "sharpe": 0.61,
+     "bench_sharpe": 0.65,
+     "roll10_win": null,
+     "switches": 68,
+     "switches_per_year": 8.5,
+     "in_frac": 0.776
+    },
+    "2016-01〜2026-08": {
+     "from": 201601,
+     "to": 202608,
+     "years": 10.7,
+     "cagr": 38.29,
+     "bench_cagr": 19.87,
+     "excess": 18.43,
+     "ex_arith": 24.37,
+     "t": 2.48,
+     "t_nw": 2.74,
+     "t_log_ref": 1.48,
+     "vol": 48.6,
+     "bench_vol": 18.8,
+     "maxdd": -58.2,
+     "bench_maxdd": -32.5,
+     "maxdd_daily": -62.3,
+     "maxdd_daily_span": [
+      20211119,
+      20230310
+     ],
+     "bench_maxdd_daily": -35.2,
+     "sharpe": 0.87,
+     "bench_sharpe": 0.94,
+     "roll10_win": "1/1",
+     "switches": 50,
+     "switches_per_year": 4.69,
+     "in_frac": 0.821
+    },
+    "2006-07〜2026-08（QLDの窓）": {
+     "from": 200607,
+     "to": 202608,
+     "years": 20.2,
+     "cagr": 30.58,
+     "bench_cagr": 16.53,
+     "excess": 14.05,
+     "ex_arith": 20.35,
+     "t": 3.04,
+     "t_nw": 3.3,
+     "t_log_ref": 1.71,
+     "vol": 46.0,
+     "bench_vol": 18.5,
+     "maxdd": -68.8,
+     "bench_maxdd": -49.9,
+     "maxdd_daily": -70.5,
+     "maxdd_daily_span": [
+      20071031,
+      20081120
+     ],
+     "bench_maxdd_daily": -53.6,
+     "sharpe": 0.78,
+     "bench_sharpe": 0.83,
+     "roll10_win": "11/11",
+     "switches": 123,
+     "switches_per_year": 6.1,
+     "in_frac": 0.805
+    },
+    "2010-03〜2026-08（TQQQの窓）": {
+     "from": 201003,
+     "to": 202608,
+     "years": 16.5,
+     "cagr": 34.54,
+     "bench_cagr": 19.41,
+     "excess": 15.13,
+     "ex_arith": 21.49,
+     "t": 2.79,
+     "t_nw": 3.09,
+     "t_log_ref": 1.56,
+     "vol": 46.9,
+     "bench_vol": 17.6,
+     "maxdd": -58.2,
+     "bench_maxdd": -32.5,
+     "maxdd_daily": -62.3,
+     "maxdd_daily_span": [
+      20211119,
+      20230310
+     ],
+     "bench_maxdd_daily": -35.2,
+     "sharpe": 0.84,
+     "bench_sharpe": 1.02,
+     "roll10_win": "7/7",
+     "switches": 98,
+     "switches_per_year": 5.94,
+     "in_frac": 0.847
+    }
+   }
+  },
+  "リスクの区分": "2001〜 ぶれ 46.0% vs 21.6%（相手×2.1）・最大下落 −83.2% vs −67.9%（月次）＝事前登録の区分では『リスクを増やして勝つ』"
+ },
+ "trend_value_vs_same_average_leverage（事後・参考）": {
+  "about": "規則と、同じ平均の倍率（1＋2×3倍にいた日の割合）を毎日リセットで持ち続けるだけ（凍結の費用）の差。倍率の上乗せを除いた「200日平均で降りる」ことそのものの価値",
+  "results": {
+   "price_1986-10〜2000-12": {
+    "in_frac": 0.787,
+    "avg_leverage": 2.57,
+    "rule_cagr": 29.18,
+    "same_avg_leverage_hold_cagr": 29.95,
+    "rule_minus_same_leverage": -0.77,
+    "t_arith": -0.19,
+    "t_log": -0.08,
+    "rule_maxdd": -86.1,
+    "same_leverage_maxdd": -89.3,
+    "same_leverage_vol": 69.7,
+    "rule_vol": 71.3,
+    "3x_hold_cagr": 28.14,
+    "3x_hold_maxdd": -93.8,
+    "NDX_hold_cagr": 22.01,
+    "NDX_hold_maxdd": -46.8
+   },
+   "price_2001-01〜2026-08": {
+    "in_frac": 0.737,
+    "avg_leverage": 2.47,
+    "rule_cagr": 16.93,
+    "same_avg_leverage_hold_cagr": 8.95,
+    "rule_minus_same_leverage": 7.98,
+    "t_arith": 0.53,
+    "t_log": 1.24,
+    "rule_maxdd": -83.2,
+    "same_leverage_maxdd": -98.2,
+    "same_leverage_vol": 53.3,
+    "rule_vol": 46.0,
+    "3x_hold_cagr": 5.12,
+    "3x_hold_maxdd": -99.6,
+    "NDX_hold_cagr": 10.37,
+    "NDX_hold_maxdd": -67.9
+   },
+   "div_2001-01〜2026-08": {
+    "in_frac": 0.743,
+    "avg_leverage": 2.49,
+    "rule_cagr": 18.72,
+    "same_avg_leverage_hold_cagr": 10.7,
+    "rule_minus_same_leverage": 8.02,
+    "t_arith": 0.52,
+    "t_log": 1.23,
+    "rule_maxdd": -82.3,
+    "same_leverage_maxdd": -98.1,
+    "same_leverage_vol": 53.6,
+    "rule_vol": 46.4,
+    "3x_hold_cagr": 7.24,
+    "3x_hold_maxdd": -99.6,
+    "NDX_hold_cagr": 11.11,
+    "NDX_hold_maxdd": -67.9
+   }
+  }
+ },
+ "crisis_paper": {
+  "about": "紙の上（凍結の費用モデル）。rule・NDX_hold・3x_hold は期間の騰落%、rule_dd・NDX_dd は期間中の日次の最大下落%、in_3x_frac は3倍でいた日の割合。下げ上位10日は (日, NDX%, 持ち高, 規則%)",
+  "results": {
+   "price": {
+    "1987年": {
+     "rule": 33.8,
+     "NDX_hold": 10.5,
+     "3x_hold": -19.6,
+     "switches": 2,
+     "rule_dd": -56.8,
+     "NDX_dd": -39.9,
+     "in_3x_frac": 0.78
+    },
+    "1990年": {
+     "rule": -28.7,
+     "NDX_hold": -10.4,
+     "3x_hold": -47.4,
+     "switches": 7,
+     "rule_dd": -47.7,
+     "NDX_dd": -32.9,
+     "in_3x_frac": 0.27
+    },
+    "2000年": {
+     "rule": -80.8,
+     "NDX_hold": -36.8,
+     "3x_hold": -91.6,
+     "switches": 15,
+     "rule_dd": -89.2,
+     "NDX_dd": -53.0,
+     "in_3x_frac": 0.64
+    },
+    "2001年": {
+     "rule": -51.3,
+     "NDX_hold": -32.7,
+     "3x_hold": -88.8,
+     "switches": 5,
+     "rule_dd": -58.7,
+     "NDX_dd": -58.7,
+     "in_3x_frac": 0.04
+    },
+    "2002年": {
+     "rule": -50.7,
+     "NDX_hold": -37.6,
+     "3x_hold": -86.9,
+     "switches": 8,
+     "rule_dd": -56.2,
+     "NDX_dd": -52.0,
+     "in_3x_frac": 0.04
+    },
+    "2008年": {
+     "rule": -62.1,
+     "NDX_hold": -41.9,
+     "3x_hold": -89.3,
+     "switches": 19,
+     "rule_dd": -67.5,
+     "NDX_dd": -50.3,
+     "in_3x_frac": 0.17
+    },
+    "2009年": {
+     "rule": 133.5,
+     "NDX_hold": 53.5,
+     "3x_hold": 188.4,
+     "switches": 3,
+     "rule_dd": -20.0,
+     "NDX_dd": -18.6,
+     "in_3x_frac": 0.66
+    },
+    "2018年": {
+     "rule": -16.1,
+     "NDX_hold": -1.0,
+     "3x_hold": -22.5,
+     "switches": 7,
+     "rule_dd": -48.8,
+     "NDX_dd": -23.0,
+     "in_3x_frac": 0.83
+    },
+    "2020年": {
+     "rule": 116.5,
+     "NDX_hold": 47.6,
+     "3x_hold": 105.0,
+     "switches": 4,
+     "rule_dd": -58.7,
+     "NDX_dd": -28.0,
+     "in_3x_frac": 0.92
+    },
+    "2022年": {
+     "rule": -55.6,
+     "NDX_hold": -33.0,
+     "3x_hold": -79.1,
+     "switches": 9,
+     "rule_dd": -58.0,
+     "NDX_dd": -35.3,
+     "in_3x_frac": 0.07
+    },
+    "1987暴落 1987-08-26→1987-10-26": {
+     "rule": -55.9,
+     "NDX_hold": -39.1,
+     "3x_hold": -82.9,
+     "switches": 1,
+     "rule_dd": -56.8,
+     "NDX_dd": -39.9,
+     "in_3x_frac": 0.86
+    },
+    "ITバブル 2000-03-27→2002-10-09（NDXの天井→底）": {
+     "rule": -97.4,
+     "NDX_hold": -82.8,
+     "3x_hold": -100.0,
+     "switches": 23,
+     "rule_dd": -97.4,
+     "NDX_dd": -82.9,
+     "in_3x_frac": 0.19
+    },
+    "2000-01-03→2002-12-31": {
+     "rule": -95.4,
+     "NDX_hold": -73.5,
+     "3x_hold": -99.9,
+     "switches": 29,
+     "rule_dd": -97.4,
+     "NDX_dd": -82.9,
+     "in_3x_frac": 0.24
+    },
+    "2008 2007-10-31→2009-03-09（NDXの天井→底）": {
+     "rule": -73.8,
+     "NDX_hold": -52.7,
+     "3x_hold": -94.9,
+     "switches": 19,
+     "rule_dd": -75.1,
+     "NDX_dd": -53.7,
+     "in_3x_frac": 0.25
+    },
+    "COVID 2020-02-19→2020-03-20": {
+     "rule": -57.5,
+     "NDX_hold": -27.4,
+     "3x_hold": -69.2,
+     "switches": 3,
+     "rule_dd": -58.7,
+     "NDX_dd": -28.0,
+     "in_3x_frac": 0.65
+    },
+    "COVID 2020-02-19→2020-12-31": {
+     "rule": 64.3,
+     "NDX_hold": 33.8,
+     "3x_hold": 55.5,
+     "switches": 4,
+     "rule_dd": -58.7,
+     "NDX_dd": -28.0,
+     "in_3x_frac": 0.9
+    },
+    "2022 2021-11-19→2022-12-28（NDXの天井→底）": {
+     "rule": -58.8,
+     "NDX_hold": -35.2,
+     "3x_hold": -81.4,
+     "switches": 9,
+     "rule_dd": -59.4,
+     "NDX_dd": -35.6,
+     "in_3x_frac": 0.17
+    },
+    "NDXの下げ上位10日の持ち高（1=3倍）": [
+     [
+      19871019,
+      -15.1,
+      0,
+      -15.1
+     ],
+     [
+      19871026,
+      -11.7,
+      0,
+      -11.7
+     ],
+     [
+      19980831,
+      -9.9,
+      1,
+      -29.6
+     ],
+     [
+      20000414,
+      -9.7,
+      1,
+      -29.2
+     ],
+     [
+      20010102,
+      -9.1,
+      0,
+      -9.1
+     ],
+     [
+      20010917,
+      -8.3,
+      0,
+      -8.3
+     ],
+     [
+      20080929,
+      -10.5,
+      0,
+      -10.5
+     ],
+     [
+      20081015,
+      -8.8,
+      0,
+      -8.8
+     ],
+     [
+      20200312,
+      -9.3,
+      0,
+      -9.3
+     ],
+     [
+      20200316,
+      -12.2,
+      0,
+      -12.2
+     ]
+    ]
+   },
+   "price_delay1": {
+    "1987年": {
+     "rule": -16.7,
+     "NDX_hold": 10.5,
+     "3x_hold": -19.6,
+     "switches": 2,
+     "rule_dd": -72.2,
+     "NDX_dd": -39.9,
+     "in_3x_frac": 0.78
+    },
+    "1990年": {
+     "rule": -39.5,
+     "NDX_hold": -10.4,
+     "3x_hold": -47.4,
+     "switches": 7,
+     "rule_dd": -52.6,
+     "NDX_dd": -32.9,
+     "in_3x_frac": 0.28
+    },
+    "2000年": {
+     "rule": -75.1,
+     "NDX_hold": -36.8,
+     "3x_hold": -91.6,
+     "switches": 15,
+     "rule_dd": -86.1,
+     "NDX_dd": -53.0,
+     "in_3x_frac": 0.64
+    },
+    "2001年": {
+     "rule": -47.7,
+     "NDX_hold": -32.7,
+     "3x_hold": -88.8,
+     "switches": 4,
+     "rule_dd": -58.7,
+     "NDX_dd": -58.7,
+     "in_3x_frac": 0.04
+    },
+    "2002年": {
+     "rule": -37.9,
+     "NDX_hold": -37.6,
+     "3x_hold": -86.9,
+     "switches": 9,
+     "rule_dd": -55.7,
+     "NDX_dd": -52.0,
+     "in_3x_frac": 0.04
+    },
+    "2008年": {
+     "rule": -55.1,
+     "NDX_hold": -41.9,
+     "3x_hold": -89.3,
+     "switches": 19,
+     "rule_dd": -61.6,
+     "NDX_dd": -50.3,
+     "in_3x_frac": 0.17
+    },
+    "2009年": {
+     "rule": 137.7,
+     "NDX_hold": 53.5,
+     "3x_hold": 188.4,
+     "switches": 3,
+     "rule_dd": -19.2,
+     "NDX_dd": -18.6,
+     "in_3x_frac": 0.66
+    },
+    "2018年": {
+     "rule": -6.1,
+     "NDX_hold": -1.0,
+     "3x_hold": -22.5,
+     "switches": 7,
+     "rule_dd": -42.8,
+     "NDX_dd": -23.0,
+     "in_3x_frac": 0.83
+    },
+    "2020年": {
+     "rule": 108.3,
+     "NDX_hold": 47.6,
+     "3x_hold": 105.0,
+     "switches": 4,
+     "rule_dd": -60.2,
+     "NDX_dd": -28.0,
+     "in_3x_frac": 0.92
+    },
+    "2022年": {
+     "rule": -54.0,
+     "NDX_hold": -33.0,
+     "3x_hold": -79.1,
+     "switches": 9,
+     "rule_dd": -56.5,
+     "NDX_dd": -35.3,
+     "in_3x_frac": 0.07
+    },
+    "1987暴落 1987-08-26→1987-10-26": {
+     "rule": -71.6,
+     "NDX_hold": -39.1,
+     "3x_hold": -82.9,
+     "switches": 1,
+     "rule_dd": -72.2,
+     "NDX_dd": -39.9,
+     "in_3x_frac": 0.88
+    },
+    "ITバブル 2000-03-27→2002-10-09（NDXの天井→底）": {
+     "rule": -96.2,
+     "NDX_hold": -82.8,
+     "3x_hold": -100.0,
+     "switches": 23,
+     "rule_dd": -96.2,
+     "NDX_dd": -82.9,
+     "in_3x_frac": 0.19
+    },
+    "2000-01-03→2002-12-31": {
+     "rule": -91.9,
+     "NDX_hold": -73.5,
+     "3x_hold": -99.9,
+     "switches": 29,
+     "rule_dd": -96.2,
+     "NDX_dd": -82.9,
+     "in_3x_frac": 0.24
+    },
+    "2008 2007-10-31→2009-03-09（NDXの天井→底）": {
+     "rule": -69.0,
+     "NDX_hold": -52.7,
+     "3x_hold": -94.9,
+     "switches": 19,
+     "rule_dd": -70.5,
+     "NDX_dd": -53.7,
+     "in_3x_frac": 0.25
+    },
+    "COVID 2020-02-19→2020-03-20": {
+     "rule": -59.1,
+     "NDX_hold": -27.4,
+     "3x_hold": -69.2,
+     "switches": 3,
+     "rule_dd": -60.2,
+     "NDX_dd": -28.0,
+     "in_3x_frac": 0.7
+    },
+    "COVID 2020-02-19→2020-12-31": {
+     "rule": 58.1,
+     "NDX_hold": 33.8,
+     "3x_hold": 55.5,
+     "switches": 4,
+     "rule_dd": -60.2,
+     "NDX_dd": -28.0,
+     "in_3x_frac": 0.9
+    },
+    "2022 2021-11-19→2022-12-28（NDXの天井→底）": {
+     "rule": -57.3,
+     "NDX_hold": -35.2,
+     "3x_hold": -81.4,
+     "switches": 9,
+     "rule_dd": -58.0,
+     "NDX_dd": -35.6,
+     "in_3x_frac": 0.17
+    },
+    "NDXの下げ上位10日の持ち高（1=3倍）": [
+     [
+      19871019,
+      -15.1,
+      1,
+      -45.3
+     ],
+     [
+      19871026,
+      -11.7,
+      0,
+      -11.7
+     ],
+     [
+      19980831,
+      -9.9,
+      1,
+      -29.6
+     ],
+     [
+      20000414,
+      -9.7,
+      1,
+      -29.2
+     ],
+     [
+      20010102,
+      -9.1,
+      0,
+      -9.1
+     ],
+     [
+      20010917,
+      -8.3,
+      0,
+      -8.3
+     ],
+     [
+      20080929,
+      -10.5,
+      0,
+      -10.5
+     ],
+     [
+      20081015,
+      -8.8,
+      0,
+      -8.8
+     ],
+     [
+      20200312,
+      -9.3,
+      1,
+      -27.8
+     ],
+     [
+      20200316,
+      -12.2,
+      0,
+      -12.2
+     ]
+    ]
+   },
+   "div": {
+    "2000年": {
+     "rule": -80.8,
+     "NDX_hold": -36.8,
+     "3x_hold": -91.6,
+     "switches": 15,
+     "rule_dd": -89.2,
+     "NDX_dd": -53.0,
+     "in_3x_frac": 0.64
+    },
+    "2001年": {
+     "rule": -51.3,
+     "NDX_hold": -32.7,
+     "3x_hold": -88.8,
+     "switches": 5,
+     "rule_dd": -58.7,
+     "NDX_dd": -58.7,
+     "in_3x_frac": 0.04
+    },
+    "2002年": {
+     "rule": -50.7,
+     "NDX_hold": -37.6,
+     "3x_hold": -86.9,
+     "switches": 8,
+     "rule_dd": -56.2,
+     "NDX_dd": -52.0,
+     "in_3x_frac": 0.04
+    },
+    "2008年": {
+     "rule": -61.6,
+     "NDX_hold": -41.7,
+     "3x_hold": -89.2,
+     "switches": 17,
+     "rule_dd": -67.2,
+     "NDX_dd": -50.2,
+     "in_3x_frac": 0.17
+    },
+    "2009年": {
+     "rule": 136.5,
+     "NDX_hold": 54.4,
+     "3x_hold": 193.1,
+     "switches": 3,
+     "rule_dd": -20.0,
+     "NDX_dd": -18.6,
+     "in_3x_frac": 0.66
+    },
+    "2018年": {
+     "rule": -21.1,
+     "NDX_hold": -0.2,
+     "3x_hold": -20.4,
+     "switches": 9,
+     "rule_dd": -52.5,
+     "NDX_dd": -22.6,
+     "in_3x_frac": 0.83
+    },
+    "2020年": {
+     "rule": 119.3,
+     "NDX_hold": 48.4,
+     "3x_hold": 108.5,
+     "switches": 4,
+     "rule_dd": -58.7,
+     "NDX_dd": -28.0,
+     "in_3x_frac": 0.92
+    },
+    "2022年": {
+     "rule": -54.5,
+     "NDX_hold": -32.5,
+     "3x_hold": -78.6,
+     "switches": 9,
+     "rule_dd": -57.1,
+     "NDX_dd": -34.9,
+     "in_3x_frac": 0.07
+    },
+    "ITバブル 2000-03-27→2002-10-09（NDXの天井→底）": {
+     "rule": -97.4,
+     "NDX_hold": -82.8,
+     "3x_hold": -100.0,
+     "switches": 23,
+     "rule_dd": -97.4,
+     "NDX_dd": -82.9,
+     "in_3x_frac": 0.19
+    },
+    "2000-01-03→2002-12-31": {
+     "rule": -95.4,
+     "NDX_hold": -73.5,
+     "3x_hold": -99.9,
+     "switches": 29,
+     "rule_dd": -97.4,
+     "NDX_dd": -82.9,
+     "in_3x_frac": 0.24
+    },
+    "2008 2007-10-31→2009-03-09（NDXの天井→底）": {
+     "rule": -73.4,
+     "NDX_hold": -52.5,
+     "3x_hold": -94.9,
+     "switches": 17,
+     "rule_dd": -74.7,
+     "NDX_dd": -53.6,
+     "in_3x_frac": 0.25
+    },
+    "COVID 2020-02-19→2020-03-20": {
+     "rule": -57.5,
+     "NDX_hold": -27.4,
+     "3x_hold": -69.2,
+     "switches": 3,
+     "rule_dd": -58.7,
+     "NDX_dd": -28.0,
+     "in_3x_frac": 0.65
+    },
+    "COVID 2020-02-19→2020-12-31": {
+     "rule": 66.4,
+     "NDX_hold": 34.6,
+     "3x_hold": 58.2,
+     "switches": 4,
+     "rule_dd": -58.7,
+     "NDX_dd": -28.0,
+     "in_3x_frac": 0.9
+    },
+    "2022 2021-11-19→2022-12-28（NDXの天井→底）": {
+     "rule": -57.6,
+     "NDX_hold": -34.7,
+     "3x_hold": -80.9,
+     "switches": 9,
+     "rule_dd": -58.4,
+     "NDX_dd": -35.2,
+     "in_3x_frac": 0.17
+    },
+    "NDXの下げ上位10日の持ち高（1=3倍）": [
+     [
+      19871019,
+      -15.1,
+      0,
+      -15.1
+     ],
+     [
+      19871026,
+      -11.7,
+      0,
+      -11.7
+     ],
+     [
+      19980831,
+      -9.9,
+      1,
+      -29.6
+     ],
+     [
+      20000414,
+      -9.7,
+      1,
+      -29.2
+     ],
+     [
+      20010102,
+      -9.1,
+      0,
+      -9.1
+     ],
+     [
+      20010917,
+      -8.3,
+      0,
+      -8.3
+     ],
+     [
+      20080929,
+      -10.5,
+      0,
+      -10.5
+     ],
+     [
+      20081015,
+      -8.8,
+      0,
+      -8.8
+     ],
+     [
+      20200312,
+      -9.3,
+      0,
+      -9.3
+     ],
+     [
+      20200316,
+      -12.2,
+      0,
+      -12.2
+     ]
+    ]
+   },
+   "div_delay1": {
+    "2000年": {
+     "rule": -75.1,
+     "NDX_hold": -36.8,
+     "3x_hold": -91.6,
+     "switches": 15,
+     "rule_dd": -86.1,
+     "NDX_dd": -53.0,
+     "in_3x_frac": 0.64
+    },
+    "2001年": {
+     "rule": -47.7,
+     "NDX_hold": -32.7,
+     "3x_hold": -88.8,
+     "switches": 4,
+     "rule_dd": -58.7,
+     "NDX_dd": -58.7,
+     "in_3x_frac": 0.04
+    },
+    "2002年": {
+     "rule": -37.9,
+     "NDX_hold": -37.6,
+     "3x_hold": -86.9,
+     "switches": 9,
+     "rule_dd": -55.7,
+     "NDX_dd": -52.0,
+     "in_3x_frac": 0.04
+    },
+    "2008年": {
+     "rule": -55.2,
+     "NDX_hold": -41.7,
+     "3x_hold": -89.2,
+     "switches": 17,
+     "rule_dd": -61.8,
+     "NDX_dd": -50.2,
+     "in_3x_frac": 0.18
+    },
+    "2009年": {
+     "rule": 140.8,
+     "NDX_hold": 54.4,
+     "3x_hold": 193.1,
+     "switches": 3,
+     "rule_dd": -18.9,
+     "NDX_dd": -18.6,
+     "in_3x_frac": 0.66
+    },
+    "2018年": {
+     "rule": -3.1,
+     "NDX_hold": -0.2,
+     "3x_hold": -20.4,
+     "switches": 9,
+     "rule_dd": -41.6,
+     "NDX_dd": -22.6,
+     "in_3x_frac": 0.84
+    },
+    "2020年": {
+     "rule": 111.0,
+     "NDX_hold": 48.4,
+     "3x_hold": 108.5,
+     "switches": 4,
+     "rule_dd": -60.2,
+     "NDX_dd": -28.0,
+     "in_3x_frac": 0.92
+    },
+    "2022年": {
+     "rule": -57.7,
+     "NDX_hold": -32.5,
+     "3x_hold": -78.6,
+     "switches": 9,
+     "rule_dd": -60.1,
+     "NDX_dd": -34.9,
+     "in_3x_frac": 0.08
+    },
+    "ITバブル 2000-03-27→2002-10-09（NDXの天井→底）": {
+     "rule": -96.2,
+     "NDX_hold": -82.8,
+     "3x_hold": -100.0,
+     "switches": 23,
+     "rule_dd": -96.2,
+     "NDX_dd": -82.9,
+     "in_3x_frac": 0.19
+    },
+    "2000-01-03→2002-12-31": {
+     "rule": -91.9,
+     "NDX_hold": -73.5,
+     "3x_hold": -99.9,
+     "switches": 29,
+     "rule_dd": -96.2,
+     "NDX_dd": -82.9,
+     "in_3x_frac": 0.24
+    },
+    "2008 2007-10-31→2009-03-09（NDXの天井→底）": {
+     "rule": -69.0,
+     "NDX_hold": -52.5,
+     "3x_hold": -94.9,
+     "switches": 17,
+     "rule_dd": -70.5,
+     "NDX_dd": -53.6,
+     "in_3x_frac": 0.26
+    },
+    "COVID 2020-02-19→2020-03-20": {
+     "rule": -59.1,
+     "NDX_hold": -27.4,
+     "3x_hold": -69.2,
+     "switches": 3,
+     "rule_dd": -60.2,
+     "NDX_dd": -28.0,
+     "in_3x_frac": 0.7
+    },
+    "COVID 2020-02-19→2020-12-31": {
+     "rule": 60.1,
+     "NDX_hold": 34.6,
+     "3x_hold": 58.2,
+     "switches": 4,
+     "rule_dd": -60.2,
+     "NDX_dd": -28.0,
+     "in_3x_frac": 0.9
+    },
+    "2022 2021-11-19→2022-12-28（NDXの天井→底）": {
+     "rule": -60.6,
+     "NDX_hold": -34.7,
+     "3x_hold": -80.9,
+     "switches": 9,
+     "rule_dd": -61.3,
+     "NDX_dd": -35.2,
+     "in_3x_frac": 0.17
+    },
+    "NDXの下げ上位10日の持ち高（1=3倍）": [
+     [
+      19871019,
+      -15.1,
+      1,
+      -45.3
+     ],
+     [
+      19871026,
+      -11.7,
+      0,
+      -11.7
+     ],
+     [
+      19980831,
+      -9.9,
+      1,
+      -29.6
+     ],
+     [
+      20000414,
+      -9.7,
+      1,
+      -29.2
+     ],
+     [
+      20010102,
+      -9.1,
+      0,
+      -9.1
+     ],
+     [
+      20010917,
+      -8.3,
+      0,
+      -8.3
+     ],
+     [
+      20080929,
+      -10.5,
+      0,
+      -10.5
+     ],
+     [
+      20081015,
+      -8.8,
+      0,
+      -8.8
+     ],
+     [
+      20200312,
+      -9.3,
+      1,
+      -27.8
+     ],
+     [
+      20200316,
+      -12.2,
+      0,
+      -12.2
+     ]
+    ]
+   }
+  }
+ },
+ "recovery_from_2000_03_27_peak（紙の上）": {
+  "rule_price": {
+   "trough": -97.9,
+   "trough_day": 20081120,
+   "recovered_on": 20200803,
+   "years_to_recover": 20.4
+  },
+  "rule_price_delay1": {
+   "trough": -96.2,
+   "trough_day": 20021007,
+   "recovered_on": 20180103,
+   "years_to_recover": 17.8
+  },
+  "NDX_hold_price": {
+   "trough": -82.9,
+   "trough_day": 20021007,
+   "recovered_on": 20151103,
+   "years_to_recover": 15.6
+  },
+  "NDX_plus_QQQ_dist": {
+   "trough": -82.9,
+   "trough_day": 20021007,
+   "recovered_on": 20141128,
+   "years_to_recover": 14.7
+  },
+  "3x_hold_price": {
+   "trough": -100.0,
+   "trough_day": 20090309,
+   "recovered_on": null,
+   "years_to_recover": null
+  }
+ },
+ "calendar_years_paper_price": {
+  "1987": {
+   "rule": 33.8,
+   "NDX": 10.5,
+   "switches": 2
+  },
+  "1988": {
+   "rule": -15.8,
+   "NDX": 13.5,
+   "switches": 15
+  },
+  "1989": {
+   "rule": 51.7,
+   "NDX": 26.2,
+   "switches": 4
+  },
+  "1990": {
+   "rule": -28.7,
+   "NDX": -10.4,
+   "switches": 7
+  },
+  "1991": {
+   "rule": 225.7,
+   "NDX": 65.0,
+   "switches": 1
+  },
+  "1992": {
+   "rule": -10.0,
+   "NDX": 8.9,
+   "switches": 10
+  },
+  "1993": {
+   "rule": 3.1,
+   "NDX": 10.6,
+   "switches": 10
+  },
+  "1994": {
+   "rule": -14.1,
+   "NDX": 1.5,
+   "switches": 10
+  },
+  "1995": {
+   "rule": 121.8,
+   "NDX": 42.5,
+   "switches": 0
+  },
+  "1996": {
+   "rule": 65.5,
+   "NDX": 42.5,
+   "switches": 8
+  },
+  "1997": {
+   "rule": 17.8,
+   "NDX": 20.6,
+   "switches": 3
+  },
+  "1998": {
+   "rule": 206.5,
+   "NDX": 85.3,
+   "switches": 11
+  },
+  "1999": {
+   "rule": 423.3,
+   "NDX": 102.0,
+   "switches": 0
+  },
+  "2000": {
+   "rule": -80.8,
+   "NDX": -36.8,
+   "switches": 15
+  },
+  "2001": {
+   "rule": -51.3,
+   "NDX": -32.7,
+   "switches": 5
+  },
+  "2002": {
+   "rule": -50.7,
+   "NDX": -37.6,
+   "switches": 9
+  },
+  "2003": {
+   "rule": 118.4,
+   "NDX": 49.1,
+   "switches": 5
+  },
+  "2004": {
+   "rule": 0.7,
+   "NDX": 10.4,
+   "switches": 16
+  },
+  "2005": {
+   "rule": -21.0,
+   "NDX": 1.5,
+   "switches": 14
+  },
+  "2006": {
+   "rule": 2.5,
+   "NDX": 6.8,
+   "switches": 6
+  },
+  "2007": {
+   "rule": 35.0,
+   "NDX": 18.7,
+   "switches": 0
+  },
+  "2008": {
+   "rule": -62.1,
+   "NDX": -41.9,
+   "switches": 19
+  },
+  "2009": {
+   "rule": 133.5,
+   "NDX": 53.5,
+   "switches": 3
+  },
+  "2010": {
+   "rule": 18.1,
+   "NDX": 19.2,
+   "switches": 14
+  },
+  "2011": {
+   "rule": -24.2,
+   "NDX": 2.7,
+   "switches": 15
+  },
+  "2012": {
+   "rule": 23.8,
+   "NDX": 16.8,
+   "switches": 12
+  },
+  "2013": {
+   "rule": 117.3,
+   "NDX": 35.0,
+   "switches": 1
+  },
+  "2014": {
+   "rule": 48.0,
+   "NDX": 17.9,
+   "switches": 2
+  },
+  "2015": {
+   "rule": 6.4,
+   "NDX": 8.4,
+   "switches": 2
+  },
+  "2016": {
+   "rule": -3.5,
+   "NDX": 5.9,
+   "switches": 16
+  },
+  "2017": {
+   "rule": 116.5,
+   "NDX": 31.5,
+   "switches": 0
+  },
+  "2018": {
+   "rule": -16.1,
+   "NDX": -1.0,
+   "switches": 7
+  },
+  "2019": {
+   "rule": 76.6,
+   "NDX": 38.0,
+   "switches": 7
+  },
+  "2020": {
+   "rule": 116.5,
+   "NDX": 47.6,
+   "switches": 4
+  },
+  "2021": {
+   "rule": 79.9,
+   "NDX": 26.6,
+   "switches": 0
+  },
+  "2022": {
+   "rule": -55.6,
+   "NDX": -33.0,
+   "switches": 9
+  },
+  "2023": {
+   "rule": 135.3,
+   "NDX": 53.8,
+   "switches": 5
+  },
+  "2024": {
+   "rule": 56.5,
+   "NDX": 24.9,
+   "switches": 0
+  },
+  "2025": {
+   "rule": 36.6,
+   "NDX": 20.2,
+   "switches": 2
+  },
+  "2026": {
+   "rule": 28.2,
+   "NDX": 16.7,
+   "switches": 2
+  }
+ },
+ "rolling_dca_paper_price_pretax（事後・参考）": {
+  "about": "紙の上・NASDAQ-100 価格だけ・税の前・USD。毎月初に1ずつ積み立て、最終額÷積んだ総額。ratio＝規則÷持ち続け。worst_window は [始め, 終わり, 規則の倍率, 持ち続けの倍率]。窓は重なる（独立ではない）",
+  "results": {
+   "price_10年": {
+    "windows": 360,
+    "first_start": 198610,
+    "last_start": 201609,
+    "rule_beats_hold": "256/360",
+    "ratio_median": 1.64,
+    "ratio_min": 0.574,
+    "ratio_max": 7.31,
+    "worst_window": [
+     199809,
+     200808,
+     0.66,
+     1.14
+    ],
+    "best_window": [
+     199003,
+     200002,
+     69.17,
+     9.47
+    ],
+    "rule_below_principal_windows": 53,
+    "hold_below_principal_windows": 10,
+    "ratio_median_by_end_year": {
+     "1996": 1.54,
+     "1997": 1.92,
+     "1998": 1.99,
+     "1999": 2.98,
+     "2000": 2.48,
+     "2001": 1.65,
+     "2002": 1.07,
+     "2003": 0.99,
+     "2004": 1.0,
+     "2005": 0.74,
+     "2006": 0.71,
+     "2007": 0.82,
+     "2008": 0.65,
+     "2009": 0.69,
+     "2010": 0.89,
+     "2011": 1.01,
+     "2012": 0.94,
+     "2013": 0.96,
+     "2014": 1.51,
+     "2015": 1.74,
+     "2016": 1.47,
+     "2017": 2.05,
+     "2018": 2.59,
+     "2019": 1.88,
+     "2020": 2.24,
+     "2021": 3.38,
+     "2022": 2.38,
+     "2023": 2.4,
+     "2024": 3.04,
+     "2025": 3.14,
+     "2026": 3.24
+    }
+   },
+   "price_15年": {
+    "windows": 300,
+    "first_start": 198610,
+    "last_start": 201109,
+    "rule_beats_hold": "202/300",
+    "ratio_median": 1.36,
+    "ratio_min": 0.592,
+    "ratio_max": 6.64,
+    "worst_window": [
+     199406,
+     200905,
+     0.75,
+     1.27
+    ],
+    "best_window": [
+     201106,
+     202605,
+     34.55,
+     5.2
+    ],
+    "rule_below_principal_windows": 15,
+    "hold_below_principal_windows": 0,
+    "ratio_median_by_end_year": {
+     "2001": 1.96,
+     "2002": 1.28,
+     "2003": 1.24,
+     "2004": 1.3,
+     "2005": 0.99,
+     "2006": 0.87,
+     "2007": 0.98,
+     "2008": 0.71,
+     "2009": 0.67,
+     "2010": 0.79,
+     "2011": 0.87,
+     "2012": 0.81,
+     "2013": 0.85,
+     "2014": 1.33,
+     "2015": 1.56,
+     "2016": 1.36,
+     "2017": 1.95,
+     "2018": 2.46,
+     "2019": 2.0,
+     "2020": 2.62,
+     "2021": 4.17,
+     "2022": 3.23,
+     "2023": 3.88,
+     "2024": 5.03,
+     "2025": 5.19,
+     "2026": 5.5
+    }
+   },
+   "price_20年": {
+    "windows": 240,
+    "first_start": 198610,
+    "last_start": 200609,
+    "rule_beats_hold": "183/240",
+    "ratio_median": 1.44,
+    "ratio_min": 0.704,
+    "ratio_max": 8.51,
+    "worst_window": [
+     199201,
+     201112,
+     1.73,
+     2.45
+    ],
+    "best_window": [
+     200606,
+     202605,
+     70.27,
+     8.26
+    ],
+    "rule_below_principal_windows": 0,
+    "hold_below_principal_windows": 0,
+    "ratio_median_by_end_year": {
+     "2006": 1.03,
+     "2007": 1.15,
+     "2008": 0.86,
+     "2009": 0.8,
+     "2010": 0.93,
+     "2011": 0.96,
+     "2012": 0.86,
+     "2013": 0.86,
+     "2014": 1.27,
+     "2015": 1.39,
+     "2016": 1.2,
+     "2017": 1.71,
+     "2018": 2.23,
+     "2019": 1.83,
+     "2020": 2.43,
+     "2021": 3.99,
+     "2022": 3.18,
+     "2023": 3.84,
+     "2024": 5.66,
+     "2025": 6.28,
+     "2026": 7.02
+    }
+   },
+   "price_delay1_10年": {
+    "windows": 360,
+    "first_start": 198610,
+    "last_start": 201609,
+    "rule_beats_hold": "317/360",
+    "ratio_median": 1.71,
+    "ratio_min": 0.795,
+    "ratio_max": 7.32,
+    "worst_window": [
+     199812,
+     200811,
+     0.57,
+     0.72
+    ],
+    "best_window": [
+     199003,
+     200002,
+     69.29,
+     9.47
+    ],
+    "rule_below_principal_windows": 14,
+    "hold_below_principal_windows": 10,
+    "ratio_median_by_end_year": {
+     "1996": 1.3,
+     "1997": 1.71,
+     "1998": 1.77,
+     "1999": 2.93,
+     "2000": 3.04,
+     "2001": 2.2,
+     "2002": 1.6,
+     "2003": 1.83,
+     "2004": 1.62,
+     "2005": 1.12,
+     "2006": 0.99,
+     "2007": 1.07,
+     "2008": 0.84,
+     "2009": 0.91,
+     "2010": 1.18,
+     "2011": 1.27,
+     "2012": 1.03,
+     "2013": 1.03,
+     "2014": 1.59,
+     "2015": 1.75,
+     "2016": 1.33,
+     "2017": 1.87,
+     "2018": 2.32,
+     "2019": 1.83,
+     "2020": 2.1,
+     "2021": 3.18,
+     "2022": 2.34,
+     "2023": 2.27,
+     "2024": 2.91,
+     "2025": 3.03,
+     "2026": 3.12
+    }
+   },
+   "price_delay1_15年": {
+    "windows": 300,
+    "first_start": 198610,
+    "last_start": 201109,
+    "rule_beats_hold": "289/300",
+    "ratio_median": 1.79,
+    "ratio_min": 0.863,
+    "ratio_max": 6.07,
+    "worst_window": [
+     199803,
+     201302,
+     1.39,
+     1.62
+    ],
+    "best_window": [
+     201106,
+     202605,
+     31.54,
+     5.2
+    ],
+    "rule_below_principal_windows": 0,
+    "hold_below_principal_windows": 0,
+    "ratio_median_by_end_year": {
+     "2001": 2.21,
+     "2002": 1.71,
+     "2003": 2.2,
+     "2004": 2.22,
+     "2005": 1.76,
+     "2006": 1.59,
+     "2007": 1.73,
+     "2008": 1.31,
+     "2009": 1.25,
+     "2010": 1.34,
+     "2011": 1.35,
+     "2012": 1.02,
+     "2013": 1.02,
+     "2014": 1.54,
+     "2015": 1.72,
+     "2016": 1.36,
+     "2017": 1.95,
+     "2018": 2.4,
+     "2019": 2.08,
+     "2020": 2.55,
+     "2021": 3.89,
+     "2022": 3.07,
+     "2023": 3.42,
+     "2024": 4.47,
+     "2025": 4.62,
+     "2026": 5.01
+    }
+   },
+   "price_delay1_20年": {
+    "windows": 240,
+    "first_start": 198610,
+    "last_start": 200609,
+    "rule_beats_hold": "240/240",
+    "ratio_median": 2.1,
+    "ratio_min": 1.287,
+    "ratio_max": 7.75,
+    "worst_window": [
+     199607,
+     201606,
+     3.31,
+     2.57
+    ],
+    "best_window": [
+     200606,
+     202605,
+     64.05,
+     8.26
+    ],
+    "rule_below_principal_windows": 0,
+    "hold_below_principal_windows": 0,
+    "ratio_median_by_end_year": {
+     "2006": 1.72,
+     "2007": 1.97,
+     "2008": 1.64,
+     "2009": 1.68,
+     "2010": 2.02,
+     "2011": 2.03,
+     "2012": 1.59,
+     "2013": 1.5,
+     "2014": 2.06,
+     "2015": 2.02,
+     "2016": 1.43,
+     "2017": 1.96,
+     "2018": 2.44,
+     "2019": 2.07,
+     "2020": 2.59,
+     "2021": 4.11,
+     "2022": 3.31,
+     "2023": 3.68,
+     "2024": 5.35,
+     "2025": 5.79,
+     "2026": 6.4
+    }
+   }
+  }
+ },
+ "pretax_real_products": {
+  "about": "1倍の側と相手は QQQ（adjclose・配当込み・経費0.20%込み）。信号は ^NDX の200日平均。入れ替え1回に凍結の滑り0.1%。窓は各商品の上場日〜2026-08-31。to_latest は 2026-09-25 まで。A_signal_QQQ は信号を QQQ の adjclose で作った版、product_buy_and_hold は器の持ち続け",
+  "results": {
+   "QLD": {
+    "A": {
+     "from": 200606,
+     "to": 202608,
+     "years": 20.2,
+     "cagr": 24.87,
+     "bench_cagr": 16.48,
+     "excess": 8.39,
+     "ex_arith": 10.27,
+     "t": 3.09,
+     "t_nw": 3.44,
+     "t_log_ref": 2.11,
+     "vol": 31.5,
+     "bench_vol": 18.6,
+     "maxdd": -60.8,
+     "bench_maxdd": -49.7,
+     "maxdd_daily": -63.7,
+     "maxdd_daily_span": [
+      20071031,
+      20081120
+     ],
+     "bench_maxdd_daily": -53.4,
+     "sharpe": 0.81,
+     "bench_sharpe": 0.83,
+     "roll10_win": "11/11",
+     "switches": 125,
+     "switches_per_year": 6.19,
+     "to_latest": {
+      "last_day": 20260925,
+      "cagr": 25.2,
+      "bench_cagr": 16.63,
+      "excess": 8.57,
+      "t": 3.14
+     }
+    },
+    "B": {
+     "from": 200606,
+     "to": 202608,
+     "years": 20.2,
+     "cagr": 24.55,
+     "bench_cagr": 16.48,
+     "excess": 8.08,
+     "ex_arith": 9.96,
+     "t": 3.05,
+     "t_nw": 3.29,
+     "t_log_ref": 2.08,
+     "vol": 31.3,
+     "bench_vol": 18.6,
+     "maxdd": -60.8,
+     "bench_maxdd": -49.7,
+     "maxdd_daily": -63.7,
+     "maxdd_daily_span": [
+      20071031,
+      20081120
+     ],
+     "bench_maxdd_daily": -53.4,
+     "sharpe": 0.81,
+     "bench_sharpe": 0.83,
+     "roll10_win": "11/11",
+     "switches": 125,
+     "switches_per_year": 6.19,
+     "to_latest": {
+      "last_day": 20260925,
+      "cagr": 24.88,
+      "bench_cagr": 16.63,
+      "excess": 8.26,
+      "t": 3.1
+     }
+    },
+    "C": {
+     "from": 200606,
+     "to": 202608,
+     "years": 20.2,
+     "cagr": 24.77,
+     "bench_cagr": 16.48,
+     "excess": 8.29,
+     "ex_arith": 10.16,
+     "t": 3.08,
+     "t_nw": 3.42,
+     "t_log_ref": 2.09,
+     "vol": 31.4,
+     "bench_vol": 18.6,
+     "maxdd": -59.6,
+     "bench_maxdd": -49.7,
+     "maxdd_daily": -62.5,
+     "maxdd_daily_span": [
+      20071031,
+      20081120
+     ],
+     "bench_maxdd_daily": -53.4,
+     "sharpe": 0.81,
+     "bench_sharpe": 0.83,
+     "roll10_win": "11/11",
+     "switches": 125,
+     "switches_per_year": 6.19,
+     "to_latest": {
+      "last_day": 20260925,
+      "cagr": 25.1,
+      "bench_cagr": 16.63,
+      "excess": 8.47,
+      "t": 3.13
+     }
+    },
+    "A_signal_QQQ": {
+     "from": 200606,
+     "to": 202608,
+     "years": 20.2,
+     "cagr": 24.52,
+     "bench_cagr": 16.48,
+     "excess": 8.05,
+     "ex_arith": 10.05,
+     "t": 3.01,
+     "t_nw": 3.27,
+     "t_log_ref": 2.01,
+     "vol": 31.7,
+     "bench_vol": 18.6,
+     "maxdd": -61.2,
+     "bench_maxdd": -49.7,
+     "maxdd_daily": -64.0,
+     "maxdd_daily_span": [
+      20071031,
+      20081120
+     ],
+     "bench_maxdd_daily": -53.4,
+     "sharpe": 0.8,
+     "bench_sharpe": 0.83,
+     "roll10_win": "11/11",
+     "switches": 123,
+     "switches_per_year": 6.09
+    },
+    "product_buy_and_hold": {
+     "from": 200606,
+     "to": 202608,
+     "years": 20.2,
+     "cagr": 25.15,
+     "bench_cagr": 16.48,
+     "excess": 8.68,
+     "ex_arith": 12.82,
+     "t": 2.98,
+     "t_nw": 3.07,
+     "t_log_ref": 1.64,
+     "vol": 37.9,
+     "bench_vol": 18.6,
+     "maxdd": -80.6,
+     "bench_maxdd": -49.7,
+     "maxdd_daily": -83.1,
+     "maxdd_daily_span": [
+      20071031,
+      20090309
+     ],
+     "bench_maxdd_daily": -53.4,
+     "sharpe": 0.75,
+     "bench_sharpe": 0.83,
+     "roll10_win": "11/11",
+     "switches": 0,
+     "switches_per_year": 0.0
+    }
+   },
+   "TQQQ": {
+    "A": {
+     "from": 201002,
+     "to": 202608,
+     "years": 16.6,
+     "cagr": 38.42,
+     "bench_cagr": 19.39,
+     "excess": 19.04,
+     "ex_arith": 24.16,
+     "t": 3.2,
+     "t_nw": 3.74,
+     "t_log_ref": 1.98,
+     "vol": 46.4,
+     "bench_vol": 17.6,
+     "maxdd": -55.1,
+     "bench_maxdd": -32.6,
+     "maxdd_daily": -58.9,
+     "maxdd_daily_span": [
+      20211119,
+      20221103
+     ],
+     "bench_maxdd_daily": -35.1,
+     "sharpe": 0.91,
+     "bench_sharpe": 1.02,
+     "roll10_win": "7/7",
+     "switches": 98,
+     "switches_per_year": 5.92,
+     "to_latest": {
+      "last_day": 20260925,
+      "cagr": 39.06,
+      "bench_cagr": 19.56,
+      "excess": 19.5,
+      "t": 3.25
+     }
+    },
+    "B": {
+     "from": 201002,
+     "to": 202608,
+     "years": 16.6,
+     "cagr": 36.12,
+     "bench_cagr": 19.39,
+     "excess": 16.74,
+     "ex_arith": 22.4,
+     "t": 2.97,
+     "t_nw": 3.38,
+     "t_log_ref": 1.76,
+     "vol": 46.3,
+     "bench_vol": 17.6,
+     "maxdd": -54.4,
+     "bench_maxdd": -32.6,
+     "maxdd_daily": -60.4,
+     "maxdd_daily_span": [
+      20200219,
+      20200316
+     ],
+     "bench_maxdd_daily": -35.1,
+     "sharpe": 0.87,
+     "bench_sharpe": 1.02,
+     "roll10_win": "7/7",
+     "switches": 98,
+     "switches_per_year": 5.92,
+     "to_latest": {
+      "last_day": 20260925,
+      "cagr": 36.76,
+      "bench_cagr": 19.56,
+      "excess": 17.2,
+      "t": 3.03
+     }
+    },
+    "C": {
+     "from": 201002,
+     "to": 202608,
+     "years": 16.6,
+     "cagr": 37.32,
+     "bench_cagr": 19.39,
+     "excess": 17.94,
+     "ex_arith": 23.27,
+     "t": 3.11,
+     "t_nw": 3.61,
+     "t_log_ref": 1.88,
+     "vol": 46.1,
+     "bench_vol": 17.6,
+     "maxdd": -52.1,
+     "bench_maxdd": -32.6,
+     "maxdd_daily": -60.2,
+     "maxdd_daily_span": [
+      20200219,
+      20200316
+     ],
+     "bench_maxdd_daily": -35.1,
+     "sharpe": 0.89,
+     "bench_sharpe": 1.02,
+     "roll10_win": "7/7",
+     "switches": 98,
+     "switches_per_year": 5.92,
+     "to_latest": {
+      "last_day": 20260925,
+      "cagr": 37.96,
+      "bench_cagr": 19.56,
+      "excess": 18.4,
+      "t": 3.16
+     }
+    },
+    "A_signal_QQQ": {
+     "from": 201002,
+     "to": 202608,
+     "years": 16.6,
+     "cagr": 37.61,
+     "bench_cagr": 19.39,
+     "excess": 18.22,
+     "ex_arith": 23.72,
+     "t": 3.12,
+     "t_nw": 3.56,
+     "t_log_ref": 1.89,
+     "vol": 46.7,
+     "bench_vol": 17.6,
+     "maxdd": -54.4,
+     "bench_maxdd": -32.6,
+     "maxdd_daily": -58.8,
+     "maxdd_daily_span": [
+      20200219,
+      20200316
+     ],
+     "bench_maxdd_daily": -35.1,
+     "sharpe": 0.89,
+     "bench_sharpe": 1.02,
+     "roll10_win": "7/7",
+     "switches": 100,
+     "switches_per_year": 6.04
+    },
+    "product_buy_and_hold": {
+     "from": 201002,
+     "to": 202608,
+     "years": 16.6,
+     "cagr": 42.33,
+     "bench_cagr": 19.39,
+     "excess": 22.94,
+     "ex_arith": 31.33,
+     "t": 3.39,
+     "t_nw": 4.43,
+     "t_log_ref": 1.92,
+     "vol": 55.1,
+     "bench_vol": 17.6,
+     "maxdd": -79.1,
+     "bench_maxdd": -32.6,
+     "maxdd_daily": -81.7,
+     "maxdd_daily_span": [
+      20211119,
+      20221228
+     ],
+     "bench_maxdd_daily": -35.1,
+     "sharpe": 0.89,
+     "bench_sharpe": 1.02,
+     "roll10_win": "7/7",
+     "switches": 0,
+     "switches_per_year": 0.0
+    }
+   }
+  }
+ },
+ "cost_drag_vs_frozen_model": {
+  "about": "持ち続けで、実物の日次 vs L×(NDX 配当込みの代わり) −(L−1)×(rf＋0.4%) −0.9%（凍結の費用モデル）。actual_cost_pa＝費用なしの合成との年率の差",
+  "results": {
+   "QLD": {
+    "window": [
+     20060623,
+     20260831
+    ],
+    "L": 2,
+    "real_cagr": 25.24,
+    "model_cagr": 26.05,
+    "nocost_cagr": 27.7,
+    "actual_cost_pa": 2.46,
+    "frozen_model_cost_pa": 1.65,
+    "extra_vs_model_pa": 0.81,
+    "daily_beta_to_NDX_TR": 1.983,
+    "days_diff_gt_2pt_vs_LxNDX": 16,
+    "real_minus_model_by_year_pt": {
+     "2006": -0.45,
+     "2007": -0.73,
+     "2008": -1.01,
+     "2009": -0.96,
+     "2010": -0.91,
+     "2011": -0.24,
+     "2012": -0.31,
+     "2013": -0.1,
+     "2014": -0.49,
+     "2015": -0.22,
+     "2016": -0.68,
+     "2017": -2.19,
+     "2018": 0.22,
+     "2019": -0.03,
+     "2020": -1.2,
+     "2021": -0.95,
+     "2022": -0.61,
+     "2023": -1.26,
+     "2024": -1.02,
+     "2025": 0.02,
+     "2026": -0.76
+    }
+   },
+   "TQQQ": {
+    "window": [
+     20100216,
+     20260831
+    ],
+    "L": 3,
+    "real_cagr": 42.47,
+    "model_cagr": 43.75,
+    "nocost_cagr": 46.21,
+    "actual_cost_pa": 3.74,
+    "frozen_model_cost_pa": 2.46,
+    "extra_vs_model_pa": 1.28,
+    "daily_beta_to_NDX_TR": 2.957,
+    "days_diff_gt_2pt_vs_LxNDX": 3,
+    "real_minus_model_by_year_pt": {
+     "2010": -0.74,
+     "2011": -0.43,
+     "2012": 0.27,
+     "2013": -1.28,
+     "2014": -0.93,
+     "2015": -0.53,
+     "2016": -0.84,
+     "2017": -5.43,
+     "2018": 0.23,
+     "2019": 0.85,
+     "2020": -3.05,
+     "2021": -2.11,
+     "2022": -0.68,
+     "2023": -4.1,
+     "2024": -2.26,
+     "2025": 0.01,
+     "2026": -1.89
+    }
+   }
+  }
+ },
+ "synthetic_calibrated_2001（事後・参考）": {
+  "extra_fee_pa": {
+   "2倍": 0.00647,
+   "3倍": 0.00894
+  },
+  "calibration_check": {
+   "SYN2_vs_QLD": {
+    "rule_A_cagr_real": 24.87,
+    "rule_A_cagr_syn": 24.15,
+    "buy_hold_real": 25.15,
+    "buy_hold_syn": 25.15,
+    "rule_A_maxdd_daily_real": -63.7,
+    "rule_A_maxdd_daily_syn": -65.8
+   },
+   "SYN3_vs_TQQQ": {
+    "rule_A_cagr_real": 38.42,
+    "rule_A_cagr_syn": 37.36,
+    "buy_hold_real": 42.33,
+    "buy_hold_syn": 42.33,
+    "rule_A_maxdd_daily_real": -58.9,
+    "rule_A_maxdd_daily_syn": -59.3
+   }
+  },
+  "results": {
+   "SYN3_A_2001-01〜2026-08": {
+    "from": 200101,
+    "to": 202608,
+    "years": 25.7,
+    "cagr": 19.05,
+    "bench_cagr": 11.0,
+    "excess": 8.05,
+    "ex_arith": 15.28,
+    "t": 2.63,
+    "t_nw": 2.66,
+    "t_log_ref": 1.21,
+    "vol": 46.2,
+    "bench_vol": 21.7,
+    "maxdd": -82.6,
+    "bench_maxdd": -67.8,
+    "maxdd_daily": -83.7,
+    "maxdd_daily_span": [
+     20010123,
+     20030311
+    ],
+    "bench_maxdd_daily": -70.4,
+    "sharpe": 0.57,
+    "bench_sharpe": 0.51,
+    "roll10_win": "13/16",
+    "switches": 175,
+    "switches_per_year": 6.82
+   },
+   "SYN3_A_2001-01〜2009-12": {
+    "from": 200101,
+    "to": 200912,
+    "years": 9.0,
+    "cagr": -6.85,
+    "bench_cagr": -2.36,
+    "excess": -4.49,
+    "ex_arith": 1.23,
+    "t": 0.14,
+    "t_nw": 0.13,
+    "t_log_ref": -0.54,
+    "vol": 44.1,
+    "bench_vol": 27.4,
+    "maxdd": -82.6,
+    "bench_maxdd": -67.8,
+    "maxdd_daily": -83.7,
+    "maxdd_daily_span": [
+     20010123,
+     20030311
+    ],
+    "bench_maxdd_daily": -70.4,
+    "sharpe": 0.01,
+    "bench_sharpe": -0.03,
+    "roll10_win": null,
+    "switches": 77,
+    "switches_per_year": 8.55
+   },
+   "SYN3_A_2010-01〜2026-08": {
+    "from": 201001,
+    "to": 202608,
+    "years": 16.7,
+    "cagr": 35.91,
+    "bench_cagr": 18.96,
+    "excess": 16.95,
+    "ex_arith": 22.86,
+    "t": 3.0,
+    "t_nw": 3.49,
+    "t_log_ref": 1.76,
+    "vol": 46.8,
+    "bench_vol": 17.7,
+    "maxdd": -55.5,
+    "bench_maxdd": -32.6,
+    "maxdd_daily": -59.3,
+    "maxdd_daily_span": [
+     20200219,
+     20200316
+    ],
+    "bench_maxdd_daily": -35.1,
+    "sharpe": 0.86,
+    "bench_sharpe": 1.0,
+    "roll10_win": "7/7",
+    "switches": 98,
+    "switches_per_year": 5.88
+   },
+   "SYN3_A_2001-01〜2007-12": {
+    "from": 200101,
+    "to": 200712,
+    "years": 7.0,
+    "cagr": -7.39,
+    "bench_cagr": -1.58,
+    "excess": -5.81,
+    "ex_arith": -0.33,
+    "t": -0.03,
+    "t_nw": -0.04,
+    "t_log_ref": -0.61,
+    "vol": 43.8,
+    "bench_vol": 27.4,
+    "maxdd": -82.6,
+    "bench_maxdd": -67.8,
+    "maxdd_daily": -83.7,
+    "maxdd_daily_span": [
+     20010123,
+     20030311
+    ],
+    "bench_maxdd_daily": -70.4,
+    "sharpe": -0.02,
+    "bench_sharpe": -0.02,
+    "roll10_win": null,
+    "switches": 55,
+    "switches_per_year": 7.85
+   },
+   "SYN3_A_2008-01〜2015-12": {
+    "from": 200801,
+    "to": 201512,
+    "years": 8.0,
+    "cagr": 18.33,
+    "bench_cagr": 11.32,
+    "excess": 7.0,
+    "ex_arith": 13.89,
+    "t": 1.4,
+    "t_nw": 1.54,
+    "t_log_ref": 0.61,
+    "vol": 43.7,
+    "bench_vol": 19.3,
+    "maxdd": -64.8,
+    "bench_maxdd": -46.1,
+    "maxdd_daily": -67.4,
+    "maxdd_daily_span": [
+     20071231,
+     20081120
+    ],
+    "bench_maxdd_daily": -50.0,
+    "sharpe": 0.6,
+    "bench_sharpe": 0.64,
+    "roll10_win": null,
+    "switches": 68,
+    "switches_per_year": 8.5
+   },
+   "SYN3_A_2016-01〜2026-08": {
+    "from": 201601,
+    "to": 202608,
+    "years": 10.7,
+    "cagr": 41.02,
+    "bench_cagr": 19.86,
+    "excess": 21.16,
+    "ex_arith": 26.56,
+    "t": 2.68,
+    "t_nw": 3.05,
+    "t_log_ref": 1.67,
+    "vol": 49.0,
+    "bench_vol": 18.9,
+    "maxdd": -55.5,
+    "bench_maxdd": -32.6,
+    "maxdd_daily": -59.3,
+    "maxdd_daily_span": [
+     20200219,
+     20200316
+    ],
+    "bench_maxdd_daily": -35.1,
+    "sharpe": 0.9,
+    "bench_sharpe": 0.94,
+    "roll10_win": "1/1",
+    "switches": 52,
+    "switches_per_year": 4.88
+   },
+   "SYN3_B_2001-01〜2026-08": {
+    "from": 200101,
+    "to": 202608,
+    "years": 25.7,
+    "cagr": 20.65,
+    "bench_cagr": 11.0,
+    "excess": 9.64,
+    "ex_arith": 16.3,
+    "t": 2.9,
+    "t_nw": 3.01,
+    "t_log_ref": 1.5,
+    "vol": 45.5,
+    "bench_vol": 21.7,
+    "maxdd": -75.3,
+    "bench_maxdd": -67.8,
+    "maxdd_daily": -77.3,
+    "maxdd_daily_span": [
+     20010123,
+     20021009
+    ],
+    "bench_maxdd_daily": -70.4,
+    "sharpe": 0.6,
+    "bench_sharpe": 0.51,
+    "roll10_win": "15/16",
+    "switches": 175,
+    "switches_per_year": 6.82
+   },
+   "SYN3_B_2001-01〜2009-12": {
+    "from": 200101,
+    "to": 200912,
+    "years": 9.0,
+    "cagr": -1.21,
+    "bench_cagr": -2.36,
+    "excess": 1.15,
+    "ex_arith": 6.59,
+    "t": 0.84,
+    "t_nw": 0.78,
+    "t_log_ref": 0.15,
+    "vol": 43.2,
+    "bench_vol": 27.4,
+    "maxdd": -75.3,
+    "bench_maxdd": -67.8,
+    "maxdd_daily": -77.3,
+    "maxdd_daily_span": [
+     20010123,
+     20021009
+    ],
+    "bench_maxdd_daily": -70.4,
+    "sharpe": 0.13,
+    "bench_sharpe": -0.03,
+    "roll10_win": null,
+    "switches": 77,
+    "switches_per_year": 8.55
+   },
+   "SYN3_B_2010-01〜2026-08": {
+    "from": 201001,
+    "to": 202608,
+    "years": 16.7,
+    "cagr": 34.4,
+    "bench_cagr": 18.96,
+    "excess": 15.43,
+    "ex_arith": 21.54,
+    "t": 2.86,
+    "t_nw": 3.23,
+    "t_log_ref": 1.63,
+    "vol": 46.5,
+    "bench_vol": 17.7,
+    "maxdd": -54.1,
+    "bench_maxdd": -32.6,
+    "maxdd_daily": -60.5,
+    "maxdd_daily_span": [
+     20200219,
+     20200316
+    ],
+    "bench_maxdd_daily": -35.1,
+    "sharpe": 0.84,
+    "bench_sharpe": 1.0,
+    "roll10_win": "7/7",
+    "switches": 98,
+    "switches_per_year": 5.88
+   },
+   "SYN3_B_2001-01〜2007-12": {
+    "from": 200101,
+    "to": 200712,
+    "years": 7.0,
+    "cagr": -2.48,
+    "bench_cagr": -1.58,
+    "excess": -0.9,
+    "ex_arith": 4.29,
+    "t": 0.48,
+    "t_nw": 0.49,
+    "t_log_ref": -0.1,
+    "vol": 42.8,
+    "bench_vol": 27.4,
+    "maxdd": -75.3,
+    "bench_maxdd": -67.8,
+    "maxdd_daily": -77.3,
+    "maxdd_daily_span": [
+     20010123,
+     20021009
+    ],
+    "bench_maxdd_daily": -70.4,
+    "sharpe": 0.09,
+    "bench_sharpe": -0.02,
+    "roll10_win": null,
+    "switches": 55,
+    "switches_per_year": 7.85
+   },
+   "SYN3_B_2008-01〜2015-12": {
+    "from": 200801,
+    "to": 201512,
+    "years": 8.0,
+    "cagr": 18.33,
+    "bench_cagr": 11.32,
+    "excess": 7.01,
+    "ex_arith": 14.1,
+    "t": 1.41,
+    "t_nw": 1.65,
+    "t_log_ref": 0.6,
+    "vol": 44.2,
+    "bench_vol": 19.3,
+    "maxdd": -58.7,
+    "bench_maxdd": -46.1,
+    "maxdd_daily": -61.7,
+    "maxdd_daily_span": [
+     20071231,
+     20081120
+    ],
+    "bench_maxdd_daily": -50.0,
+    "sharpe": 0.6,
+    "bench_sharpe": 0.64,
+    "roll10_win": null,
+    "switches": 68,
+    "switches_per_year": 8.5
+   },
+   "SYN3_B_2016-01〜2026-08": {
+    "from": 201601,
+    "to": 202608,
+    "years": 10.7,
+    "cagr": 40.76,
+    "bench_cagr": 19.86,
+    "excess": 20.9,
+    "ex_arith": 25.82,
+    "t": 2.69,
+    "t_nw": 3.06,
+    "t_log_ref": 1.71,
+    "vol": 47.9,
+    "bench_vol": 18.9,
+    "maxdd": -54.1,
+    "bench_maxdd": -32.6,
+    "maxdd_daily": -60.5,
+    "maxdd_daily_span": [
+     20200219,
+     20200316
+    ],
+    "bench_maxdd_daily": -35.1,
+    "sharpe": 0.91,
+    "bench_sharpe": 0.94,
+    "roll10_win": "1/1",
+    "switches": 52,
+    "switches_per_year": 4.88
+   },
+   "SYN3_buy_hold_2001": {
+    "from": 200101,
+    "to": 202608,
+    "years": 25.7,
+    "cagr": 7.54,
+    "bench_cagr": 11.0,
+    "excess": -3.46,
+    "ex_arith": 16.76,
+    "t": 1.97,
+    "t_nw": 1.9,
+    "t_log_ref": -0.34,
+    "vol": 64.6,
+    "bench_vol": 21.7,
+    "maxdd": -99.5,
+    "bench_maxdd": -67.8,
+    "maxdd_daily": -99.7,
+    "maxdd_daily_span": [
+     20010123,
+     20090309
+    ],
+    "bench_maxdd_daily": -70.4,
+    "sharpe": 0.43,
+    "bench_sharpe": 0.51,
+    "roll10_win": "14/16",
+    "switches": 0,
+    "switches_per_year": 0.0
+   },
+   "SYN2_A_2001-01〜2026-08": {
+    "from": 200101,
+    "to": 202608,
+    "years": 25.7,
+    "cagr": 15.42,
+    "bench_cagr": 11.0,
+    "excess": 4.42,
+    "ex_arith": 6.96,
+    "t": 2.39,
+    "t_nw": 2.39,
+    "t_log_ref": 1.35,
+    "vol": 32.9,
+    "bench_vol": 21.7,
+    "maxdd": -74.2,
+    "bench_maxdd": -67.8,
+    "maxdd_daily": -76.2,
+    "maxdd_daily_span": [
+     20010123,
+     20021009
+    ],
+    "bench_maxdd_daily": -70.4,
+    "sharpe": 0.55,
+    "bench_sharpe": 0.51,
+    "roll10_win": "13/16",
+    "switches": 175,
+    "switches_per_year": 6.82
+   },
+   "SYN2_A_2001-01〜2009-12": {
+    "from": 200101,
+    "to": 200912,
+    "years": 9.0,
+    "cagr": -4.43,
+    "bench_cagr": -2.36,
+    "excess": -2.07,
+    "ex_arith": 0.01,
+    "t": 0.0,
+    "t_nw": 0.0,
+    "t_log_ref": -0.49,
+    "vol": 34.4,
+    "bench_vol": 27.4,
+    "maxdd": -74.2,
+    "bench_maxdd": -67.8,
+    "maxdd_daily": -76.2,
+    "maxdd_daily_span": [
+     20010123,
+     20021009
+    ],
+    "bench_maxdd_daily": -70.4,
+    "sharpe": -0.03,
+    "bench_sharpe": -0.03,
+    "roll10_win": null,
+    "switches": 77,
+    "switches_per_year": 8.55
+   },
+   "SYN2_A_2010-01〜2026-08": {
+    "from": 201001,
+    "to": 202608,
+    "years": 16.7,
+    "cagr": 27.81,
+    "bench_cagr": 18.96,
+    "excess": 8.85,
+    "ex_arith": 10.71,
+    "t": 2.82,
+    "t_nw": 3.22,
+    "t_log_ref": 1.91,
+    "vol": 31.7,
+    "bench_vol": 17.7,
+    "maxdd": -45.3,
+    "bench_maxdd": -32.6,
+    "maxdd_daily": -48.5,
+    "maxdd_daily_span": [
+     20211119,
+     20221103
+    ],
+    "bench_maxdd_daily": -35.1,
+    "sharpe": 0.89,
+    "bench_sharpe": 1.0,
+    "roll10_win": "7/7",
+    "switches": 98,
+    "switches_per_year": 5.88
+   },
+   "SYN2_A_2001-01〜2007-12": {
+    "from": 200101,
+    "to": 200712,
+    "years": 7.0,
+    "cagr": -4.27,
+    "bench_cagr": -1.58,
+    "excess": -2.7,
+    "ex_arith": -0.72,
+    "t": -0.15,
+    "t_nw": -0.15,
+    "t_log_ref": -0.56,
+    "vol": 34.2,
+    "bench_vol": 27.4,
+    "maxdd": -74.2,
+    "bench_maxdd": -67.8,
+    "maxdd_daily": -76.2,
+    "maxdd_daily_span": [
+     20010123,
+     20021009
+    ],
+    "bench_maxdd_daily": -70.4,
+    "sharpe": -0.04,
+    "bench_sharpe": -0.02,
+    "roll10_win": null,
+    "switches": 55,
+    "switches_per_year": 7.85
+   },
+   "SYN2_A_2008-01〜2015-12": {
+    "from": 200801,
+    "to": 201512,
+    "years": 8.0,
+    "cagr": 14.96,
+    "bench_cagr": 11.32,
+    "excess": 3.63,
+    "ex_arith": 6.11,
+    "t": 1.22,
+    "t_nw": 1.33,
+    "t_log_ref": 0.64,
+    "vol": 30.7,
+    "bench_vol": 19.3,
+    "maxdd": -56.7,
+    "bench_maxdd": -46.1,
+    "maxdd_daily": -59.8,
+    "maxdd_daily_span": [
+     20071231,
+     20081120
+    ],
+    "bench_maxdd_daily": -50.0,
+    "sharpe": 0.6,
+    "bench_sharpe": 0.64,
+    "roll10_win": null,
+    "switches": 68,
+    "switches_per_year": 8.5
+   },
+   "SYN2_A_2016-01〜2026-08": {
+    "from": 201601,
+    "to": 202608,
+    "years": 10.7,
+    "cagr": 30.91,
+    "bench_cagr": 19.86,
+    "excess": 11.05,
+    "ex_arith": 12.64,
+    "t": 2.57,
+    "t_nw": 2.86,
+    "t_log_ref": 1.82,
+    "vol": 33.3,
+    "bench_vol": 18.9,
+    "maxdd": -45.3,
+    "bench_maxdd": -32.6,
+    "maxdd_daily": -48.5,
+    "maxdd_daily_span": [
+     20211119,
+     20221103
+    ],
+    "bench_maxdd_daily": -35.1,
+    "sharpe": 0.91,
+    "bench_sharpe": 0.94,
+    "roll10_win": "1/1",
+    "switches": 52,
+    "switches_per_year": 4.88
+   },
+   "SYN2_B_2001-01〜2026-08": {
+    "from": 200101,
+    "to": 202608,
+    "years": 25.7,
+    "cagr": 16.24,
+    "bench_cagr": 11.0,
+    "excess": 5.24,
+    "ex_arith": 7.57,
+    "t": 2.71,
+    "t_nw": 2.76,
+    "t_log_ref": 1.67,
+    "vol": 32.6,
+    "bench_vol": 21.7,
+    "maxdd": -71.8,
+    "bench_maxdd": -67.8,
+    "maxdd_daily": -74.1,
+    "maxdd_daily_span": [
+     20010123,
+     20021009
+    ],
+    "bench_maxdd_daily": -70.4,
+    "sharpe": 0.57,
+    "bench_sharpe": 0.51,
+    "roll10_win": "16/16",
+    "switches": 175,
+    "switches_per_year": 6.82
+   },
+   "SYN2_B_2001-01〜2009-12": {
+    "from": 200101,
+    "to": 200912,
+    "years": 9.0,
+    "cagr": -1.6,
+    "bench_cagr": -2.36,
+    "excess": 0.77,
+    "ex_arith": 2.82,
+    "t": 0.71,
+    "t_nw": 0.65,
+    "t_log_ref": 0.2,
+    "vol": 34.2,
+    "bench_vol": 27.4,
+    "maxdd": -71.8,
+    "bench_maxdd": -67.8,
+    "maxdd_daily": -74.1,
+    "maxdd_daily_span": [
+     20010123,
+     20021009
+    ],
+    "bench_maxdd_daily": -70.4,
+    "sharpe": 0.06,
+    "bench_sharpe": -0.03,
+    "roll10_win": null,
+    "switches": 77,
+    "switches_per_year": 8.55
+   },
+   "SYN2_B_2010-01〜2026-08": {
+    "from": 201001,
+    "to": 202608,
+    "years": 16.7,
+    "cagr": 27.18,
+    "bench_cagr": 18.96,
+    "excess": 8.21,
+    "ex_arith": 10.14,
+    "t": 2.71,
+    "t_nw": 2.99,
+    "t_log_ref": 1.8,
+    "vol": 31.5,
+    "bench_vol": 17.7,
+    "maxdd": -44.4,
+    "bench_maxdd": -32.6,
+    "maxdd_daily": -47.7,
+    "maxdd_daily_span": [
+     20211119,
+     20221103
+    ],
+    "bench_maxdd_daily": -35.1,
+    "sharpe": 0.88,
+    "bench_sharpe": 1.0,
+    "roll10_win": "7/7",
+    "switches": 98,
+    "switches_per_year": 5.88
+   },
+   "SYN2_B_2001-01〜2007-12": {
+    "from": 200101,
+    "to": 200712,
+    "years": 7.0,
+    "cagr": -1.78,
+    "bench_cagr": -1.58,
+    "excess": -0.2,
+    "ex_arith": 1.72,
+    "t": 0.38,
+    "t_nw": 0.38,
+    "t_log_ref": -0.05,
+    "vol": 34.0,
+    "bench_vol": 27.4,
+    "maxdd": -71.8,
+    "bench_maxdd": -67.8,
+    "maxdd_daily": -74.1,
+    "maxdd_daily_span": [
+     20010123,
+     20021009
+    ],
+    "bench_maxdd_daily": -70.4,
+    "sharpe": 0.03,
+    "bench_sharpe": -0.02,
+    "roll10_win": null,
+    "switches": 55,
+    "switches_per_year": 7.85
+   },
+   "SYN2_B_2008-01〜2015-12": {
+    "from": 200801,
+    "to": 201512,
+    "years": 8.0,
+    "cagr": 15.0,
+    "bench_cagr": 11.32,
+    "excess": 3.68,
+    "ex_arith": 6.24,
+    "t": 1.25,
+    "t_nw": 1.44,
+    "t_log_ref": 0.64,
+    "vol": 31.0,
+    "bench_vol": 19.3,
+    "maxdd": -53.1,
+    "bench_maxdd": -46.1,
+    "maxdd_daily": -56.5,
+    "maxdd_daily_span": [
+     20071231,
+     20081120
+    ],
+    "bench_maxdd_daily": -50.0,
+    "sharpe": 0.6,
+    "bench_sharpe": 0.64,
+    "roll10_win": null,
+    "switches": 68,
+    "switches_per_year": 8.5
+   },
+   "SYN2_B_2016-01〜2026-08": {
+    "from": 201601,
+    "to": 202608,
+    "years": 10.7,
+    "cagr": 30.87,
+    "bench_cagr": 19.86,
+    "excess": 11.01,
+    "ex_arith": 12.41,
+    "t": 2.62,
+    "t_nw": 2.91,
+    "t_log_ref": 1.9,
+    "vol": 32.7,
+    "bench_vol": 18.9,
+    "maxdd": -44.4,
+    "bench_maxdd": -32.6,
+    "maxdd_daily": -47.7,
+    "maxdd_daily_span": [
+     20211119,
+     20221103
+    ],
+    "bench_maxdd_daily": -35.1,
+    "sharpe": 0.92,
+    "bench_sharpe": 0.94,
+    "roll10_win": "1/1",
+    "switches": 52,
+    "switches_per_year": 4.88
+   },
+   "SYN2_buy_hold_2001": {
+    "from": 200101,
+    "to": 202608,
+    "years": 25.7,
+    "cagr": 12.09,
+    "bench_cagr": 11.0,
+    "excess": 1.09,
+    "ex_arith": 8.33,
+    "t": 1.95,
+    "t_nw": 1.91,
+    "t_log_ref": 0.22,
+    "vol": 43.2,
+    "bench_vol": 21.7,
+    "maxdd": -93.6,
+    "bench_maxdd": -67.8,
+    "maxdd_daily": -95.0,
+    "maxdd_daily_span": [
+     20010123,
+     20090309
+    ],
+    "bench_maxdd_daily": -70.4,
+    "sharpe": 0.45,
+    "bench_sharpe": 0.51,
+    "roll10_win": "14/16",
+    "switches": 0,
+    "switches_per_year": 0.0
+   }
+  }
+ },
+ "crisis_real_products": {
+  "about": "(騰落%, 期間中の日次の最大下落%, 入れ替え回数)。器の持ち続け・QQQ は (騰落%, 最大下落%)。SYN3 は較正した合成（2000-2009 に3倍の実物は無い）",
+  "results": {
+   "TQQQ": {
+    "2018年": {
+     "rule_A（騰落%・期間中の最大下落%・切替）": [
+      -13.7,
+      -48.8,
+      7
+     ],
+     "rule_B（騰落%・期間中の最大下落%・切替）": [
+      -3.0,
+      -42.5,
+      7
+     ],
+     "rule_C（騰落%・期間中の最大下落%・切替）": [
+      -6.1,
+      -44.3,
+      7
+     ],
+     "器の持ち続け": [
+      -19.8,
+      -58.1
+     ],
+     "QQQ": [
+      -0.1,
+      -22.8
+     ]
+    },
+    "2020年": {
+     "rule_A（騰落%・期間中の最大下落%・切替）": [
+      122.5,
+      -58.8,
+      4
+     ],
+     "rule_B（騰落%・期間中の最大下落%・切替）": [
+      113.4,
+      -60.4,
+      4
+     ],
+     "rule_C（騰落%・期間中の最大下落%・切替）": [
+      111.2,
+      -60.2,
+      4
+     ],
+     "器の持ち続け": [
+      110.1,
+      -69.9
+     ],
+     "QQQ": [
+      48.4,
+      -28.6
+     ]
+    },
+    "COVID 2020-02-19→2020-03-20": {
+     "rule_A（騰落%・期間中の最大下落%・切替）": [
+      -58.5,
+      -58.8,
+      3
+     ],
+     "rule_B（騰落%・期間中の最大下落%・切替）": [
+      -60.1,
+      -60.4,
+      3
+     ],
+     "rule_C（騰落%・期間中の最大下落%・切替）": [
+      -59.9,
+      -60.2,
+      3
+     ],
+     "器の持ち続け": [
+      -69.9,
+      -69.9
+     ],
+     "QQQ": [
+      -28.0,
+      -28.6
+     ]
+    },
+    "2022年": {
+     "rule_A（騰落%・期間中の最大下落%・切替）": [
+      -55.1,
+      -57.4,
+      9
+     ],
+     "rule_B（騰落%・期間中の最大下落%・切替）": [
+      -54.4,
+      -56.7,
+      9
+     ],
+     "rule_C（騰落%・期間中の最大下落%・切替）": [
+      -52.1,
+      -54.5,
+      9
+     ],
+     "器の持ち続け": [
+      -79.1,
+      -81.0
+     ],
+     "QQQ": [
+      -32.6,
+      -34.8
+     ]
+    },
+    "2022 2021-11-19→2022-12-28": {
+     "rule_A（騰落%・期間中の最大下落%・切替）": [
+      -58.9,
+      -58.9,
+      9
+     ],
+     "rule_B（騰落%・期間中の最大下落%・切替）": [
+      -58.1,
+      -58.2,
+      9
+     ],
+     "rule_C（騰落%・期間中の最大下落%・切替）": [
+      -56.0,
+      -56.1,
+      9
+     ],
+     "器の持ち続け": [
+      -81.7,
+      -81.7
+     ],
+     "QQQ": [
+      -35.1,
+      -35.1
+     ]
+    },
+    "2025年": {
+     "rule_A（騰落%・期間中の最大下落%・切替）": [
+      39.1,
+      -37.7,
+      2
+     ],
+     "rule_B（騰落%・期間中の最大下落%・切替）": [
+      36.9,
+      -36.9,
+      2
+     ],
+     "rule_C（騰落%・期間中の最大下落%・切替）": [
+      37.6,
+      -38.0,
+      2
+     ],
+     "器の持ち続け": [
+      34.4,
+      -56.8
+     ],
+     "QQQ": [
+      20.8,
+      -22.8
+     ]
+    },
+    "switch_days_2020_A": [
+     20200310,
+     20200311,
+     20200312,
+     20200409
+    ],
+    "switch_days_2022_A": [
+     20220121,
+     20220203,
+     20220204,
+     20220210,
+     20220211,
+     20220330,
+     20220331,
+     20220405,
+     20220406
+    ]
+   },
+   "QLD": {
+    "2008年": {
+     "rule_A（騰落%・期間中の最大下落%・切替）": [
+      -50.4,
+      -57.5,
+      19
+     ],
+     "rule_B（騰落%・期間中の最大下落%・切替）": [
+      -50.4,
+      -57.5,
+      19
+     ],
+     "rule_C（騰落%・期間中の最大下落%・切替）": [
+      -48.9,
+      -56.1,
+      19
+     ],
+     "器の持ち続け": [
+      -72.9,
+      -79.2
+     ],
+     "QQQ": [
+      -41.7,
+      -50.0
+     ]
+    },
+    "GFC 2007-10-31→2009-03-09": {
+     "rule_A（騰落%・期間中の最大下落%・切替）": [
+      -63.4,
+      -63.7,
+      19
+     ],
+     "rule_B（騰落%・期間中の最大下落%・切替）": [
+      -63.4,
+      -63.7,
+      19
+     ],
+     "rule_C（騰落%・期間中の最大下落%・切替）": [
+      -62.2,
+      -62.5,
+      19
+     ],
+     "器の持ち続け": [
+      -83.1,
+      -83.1
+     ],
+     "QQQ": [
+      -53.0,
+      -53.4
+     ]
+    },
+    "2018年": {
+     "rule_A（騰落%・期間中の最大下落%・切替）": [
+      -6.3,
+      -37.1,
+      7
+     ],
+     "rule_B（騰落%・期間中の最大下落%・切替）": [
+      -0.7,
+      -33.4,
+      7
+     ],
+     "rule_C（騰落%・期間中の最大下落%・切替）": [
+      -2.2,
+      -34.4,
+      7
+     ],
+     "器の持ち続け": [
+      -8.3,
+      -42.5
+     ],
+     "QQQ": [
+      -0.1,
+      -22.8
+     ]
+    },
+    "2020年": {
+     "rule_A（騰落%・期間中の最大下落%・切替）": [
+      86.4,
+      -45.5,
+      4
+     ],
+     "rule_B（騰落%・期間中の最大下落%・切替）": [
+      83.8,
+      -46.2,
+      4
+     ],
+     "rule_C（騰落%・期間中の最大下落%・切替）": [
+      82.1,
+      -46.3,
+      4
+     ],
+     "器の持ち続け": [
+      88.9,
+      -51.7
+     ],
+     "QQQ": [
+      48.4,
+      -28.6
+     ]
+    },
+    "COVID 2020-02-19→2020-03-20": {
+     "rule_A（騰落%・期間中の最大下落%・切替）": [
+      -45.0,
+      -45.5,
+      3
+     ],
+     "rule_B（騰落%・期間中の最大下落%・切替）": [
+      -45.7,
+      -46.2,
+      3
+     ],
+     "rule_C（騰落%・期間中の最大下落%・切替）": [
+      -45.8,
+      -46.3,
+      3
+     ],
+     "器の持ち続け": [
+      -51.7,
+      -51.7
+     ],
+     "QQQ": [
+      -28.0,
+      -28.6
+     ]
+    },
+    "2022年": {
+     "rule_A（騰落%・期間中の最大下落%・切替）": [
+      -45.3,
+      -47.7,
+      9
+     ],
+     "rule_B（騰落%・期間中の最大下落%・切替）": [
+      -44.6,
+      -47.1,
+      9
+     ],
+     "rule_C（騰落%・期間中の最大下落%・切替）": [
+      -43.1,
+      -45.6,
+      9
+     ],
+     "器の持ち続け": [
+      -60.5,
+      -63.1
+     ],
+     "QQQ": [
+      -32.6,
+      -34.8
+     ]
+    },
+    "2022 2021-11-19→2022-12-28": {
+     "rule_A（騰落%・期間中の最大下落%・切替）": [
+      -48.5,
+      -48.5,
+      9
+     ],
+     "rule_B（騰落%・期間中の最大下落%・切替）": [
+      -47.9,
+      -47.9,
+      9
+     ],
+     "rule_C（騰落%・期間中の最大下落%・切替）": [
+      -46.5,
+      -46.5,
+      9
+     ],
+     "器の持ち続け": [
+      -63.7,
+      -63.7
+     ],
+     "QQQ": [
+      -35.1,
+      -35.1
+     ]
+    },
+    "2025年": {
+     "rule_A（騰落%・期間中の最大下落%・切替）": [
+      30.6,
+      -30.6,
+      2
+     ],
+     "rule_B（騰落%・期間中の最大下落%・切替）": [
+      29.5,
+      -30.1,
+      2
+     ],
+     "rule_C（騰落%・期間中の最大下落%・切替）": [
+      29.8,
+      -30.8,
+      2
+     ],
+     "器の持ち続け": [
+      30.4,
+      -41.8
+     ],
+     "QQQ": [
+      20.8,
+      -22.8
+     ]
+    },
+    "switch_days_2020_A": [
+     20200310,
+     20200311,
+     20200312,
+     20200409
+    ],
+    "switch_days_2022_A": [
+     20220121,
+     20220203,
+     20220204,
+     20220210,
+     20220211,
+     20220330,
+     20220331,
+     20220405,
+     20220406
+    ]
+   },
+   "SYN3（較正・事後）": {
+    "2001年": {
+     "rule_A（騰落%・期間中の最大下落%・切替）": [
+      -53.1,
+      -59.6,
+      5
+     ],
+     "rule_B（騰落%・期間中の最大下落%・切替）": [
+      -48.0,
+      -58.4,
+      4
+     ],
+     "器の持ち続け": [
+      -88.9,
+      -96.3
+     ],
+     "QQQ": [
+      -33.3,
+      -58.4
+     ]
+    },
+    "2002年": {
+     "rule_A（騰落%・期間中の最大下落%・切替）": [
+      -50.7,
+      -56.0,
+      9
+     ],
+     "rule_B（騰落%・期間中の最大下落%・切替）": [
+      -36.7,
+      -55.2,
+      10
+     ],
+     "器の持ち続け": [
+      -86.4,
+      -93.0
+     ],
+     "QQQ": [
+      -37.4,
+      -51.9
+     ]
+    },
+    "ITバブル 2000-03-27→2002-10-09": {
+     "rule_A（騰落%・期間中の最大下落%・切替）": [
+      -97.7,
+      -97.7,
+      23
+     ],
+     "rule_B（騰落%・期間中の最大下落%・切替）": [
+      -95.9,
+      -95.9,
+      23
+     ],
+     "器の持ち続け": [
+      -100.0,
+      -100.0
+     ],
+     "QQQ": [
+      -83.0,
+      -83.0
+     ]
+    },
+    "2008年": {
+     "rule_A（騰落%・期間中の最大下落%・切替）": [
+      -62.0,
+      -67.4,
+      19
+     ],
+     "rule_B（騰落%・期間中の最大下落%・切替）": [
+      -55.4,
+      -61.7,
+      19
+     ],
+     "器の持ち続け": [
+      -88.5,
+      -92.2
+     ],
+     "QQQ": [
+      -41.7,
+      -50.0
+     ]
+    },
+    "GFC 2007-10-31→2009-03-09": {
+     "rule_A（騰落%・期間中の最大下落%・切替）": [
+      -74.7,
+      -74.9,
+      19
+     ],
+     "rule_B（騰落%・期間中の最大下落%・切替）": [
+      -70.2,
+      -70.5,
+      19
+     ],
+     "器の持ち続け": [
+      -94.7,
+      -94.7
+     ],
+     "QQQ": [
+      -53.0,
+      -53.4
+     ]
+    },
+    "2018年": {
+     "rule_A（騰落%・期間中の最大下落%・切替）": [
+      -15.4,
+      -49.1,
+      7
+     ],
+     "rule_B（騰落%・期間中の最大下落%・切替）": [
+      -4.9,
+      -42.8,
+      7
+     ],
+     "器の持ち続け": [
+      -20.7,
+      -58.3
+     ],
+     "QQQ": [
+      -0.1,
+      -22.8
+     ]
+    },
+    "2020年": {
+     "rule_A（騰落%・期間中の最大下落%・切替）": [
+      118.1,
+      -59.3,
+      4
+     ],
+     "rule_B（騰落%・期間中の最大下落%・切替）": [
+      110.6,
+      -60.5,
+      4
+     ],
+     "器の持ち続け": [
+      111.2,
+      -69.8
+     ],
+     "QQQ": [
+      48.4,
+      -28.6
+     ]
+    },
+    "COVID 2020-02-19→2020-03-20": {
+     "rule_A（騰落%・期間中の最大下落%・切替）": [
+      -58.9,
+      -59.3,
+      3
+     ],
+     "rule_B（騰落%・期間中の最大下落%・切替）": [
+      -60.2,
+      -60.5,
+      3
+     ],
+     "器の持ち続け": [
+      -69.7,
+      -69.8
+     ],
+     "QQQ": [
+      -28.0,
+      -28.6
+     ]
+    },
+    "2022年": {
+     "rule_A（騰落%・期間中の最大下落%・切替）": [
+      -55.5,
+      -57.8,
+      9
+     ],
+     "rule_B（騰落%・期間中の最大下落%・切替）": [
+      -54.1,
+      -56.4,
+      9
+     ],
+     "器の持ち続け": [
+      -78.6,
+      -80.6
+     ],
+     "QQQ": [
+      -32.6,
+      -34.8
+     ]
+    },
+    "2022 2021-11-19→2022-12-28": {
+     "rule_A（騰落%・期間中の最大下落%・切替）": [
+      -59.1,
+      -59.2,
+      9
+     ],
+     "rule_B（騰落%・期間中の最大下落%・切替）": [
+      -57.8,
+      -57.8,
+      9
+     ],
+     "器の持ち続け": [
+      -81.2,
+      -81.2
+     ],
+     "QQQ": [
+      -35.1,
+      -35.1
+     ]
+    },
+    "2025年": {
+     "rule_A（騰落%・期間中の最大下落%・切替）": [
+      37.9,
+      -37.8,
+      2
+     ],
+     "rule_B（騰落%・期間中の最大下落%・切替）": [
+      35.9,
+      -36.9,
+      2
+     ],
+     "器の持ち続け": [
+      33.1,
+      -56.9
+     ],
+     "QQQ": [
+      20.8,
+      -22.8
+     ]
+    },
+    "switch_days_2020_A": [
+     20200310,
+     20200311,
+     20200312,
+     20200409
+    ],
+    "switch_days_2022_A": [
+     20220121,
+     20220203,
+     20220204,
+     20220210,
+     20220211,
+     20220330,
+     20220331,
+     20220405,
+     20220406
+    ]
+   }
+  }
+ },
+ "after_tax_jpy_lump": {
+  "about": "一括・円建て（JPY=X の日次の終値で換算）。課税口座: 米国ETFの分配は 米国10%→残りに20.315%（外国税額控除なし＝28.28%）、入れ替えのたびに全部売り円で測った売却益に20.315%（源泉徴収ありの特定口座＝同じ年の中は損益通算・還付）、最後に全部売って清算。taxable_with_3yr_carryforward は確定申告で損失を3年繰り越した場合。NISA: 分配は米国の10%だけ・売却益は非課税・売買手数料は無料。楽天の手数料: 約定代金の0.495%・上限22ドル。QLD/TQQQ の売り買いと QQQ の売りは有料、QQQ の買いは楽天の「買付手数料無料」15銘柄に入る（2026-09-28 に楽天の頁で確認）。滑り0.1%/入れ替えは別に引く。値は [年率%, 倍率]",
+  "⚠NISA の相手の仮定": "一括の相手は QQQ を全額 NISA で持った場合。新NISA は成長投資枠 年240万円・生涯1200万円（つみたて枠と合わせ1800万円）で、1000万円の一括は1年では入らない",
+  "results": {
+   "TQQQ_3x_real_2010-02": {
+    "100万円": {
+     "QQQ_pretax": [
+      23.69,
+      33.75
+     ],
+     "QQQ_NISA": [
+      23.59,
+      33.27
+     ],
+     "QQQ_taxable": [
+      21.8,
+      26.16
+     ],
+     "rule_A": {
+      "pretax": [
+       43.43,
+       391.0
+      ],
+      "with_rakuten_commission": [
+       42.26,
+       341.49
+      ],
+      "commission_total_pct_of_principal": 52.1,
+      "taxable_withholding_only": [
+       34.64,
+       137.3
+      ],
+      "taxable_with_3yr_carryforward": [
+       35.28,
+       148.4
+      ],
+      "taxes_paid_x_principal": 36.39,
+      "vs_QQQ_NISA_pa": 11.05,
+      "vs_QQQ_NISA_pa_with_carry": 11.69,
+      "vs_QQQ_taxable_pa": 12.84
+     },
+     "rule_B": {
+      "pretax": [
+       41.05,
+       296.19
+      ],
+      "with_rakuten_commission": [
+       39.77,
+       254.81
+      ],
+      "commission_total_pct_of_principal": 52.1,
+      "taxable_withholding_only": [
+       32.69,
+       107.76
+      ],
+      "taxable_with_3yr_carryforward": [
+       33.35,
+       117.0
+      ],
+      "taxes_paid_x_principal": 28.64,
+      "vs_QQQ_NISA_pa": 9.1,
+      "vs_QQQ_NISA_pa_with_carry": 9.76,
+      "vs_QQQ_taxable_pa": 10.89
+     },
+     "rule_C": {
+      "pretax": [
+       42.29,
+       342.55
+      ],
+      "with_rakuten_commission": [
+       41.04,
+       296.07
+      ],
+      "commission_total_pct_of_principal": 52.1,
+      "taxable_withholding_only": [
+       33.63,
+       121.19
+      ],
+      "taxable_with_3yr_carryforward": [
+       34.3,
+       131.57
+      ],
+      "taxes_paid_x_principal": 32.14,
+      "vs_QQQ_NISA_pa": 10.04,
+      "vs_QQQ_NISA_pa_with_carry": 10.71,
+      "vs_QQQ_taxable_pa": 11.83
+     }
+    },
+    "1000万円": {
+     "QQQ_pretax": [
+      23.69,
+      33.75
+     ],
+     "QQQ_NISA": [
+      23.59,
+      33.27
+     ],
+     "QQQ_taxable": [
+      21.8,
+      26.16
+     ],
+     "rule_A": {
+      "pretax": [
+       43.43,
+       391.0
+      ],
+      "with_rakuten_commission": [
+       43.32,
+       386.05
+      ],
+      "commission_total_pct_of_principal": 5.2,
+      "taxable_withholding_only": [
+       35.66,
+       155.49
+      ],
+      "taxable_with_3yr_carryforward": [
+       36.24,
+       166.91
+      ],
+      "taxes_paid_x_principal": 41.17,
+      "vs_QQQ_NISA_pa": 12.07,
+      "vs_QQQ_NISA_pa_with_carry": 12.65,
+      "vs_QQQ_taxable_pa": 13.86
+     },
+     "rule_B": {
+      "pretax": [
+       41.05,
+       296.19
+      ],
+      "with_rakuten_commission": [
+       40.93,
+       292.05
+      ],
+      "commission_total_pct_of_principal": 5.2,
+      "taxable_withholding_only": [
+       33.79,
+       123.6
+      ],
+      "taxable_with_3yr_carryforward": [
+       34.39,
+       133.08
+      ],
+      "taxes_paid_x_principal": 32.82,
+      "vs_QQQ_NISA_pa": 10.2,
+      "vs_QQQ_NISA_pa_with_carry": 10.8,
+      "vs_QQQ_taxable_pa": 11.99
+     },
+     "rule_C": {
+      "pretax": [
+       42.29,
+       342.55
+      ],
+      "with_rakuten_commission": [
+       42.17,
+       337.9
+      ],
+      "commission_total_pct_of_principal": 5.2,
+      "taxable_withholding_only": [
+       34.72,
+       138.57
+      ],
+      "taxable_with_3yr_carryforward": [
+       35.32,
+       149.21
+      ],
+      "taxes_paid_x_principal": 36.71,
+      "vs_QQQ_NISA_pa": 11.13,
+      "vs_QQQ_NISA_pa_with_carry": 11.73,
+      "vs_QQQ_taxable_pa": 12.92
+     }
+    }
+   },
+   "QLD_2x_real_2006-06": {
+    "100万円": {
+     "QQQ_pretax": [
+      18.39,
+      30.22
+     ],
+     "QQQ_NISA": [
+      18.29,
+      29.75
+     ],
+     "QQQ_taxable": [
+      16.89,
+      23.35
+     ],
+     "rule_A": {
+      "pretax": [
+       26.96,
+       123.91
+      ],
+      "with_rakuten_commission": [
+       25.38,
+       96.17
+      ],
+      "commission_total_pct_of_principal": 66.2,
+      "taxable_withholding_only": [
+       19.75,
+       38.06
+      ],
+      "taxable_with_3yr_carryforward": [
+       20.56,
+       43.63
+      ],
+      "taxes_paid_x_principal": 10.29,
+      "vs_QQQ_NISA_pa": 1.46,
+      "vs_QQQ_NISA_pa_with_carry": 2.27,
+      "vs_QQQ_taxable_pa": 2.86
+     },
+     "rule_B": {
+      "pretax": [
+       26.64,
+       117.69
+      ],
+      "with_rakuten_commission": [
+       25.09,
+       91.86
+      ],
+      "commission_total_pct_of_principal": 66.2,
+      "taxable_withholding_only": [
+       19.56,
+       36.89
+      ],
+      "taxable_with_3yr_carryforward": [
+       20.37,
+       42.26
+      ],
+      "taxes_paid_x_principal": 9.95,
+      "vs_QQQ_NISA_pa": 1.27,
+      "vs_QQQ_NISA_pa_with_carry": 2.08,
+      "vs_QQQ_taxable_pa": 2.67
+     },
+     "rule_C": {
+      "pretax": [
+       26.85,
+       121.84
+      ],
+      "with_rakuten_commission": [
+       25.31,
+       95.1
+      ],
+      "commission_total_pct_of_principal": 66.2,
+      "taxable_withholding_only": [
+       19.73,
+       37.94
+      ],
+      "taxable_with_3yr_carryforward": [
+       20.51,
+       43.24
+      ],
+      "taxes_paid_x_principal": 10.23,
+      "vs_QQQ_NISA_pa": 1.44,
+      "vs_QQQ_NISA_pa_with_carry": 2.22,
+      "vs_QQQ_taxable_pa": 2.84
+     }
+    },
+    "1000万円": {
+     "QQQ_pretax": [
+      18.39,
+      30.22
+     ],
+     "QQQ_NISA": [
+      18.29,
+      29.75
+     ],
+     "QQQ_taxable": [
+      16.89,
+      23.36
+     ],
+     "rule_A": {
+      "pretax": [
+       26.96,
+       123.91
+      ],
+      "with_rakuten_commission": [
+       26.82,
+       121.13
+      ],
+      "commission_total_pct_of_principal": 6.6,
+      "taxable_withholding_only": [
+       21.21,
+       48.59
+      ],
+      "taxable_with_3yr_carryforward": [
+       21.9,
+       54.49
+      ],
+      "taxes_paid_x_principal": 13.1,
+      "vs_QQQ_NISA_pa": 2.92,
+      "vs_QQQ_NISA_pa_with_carry": 3.61,
+      "vs_QQQ_taxable_pa": 4.32
+     },
+     "rule_B": {
+      "pretax": [
+       26.64,
+       117.69
+      ],
+      "with_rakuten_commission": [
+       26.5,
+       115.11
+      ],
+      "commission_total_pct_of_principal": 6.6,
+      "taxable_withholding_only": [
+       21.0,
+       46.93
+      ],
+      "taxable_with_3yr_carryforward": [
+       21.68,
+       52.57
+      ],
+      "taxes_paid_x_principal": 12.61,
+      "vs_QQQ_NISA_pa": 2.71,
+      "vs_QQQ_NISA_pa_with_carry": 3.39,
+      "vs_QQQ_taxable_pa": 4.11
+     },
+     "rule_C": {
+      "pretax": [
+       26.85,
+       121.84
+      ],
+      "with_rakuten_commission": [
+       26.71,
+       119.16
+      ],
+      "commission_total_pct_of_principal": 6.6,
+      "taxable_withholding_only": [
+       21.16,
+       48.23
+      ],
+      "taxable_with_3yr_carryforward": [
+       21.82,
+       53.82
+      ],
+      "taxes_paid_x_principal": 12.97,
+      "vs_QQQ_NISA_pa": 2.87,
+      "vs_QQQ_NISA_pa_with_carry": 3.53,
+      "vs_QQQ_taxable_pa": 4.27
+     }
+    }
+   },
+   "SYN3_calibrated_2001-01（事後・参考）": {
+    "100万円": {
+     "QQQ_pretax": [
+      12.46,
+      20.4
+     ],
+     "QQQ_NISA": [
+      12.39,
+      20.05
+     ],
+     "QQQ_taxable": [
+      11.34,
+      15.77
+     ],
+     "rule_A": {
+      "pretax": [
+       20.62,
+       122.95
+      ],
+      "with_rakuten_commission": [
+       15.84,
+       43.58
+      ],
+      "commission_total_pct_of_principal": 64.2,
+      "taxable_withholding_only": [
+       11.23,
+       15.38
+      ],
+      "taxable_with_3yr_carryforward": [
+       12.39,
+       20.04
+      ],
+      "taxes_paid_x_principal": 4.2,
+      "vs_QQQ_NISA_pa": -1.16,
+      "vs_QQQ_NISA_pa_with_carry": 0.0,
+      "vs_QQQ_taxable_pa": -0.11
+     },
+     "rule_B": {
+      "pretax": [
+       22.24,
+       173.13
+      ],
+      "with_rakuten_commission": [
+       17.65,
+       64.83
+      ],
+      "commission_total_pct_of_principal": 80.4,
+      "taxable_withholding_only": [
+       13.25,
+       24.41
+      ],
+      "taxable_with_3yr_carryforward": [
+       14.28,
+       30.75
+      ],
+      "taxes_paid_x_principal": 6.66,
+      "vs_QQQ_NISA_pa": 0.86,
+      "vs_QQQ_NISA_pa_with_carry": 1.89,
+      "vs_QQQ_taxable_pa": 1.91
+     }
+    },
+    "1000万円": {
+     "QQQ_pretax": [
+      12.46,
+      20.4
+     ],
+     "QQQ_NISA": [
+      12.39,
+      20.05
+     ],
+     "QQQ_taxable": [
+      11.34,
+      15.77
+     ],
+     "rule_A": {
+      "pretax": [
+       20.62,
+       122.95
+      ],
+      "with_rakuten_commission": [
+       20.03,
+       108.6
+      ],
+      "commission_total_pct_of_principal": 9.3,
+      "taxable_withholding_only": [
+       15.25,
+       38.26
+      ],
+      "taxable_with_3yr_carryforward": [
+       16.19,
+       47.12
+      ],
+      "taxes_paid_x_principal": 10.33,
+      "vs_QQQ_NISA_pa": 2.86,
+      "vs_QQQ_NISA_pa_with_carry": 3.8,
+      "vs_QQQ_taxable_pa": 3.91
+     },
+     "rule_B": {
+      "pretax": [
+       22.24,
+       173.13
+      ],
+      "with_rakuten_commission": [
+       21.84,
+       159.47
+      ],
+      "commission_total_pct_of_principal": 9.3,
+      "taxable_withholding_only": [
+       17.23,
+       59.13
+      ],
+      "taxable_with_3yr_carryforward": [
+       18.08,
+       71.29
+      ],
+      "taxes_paid_x_principal": 16.01,
+      "vs_QQQ_NISA_pa": 4.84,
+      "vs_QQQ_NISA_pa_with_carry": 5.69,
+      "vs_QQQ_taxable_pa": 5.89
+     }
+    }
+   },
+   "SYN2_calibrated_2001-01（事後・参考）": {
+    "100万円": {
+     "QQQ_pretax": [
+      12.46,
+      20.4
+     ],
+     "QQQ_NISA": [
+      12.39,
+      20.05
+     ],
+     "QQQ_taxable": [
+      11.34,
+      15.77
+     ],
+     "rule_A": {
+      "pretax": [
+       16.95,
+       55.61
+      ],
+      "with_rakuten_commission": [
+       12.33,
+       19.77
+      ],
+      "commission_total_pct_of_principal": 75.6,
+      "taxable_withholding_only": [
+       8.23,
+       7.62
+      ],
+      "taxable_with_3yr_carryforward": [
+       9.24,
+       9.67
+      ],
+      "taxes_paid_x_principal": 2.12,
+      "vs_QQQ_NISA_pa": -4.16,
+      "vs_QQQ_NISA_pa_with_carry": -3.15,
+      "vs_QQQ_taxable_pa": -3.11
+     },
+     "rule_B": {
+      "pretax": [
+       17.77,
+       66.58
+      ],
+      "with_rakuten_commission": [
+       13.28,
+       24.54
+      ],
+      "commission_total_pct_of_principal": 85.3,
+      "taxable_withholding_only": [
+       9.3,
+       9.8
+      ],
+      "taxable_with_3yr_carryforward": [
+       10.24,
+       12.21
+      ],
+      "taxes_paid_x_principal": 2.71,
+      "vs_QQQ_NISA_pa": -3.09,
+      "vs_QQQ_NISA_pa_with_carry": -2.15,
+      "vs_QQQ_taxable_pa": -2.04
+     }
+    },
+    "1000万円": {
+     "QQQ_pretax": [
+      12.46,
+      20.4
+     ],
+     "QQQ_NISA": [
+      12.39,
+      20.05
+     ],
+     "QQQ_taxable": [
+      11.34,
+      15.77
+     ],
+     "rule_A": {
+      "pretax": [
+       16.95,
+       55.61
+      ],
+      "with_rakuten_commission": [
+       16.53,
+       50.74
+      ],
+      "commission_total_pct_of_principal": 9.3,
+      "taxable_withholding_only": [
+       12.24,
+       19.37
+      ],
+      "taxable_with_3yr_carryforward": [
+       13.08,
+       23.45
+      ],
+      "taxes_paid_x_principal": 5.28,
+      "vs_QQQ_NISA_pa": -0.15,
+      "vs_QQQ_NISA_pa_with_carry": 0.69,
+      "vs_QQQ_taxable_pa": 0.9
+     },
+     "rule_B": {
+      "pretax": [
+       17.77,
+       66.58
+      ],
+      "with_rakuten_commission": [
+       17.43,
+       61.78
+      ],
+      "commission_total_pct_of_principal": 9.3,
+      "taxable_withholding_only": [
+       13.22,
+       24.23
+      ],
+      "taxable_with_3yr_carryforward": [
+       14.0,
+       28.89
+      ],
+      "taxes_paid_x_principal": 6.59,
+      "vs_QQQ_NISA_pa": 0.83,
+      "vs_QQQ_NISA_pa_with_carry": 1.61,
+      "vs_QQQ_taxable_pa": 1.88
+     }
+    }
+   }
+  }
+ },
+ "after_tax_jpy_dca_100000_per_month": {
+  "about": "毎月最初の営業日の終値で10万円を円からドルへ替えて、そのとき持っている器を買い足す。規則は課税口座（入れ替えのたびに全部売って課税）・楽天の手数料込み。相手は QQQ の持ち続け（NISA_all＝全額 NISA／taxable＝課税口座）。ratio は最終額の比",
+  "results": {
+   "TQQQ_3x_real_2010-02": {
+    "contrib_jpy": 19900000,
+    "QQQ_pretax": {
+     "final_jpy": 206116559,
+     "multiple": 10.36
+    },
+    "QQQ_NISA_all": {
+     "final_jpy": 204079322,
+     "multiple": 10.26
+    },
+    "QQQ_taxable": {
+     "final_jpy": 164441138,
+     "multiple": 8.26
+    },
+    "rule_A": {
+     "pretax_final_jpy": 1751395001,
+     "pretax_multiple": 88.01,
+     "pretax_ratio_vs_QQQ": 8.497,
+     "taxable_final_jpy": 782191983,
+     "taxable_multiple": 39.31,
+     "taxable_ratio_vs_QQQ_NISA_all": 3.833,
+     "taxable_ratio_vs_QQQ_taxable": 4.757,
+     "taxable_carry_ratio_vs_QQQ_NISA_all": 4.033,
+     "taxes_paid_jpy": 202810558,
+     "commission_jpy_approx": 637320,
+     "rule_maxdd_daily_pretax": -58.8
+    },
+    "rule_B": {
+     "pretax_final_jpy": 1487371386,
+     "pretax_multiple": 74.74,
+     "pretax_ratio_vs_QQQ": 7.216,
+     "taxable_final_jpy": 682722661,
+     "taxable_multiple": 34.31,
+     "taxable_ratio_vs_QQQ_NISA_all": 3.345,
+     "taxable_ratio_vs_QQQ_taxable": 4.152,
+     "taxable_carry_ratio_vs_QQQ_NISA_all": 3.534,
+     "taxes_paid_jpy": 177013750,
+     "commission_jpy_approx": 637194,
+     "rule_maxdd_daily_pretax": -60.3
+    },
+    "rule_C": {
+     "pretax_final_jpy": 1651975711,
+     "pretax_multiple": 83.01,
+     "pretax_ratio_vs_QQQ": 8.015,
+     "taxable_final_jpy": 747868186,
+     "taxable_multiple": 37.58,
+     "taxable_ratio_vs_QQQ_NISA_all": 3.665,
+     "taxable_ratio_vs_QQQ_taxable": 4.548,
+     "taxable_carry_ratio_vs_QQQ_NISA_all": 3.855,
+     "taxes_paid_jpy": 193862666,
+     "commission_jpy_approx": 636605,
+     "rule_maxdd_daily_pretax": -60.1
+    },
+    "QQQ_maxdd_daily_of_account": -34.1
+   },
+   "QLD_2x_real_2006-07": {
+    "contrib_jpy": 24200000,
+    "QQQ_pretax": {
+     "final_jpy": 341128328,
+     "multiple": 14.1
+    },
+    "QQQ_NISA_all": {
+     "final_jpy": 337078694,
+     "multiple": 13.93
+    },
+    "QQQ_taxable": {
+     "final_jpy": 268943331,
+     "multiple": 11.11
+    },
+    "rule_A": {
+     "pretax_final_jpy": 1188256365,
+     "pretax_multiple": 49.1,
+     "pretax_ratio_vs_QQQ": 3.483,
+     "taxable_final_jpy": 544858283,
+     "taxable_multiple": 22.51,
+     "taxable_ratio_vs_QQQ_NISA_all": 1.616,
+     "taxable_ratio_vs_QQQ_taxable": 2.026,
+     "taxable_carry_ratio_vs_QQQ_NISA_all": 1.709,
+     "taxes_paid_jpy": 142356720,
+     "commission_jpy_approx": 793728,
+     "rule_maxdd_daily_pretax": -48.3
+    },
+    "rule_B": {
+     "pretax_final_jpy": 1105674952,
+     "pretax_multiple": 45.69,
+     "pretax_ratio_vs_QQQ": 3.241,
+     "taxable_final_jpy": 518783735,
+     "taxable_multiple": 21.44,
+     "taxable_ratio_vs_QQQ_NISA_all": 1.539,
+     "taxable_ratio_vs_QQQ_taxable": 1.929,
+     "taxable_carry_ratio_vs_QQQ_NISA_all": 1.623,
+     "taxes_paid_jpy": 134772474,
+     "commission_jpy_approx": 793345,
+     "rule_maxdd_daily_pretax": -47.7
+    },
+    "rule_C": {
+     "pretax_final_jpy": 1140280613,
+     "pretax_multiple": 47.12,
+     "pretax_ratio_vs_QQQ": 3.343,
+     "taxable_final_jpy": 530160498,
+     "taxable_multiple": 21.91,
+     "taxable_ratio_vs_QQQ_NISA_all": 1.573,
+     "taxable_ratio_vs_QQQ_taxable": 1.971,
+     "taxable_carry_ratio_vs_QQQ_NISA_all": 1.658,
+     "taxes_paid_jpy": 138009723,
+     "commission_jpy_approx": 793896,
+     "rule_maxdd_daily_pretax": -46.3
+    },
+    "QQQ_maxdd_daily_of_account": -39.1
+   },
+   "SYN3_calibrated_2001-01（事後・参考）": {
+    "contrib_jpy": 30900000,
+    "QQQ_pretax": {
+     "final_jpy": 566470681,
+     "multiple": 18.33
+    },
+    "QQQ_NISA_all": {
+     "final_jpy": 558662814,
+     "multiple": 18.08
+    },
+    "QQQ_taxable": {
+     "final_jpy": 442406995,
+     "multiple": 14.32
+    },
+    "rule_A": {
+     "pretax_final_jpy": 5259376642,
+     "pretax_multiple": 170.21,
+     "pretax_ratio_vs_QQQ": 9.284,
+     "taxable_final_jpy": 2109773277,
+     "taxable_multiple": 68.28,
+     "taxable_ratio_vs_QQQ_NISA_all": 3.776,
+     "taxable_ratio_vs_QQQ_taxable": 4.769,
+     "taxable_carry_ratio_vs_QQQ_NISA_all": 4.156,
+     "taxes_paid_jpy": 563118938,
+     "commission_jpy_approx": 1091383,
+     "rule_maxdd_daily_pretax": -70.6
+    },
+    "rule_B": {
+     "pretax_final_jpy": 5044049959,
+     "pretax_multiple": 163.24,
+     "pretax_ratio_vs_QQQ": 8.904,
+     "taxable_final_jpy": 2076238116,
+     "taxable_multiple": 67.19,
+     "taxable_ratio_vs_QQQ_NISA_all": 3.716,
+     "taxable_ratio_vs_QQQ_taxable": 4.693,
+     "taxable_carry_ratio_vs_QQQ_NISA_all": 4.049,
+     "taxes_paid_jpy": 555649326,
+     "commission_jpy_approx": 1093331,
+     "rule_maxdd_daily_pretax": -66.1
+    },
+    "QQQ_maxdd_daily_of_account": -47.1
+   },
+   "SYN3_calibrated_2010-02（事後・参考・実物との照合）": {
+    "contrib_jpy": 19900000,
+    "QQQ_pretax": {
+     "final_jpy": 206116559,
+     "multiple": 10.36
+    },
+    "QQQ_NISA_all": {
+     "final_jpy": 204079322,
+     "multiple": 10.26
+    },
+    "QQQ_taxable": {
+     "final_jpy": 164441138,
+     "multiple": 8.26
+    },
+    "rule_A": {
+     "pretax_final_jpy": 1633970172,
+     "pretax_multiple": 82.11,
+     "pretax_ratio_vs_QQQ": 7.927,
+     "taxable_final_jpy": 741986541,
+     "taxable_multiple": 37.29,
+     "taxable_ratio_vs_QQQ_NISA_all": 3.636,
+     "taxable_ratio_vs_QQQ_taxable": 4.512,
+     "taxable_carry_ratio_vs_QQQ_NISA_all": 3.832,
+     "taxes_paid_jpy": 195031815,
+     "commission_jpy_approx": 636687,
+     "rule_maxdd_daily_pretax": -59.2
+    },
+    "rule_B": {
+     "pretax_final_jpy": 1435151485,
+     "pretax_multiple": 72.12,
+     "pretax_ratio_vs_QQQ": 6.963,
+     "taxable_final_jpy": 666213335,
+     "taxable_multiple": 33.48,
+     "taxable_ratio_vs_QQQ_NISA_all": 3.264,
+     "taxable_ratio_vs_QQQ_taxable": 4.051,
+     "taxable_carry_ratio_vs_QQQ_NISA_all": 3.448,
+     "taxes_paid_jpy": 175139603,
+     "commission_jpy_approx": 637555,
+     "rule_maxdd_daily_pretax": -60.5
+    },
+    "QQQ_maxdd_daily_of_account": -34.1
+   },
+   "SYN2_calibrated_2001-01（事後・参考）": {
+    "contrib_jpy": 30900000,
+    "QQQ_pretax": {
+     "final_jpy": 566470681,
+     "multiple": 18.33
+    },
+    "QQQ_NISA_all": {
+     "final_jpy": 558662814,
+     "multiple": 18.08
+    },
+    "QQQ_taxable": {
+     "final_jpy": 442406995,
+     "multiple": 14.32
+    },
+    "rule_A": {
+     "pretax_final_jpy": 1862179675,
+     "pretax_multiple": 60.26,
+     "pretax_ratio_vs_QQQ": 3.287,
+     "taxable_final_jpy": 811262833,
+     "taxable_multiple": 26.25,
+     "taxable_ratio_vs_QQQ_NISA_all": 1.452,
+     "taxable_ratio_vs_QQQ_taxable": 1.834,
+     "taxable_carry_ratio_vs_QQQ_NISA_all": 1.576,
+     "taxes_paid_jpy": 215264778,
+     "commission_jpy_approx": 1091383,
+     "rule_maxdd_daily_pretax": -60.7
+    },
+    "rule_B": {
+     "pretax_final_jpy": 1844639830,
+     "pretax_multiple": 59.7,
+     "pretax_ratio_vs_QQQ": 3.256,
+     "taxable_final_jpy": 816997478,
+     "taxable_multiple": 26.44,
+     "taxable_ratio_vs_QQQ_NISA_all": 1.462,
+     "taxable_ratio_vs_QQQ_taxable": 1.847,
+     "taxable_carry_ratio_vs_QQQ_NISA_all": 1.573,
+     "taxes_paid_jpy": 216005170,
+     "commission_jpy_approx": 1093331,
+     "rule_maxdd_daily_pretax": -57.8
+    },
+    "QQQ_maxdd_daily_of_account": -47.1
+   }
+  },
+  "NISA の上限（累計1800万円）で相手を分けた版": {
+   "TQQQ_3x_real_2010-02": {
+    "bench_final_jpy": 203962339,
+    "months_over_cap_to_taxable": 19,
+    "rule_A_taxable_ratio": 3.835,
+    "rule_B_taxable_ratio": 3.347,
+    "rule_C_taxable_ratio": 3.667
+   },
+   "QLD_2x_real_2006-07": {
+    "bench_final_jpy": 335732417,
+    "months_over_cap_to_taxable": 62,
+    "rule_A_taxable_ratio": 1.623,
+    "rule_B_taxable_ratio": 1.545,
+    "rule_C_taxable_ratio": 1.579
+   },
+   "SYN3_calibrated_2001-01（事後・参考）": {
+    "bench_final_jpy": 549359247,
+    "months_over_cap_to_taxable": 129,
+    "rule_A_taxable_ratio": 3.84,
+    "rule_B_taxable_ratio": 3.779
+   }
+  }
+ },
+ "stress_lump_from_2000_03_27_peak（事後・ストレス）": {
+  "about": "較正した合成の3倍・1倍＝QQQ・2000-03-27（NASDAQ-100 の天井）に一括で始めて 2026-08-31 まで。円・課税口座・楽天の手数料。値は年率%",
+  "pretax_usd": {
+   "A": {
+    "cagr": 8.65,
+    "bench_cagr": 7.75,
+    "excess": 0.9,
+    "t": 1.75,
+    "maxdd_daily": -98.1,
+    "bench_maxdd_daily": -83.0,
+    "sharpe": 0.39,
+    "bench_sharpe": 0.36,
+    "jpy_1000万_taxable_cagr": 1.97,
+    "jpy_1000万_QQQ_NISA_cagr": 9.37,
+    "recovered_start_value_on": 20200219
+   },
+   "B": {
+    "cagr": 11.79,
+    "bench_cagr": 7.75,
+    "excess": 4.05,
+    "t": 2.18,
+    "maxdd_daily": -95.9,
+    "bench_maxdd_daily": -83.0,
+    "sharpe": 0.44,
+    "bench_sharpe": 0.36,
+    "jpy_1000万_taxable_cagr": 6.45,
+    "jpy_1000万_QQQ_NISA_cagr": 9.37,
+    "recovered_start_value_on": 20171031
+   }
+  },
+  "jpy_detail": {
+   "100万円_A": {
+    "pretax": 10.36,
+    "commission": 4.7,
+    "taxable": 0.92,
+    "taxes_paid_x_principal": 0.36,
+    "commission_x_principal": 0.16,
+    "lowest_value_jpy": 8297,
+    "taxable_carry3y": 1.85,
+    "QQQ_NISA": 9.37
+   },
+   "100万円_B": {
+    "pretax": 13.56,
+    "commission": 7.97,
+    "taxable": 4.14,
+    "taxes_paid_x_principal": 0.82,
+    "commission_x_principal": 0.28,
+    "lowest_value_jpy": 21146,
+    "taxable_carry3y": 5.05,
+    "QQQ_NISA": 9.37
+   },
+   "1000万円_A": {
+    "pretax": 10.36,
+    "commission": 6.07,
+    "taxable": 1.97,
+    "taxes_paid_x_principal": 0.46,
+    "commission_x_principal": 0.07,
+    "lowest_value_jpy": 91179,
+    "taxable_carry3y": 3.0,
+    "QQQ_NISA": 9.37
+   },
+   "1000万円_B": {
+    "pretax": 13.56,
+    "commission": 10.7,
+    "taxable": 6.45,
+    "taxes_paid_x_principal": 1.42,
+    "commission_x_principal": 0.1,
+    "lowest_value_jpy": 263133,
+    "taxable_carry3y": 7.49,
+    "QQQ_NISA": 9.37
+   }
+  }
+ },
+ "instruments_for_japanese_individual": {
+  "rakuten_us_etf_list_2026_08_24（out/broker_lineup.json）": {
+   "QLD": {
+    "listed": true,
+    "name": "ProShares Ultra QQQ",
+    "expense_ratio_pct": "0.95"
+   },
+   "TQQQ": {
+    "listed": true,
+    "name": "ProShares UltraPro QQQ",
+    "expense_ratio_pct": "0.82"
+   },
+   "QQQ": {
+    "listed": true,
+    "name": "Invesco QQQ Trust, Series 1",
+    "expense_ratio_pct": "0.20"
+   },
+   "QQQM": {
+    "listed": true,
+    "name": "Invesco NASDAQ 100 ETF",
+    "expense_ratio_pct": "0.15"
+   }
+  },
+  "rakuten_commission（2026-09-28 楽天の頁で確認）": "米国ETF: 約定代金の0.495%（税込）・上限22ドル。楽天指定の15銘柄は買付手数料無料（2020-01-06〜）——QQQ は対象、QQQM・TQQQ・QLD は対象外。NISA 口座の米国株・ETF の売買手数料は無料",
+  "nisa": "新NISA の成長投資枠は デリバティブで倍率を掛ける投資信託・ETF（レバレッジ型）を対象外にしている＝QLD・TQQQ・国内のレバレッジ投信は NISA で買えず、課税口座（特定口座）になる。broker_lineup.json は NISA の可否を持っていないので、この一覧では確認していない（制度の一般の決まりによる）",
+  "execution": "信号（米国の前日の終値 vs 200日平均）は日本時間の朝に分かる。発注は当夜の米国の取引時間＝版C（寄付き）か版B（引け）。版A は日本からは原理的にできない。入れ替えは年6〜7回（2001〜 で 175回）",
+  "domestic_leveraged_funds": "国内の2倍型投信（楽天レバレッジNASDAQ-100 など）は1日1回の基準価額で約定（版B に近い）・受渡に数営業日・乗り換えに現金の空白が出る。★この経路は測っていない"
+ },
+ "caveats": [
+  "1986-2000 は配当を足せていない（価格だけ）。2001〜 で分配を足すと超過は +1.05pt 上がった＝価格だけの数字は規則にやや不利",
+  "実物の窓（2006/2010〜）は NASDAQ-100 の長い上げ相場にほぼ重なる。3倍の実物で 2000-2002・2008 を経験した記録は無い（合成で代えた）",
+  "シャープ・対数の t・同じ平均の倍率との比較・合成・天井からのストレス・転がる積立はすべて事後の追加（事前登録の判定の外）",
+  "1営業日のずれで結果が大きく変わる（1987年 +33.8% vs −16.7%・2018年 −16.1% vs −6.1%・2001〜 の最大下落 −83.9% vs −78.0%）。どちらが本当ということはなく、ずれの幅そのものが不確かさ",
+  "税の計算は外国税額控除を入れていない。損失の繰り越しは確定申告が要る。積立の NISA の相手は累計1800万円の上限で分けた版も出した（比はほぼ同じ）",
+  "3倍の器は NASDAQ-100 が1日で −33% 下げれば価値がほぼ0になる。最大の下げ −15.1%（1987-10-19）の日は凍結の版では1倍だったが、1営業日遅れの版では3倍（−45%）",
+  "転がる積立の窓は重なっていて独立ではない。2010〜2026 の一度きりの上げ相場が結果の大半を決めている"
+ ],
+ "key_numbers": [
+  "紙の上 2001-01〜2026-08: 年率16.93% vs NDX持ち続け10.37%・超過+6.56%/年・t2.41（分配込み+7.61・t2.56）",
+  "紙の上 1986-10〜2000-12: 29.18% vs 22.01%・超過+7.17%/年・t2.10",
+  "対数の t は 2001〜 1.00・シャープ 0.53 vs 0.49＝勝ちの大半は倍率の分",
+  "同じ平均の倍率2.47倍を毎日持つだけとの差: 2001〜 +7.98%/年・t0.53／1986-2000 −0.77%/年",
+  "最大下落（日次）2001〜 −83.9%（持ち続け −70.5%）・2000-03の天井から −97.9%・回復に20.4年",
+  "区間: 2001-07 −6.70%/年・2008-15 +4.91（t1.22）・2016〜 +19.63（t2.58）",
+  "実物 税の前: QLD 2006〜 +8.1〜8.4%/年 t3.0〜3.1・TQQQ 2010〜 +16.7〜19.0%/年 t3.0〜3.2（持ちっぱなしTQQQ 42.3% ＞ 規則 38.4%）",
+  "実物の目減りは凍結の費用モデルより重い: TQQQ +1.28%/年・QLD +0.81%/年",
+  "円・課税口座 vs NISAのQQQ（一括）: TQQQ 2010〜 +9.1〜12.1%/年・QLD 2006〜 +1.3〜2.9%/年",
+  "較正した合成 2001〜 一括: 100万円 −1.2〜+0.9%/年・1000万円 +2.9〜+4.8%/年（NISAのQQQ比）",
+  "2000-03の天井から1000万円: 課税口座 1.97〜6.45%/年 vs NISAのQQQ 9.37%/年（口座は一時9万〜26万円）",
+  "積立10万円/月 税の後 NISAのQQQ比: TQQQ 2010〜 3.3〜3.8倍・合成 2001〜 3.7〜3.8倍（2010〜の上げ相場が大半）",
+  "紙の上の転がる10年積立: 規則の勝ち 256/360窓・最悪0.57倍・元本割れ53窓（持ち続け10）",
+  "入れ替えは年6〜7回。楽天で QLD（0.95%）・TQQQ（0.82%）は買えるが NISA不可・買付手数料無料はQQQだけ"
+ ],
+ "files": [
+  "/home/user/ccf-gate/out/edge/verify_levtrend_ndx.json",
+  "scratchpad/levtrend_ndx/*.py（計算・repo 外）",
+  "out/_edge_cache/yhdp_{^NDX,QQQ,QLD,TQQQ,QQQM,JPY=X,^IRX,^IXIC}.json（日次・h.cached）"
+ ]
+}

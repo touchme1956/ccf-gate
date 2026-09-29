@@ -1,0 +1,524 @@
+{
+ "key": "pead",
+ "frozen": "2026-09-28",
+ "phase": "select",
+ "sel_end": 200012,
+ "spec": {
+  "legs": [
+   [
+    "niq_su",
+    "3.0"
+   ]
+  ],
+  "w": "vw_cap",
+  "min_n": 50,
+  "min_n_repl": 20,
+  "replicate": [
+   "jpn",
+   "gbr",
+   "deu",
+   "fra",
+   "can",
+   "aus",
+   "che",
+   "swe",
+   "nld",
+   "ita",
+   "esp",
+   "hkg",
+   "sgp",
+   "dnk",
+   "nor",
+   "bel",
+   "fin",
+   "aut",
+   "irl",
+   "prt",
+   "nzl",
+   "isr"
+  ],
+  "turn_ann": 3.0,
+  "cost_per_turnover": 0.0025,
+  "side_note": "'3.0' = 標準化した驚きが大きい三分位（JKP の direction が +1 の側）。選定期間の 因子 と 3.0−1.0 の相関で確かめた"
+ },
+ "rationale": "【規則】米国上場株のうち、標準化した利益の驚き（JKP niq_su＝四半期の純利益の前年同期差 ÷ その差の過去8四半期のばらつき）が大きい三分位（JKP の '3.0'・境目は非超小型株で引く）を、上限つきの時価加重（JKP vw_cap＝NYSE の80%点で重みに上限）で買いだけで持つ。組は JKP が毎月 m−1 月末に組んだもの（会計値は公表の遅れを置いて使う）をそのまま使い、月 m のリターンを取る。三分位の銘柄数が50社未満の月（1964-11〜1965-07）は使わない。【なぜ】(1) 決算発表後の値動きの持続（Ball & Brown 1968・Foster, Olsen & Shevlin 1984・Bernard & Thomas 1989/1990）: 市場は利益の季節的な時系列の性質（前年同期差に正の自己相関がある）を十分に織り込まず、良い驚きの後の数四半期にわたって株価が上へ漂う——2001年より前に公表された、会計の異常の中で最も古く頑丈とされた一つ。(2) 買いだけの組なので、空売りの制約で残りやすい悪い側の漂い（下へ）は取れず、良い側の上乗せだけを取る。(3) 売上の驚き（Jegadeesh & Livnat 2006 は2001年以降の公表）は同じ系統の参考として並べた。【向き】選定期間の米国で JKP 因子と '3.0'−'1.0' の相関は +1.000（vw_cap・vw とも）＝JKP の direction は +1・良い側は '3.0'。三分位の平均の超過（年率・費用前）も 1.0 4.76% < 2.0 7.44% < 3.0 8.83% と単調。【選定期間 196508〜200012（35.4年）】費用後の年率 13.74% 対 French 米国市場 11.84%、超過 +1.91%/年（費用前 +2.75）、t 2.81（Newey-West 2.2）、ぶれ 17.1% 対 15.7%、最大下落 -42.5% 対 -46.5%、転がる10年で勝った窓 21/26。市場に対するβ 1.06・CAPM のα +2.32%/年。JKP の上限つき市場（vw_cap）に対しては +1.44%/年＝超過の一部（約0.5pt）は上限つきの重み（中型寄り）の分。⚠ 部分期間: 1965-1980 +3.96%/年（t 3.85）・1981-1990 -0.31（t 0.02）・1991-2000 +0.82（t 0.57）＝上乗せはほぼ1980年までに集中し、Bernard & Thomas の公表（1989）の前後から小さい。参考: 同じ側の vw（上限なし）は +1.09%/年（t 1.68）、売上の驚きの良い側 vw_cap は +0.76（t 1.31）、利益＋売上の等分 vw_cap は +1.34（t 2.09）、利益の驚きの悪い側 vw_cap は -2.65（t -2.75）＝向きは系統の前提どおり（悪い側のほうが大きく負ける＝買いだけでは取れない側が大きい）。【選び方】事前登録どおり（選べる6変種のうち、選定期間の費用後の超過が +1%/年以上の中で t が最大）。試した変種は10（選べる6・参考4〔悪い側2・中＋良2＝定義の外〕）。【予想】事前登録 r6 どおり「公表から時間が経ち米国では弱い」。選定期間の後半20年で上乗せはほぼ0なので、ホールドアウトで +1%/年・t≥2 を満たす見込みは低い。",
+ "n_variants_tried": 10,
+ "selection_stats": {
+  "from": 196508,
+  "to": 200012,
+  "years": 35.4,
+  "cagr": 13.74,
+  "bench_cagr": 11.84,
+  "excess": 1.91,
+  "ex_arith": 1.95,
+  "t": 2.81,
+  "t_nw": 2.2,
+  "vol": 17.1,
+  "bench_vol": 15.7,
+  "maxdd": -42.5,
+  "bench_maxdd": -46.5,
+  "sharpe": 0.47,
+  "bench_sharpe": 0.39,
+  "roll10_win": "21/26"
+ },
+ "implement": "楽天証券の米国株（成長投資枠で NISA 可・レバレッジではない）で個別株を持つ形しか無い: 決算が出るたび（四半期ごと・米国は1〜2月・4〜5月・7〜8月・10〜11月に集中）、米国上場の大型・中型株を「四半期の利益（または売上）の前年同期差 ÷ その差の過去2年のばらつき」で並べ、上の1/3を時価加重で持ち、下がった銘柄は次の決算で入れ替える。回転は年300%前後と重く、数百社の三分位を個人が再現するのは無理なので、実際には大きい会社から数十社に絞る近似になる。決算の驚きで選ぶ ETF は楽天の一覧（out/broker_lineup.json）には無く、米国にも純粋なものは見当たらない（勢いの ETF〔MTUM〕は価格の勢いで選び、決算の驚きとは別物）。売買の手間・税（課税口座なら毎年の売却益に20.315%）が重い",
+ "family_name": "決算の驚きの良い側の買いだけ（JKP 標準化した利益の驚き・売上の驚きの上の三分位）",
+ "lookahead_test": "fam_pead.lookahead_test と prefix_subprocess で確かめた（すべて食い違い0）: (1) 切り詰め: 脚のリターン・銘柄数・RF を 1975-12/1985-12/1990-12/1995-12/1999-12 で切って作り直しても、切った月までの規則のリターンと回転が完全一致。(2) 未来の毒: 切った月より後の脚のリターン・銘柄数・RF を乱数に置き換えても、それより前のリターンと回転は1か月も変わらない（後ろは変わる＝毒は効いている）。(3) 1か月ずらし: 切った月より後の脚の値を1か月ずらして壊しても前は不変（後ろは変わる）。(4) 月合わせ: 月 m の総リターン − 月 m の RF = JKP の月 m の脚の超過（差の最大 1.4e-17）。脚の月 m の値は同じ月の米国市場と相関 0.972・次の月とは 0.054・前の月とは 0.045＝JKP の月 m はその月のリターン（m−1 月末に組んだ組）。(5) 別プロセス: EDGE_SEL_END=199012 と 200012 で run(spec) を走らせ、1990-12 までの規則・相手・回転 1384 値と他の市場（can）の 38 値が 1e-12 で一致・1990-12 で切った側に後の月は0。(6) 側（信号）は spec の定数で、データから再推定しない。月 m に持つかは月 m の組（m−1 月末に組まれた）の銘柄数 n だけで決め、この module は全期間の平均・分位・標準化を一切使わない（標準化は JKP が各社の過去8四半期で行う）",
+ "lookahead_result": {
+  "cuts": [
+   {
+    "cut": 197512,
+    "truncate": true,
+    "poison_prefix_same": true,
+    "poison_effective": true,
+    "shift_prefix_same": true,
+    "shift_effective": true
+   },
+   {
+    "cut": 198512,
+    "truncate": true,
+    "poison_prefix_same": true,
+    "poison_effective": true,
+    "shift_prefix_same": true,
+    "shift_effective": true
+   },
+   {
+    "cut": 199012,
+    "truncate": true,
+    "poison_prefix_same": true,
+    "poison_effective": true,
+    "shift_prefix_same": true,
+    "shift_effective": true
+   },
+   {
+    "cut": 199512,
+    "truncate": true,
+    "poison_prefix_same": true,
+    "poison_effective": true,
+    "shift_prefix_same": true,
+    "shift_effective": true
+   },
+   {
+    "cut": 199912,
+    "truncate": true,
+    "poison_prefix_same": true,
+    "poison_effective": true,
+    "shift_prefix_same": true,
+    "shift_effective": true
+   }
+  ],
+  "n_months_full": 425,
+  "month_align_maxdiff": 1.3877787807814457e-17,
+  "sides_constant": true,
+  "ok": true
+ },
+ "prefix_result": {
+  "us_values_compared": 1384,
+  "us_mismatch": 0,
+  "markets_values_compared": 38,
+  "markets_mismatch": 0,
+  "markets_in_1990cut": [
+   "can"
+  ],
+  "leak_after_cut": 0,
+  "ok": true
+ },
+ "directions": {
+  "niq_su": {
+   "side": "3.0",
+   "bad": "1.0",
+   "vw_cap": {
+    "corr": 1.0,
+    "months": 434,
+    "from": 196411,
+    "to": 200012,
+    "mean_excess_ann_pct": {
+     "1.0": 4.76,
+     "2.0": 7.44,
+     "3.0": 8.83
+    }
+   },
+   "vw": {
+    "corr": 1.0,
+    "months": 434,
+    "from": 196411,
+    "to": 200012,
+    "mean_excess_ann_pct": {
+     "1.0": 3.76,
+     "2.0": 6.14,
+     "3.0": 7.99
+    }
+   }
+  },
+  "saleq_su": {
+   "side": "3.0",
+   "bad": "1.0",
+   "vw_cap": {
+    "corr": 1.0,
+    "months": 434,
+    "from": 196411,
+    "to": 200012,
+    "mean_excess_ann_pct": {
+     "1.0": 6.05,
+     "2.0": 7.06,
+     "3.0": 8.03
+    }
+   },
+   "vw": {
+    "corr": 1.0,
+    "months": 434,
+    "from": 196411,
+    "to": 200012,
+    "mean_excess_ann_pct": {
+     "1.0": 4.95,
+     "2.0": 5.5,
+     "3.0": 7.5
+    }
+   }
+  }
+ },
+ "variants_table": [
+  {
+   "name": "利益の驚き(niq_su)の良い側・vw_cap",
+   "eligible": true,
+   "from": 196508,
+   "excess": 1.91,
+   "gross_excess": 2.75,
+   "t": 2.81,
+   "t_nw": 2.2,
+   "vol": 17.1,
+   "maxdd": -42.5,
+   "beta": 1.06,
+   "alpha_capm": 2.32,
+   "ex_vs_jkp_capped_mkt": 1.44,
+   "sub_periods": {
+    "1964-1980": {
+     "excess": 3.96,
+     "t": 3.85
+    },
+    "1981-1990": {
+     "excess": -0.31,
+     "t": 0.02
+    },
+    "1991-2000": {
+     "excess": 0.82,
+     "t": 0.57
+    }
+   },
+   "turnover_yr": 3.0
+  },
+  {
+   "name": "売上の驚き(saleq_su)の良い側・vw_cap",
+   "eligible": true,
+   "from": 196508,
+   "excess": 0.76,
+   "gross_excess": 1.6,
+   "t": 1.31,
+   "t_nw": 1.15,
+   "vol": 17.6,
+   "maxdd": -45.0,
+   "beta": 1.08,
+   "alpha_capm": 1.24,
+   "ex_vs_jkp_capped_mkt": 0.3,
+   "sub_periods": {
+    "1964-1980": {
+     "excess": 2.65,
+     "t": 2.72
+    },
+    "1981-1990": {
+     "excess": -1.02,
+     "t": -0.42
+    },
+    "1991-2000": {
+     "excess": -0.49,
+     "t": -0.04
+    }
+   },
+   "turnover_yr": 3.0
+  },
+  {
+   "name": "利益＋売上の良い側を等分・vw_cap",
+   "eligible": true,
+   "from": 196508,
+   "excess": 1.34,
+   "gross_excess": 2.19,
+   "t": 2.09,
+   "t_nw": 1.72,
+   "vol": 17.3,
+   "maxdd": -43.8,
+   "beta": 1.07,
+   "alpha_capm": 1.78,
+   "ex_vs_jkp_capped_mkt": 0.87,
+   "sub_periods": {
+    "1964-1980": {
+     "excess": 3.31,
+     "t": 3.41
+    },
+    "1981-1990": {
+     "excess": -0.67,
+     "t": -0.22
+    },
+    "1991-2000": {
+     "excess": 0.17,
+     "t": 0.24
+    }
+   },
+   "turnover_yr": 3.014
+  },
+  {
+   "name": "利益の驚き(niq_su)の良い側・vw",
+   "eligible": true,
+   "from": 196508,
+   "excess": 1.09,
+   "gross_excess": 1.93,
+   "t": 1.68,
+   "t_nw": 1.8,
+   "vol": 16.2,
+   "maxdd": -40.7,
+   "beta": 1.0,
+   "alpha_capm": 1.79,
+   "ex_vs_jkp_capped_mkt": 0.62,
+   "sub_periods": {
+    "1964-1980": {
+     "excess": 2.01,
+     "t": 1.67
+    },
+    "1981-1990": {
+     "excess": -0.29,
+     "t": -0.15
+    },
+    "1991-2000": {
+     "excess": 1.0,
+     "t": 0.91
+    }
+   },
+   "turnover_yr": 3.0
+  },
+  {
+   "name": "売上の驚き(saleq_su)の良い側・vw",
+   "eligible": true,
+   "from": 196508,
+   "excess": 0.67,
+   "gross_excess": 1.51,
+   "t": 1.19,
+   "t_nw": 1.23,
+   "vol": 16.5,
+   "maxdd": -40.1,
+   "beta": 1.02,
+   "alpha_capm": 1.33,
+   "ex_vs_jkp_capped_mkt": 0.2,
+   "sub_periods": {
+    "1964-1980": {
+     "excess": 2.11,
+     "t": 1.97
+    },
+    "1981-1990": {
+     "excess": -0.63,
+     "t": -0.35
+    },
+    "1991-2000": {
+     "excess": -0.36,
+     "t": -0.05
+    }
+   },
+   "turnover_yr": 3.0
+  },
+  {
+   "name": "利益＋売上の良い側を等分・vw",
+   "eligible": true,
+   "from": 196508,
+   "excess": 0.89,
+   "gross_excess": 1.73,
+   "t": 1.55,
+   "t_nw": 1.63,
+   "vol": 16.3,
+   "maxdd": -40.4,
+   "beta": 1.01,
+   "alpha_capm": 1.56,
+   "ex_vs_jkp_capped_mkt": 0.42,
+   "sub_periods": {
+    "1964-1980": {
+     "excess": 2.07,
+     "t": 1.91
+    },
+    "1981-1990": {
+     "excess": -0.46,
+     "t": -0.28
+    },
+    "1991-2000": {
+     "excess": 0.33,
+     "t": 0.46
+    }
+   },
+   "turnover_yr": 3.019
+  },
+  {
+   "name": "利益の驚きの悪い側・vw_cap（参考・向きの確認）",
+   "eligible": false,
+   "from": 196508,
+   "excess": -2.65,
+   "gross_excess": -1.83,
+   "t": -2.75,
+   "t_nw": -2.8,
+   "vol": 16.9,
+   "maxdd": -53.3,
+   "beta": 1.03,
+   "alpha_capm": -1.68,
+   "ex_vs_jkp_capped_mkt": -3.12,
+   "sub_periods": {
+    "1964-1980": {
+     "excess": -2.71,
+     "t": -1.58
+    },
+    "1981-1990": {
+     "excess": -2.01,
+     "t": -1.57
+    },
+    "1991-2000": {
+     "excess": -3.19,
+     "t": -1.79
+    }
+   },
+   "turnover_yr": 3.0
+  },
+  {
+   "name": "売上の驚きの悪い側・vw_cap（参考・向きの確認）",
+   "eligible": false,
+   "from": 196508,
+   "excess": -1.06,
+   "gross_excess": -0.23,
+   "t": -0.98,
+   "t_nw": -0.89,
+   "vol": 16.6,
+   "maxdd": -51.3,
+   "beta": 1.01,
+   "alpha_capm": -0.12,
+   "ex_vs_jkp_capped_mkt": -1.53,
+   "sub_periods": {
+    "1964-1980": {
+     "excess": -1.22,
+     "t": -0.54
+    },
+    "1981-1990": {
+     "excess": -0.9,
+     "t": -0.78
+    },
+    "1991-2000": {
+     "excess": -0.96,
+     "t": -0.53
+    }
+   },
+   "turnover_yr": 3.0
+  },
+  {
+   "name": "利益の驚きの中＋良を等分・vw_cap（参考・悪い驚きを避ける＝定義の外）",
+   "eligible": false,
+   "from": 196508,
+   "excess": 1.16,
+   "gross_excess": 2.01,
+   "t": 2.0,
+   "t_nw": 1.49,
+   "vol": 16.8,
+   "maxdd": -44.8,
+   "beta": 1.04,
+   "alpha_capm": 1.71,
+   "ex_vs_jkp_capped_mkt": 0.69,
+   "sub_periods": {
+    "1964-1980": {
+     "excess": 2.48,
+     "t": 2.89
+    },
+    "1981-1990": {
+     "excess": -0.06,
+     "t": 0.17
+    },
+    "1991-2000": {
+     "excess": 0.25,
+     "t": 0.16
+    }
+   },
+   "turnover_yr": 3.024
+  },
+  {
+   "name": "利益＋売上の中＋良の4脚を等分・vw_cap（参考・定義の外）",
+   "eligible": false,
+   "from": 196508,
+   "excess": 0.77,
+   "gross_excess": 1.62,
+   "t": 1.46,
+   "t_nw": 1.13,
+   "vol": 16.8,
+   "maxdd": -45.2,
+   "beta": 1.05,
+   "alpha_capm": 1.34,
+   "ex_vs_jkp_capped_mkt": 0.3,
+   "sub_periods": {
+    "1964-1980": {
+     "excess": 2.08,
+     "t": 2.52
+    },
+    "1981-1990": {
+     "excess": -0.31,
+     "t": -0.05
+    },
+    "1991-2000": {
+     "excess": -0.28,
+     "t": -0.13
+    }
+   },
+   "turnover_yr": 3.025
+  }
+ ],
+ "markets": [
+  "jpn",
+  "gbr",
+  "deu",
+  "fra",
+  "can",
+  "aus",
+  "che",
+  "swe",
+  "nld",
+  "ita",
+  "esp",
+  "hkg",
+  "sgp",
+  "dnk",
+  "nor",
+  "bel",
+  "fin",
+  "aut",
+  "irl",
+  "prt",
+  "nzl",
+  "isr"
+ ],
+ "markets_note": "国は JKP の3文字で run() の markets のキーと同じ。相手はその国の JKP mkt(vw)+米国RF（米ドル）。脚の銘柄数が20未満の月は落とし、24か月未満の国は markets に入らない。⚠ 四半期の会計値は米国外では1990年代後半まで薄く、選定期間（〜2000-12）に20社以上そろう国はカナダ（1987-02〜・13年）だけ＝他の21か国の再現は選定期間では一度も見ていない（見られない）",
+ "markets_selection_period": {
+  "can": {
+   "from": 198702,
+   "years": 13.2,
+   "excess": -1.51,
+   "t": -0.03
+  }
+ },
+ "selection_note": "事前登録どおり（選べる6変種のうち、選定期間の費用後の超過が +1%/年以上の中で t が最大）",
+ "benchmark": "French 米国市場（Mkt-RF＋RF・CRSP 全上場の上限なし時価加重）。他の国は JKP の国の mkt（vw＝上限なし・米ドル超過）＋French RF",
+ "cost_note": "片道の回転100%につき0.25%。回転は 300%/年（事前登録 r6 の置き値・四半期の決算の信号）＋等分の組の戻し（選んだ規則は1脚なので戻し無し）",
+ "subperiods": {
+  "1964-1980": {
+   "excess": 3.96,
+   "t": 3.85
+  },
+  "1981-1990": {
+   "excess": -0.31,
+   "t": 0.02
+  },
+  "1991-2000": {
+   "excess": 0.82,
+   "t": 0.57
+  }
+ },
+ "eligible_variants": 6,
+ "reference_variants": 4
+}

@@ -1,0 +1,381 @@
+{
+ "key": "factor_mom",
+ "frozen": "2026-09-28",
+ "phase": "select",
+ "sel_end": 200012,
+ "spec": {
+  "mode": "cs",
+  "score": "blend",
+  "top": 3
+ },
+ "rationale": "【規則】米国の大型株を French の2×3の組の大型側8つ（割安 BIG HiBM・成長 BIG LoBM・勢いの上位 BIG HiPRIOR・下位 BIG LoPRIOR・高収益 BIG HiOP・低収益 BIG LoOP・投資控えめ BIG LoINV・積極 BIG HiINV。1963年より前は取れる4組）に分け、毎月、過去3か月・6か月・12か月の複利リターンの順位を平均し、上位3組を等分で1か月持つ（月 m の持ち方は m−1 月末までのリターンだけで決まる）。【先行研究・経済的な理由】因子（型）のリターンには自己相関があり、直近に勝った型は翌月も勝ちやすい＝因子の勢い（Ehsani & Linnainmaa 2022 JF「Factor Momentum and the Momentum Factor」・Gupta & Kelly 2019「Factor Momentum Everywhere」・Arnott, Clements, Kalesnik & Linnainmaa 2023）。大型の型の入れ替えは「型の勢い」（Barberis & Shleifer 2003・Chen & De Bondt 2004 が S&P500 の中で確認・Lewellen 2002 は規模×簿価時価の組に勢い）。理由として挙げられるのは、型への資金の流れがゆっくり動くこと・型のリスクプレミアムが時間とともにゆっくり変わること・情報への反応の遅れ。3・6・12か月の順位の平均にしたのは、一つの窓の選び方に頼らないため。【選定期間の結果（1928-01〜2000-12・費用後）】年率 11.63% 対 米国市場 10.37%＝超過 +1.25%/年・t 3.0（Newey-West 3.25）・ぶれ 20.9% 対 19.3%・最大下落 -84.2% 対 -83.7%・転がる10年の勝ち 59/64。費用前の超過は約+2.1%/年で、回転 約3.0/年×0.25%＝約0.76%/年を引いた。前半（1928〜1963・4組から3組）超過 +0.62%/年 t 1.64、後半（1964〜2000・8組から3組）+1.89%/年 t 2.56。【選び方】事前に固定した29変種のうち、費用後の t が最大で超過が+1%/年以上のものは「12か月の勢い・上位2組・3か月ごとの入れ替え」（t 3.001・超過+1.89）だったが、入れ替えの位相を1〜2か月ずらすと t が 2.19・1.87 へ落ちた＝特定の月で効く変種なので事前登録の決まりどおり除外し、次点（t 2.995・超過+1.25）のこの規則を選んだ（両者の t の差は0.006）。【参考・選定期間の他の地域（1991〜2000・選ぶのには使っていない）】Europe +3.11%/年 t 2.07・Japan +1.75%/年 t 0.83・Asia_Pacific_ex_Japan +0.48%/年 t 0.25・Emerging -0.53%/年 t -0.21",
+ "n_variants_tried": 31,
+ "selection_stats": {
+  "from": 192801,
+  "to": 200012,
+  "years": 73.0,
+  "cagr": 11.63,
+  "bench_cagr": 10.37,
+  "excess": 1.25,
+  "ex_arith": 1.43,
+  "t": 3.0,
+  "t_nw": 3.25,
+  "vol": 20.9,
+  "bench_vol": 19.3,
+  "maxdd": -84.2,
+  "bench_maxdd": -83.7,
+  "sharpe": 0.45,
+  "bench_sharpe": 0.41,
+  "roll10_win": "59/64"
+ },
+ "implement": "米国の大型株を8つの「型」（割安・成長〔高PBR〕・勢いの上位/下位・高収益/低収益・投資控えめ/積極）に分け、毎月、直近の成績が良かった型を等分で持ち、翌月に入れ替える。楽天証券（成長投資枠＝NISA可）の米国ETFで近いもの: 割安 VTV/SPYV・成長 VUG/SPYG・高収益 QUAL（近似）・配当/低投資 DGRW（近似）。ただし勢いの上位/下位・低収益・積極投資の型に対応するETFは楽天の一覧（out/broker_lineup.json）に無く、その型が選ばれた月は S&P500 の中で自分で銘柄を組むしかない（勢いの型は年200%前後の回転＝課税の特定口座）。毎月の入れ替えは NISA の枠（売った枠は翌年まで戻らない）と相性が悪く、実際は特定口座（売買益に20.315%）になる",
+ "name": "大型株の「型」の勢いの入れ替え（割安/成長・勢い・収益性・投資の8組から直近の勝ち組を持つ）",
+ "lookahead_test": "(1) 月X以降の組と市場のリターンを乱しても、月X以前の重み・回転と月X未満のリターンが1ビットも変わらない（X=1935-06/1950-12/1969-12/1985-12/1996-06）(2) データを X−1 月で切って組み立てても、それまでのリターン・回転・重みが全データの場合と一致 (3) ある組の月 m のリターンだけを大きく変えても weights[m] は動かない（同じ月の先読みが無い）。29変種すべてで合格、再現の4地域でも合格。検査自体がわざと入れた先読み（月 m・月 m+1 のリターンを点に混ぜる）を捕まえることも確かめた",
+ "variants_table": [
+  {
+   "name": "A cs J6 k1",
+   "excess": 1.07,
+   "t": 1.57,
+   "gross_excess": 2.48,
+   "turnover_yr": 5.04,
+   "from": 192701,
+   "note": ""
+  },
+  {
+   "name": "A cs J6 k2",
+   "excess": 1.52,
+   "t": 2.46,
+   "gross_excess": 2.56,
+   "turnover_yr": 3.7,
+   "from": 192707,
+   "note": ""
+  },
+  {
+   "name": "A cs J6 k3",
+   "excess": 0.69,
+   "t": 1.89,
+   "gross_excess": 1.52,
+   "turnover_yr": 2.99,
+   "from": 192707,
+   "note": ""
+  },
+  {
+   "name": "A cs J12 k1",
+   "excess": 2.51,
+   "t": 2.79,
+   "gross_excess": 3.47,
+   "turnover_yr": 3.4,
+   "from": 192707,
+   "note": ""
+  },
+  {
+   "name": "A cs J12 k2",
+   "excess": 1.79,
+   "t": 2.77,
+   "gross_excess": 2.61,
+   "turnover_yr": 2.93,
+   "from": 192801,
+   "note": ""
+  },
+  {
+   "name": "A cs J12 k3",
+   "excess": 1.09,
+   "t": 2.84,
+   "gross_excess": 1.76,
+   "turnover_yr": 2.41,
+   "from": 192801,
+   "note": ""
+  },
+  {
+   "name": "B cs J1 k1",
+   "excess": 0.8,
+   "t": 1.42,
+   "gross_excess": 3.65,
+   "turnover_yr": 10.17,
+   "from": 192608,
+   "note": ""
+  },
+  {
+   "name": "B cs J1 k2",
+   "excess": 1.19,
+   "t": 1.82,
+   "gross_excess": 3.44,
+   "turnover_yr": 8.02,
+   "from": 192702,
+   "note": ""
+  },
+  {
+   "name": "B cs J1 k3",
+   "excess": 1.1,
+   "t": 2.26,
+   "gross_excess": 2.75,
+   "turnover_yr": 5.92,
+   "from": 192702,
+   "note": ""
+  },
+  {
+   "name": "B cs J3 k1",
+   "excess": -0.23,
+   "t": 0.48,
+   "gross_excess": 1.69,
+   "turnover_yr": 6.96,
+   "from": 192610,
+   "note": ""
+  },
+  {
+   "name": "B cs J3 k2",
+   "excess": 0.75,
+   "t": 1.45,
+   "gross_excess": 2.19,
+   "turnover_yr": 5.19,
+   "from": 192704,
+   "note": ""
+  },
+  {
+   "name": "B cs J3 k3",
+   "excess": 0.55,
+   "t": 1.54,
+   "gross_excess": 1.62,
+   "turnover_yr": 3.84,
+   "from": 192704,
+   "note": ""
+  },
+  {
+   "name": "C cs J12skip1 k1",
+   "excess": 1.75,
+   "t": 2.19,
+   "gross_excess": 2.7,
+   "turnover_yr": 3.4,
+   "from": 192708,
+   "note": ""
+  },
+  {
+   "name": "C cs J12skip1 k2",
+   "excess": 1.13,
+   "t": 1.98,
+   "gross_excess": 1.95,
+   "turnover_yr": 2.93,
+   "from": 192802,
+   "note": ""
+  },
+  {
+   "name": "C cs J12skip1 k3",
+   "excess": 0.55,
+   "t": 1.8,
+   "gross_excess": 1.22,
+   "turnover_yr": 2.41,
+   "from": 192802,
+   "note": ""
+  },
+  {
+   "name": "D cs blend k1",
+   "excess": 1.97,
+   "t": 2.32,
+   "gross_excess": 3.39,
+   "turnover_yr": 5.06,
+   "from": 192707,
+   "note": ""
+  },
+  {
+   "name": "D cs blend k2",
+   "excess": 1.61,
+   "t": 2.79,
+   "gross_excess": 2.69,
+   "turnover_yr": 3.85,
+   "from": 192801,
+   "note": ""
+  },
+  {
+   "name": "D cs blend k3",
+   "excess": 1.25,
+   "t": 3.0,
+   "gross_excess": 2.1,
+   "turnover_yr": 3.04,
+   "from": 192801,
+   "note": "★選んだ規則"
+  },
+  {
+   "name": "E vs_mkt J6",
+   "excess": 1.04,
+   "t": 2.06,
+   "gross_excess": 2.04,
+   "turnover_yr": 3.62,
+   "from": 192701,
+   "note": ""
+  },
+  {
+   "name": "E vs_mkt J12",
+   "excess": 1.19,
+   "t": 2.3,
+   "gross_excess": 2.03,
+   "turnover_yr": 3.02,
+   "from": 192707,
+   "note": ""
+  },
+  {
+   "name": "F cs+mid J6 k3",
+   "excess": 0.39,
+   "t": 1.07,
+   "gross_excess": 1.44,
+   "turnover_yr": 3.79,
+   "from": 192707,
+   "note": ""
+  },
+  {
+   "name": "F cs+mid J12 k3",
+   "excess": 0.92,
+   "t": 2.05,
+   "gross_excess": 1.76,
+   "turnover_yr": 3.05,
+   "from": 192801,
+   "note": ""
+  },
+  {
+   "name": "G cs sharpe12 k2",
+   "excess": 1.86,
+   "t": 2.89,
+   "gross_excess": 2.63,
+   "turnover_yr": 2.75,
+   "from": 192801,
+   "note": ""
+  },
+  {
+   "name": "G cs sharpe12 k3",
+   "excess": 0.73,
+   "t": 2.04,
+   "gross_excess": 1.41,
+   "turnover_yr": 2.45,
+   "from": 192801,
+   "note": ""
+  },
+  {
+   "name": "H cs J6 k4",
+   "excess": 0.89,
+   "t": 1.48,
+   "gross_excess": 1.75,
+   "turnover_yr": 3.04,
+   "from": 196401,
+   "note": ""
+  },
+  {
+   "name": "H cs J12 k4",
+   "excess": 1.08,
+   "t": 1.96,
+   "gross_excess": 1.76,
+   "turnover_yr": 2.44,
+   "from": 196407,
+   "note": ""
+  },
+  {
+   "name": "I cs J12 k1 hold3",
+   "excess": 2.38,
+   "t": 2.71,
+   "gross_excess": 3.08,
+   "turnover_yr": 2.49,
+   "from": 192707,
+   "note": "除外: 3か月ごとの入れ替えの位相（系列の始まり）に結果が依存（k2 で 1・4・7・10月 t2.92 / 2・5・8・11月 t2.19 / 3・6・9・12月 t1.87）＝特定の月で効く変種"
+  },
+  {
+   "name": "I cs J12 k2 hold3",
+   "excess": 1.89,
+   "t": 3.0,
+   "gross_excess": 2.5,
+   "turnover_yr": 2.19,
+   "from": 192801,
+   "note": "除外: 3か月ごとの入れ替えの位相（系列の始まり）に結果が依存（k2 で 1・4・7・10月 t2.92 / 2・5・8・11月 t2.19 / 3・6・9・12月 t1.87）＝特定の月で効く変種"
+  },
+  {
+   "name": "I cs J12 k3 hold3",
+   "excess": 1.01,
+   "t": 2.69,
+   "gross_excess": 1.53,
+   "turnover_yr": 1.88,
+   "from": 192801,
+   "note": "除外: 3か月ごとの入れ替えの位相（系列の始まり）に結果が依存（k2 で 1・4・7・10月 t2.92 / 2・5・8・11月 t2.19 / 3・6・9・12月 t1.87）＝特定の月で効く変種"
+  },
+  {
+   "name": "診断 I J12 k2 hold3 位相 2・5・8・11月",
+   "excess": 1.37,
+   "t": 2.19,
+   "note": "位相の検査（192804〜の共通窓）。選定の候補ではない"
+  },
+  {
+   "name": "診断 I J12 k2 hold3 位相 3・6・9・12月",
+   "excess": 1.06,
+   "t": 1.87,
+   "note": "位相の検査（192804〜の共通窓）。選定の候補ではない"
+  }
+ ],
+ "markets": [
+  "Europe",
+  "Japan",
+  "Asia_Pacific_ex_Japan",
+  "Emerging"
+ ],
+ "selection_subperiods": {
+  "192801-196312": {
+   "from": 192801,
+   "to": 196312,
+   "years": 36.0,
+   "cagr": 9.51,
+   "bench_cagr": 8.89,
+   "excess": 0.62,
+   "ex_arith": 1.09,
+   "t": 1.64,
+   "t_nw": 1.7,
+   "vol": 24.9,
+   "bench_vol": 22.7,
+   "maxdd": -84.2,
+   "bench_maxdd": -83.7,
+   "sharpe": 0.44,
+   "bench_sharpe": 0.43,
+   "roll10_win": "22/27"
+  },
+  "196401-200012": {
+   "from": 196401,
+   "to": 200012,
+   "years": 37.0,
+   "cagr": 13.72,
+   "bench_cagr": 11.84,
+   "excess": 1.89,
+   "ex_arith": 1.77,
+   "t": 2.56,
+   "t_nw": 2.93,
+   "vol": 16.0,
+   "bench_vol": 15.4,
+   "maxdd": -37.8,
+   "bench_maxdd": -46.5,
+   "sharpe": 0.5,
+   "bench_sharpe": 0.41,
+   "roll10_win": "28/28"
+  }
+ },
+ "selection_regions_info_only": {
+  "Europe": {
+   "from": 199107,
+   "to": 200012,
+   "excess": 3.11,
+   "t": 2.07
+  },
+  "Japan": {
+   "from": 199107,
+   "to": 200012,
+   "excess": 1.75,
+   "t": 0.83
+  },
+  "Asia_Pacific_ex_Japan": {
+   "from": 199107,
+   "to": 200012,
+   "excess": 0.48,
+   "t": 0.25
+  },
+  "Emerging": {
+   "from": 199101,
+   "to": 200012,
+   "excess": -0.53,
+   "t": -0.21
+  }
+ },
+ "selection_rule_note": "I（3か月ごとの入れ替え）は位相依存で除外。除外しなければ I J12 k2 hold3（t 3.001）が選ばれていた",
+ "cost_model": "回転1あたり0.25%。回転＝組の入れ替え・戻し（組どうしは重ならないと置く＝保守側）＋組の中の回転（勢いの組200%/年・他50%/年を月割り）"
+}

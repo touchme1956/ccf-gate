@@ -1,0 +1,1208 @@
+{
+ "key": "intl_value",
+ "lens": "bench",
+ "asof": "2026-09-28",
+ "how": "凍結した規則（spec_intl_value.json・fam_intl_value.build をそのまま呼ぶ・規則は1文字も変えていない）の費用後の月次を、相手だけ替えて harness.stats で比べた。EDGE_PHASE=holdout を自分のプロセスで立てた。検定期間 2001-01〜2025-12（French の国別データの最終月）。10年窓の勝率は harness の年刻み（16窓）と月刻み（181窓）の両方。CAPM の α は (規則−rf) を (相手−rf) に回帰。時価加重の21か国は French の国別ファイルに時価総額が無いので、World Bank CM.MKT.LCAP.CD（上場国内企業の年末時価総額・米ドル）を錨に、以後は French の国の市場の総リターンから配当利回り（同ファイルの Average of Annual Value-Weight Averages の Yld）を引いた値上がりで漂わせた。3通り: anchor2000（2000年末の錨だけ・買い持ち）/ reanchor（毎年末に WB の値で打ち直し・欠けた年は漂わせる）/ reanchor_hk96（香港だけ1996年末で錨を止める〔WB の香港は本土企業を含み2020年に日本並み〕）。作った時価加重21か国は French Developed_ex_US と年 −0.04〜−0.22%（t −0.2〜−0.8）で一致＝構成の検算。円建ては FRED DEXJPUS の月末値で規則と相手の両方を円へ直した。スクリプトは scratchpad の bench_verify.py",
+ "reproduction_check": {
+  "mine": {
+   "from": 200101,
+   "to": 202512,
+   "years": 25.0,
+   "cagr": 10.88,
+   "bench_cagr": 7.85,
+   "excess": 3.03,
+   "ex_arith": 3.12,
+   "t": 3.15,
+   "t_nw": 2.58,
+   "vol": 19.6,
+   "bench_vol": 17.8,
+   "maxdd": -65.4,
+   "bench_maxdd": -60.3,
+   "sharpe": 0.54,
+   "bench_sharpe": 0.42,
+   "roll10_win": "14/16"
+  },
+  "reported": {
+   "cagr": 10.88,
+   "bench_cagr": 7.85,
+   "excess": 3.03,
+   "t": 3.15,
+   "t_nw": 2.58
+  },
+  "match": "完全一致"
+ },
+ "verdict": "持ちこたえた",
+ "verdict_why": "同じ国の集合の相手を替えても勝ちは消えず、むしろ大きくなった: 時価加重の相手（French Developed_ex_US・自作の21か国時価加重）には +4.4〜+4.7%/年・t 3.7〜3.9、10年窓 15〜16/16。事前登録の相手（21か国の等加重）は時価加重の ex-US 市場に +1.40%/年（t 2.50）勝っていた＝『弱い相手』ではなく一番強い ex-US の相手だった。規則側も時価加重の国にして相手と揃えた『選ぶ腕だけ』でも +2.7〜+2.9%/年・t 3.1〜3.6、大きい7か国だけでも +2.28・t 2.60（選定期間も +3.26・t 3.55）、円建てでも +3.07・t 3.16。⚠ ただし米国市場（French）を相手にすると +1.73%/年・t 0.98・10年窓 5/16 で勝ちとは言えず、2008年以降は −4.1%/年。これは相手が弱かったのではなく、米国外という土俵そのものが米国に年 −1.3〜−2.7% 負けたから（選定期間でも米国に対しては t 0.6 と spec に書かれている）。また全ての相手で勝ちの中身は 2001-2007 に偏り、2008年以降は +1.5〜+2.4%/年・t 1.5〜2.1 に縮む（reimpl のレンズと同じ所見）",
+ "rows": {
+  "0_base_EW21": {
+   "name": "基準: 規則(費用後) vs 21か国 Mkt 等加重",
+   "from": 200101,
+   "to": 202512,
+   "years": 25.0,
+   "cagr": 10.88,
+   "bench_cagr": 7.85,
+   "excess": 3.03,
+   "ex_arith": 3.12,
+   "t": 3.15,
+   "t_nw": 2.58,
+   "vol": 19.6,
+   "bench_vol": 17.8,
+   "maxdd": -65.4,
+   "bench_maxdd": -60.3,
+   "roll10_win_yearly": "14/16",
+   "roll10_win_monthly": "155/181",
+   "capm_vs_bench": {
+    "alpha": 2.63,
+    "t_alpha": 2.7,
+    "beta": 1.065
+   },
+   "sub": {
+    "200101-200712": {
+     "excess": 6.67,
+     "t": 4.01
+    },
+    "200801-201712": {
+     "excess": 1.65,
+     "t": 1.25
+    },
+    "201801-202512": {
+     "excess": 1.89,
+     "t": 1.12
+    },
+    "200801-202512": {
+     "excess": 1.76,
+     "t": 1.68
+    }
+   }
+  },
+  "a_devexus": {
+   "name": "(a) vs French Developed_ex_US Mkt（時価加重）",
+   "from": 200101,
+   "to": 202512,
+   "years": 25.0,
+   "cagr": 10.88,
+   "bench_cagr": 6.45,
+   "excess": 4.43,
+   "ex_arith": 4.7,
+   "t": 3.7,
+   "t_nw": 2.97,
+   "vol": 19.6,
+   "bench_vol": 16.3,
+   "maxdd": -65.4,
+   "bench_maxdd": -55.9,
+   "roll10_win_yearly": "16/16",
+   "roll10_win_monthly": "172/181",
+   "capm_vs_bench": {
+    "alpha": 3.84,
+    "t_alpha": 3.23,
+    "beta": 1.147
+   },
+   "sub": {
+    "200101-200712": {
+     "excess": 10.74,
+     "t": 4.69
+    },
+    "200801-201712": {
+     "excess": 1.94,
+     "t": 1.28
+    },
+    "201801-202512": {
+     "excess": 2.52,
+     "t": 1.3
+    },
+    "200801-202512": {
+     "excess": 2.19,
+     "t": 1.81
+    }
+   }
+  },
+  "a_devexus_sel": {
+   "name": "(a) 選定期間の重なり 1990-07〜2000-12",
+   "from": 199007,
+   "to": 200012,
+   "years": 10.5,
+   "cagr": 12.72,
+   "bench_cagr": 5.35,
+   "excess": 7.37,
+   "ex_arith": 6.72,
+   "t": 2.13,
+   "t_nw": 2.46,
+   "vol": 15.8,
+   "bench_vol": 16.3,
+   "maxdd": -22.1,
+   "bench_maxdd": -23.5,
+   "roll10_win_yearly": "1/1",
+   "roll10_win_monthly": "7/7",
+   "capm_vs_bench": {
+    "alpha": 7.12,
+    "t_alpha": 2.41,
+    "beta": 0.774
+   },
+   "note": "選定期間の行（sub は検定期間の区切りなので省いた）"
+  },
+  "a_bench_EW21_vs_devexus": {
+   "name": "(a)参考: 相手EW21 自体 vs Dev ex US",
+   "from": 200101,
+   "to": 202512,
+   "years": 25.0,
+   "cagr": 7.85,
+   "bench_cagr": 6.45,
+   "excess": 1.4,
+   "ex_arith": 1.59,
+   "t": 2.5,
+   "t_nw": 2.62,
+   "vol": 17.8,
+   "bench_vol": 16.3,
+   "maxdd": -60.3,
+   "bench_maxdd": -55.9,
+   "roll10_win_yearly": "16/16",
+   "roll10_win_monthly": "180/181",
+   "capm_vs_bench": {
+    "alpha": 1.12,
+    "t_alpha": 1.91,
+    "beta": 1.08
+   },
+   "sub": {
+    "200101-200712": {
+     "excess": 4.07,
+     "t": 2.6
+    },
+    "200801-201712": {
+     "excess": 0.29,
+     "t": 0.69
+    },
+    "201801-202512": {
+     "excess": 0.63,
+     "t": 0.95
+    },
+    "200801-202512": {
+     "excess": 0.44,
+     "t": 1.09
+    }
+   }
+  },
+  "a2_efa": {
+   "name": "(a2) vs EFA（MSCI EAFE・投資できる・2001-09〜）",
+   "from": 200109,
+   "to": 202512,
+   "years": 24.3,
+   "cagr": 11.23,
+   "bench_cagr": 6.33,
+   "excess": 4.9,
+   "ex_arith": 5.1,
+   "t": 3.65,
+   "t_nw": 3.12,
+   "vol": 19.8,
+   "bench_vol": 16.7,
+   "maxdd": -65.4,
+   "bench_maxdd": -57.4,
+   "roll10_win_yearly": "15/15",
+   "roll10_win_monthly": "173/173",
+   "capm_vs_bench": {
+    "alpha": 4.41,
+    "t_alpha": 3.27,
+    "beta": 1.116
+   },
+   "sub": {
+    "200101-200712": {
+     "excess": 11.46,
+     "t": 4.45
+    },
+    "200801-201712": {
+     "excess": 3.01,
+     "t": 1.53
+    },
+    "201801-202512": {
+     "excess": 2.61,
+     "t": 1.26
+    },
+    "200801-202512": {
+     "excess": 2.84,
+     "t": 1.99
+    }
+   }
+  },
+  "a3_veu": {
+   "name": "(a3) vs VEU（FTSE 全世界除く米国・2007-04〜）",
+   "from": 200704,
+   "to": 202512,
+   "years": 18.8,
+   "cagr": 7.27,
+   "bench_cagr": 4.73,
+   "excess": 2.54,
+   "ex_arith": 3.0,
+   "t": 1.89,
+   "t_nw": 1.82,
+   "vol": 20.9,
+   "bench_vol": 17.8,
+   "maxdd": -65.4,
+   "bench_maxdd": -58.4,
+   "roll10_win_yearly": "9/9",
+   "roll10_win_monthly": "106/106",
+   "capm_vs_bench": {
+    "alpha": 2.45,
+    "t_alpha": 1.61,
+    "beta": 1.114
+   },
+   "sub": {
+    "200801-201712": {
+     "excess": 2.79,
+     "t": 1.49
+    },
+    "201801-202512": {
+     "excess": 2.78,
+     "t": 1.31
+    },
+    "200801-202512": {
+     "excess": 2.78,
+     "t": 1.99
+    }
+   }
+  },
+  "c_us": {
+   "name": "(c) vs 米国市場（French・CRSP 時価加重）",
+   "from": 200101,
+   "to": 202512,
+   "years": 25.0,
+   "cagr": 10.88,
+   "bench_cagr": 9.15,
+   "excess": 1.73,
+   "ex_arith": 2.31,
+   "t": 0.98,
+   "t_nw": 0.83,
+   "vol": 19.6,
+   "bench_vol": 15.5,
+   "maxdd": -65.4,
+   "bench_maxdd": -50.3,
+   "roll10_win_yearly": "5/16",
+   "roll10_win_monthly": "53/181",
+   "capm_vs_bench": {
+    "alpha": 2.24,
+    "t_alpha": 0.94,
+    "beta": 1.009
+   },
+   "sub": {
+    "200101-200712": {
+     "excess": 17.16,
+     "t": 4.66
+    },
+    "200801-201712": {
+     "excess": -4.02,
+     "t": -0.58
+    },
+    "201801-202512": {
+     "excess": -4.16,
+     "t": -0.81
+    },
+    "200801-202512": {
+     "excess": -4.08,
+     "t": -0.97
+    }
+   }
+  },
+  "c_bench_EW21_vs_us": {
+   "name": "(c)参考: 相手EW21 自体 vs 米国市場",
+   "from": 200101,
+   "to": 202512,
+   "years": 25.0,
+   "cagr": 7.85,
+   "bench_cagr": 9.15,
+   "excess": -1.3,
+   "ex_arith": -0.8,
+   "t": -0.43,
+   "t_nw": -0.39,
+   "vol": 17.8,
+   "bench_vol": 15.5,
+   "maxdd": -60.3,
+   "bench_maxdd": -50.3,
+   "roll10_win_yearly": "4/16",
+   "roll10_win_monthly": "46/181",
+   "capm_vs_bench": {
+    "alpha": -0.65,
+    "t_alpha": -0.35,
+    "beta": 0.982
+   },
+   "sub": {
+    "200101-200712": {
+     "excess": 10.49,
+     "t": 3.6
+    },
+    "200801-201712": {
+     "excess": -5.67,
+     "t": -1.4
+    },
+    "201801-202512": {
+     "excess": -6.05,
+     "t": -1.69
+    },
+    "200801-202512": {
+     "excess": -5.84,
+     "t": -2.16
+    }
+   }
+  },
+  "c_devexus_vs_us": {
+   "name": "(c)参考: Dev ex US vs 米国市場",
+   "from": 200101,
+   "to": 202512,
+   "years": 25.0,
+   "cagr": 6.45,
+   "bench_cagr": 9.15,
+   "excess": -2.7,
+   "ex_arith": -2.39,
+   "t": -1.4,
+   "t_nw": -1.37,
+   "vol": 16.3,
+   "bench_vol": 15.5,
+   "maxdd": -55.9,
+   "bench_maxdd": -50.3,
+   "roll10_win_yearly": "3/16",
+   "roll10_win_monthly": "36/181",
+   "capm_vs_bench": {
+    "alpha": -1.56,
+    "t_alpha": -0.92,
+    "beta": 0.9
+   },
+   "sub": {
+    "200101-200712": {
+     "excess": 6.43,
+     "t": 2.08
+    },
+    "200801-201712": {
+     "excess": -5.96,
+     "t": -1.92
+    },
+    "201801-202512": {
+     "excess": -6.68,
+     "t": -2.02
+    },
+    "200801-202512": {
+     "excess": -6.27,
+     "t": -2.78
+    }
+   }
+  },
+  "b_capbench_anchor2000": {
+   "name": "(b) 規則(国等加重) vs 21か国 時価加重[anchor2000]",
+   "from": 200101,
+   "to": 202512,
+   "years": 25.0,
+   "cagr": 10.88,
+   "bench_cagr": 6.41,
+   "excess": 4.47,
+   "ex_arith": 4.73,
+   "t": 3.75,
+   "t_nw": 2.94,
+   "vol": 19.6,
+   "bench_vol": 16.3,
+   "maxdd": -65.4,
+   "bench_maxdd": -55.8,
+   "roll10_win_yearly": "15/16",
+   "roll10_win_monthly": "171/181",
+   "capm_vs_bench": {
+    "alpha": 3.87,
+    "t_alpha": 3.29,
+    "beta": 1.146
+   },
+   "sub": {
+    "200101-200712": {
+     "excess": 11.2,
+     "t": 5.24
+    },
+    "200801-201712": {
+     "excess": 1.68,
+     "t": 1.18
+    },
+    "201801-202512": {
+     "excess": 2.57,
+     "t": 1.29
+    },
+    "200801-202512": {
+     "excess": 2.07,
+     "t": 1.73
+    }
+   },
+   "weights_2001_01_top6": {
+    "Japan": 22.5,
+    "UK": 18.4,
+    "France": 10.3,
+    "Germany": 9.0,
+    "Swtzrlnd": 5.6,
+    "Canada": 5.5
+   },
+   "weights_last_top6": {
+    "Japan": 21.3,
+    "UK": 11.9,
+    "France": 10.1,
+    "Canada": 9.5,
+    "Swtzrlnd": 8.9,
+    "Germany": 8.7
+   }
+  },
+  "d_capstrat_anchor2000": {
+   "name": "(d) 規則も時価加重の国 vs 21か国 時価加重[anchor2000]",
+   "from": 200101,
+   "to": 202512,
+   "years": 25.0,
+   "cagr": 9.25,
+   "bench_cagr": 6.41,
+   "excess": 2.84,
+   "ex_arith": 2.85,
+   "t": 3.24,
+   "t_nw": 2.76,
+   "vol": 17.5,
+   "bench_vol": 16.3,
+   "maxdd": -58.3,
+   "bench_maxdd": -55.8,
+   "roll10_win_yearly": "14/16",
+   "roll10_win_monthly": "156/181",
+   "capm_vs_bench": {
+    "alpha": 2.61,
+    "t_alpha": 2.99,
+    "beta": 1.04
+   },
+   "sub": {
+    "200101-200712": {
+     "excess": 5.49,
+     "t": 3.78
+    },
+    "200801-201712": {
+     "excess": 1.57,
+     "t": 1.43
+    },
+    "201801-202512": {
+     "excess": 2.26,
+     "t": 1.2
+    },
+    "200801-202512": {
+     "excess": 1.87,
+     "t": 1.84
+    }
+   }
+  },
+  "b_capbench_vs_devexus_anchor2000": {
+   "name": "(b)検算: 21か国 時価加重[anchor2000] vs Dev ex US",
+   "from": 200101,
+   "to": 202512,
+   "years": 25.0,
+   "cagr": 6.41,
+   "bench_cagr": 6.45,
+   "excess": -0.04,
+   "ex_arith": -0.03,
+   "t": -0.18,
+   "t_nw": -0.23,
+   "vol": 16.3,
+   "bench_vol": 16.3,
+   "maxdd": -55.8,
+   "bench_maxdd": -55.9,
+   "roll10_win_yearly": "12/16",
+   "roll10_win_monthly": "143/181",
+   "capm_vs_bench": {
+    "alpha": -0.03,
+    "t_alpha": -0.19,
+    "beta": 1.0
+   },
+   "sub": {
+    "200101-200712": {
+     "excess": -0.47,
+     "t": -0.79
+    },
+    "200801-201712": {
+     "excess": 0.26,
+     "t": 2.31
+    },
+    "201801-202512": {
+     "excess": -0.05,
+     "t": -0.34
+    },
+    "200801-202512": {
+     "excess": 0.12,
+     "t": 1.31
+    }
+   }
+  },
+  "b_capbench_reanchor": {
+   "name": "(b) 規則(国等加重) vs 21か国 時価加重[reanchor]",
+   "from": 200101,
+   "to": 202512,
+   "years": 25.0,
+   "cagr": 10.88,
+   "bench_cagr": 6.23,
+   "excess": 4.66,
+   "ex_arith": 4.93,
+   "t": 3.92,
+   "t_nw": 3.15,
+   "vol": 19.6,
+   "bench_vol": 16.2,
+   "maxdd": -65.4,
+   "bench_maxdd": -55.6,
+   "roll10_win_yearly": "16/16",
+   "roll10_win_monthly": "173/181",
+   "capm_vs_bench": {
+    "alpha": 4.05,
+    "t_alpha": 3.49,
+    "beta": 1.155
+   },
+   "sub": {
+    "200101-200712": {
+     "excess": 11.09,
+     "t": 5.16
+    },
+    "200801-201712": {
+     "excess": 1.64,
+     "t": 1.14
+    },
+    "201801-202512": {
+     "excess": 3.3,
+     "t": 1.69
+    },
+    "200801-202512": {
+     "excess": 2.36,
+     "t": 1.93
+    }
+   },
+   "weights_2001_01_top6": {
+    "Japan": 22.5,
+    "UK": 18.4,
+    "France": 10.3,
+    "Germany": 9.0,
+    "Swtzrlnd": 5.6,
+    "Canada": 5.5
+   },
+   "weights_last_top6": {
+    "Japan": 17.8,
+    "HongKong": 14.3,
+    "Canada": 10.8,
+    "UK": 10.6,
+    "France": 9.3,
+    "Germany": 6.8
+   }
+  },
+  "d_capstrat_reanchor": {
+   "name": "(d) 規則も時価加重の国 vs 21か国 時価加重[reanchor]",
+   "from": 200101,
+   "to": 202512,
+   "years": 25.0,
+   "cagr": 9.15,
+   "bench_cagr": 6.23,
+   "excess": 2.92,
+   "ex_arith": 2.9,
+   "t": 3.55,
+   "t_nw": 2.88,
+   "vol": 17.3,
+   "bench_vol": 16.2,
+   "maxdd": -57.3,
+   "bench_maxdd": -55.6,
+   "roll10_win_yearly": "14/16",
+   "roll10_win_monthly": "159/181",
+   "capm_vs_bench": {
+    "alpha": 2.7,
+    "t_alpha": 3.32,
+    "beta": 1.035
+   },
+   "sub": {
+    "200101-200712": {
+     "excess": 5.45,
+     "t": 3.77
+    },
+    "200801-201712": {
+     "excess": 1.88,
+     "t": 1.75
+    },
+    "201801-202512": {
+     "excess": 2.15,
+     "t": 1.26
+    },
+    "200801-202512": {
+     "excess": 2.0,
+     "t": 2.1
+    }
+   }
+  },
+  "b_capbench_vs_devexus_reanchor": {
+   "name": "(b)検算: 21か国 時価加重[reanchor] vs Dev ex US",
+   "from": 200101,
+   "to": 202512,
+   "years": 25.0,
+   "cagr": 6.23,
+   "bench_cagr": 6.45,
+   "excess": -0.22,
+   "ex_arith": -0.22,
+   "t": -0.81,
+   "t_nw": -1.01,
+   "vol": 16.2,
+   "bench_vol": 16.3,
+   "maxdd": -55.6,
+   "bench_maxdd": -55.9,
+   "roll10_win_yearly": "10/16",
+   "roll10_win_monthly": "110/181",
+   "capm_vs_bench": {
+    "alpha": -0.17,
+    "t_alpha": -0.63,
+    "beta": 0.992
+   },
+   "sub": {
+    "200101-200712": {
+     "excess": -0.36,
+     "t": -0.58
+    },
+    "200801-201712": {
+     "excess": 0.3,
+     "t": 1.01
+    },
+    "201801-202512": {
+     "excess": -0.78,
+     "t": -1.3
+    },
+    "200801-202512": {
+     "excess": -0.17,
+     "t": -0.58
+    }
+   }
+  },
+  "b_capbench_reanchor_hk96": {
+   "name": "(b) 規則(国等加重) vs 21か国 時価加重[reanchor_hk96]",
+   "from": 200101,
+   "to": 202512,
+   "years": 25.0,
+   "cagr": 10.88,
+   "bench_cagr": 6.42,
+   "excess": 4.47,
+   "ex_arith": 4.71,
+   "t": 3.71,
+   "t_nw": 2.9,
+   "vol": 19.6,
+   "bench_vol": 16.4,
+   "maxdd": -65.4,
+   "bench_maxdd": -55.7,
+   "roll10_win_yearly": "15/16",
+   "roll10_win_monthly": "171/181",
+   "capm_vs_bench": {
+    "alpha": 3.91,
+    "t_alpha": 3.27,
+    "beta": 1.137
+   },
+   "sub": {
+    "200101-200712": {
+     "excess": 11.32,
+     "t": 5.15
+    },
+    "200801-201712": {
+     "excess": 1.88,
+     "t": 1.27
+    },
+    "201801-202512": {
+     "excess": 2.2,
+     "t": 1.11
+    },
+    "200801-202512": {
+     "excess": 2.02,
+     "t": 1.69
+    }
+   },
+   "weights_2001_01_top6": {
+    "Japan": 23.5,
+    "UK": 19.2,
+    "France": 10.8,
+    "Germany": 9.5,
+    "Swtzrlnd": 5.9,
+    "Canada": 5.7
+   },
+   "weights_last_top6": {
+    "Japan": 20.8,
+    "Canada": 12.6,
+    "UK": 12.3,
+    "France": 10.8,
+    "Germany": 7.9,
+    "Swtzrlnd": 6.9
+   }
+  },
+  "d_capstrat_reanchor_hk96": {
+   "name": "(d) 規則も時価加重の国 vs 21か国 時価加重[reanchor_hk96]",
+   "from": 200101,
+   "to": 202512,
+   "years": 25.0,
+   "cagr": 9.12,
+   "bench_cagr": 6.42,
+   "excess": 2.7,
+   "ex_arith": 2.73,
+   "t": 3.07,
+   "t_nw": 2.62,
+   "vol": 17.7,
+   "bench_vol": 16.4,
+   "maxdd": -58.5,
+   "bench_maxdd": -55.7,
+   "roll10_win_yearly": "14/16",
+   "roll10_win_monthly": "153/181",
+   "capm_vs_bench": {
+    "alpha": 2.48,
+    "t_alpha": 2.8,
+    "beta": 1.043
+   },
+   "sub": {
+    "200101-200712": {
+     "excess": 5.45,
+     "t": 3.66
+    },
+    "200801-201712": {
+     "excess": 1.41,
+     "t": 1.31
+    },
+    "201801-202512": {
+     "excess": 2.07,
+     "t": 1.09
+    },
+    "200801-202512": {
+     "excess": 1.7,
+     "t": 1.68
+    }
+   }
+  },
+  "b_capbench_vs_devexus_reanchor_hk96": {
+   "name": "(b)検算: 21か国 時価加重[reanchor_hk96] vs Dev ex US",
+   "from": 200101,
+   "to": 202512,
+   "years": 25.0,
+   "cagr": 6.42,
+   "bench_cagr": 6.45,
+   "excess": -0.03,
+   "ex_arith": -0.01,
+   "t": -0.04,
+   "t_nw": -0.06,
+   "vol": 16.4,
+   "bench_vol": 16.3,
+   "maxdd": -55.7,
+   "bench_maxdd": -55.9,
+   "roll10_win_yearly": "10/16",
+   "roll10_win_monthly": "119/181",
+   "capm_vs_bench": {
+    "alpha": -0.05,
+    "t_alpha": -0.27,
+    "beta": 1.007
+   },
+   "sub": {
+    "200101-200712": {
+     "excess": -0.58,
+     "t": -0.98
+    },
+    "200801-201712": {
+     "excess": 0.06,
+     "t": 0.35
+    },
+    "201801-202512": {
+     "excess": 0.32,
+     "t": 1.42
+    },
+    "200801-202512": {
+     "excess": 0.17,
+     "t": 1.24
+    }
+   }
+  },
+  "d_big7_ew": {
+   "name": "(d) 大きい7か国だけ（国は等加重）vs 同じ7か国 Mkt 等加重",
+   "from": 200101,
+   "to": 202512,
+   "years": 25.0,
+   "cagr": 9.55,
+   "bench_cagr": 7.27,
+   "excess": 2.28,
+   "ex_arith": 2.32,
+   "t": 2.6,
+   "t_nw": 2.35,
+   "vol": 17.8,
+   "bench_vol": 16.6,
+   "maxdd": -57.9,
+   "bench_maxdd": -55.0,
+   "roll10_win_yearly": "14/16",
+   "roll10_win_monthly": "153/181",
+   "capm_vs_bench": {
+    "alpha": 2.05,
+    "t_alpha": 2.31,
+    "beta": 1.039
+   },
+   "sub": {
+    "200101-200712": {
+     "excess": 4.53,
+     "t": 2.91
+    },
+    "200801-201712": {
+     "excess": 1.29,
+     "t": 1.19
+    },
+    "201801-202512": {
+     "excess": 1.68,
+     "t": 0.92
+    },
+    "200801-202512": {
+     "excess": 1.46,
+     "t": 1.47
+    }
+   }
+  },
+  "d_big7_vs_devexus": {
+   "name": "(d) 大きい7か国の規則 vs Dev ex US",
+   "from": 200101,
+   "to": 202512,
+   "years": 25.0,
+   "cagr": 9.55,
+   "bench_cagr": 6.45,
+   "excess": 3.1,
+   "ex_arith": 3.15,
+   "t": 3.32,
+   "t_nw": 2.84,
+   "vol": 17.8,
+   "bench_vol": 16.3,
+   "maxdd": -57.9,
+   "bench_maxdd": -55.9,
+   "roll10_win_yearly": "14/16",
+   "roll10_win_monthly": "162/181",
+   "capm_vs_bench": {
+    "alpha": 2.81,
+    "t_alpha": 3.0,
+    "beta": 1.057
+   },
+   "sub": {
+    "200101-200712": {
+     "excess": 5.49,
+     "t": 2.92
+    },
+    "200801-201712": {
+     "excess": 2.25,
+     "t": 1.85
+    },
+    "201801-202512": {
+     "excess": 2.21,
+     "t": 1.23
+    },
+    "200801-202512": {
+     "excess": 2.23,
+     "t": 2.13
+    }
+   }
+  },
+  "d_big7_sel": {
+   "name": "(d) 大きい7か国・選定期間 1975〜2000",
+   "from": 197502,
+   "to": 200012,
+   "years": 25.9,
+   "cagr": 17.93,
+   "bench_cagr": 14.67,
+   "excess": 3.26,
+   "ex_arith": 2.79,
+   "t": 3.55,
+   "t_nw": 3.03,
+   "vol": 14.9,
+   "bench_vol": 15.2,
+   "maxdd": -22.9,
+   "bench_maxdd": -28.0,
+   "roll10_win_yearly": "16/16",
+   "roll10_win_monthly": "192/192",
+   "capm_vs_bench": {
+    "alpha": 3.22,
+    "t_alpha": 4.13,
+    "beta": 0.948
+   },
+   "note": "選定期間の行（sub は検定期間の区切りなので省いた）"
+  },
+  "d_small14_ew": {
+   "name": "(d)参考: 残り14か国だけ（国は等加重）",
+   "from": 200101,
+   "to": 202512,
+   "years": 25.0,
+   "cagr": 11.52,
+   "bench_cagr": 8.11,
+   "excess": 3.41,
+   "ex_arith": 3.55,
+   "t": 3.1,
+   "t_nw": 2.56,
+   "vol": 20.9,
+   "bench_vol": 18.7,
+   "maxdd": -69.0,
+   "bench_maxdd": -63.0,
+   "roll10_win_yearly": "14/16",
+   "roll10_win_monthly": "157/181",
+   "capm_vs_bench": {
+    "alpha": 2.95,
+    "t_alpha": 2.64,
+    "beta": 1.076
+   },
+   "sub": {
+    "200101-200712": {
+     "excess": 7.86,
+     "t": 3.96
+    },
+    "200801-201712": {
+     "excess": 1.79,
+     "t": 1.18
+    },
+    "201801-202512": {
+     "excess": 1.99,
+     "t": 1.16
+    },
+    "200801-202512": {
+     "excess": 1.88,
+     "t": 1.64
+    }
+   }
+  },
+  "e_yen_EW21": {
+   "name": "(e) 円建て: 規則 vs 21か国 等加重（円）",
+   "from": 200101,
+   "to": 202512,
+   "years": 25.0,
+   "cagr": 12.29,
+   "bench_cagr": 9.22,
+   "excess": 3.07,
+   "ex_arith": 3.12,
+   "t": 3.16,
+   "t_nw": 2.61,
+   "vol": 21.2,
+   "bench_vol": 19.5,
+   "maxdd": -70.7,
+   "bench_maxdd": -66.4,
+   "roll10_win_yearly": "14/16",
+   "roll10_win_monthly": "155/181",
+   "capm_vs_bench": {
+    "alpha": 2.63,
+    "t_alpha": 2.69,
+    "beta": 1.055
+   },
+   "sub": {
+    "200101-200712": {
+     "excess": 6.64,
+     "t": 4.02
+    },
+    "200801-201712": {
+     "excess": 1.65,
+     "t": 1.22
+    },
+    "201801-202512": {
+     "excess": 1.97,
+     "t": 1.17
+    },
+    "200801-202512": {
+     "excess": 1.79,
+     "t": 1.69
+    }
+   }
+  },
+  "e_yen_devexus": {
+   "name": "(e) 円建て: 規則 vs Dev ex US（円）",
+   "from": 200101,
+   "to": 202512,
+   "years": 25.0,
+   "cagr": 12.29,
+   "bench_cagr": 7.8,
+   "excess": 4.49,
+   "ex_arith": 4.75,
+   "t": 3.74,
+   "t_nw": 3.0,
+   "vol": 21.2,
+   "bench_vol": 18.0,
+   "maxdd": -70.7,
+   "bench_maxdd": -62.7,
+   "roll10_win_yearly": "16/16",
+   "roll10_win_monthly": "172/181",
+   "capm_vs_bench": {
+    "alpha": 3.77,
+    "t_alpha": 3.17,
+    "beta": 1.13
+   },
+   "sub": {
+    "200101-200712": {
+     "excess": 10.7,
+     "t": 4.73
+    },
+    "200801-201712": {
+     "excess": 1.94,
+     "t": 1.28
+    },
+    "201801-202512": {
+     "excess": 2.63,
+     "t": 1.33
+    },
+    "200801-202512": {
+     "excess": 2.23,
+     "t": 1.83
+    }
+   }
+  },
+  "e_yen_us": {
+   "name": "(e) 円建て: 規則 vs 米国市場（円）",
+   "from": 200101,
+   "to": 202512,
+   "years": 25.0,
+   "cagr": 12.29,
+   "bench_cagr": 10.54,
+   "excess": 1.75,
+   "ex_arith": 2.11,
+   "t": 0.9,
+   "t_nw": 0.76,
+   "vol": 21.2,
+   "bench_vol": 18.7,
+   "maxdd": -70.7,
+   "bench_maxdd": -59.3,
+   "roll10_win_yearly": "5/16",
+   "roll10_win_monthly": "53/181",
+   "capm_vs_bench": {
+    "alpha": 2.68,
+    "t_alpha": 1.14,
+    "beta": 0.944
+   },
+   "sub": {
+    "200101-200712": {
+     "excess": 17.1,
+     "t": 4.65
+    },
+    "200801-201712": {
+     "excess": -4.02,
+     "t": -0.63
+    },
+    "201801-202512": {
+     "excess": -4.34,
+     "t": -0.86
+    },
+    "200801-202512": {
+     "excess": -4.16,
+     "t": -1.04
+    }
+   }
+  },
+  "e_yen_vs_japan_local": {
+   "name": "(e)参考: 円建て: 規則 vs 日本株（French Japan・円）",
+   "from": 200101,
+   "to": 202512,
+   "years": 25.0,
+   "cagr": 12.29,
+   "bench_cagr": 6.23,
+   "excess": 6.06,
+   "ex_arith": 6.6,
+   "t": 2.27,
+   "t_nw": 2.25,
+   "vol": 21.2,
+   "bench_vol": 15.9,
+   "maxdd": -70.7,
+   "bench_maxdd": -54.8,
+   "roll10_win_yearly": "12/16",
+   "roll10_win_monthly": "141/181",
+   "capm_vs_bench": {
+    "alpha": 6.81,
+    "t_alpha": 2.32,
+    "beta": 0.963
+   },
+   "sub": {
+    "200101-200712": {
+     "excess": 17.43,
+     "t": 2.7
+    },
+    "200801-201712": {
+     "excess": 0.14,
+     "t": 0.37
+    },
+    "201801-202512": {
+     "excess": 4.0,
+     "t": 1.03
+    },
+    "200801-202512": {
+     "excess": 1.79,
+     "t": 0.9
+    }
+   }
+  },
+  "f_efv": {
+   "name": "(f)参考: 規則 vs EFV（MSCI EAFE Value・2005-09〜）",
+   "from": 200509,
+   "to": 202512,
+   "years": 20.3,
+   "cagr": 8.97,
+   "bench_cagr": 5.43,
+   "excess": 3.54,
+   "ex_arith": 3.75,
+   "t": 3.05,
+   "t_nw": 2.64,
+   "vol": 20.3,
+   "bench_vol": 18.1,
+   "maxdd": -65.4,
+   "bench_maxdd": -59.7,
+   "roll10_win_yearly": "11/11",
+   "roll10_win_monthly": "125/125",
+   "capm_vs_bench": {
+    "alpha": 3.3,
+    "t_alpha": 2.78,
+    "beta": 1.085
+   },
+   "sub": {
+    "200101-200712": {
+     "excess": 7.08,
+     "t": 2.18
+    },
+    "200801-201712": {
+     "excess": 3.87,
+     "t": 2.03
+    },
+    "201801-202512": {
+     "excess": 2.17,
+     "t": 1.69
+    },
+    "200801-202512": {
+     "excess": 3.14,
+     "t": 2.57
+    }
+   },
+   "note": "EFV は 2005-09〜。sub の 2001-2007 は 2005-09〜2007-12 だけ"
+  },
+  "g_developed": {
+   "name": "(g)参考: 規則 vs French Developed（米国込み・時価加重）",
+   "from": 200101,
+   "to": 202512,
+   "years": 25.0,
+   "cagr": 10.88,
+   "bench_cagr": 7.91,
+   "excess": 2.97,
+   "ex_arith": 3.47,
+   "t": 2.02,
+   "t_nw": 1.65,
+   "vol": 19.6,
+   "bench_vol": 15.5,
+   "maxdd": -65.4,
+   "bench_maxdd": -53.6,
+   "roll10_win_yearly": "7/16",
+   "roll10_win_monthly": "77/181",
+   "capm_vs_bench": {
+    "alpha": 2.41,
+    "t_alpha": 1.45,
+    "beta": 1.147
+   },
+   "sub": {
+    "200101-200712": {
+     "excess": 13.75,
+     "t": 5.29
+    },
+    "200801-201712": {
+     "excess": -0.76,
+     "t": 0.21
+    },
+    "201801-202512": {
+     "excess": -1.24,
+     "t": -0.22
+    },
+    "200801-202512": {
+     "excess": -0.97,
+     "t": 0.0
+    }
+   }
+  }
+ },
+ "caveats": [
+  "EFA・VEU・EFV は投資できる ETF で、経費（0.07〜0.35%）と配当の源泉税が引かれた実額。規則は French の紙の上（源泉税なし・費用は回転×0.25%のみ）なので、ETF との差は規則に有利に出る。主の判定は French の相手（同じ土俵）で行った",
+  "WB の時価総額は国によって途中で途切れる（DNK/SWE/FIN は2003〜2004年まで・UK 2014年まで等）。欠けた年は値上がりで漂わせたので新規上場の分は入らない。3通りの作り方で結果はほぼ同じ（相手の年率 6.23〜6.42%）",
+  "香港の WB 時価総額は本土企業の香港上場を含む（2020年に6.1兆ドル）。French の香港の市場の中身とずれている可能性がある。1996年末で止めた版でも結論は同じ",
+  "円建ては規則と相手に同じ為替が掛かるので、同じ土俵の超過はほとんど変わらない（+3.03→+3.07）。円建てで効くのは『米国外 vs 米国・日本』の比較だけ",
+  "米国市場との比較は土俵が違う（国の選び方の差を含む）。事前登録は国の規則の相手を『同じ国の集合の等加重』と決め、米国市場は併記とした"
+ ],
+ "scripts": [
+  "scratchpad/bench_verify.py",
+  "scratchpad/wb_mcap.json（World Bank API の取得物）"
+ ]
+}
