@@ -1313,11 +1313,42 @@ def grade_block(lab, cfg, rname, pn='USJ'):
         s, b = twr(rs, cs, kk), twr(rb, cb, kk)
         st[nm] = M.excess_stats(s, b)
         st[nm + '_final_ratio'] = round(fs / fb, 6)
+        # 報告だけ（判定に不使用）: その期間に規則が何回発動したか（時間加重の t が『一度の出来事＋税の繰り延べの一定の漂い』から来ていないかを見るため）
+        st[nm + '_fires'] = {k: round(hs.stats.get(k, 0)) for k in ('o1_sales', 'o1_room_gain', 'o2_moves', 'o2_moved')}
         series[nm] = (s, b)
     s, b = series['full']
     st['rolling20_on_full_twr'] = M.rolling(s, b, 20)
     st['dca20_on_full_twr'] = M.dca(s, b, 20)
     return st
+
+
+DEVIATIONS = [
+    '事前登録どおり: C4（転がる20年窓）は一括ではなく USJ の毎月積立20年窓（窓ごとに家計を作り直す）の比の勝ちの割合で当てた。mw_common.rolling・dca を全期間の時間加重に当てた数字は rolling20_on_full_twr・dca20_on_full_twr に報告（判定に不使用）',
+    '事前登録どおり: 全体の格付け（mw_common.grade）は『市場に勝つ規則』のための物差しを、同じ資産・同じ積立の中の運用の差（家計の税引後の時間加重リターンの差）に当てたもの。差は規則が発動しない月は0で、発動の後は税の繰り延べの差が毎月ほぼ一定に漂うので、差が小さくても t が大きく出る（雑音の多い超過リターンを前提にした t の意味を持たない）。格付け S/A/B は『市場に勝った』ではなく『既定の運用に税引後でわずかに勝った』の意味',
+    '事前登録どおり: 判定は場面 P だけ。S1・S2・S4 の格付けは参考（感度）。S3・S5（49業種の城）・S6（実物の N5・一本の窓）・S7（楽天の実際の手数料・USJ だけ）は窓の判定だけで格付けしない',
+    '事前登録2・3 に書いた道具の直し（S4 の格付けだけ）: (2) S4 の格付けで窓の前12か月の持ち越しを使っていなかった→使う、(3) S4 の時間加重の最初の月が持ち越しの区画を『その月の益』として数えていた（CAGR 45%・ボラ 160〜426% に壊れていた）→最初の月の前の値を持ち越しの終わりの『いま全部売ったら』にした。(3) の直しの前に O2a の S4 の格付けが B（Holm 0.059）だったのを見ていた。直しの後は S（Holm 0.047）。直しは壊れた数字（ボラ 160%）を理由に測る前に登録したが、境目の格付けを動かしたので S は脆いと扱う（grade_robustness_wider_holm）',
+    '出力の大きさ（〜2MB）のため、場面 P 以外の tested の要素から JST の国別の要約（by_country）・判定の細目（verdict_detail〔windows と pass_by_horizon から再現できる〕）・25/30年の diag_median を落とした（場面 P は全部残す）。計算と判定は変えていない（事前登録3 のコミットの後に出力の形だけを直した）',
+    'front-loading（年の枠を年初に使い切る）: この家計（2人・月17万＝年204万に対し年の枠720万）では年の枠が一度も縛らないので、年初に前倒しできるのは課税口座に既にある区画だけ＝O2b（1月に課税口座の区画を空いた枠へ移す）と同じ。課税口座の持ち越しがある家計は S4 で測った',
+    '手元の作業ファイルの名前が他の角度の作業と同じ場所（共有のスクラッチ）でぶつかり、実行ログが混ざった（結果の JSON は本体が直接書くので影響なし・再実行で確認）',
+    'mw_common の不具合は見つけていない。excess_stats は ex_ann を小数2桁（%）で丸めるので、年0.005% 未満の差は C2 で0として扱われる（事前登録に記載）',
+]
+
+
+def compact_tested(out):
+    """出力を〜2MB に収める（場面 P 以外の細目を落とす）。判定・格付けに使った数字は残す"""
+    for t in out['tested']:
+        if t.get('scenario') == 'P':
+            continue
+        t.pop('verdict_detail', None)
+        w = t.get('windows')
+        if not w:
+            continue
+        for pn, v in w.items():
+            for H, e in v.items():
+                if pn == 'JST':
+                    e.pop('by_country', None)
+                if H != 20 and str(H) != '20':
+                    e.pop('diag_median', None)
 
 
 def main():
@@ -1406,9 +1437,12 @@ def main():
     out['n5_2010'] = n5
     # 格付け（mw_common.grade）: USJ の時間加重（税引後の『いま全部売ったら』）・族ごとに Holm
     out['grades'] = {}
+    gb_all = {}
     for sc in ['P', 'S1_one_holder', 'S2_300k', 'S4_init_taxable']:
         cfg = SCEN[sc]
         gb = {rn: grade_block(lab, cfg, rn) for rn in PRIMARY_RULES + SECONDARY_RULES + EXPLORE_RULES + EXPLORE3_RULES}
+        for rn, g in gb.items():
+            gb_all[f'{rn}__{sc}'] = g
         fams = [(PRIMARY_RULES, 'primary' if sc == 'P' else f'sens_{sc}'), (SECONDARY_RULES, 'secondary' if sc == 'P' else f'sens2_{sc}'),
                 (EXPLORE_RULES, 'explore_prereg2' if sc == 'P' else f'sens_explore_{sc}'),
                 (EXPLORE3_RULES, 'explore_prereg3' if sc == 'P' else f'sens_explore3_{sc}')]
@@ -1425,11 +1459,49 @@ def main():
                 gr, cr = M.grade(g['full'], g['train'], g['hold'], roll, cost_hold=g['hold'], repl=repl, family_holm_p=hp.get(rn), leveraged_or_timing=False)
                 ent = {'rule': rn, 'scenario': sc, 'family': fname, 'full': g['full'], 'train': g['train'], 'hold': g['hold'], 'recent': g['recent'],
                        'net_cost_hold': g['hold'], 'final_ratio': {k: g[k + '_final_ratio'] for k in ('full', 'train', 'hold', 'recent')},
+                       'fires': {k: g[k + '_fires'] for k in ('full', 'train', 'hold', 'recent')},
                        'roll20_dca_windows': roll, 'rolling20_on_full_twr': g['rolling20_on_full_twr'], 'dca20_on_full_twr': g['dca20_on_full_twr'],
                        'repl': repl, 'holm_p_hold': hp.get(rn), 'grade': gr, 'criteria': cr}
                 out['grades'][f'{rn}__{sc}'] = ent
                 rec['grade'] = gr; rec['criteria'] = cr
                 log(f'格付け {rn:7s} {sc:16s} {gr} full {g["full"] and g["full"]["ex_ann"]} t{g["full"] and g["full"]["t"]} | hold {g["hold"] and g["hold"]["ex_ann"]} t{g["hold"] and g["hold"]["t"]} | holm {hp.get(rn)}')
+    # 報告だけ（事前登録の外・判定は上の格付けのまま）: Holm の族を広げたら格付けが保たれるか
+    #   (a) 同じ場面で試した規則すべて（主6＋副1＋族X 5＋族X5 3 ＝15本）  (b) 格付けした規則×場面すべて（15×4＝60本）
+    raw = {n: (e['hold'] or {}).get('p') for n, e in out['grades'].items() if e.get('hold')}
+    h_all = M.holm(raw)
+    wider = {}
+    for sc in ['P', 'S1_one_holder', 'S2_300k', 'S4_init_taxable']:
+        h_sc = M.holm({n: p for n, p in raw.items() if n.endswith('__' + sc)})
+        for n, e in out['grades'].items():
+            if not n.endswith('__' + sc):
+                continue
+            if e['grade'] in ('S', 'A', 'B'):
+                g = gb_all[n]
+                reg = e['repl']
+                g_sc, _ = M.grade(g['full'], g['train'], g['hold'], e['roll20_dca_windows'], cost_hold=g['hold'], repl=reg, family_holm_p=h_sc.get(n))
+                g_al, _ = M.grade(g['full'], g['train'], g['hold'], e['roll20_dca_windows'], cost_hold=g['hold'], repl=reg, family_holm_p=h_all.get(n))
+                wider[n] = {'grade_registered_family': e['grade'], 'holm_registered_family': e['holm_p_hold'], 'raw_p_hold': raw.get(n),
+                            'holm_all15_rules_same_scenario': h_sc.get(n), 'grade_all15': g_sc,
+                            'holm_all60_graded': h_all.get(n), 'grade_all60': g_al}
+    out['grade_robustness_wider_holm'] = wider
+    # 読みやすさのための要約（判定は tested と grades のまま）: 場面 P の規則ごと・道の組ごとの 20/30年の勝ちの割合と中央
+    tab = {}
+    for rn in PRIMARY_RULES + SECONDARY_RULES + EXPLORE_RULES + EXPLORE3_RULES:
+        rec = fam[(rn, 'P')]
+        row = {'family': rec['family'], 'verdict': rec['verdict'], 'grade': rec.get('grade')}
+        for st_ in ('USJ', 'JPJ', 'USD', 'JST'):
+            for H in (20, 30):
+                e = rec['windows'][st_][H]['all']
+                row[f'{st_}{H}'] = [e['win_share'], e['median'], e['worst'][1]]
+        row['stress'] = rec['stress']
+        g4 = fam.get((rn, 'S4_init_taxable'))
+        if g4:
+            row['S4'] = {st_: [g4['windows'][st_][20]['all']['win_share'], g4['windows'][st_][20]['all']['median']] for st_ in ('USJ', 'JPJ', 'USD', 'JST')}
+            row['S4_verdict'] = g4['verdict']; row['S4_grade'] = g4.get('grade')
+        tab[rn] = row
+    out['table_P'] = {'cols': '[勝ちの割合, 比の中央, 最悪の比]（比＝規則の税引後の最終額÷既定 D0）', 'rows': tab}
+    out['deviations'] = DEVIATIONS
+    compact_tested(out)
     out['n_tested'] = len(out['tested'])
     out['runtime_s'] = round(time.time() - t0)
     out['log_tail'] = LOG[-400:]
