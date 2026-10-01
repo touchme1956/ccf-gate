@@ -1,0 +1,2676 @@
+{
+ "key": "levtrend",
+ "lens": "real_products",
+ "as_of": "2026-09-28",
+ "question": "凍結した規則（前日の終値が200日平均の上なら3倍・下なら1倍）の検定期間の勝ち（2001〜 年率15.78% vs 9.45%・超過+6.34%/年・t2.38）は、実際に買える商品（SSO・SPXL・UPRO と SPY）で、日本から現実に執行できる形で、日本の税の後にも残るか",
+ "verdict": "弱まった",
+ "verdict_reason": "実際の商品（SSO 2006-06〜・SPXL 2008-11〜・UPRO 2009-06〜）で同じ規則を回すと、税の前は3つの窓すべてで SPY に勝った（3倍: 年+10.8〜+13.0%・t2.6〜2.9／2倍: +4.0〜+4.3%・t2.2〜2.3・転がる10年は全勝）。実物の費用は凍結の費用モデルより年0.4%（2倍）〜0.8%（3倍）重いが、勝ちを消すほどではない。1営業日遅らせても（版B）米国の寄付きで執行しても（版C）同程度。だが (1) 3倍の実物は2008年の暴落の後にしか存在せず、紙の規則の検定期間の勝ちは全部 2009-06 以降にある（2001-01〜2009-05 は −4.6%/年・t−0.38）＝実物で確かめられたのは有利な半分だけ。2008年を含む唯一の実物（SSO・2倍）では、円・課税口座・楽天の手数料・売るたびの20.315% の後、NISA で SPY を持ち続けるのに対し 1000万円で −0.1〜+0.2%/年、100万円で −1.7〜−2.1%/年＝勝ちは消えた。(2) シャープは3つの窓すべてで SPY より低い（0.72〜0.90 vs 0.79〜1.06）＝勝ちはリスクを増やした分。最大下落（日次）は −53〜−63%（同じ窓の SPY −34〜−55%）、3倍で COVID（2020-02-19→03-23）は −47〜−55%（SPY −33%）、2022年は −43〜−45%（SPY −18%・入れ替え13回）＝速い下げは防げない。(3) 1営業日の執行のずれで 2020年の成績が +17% と +40% に割れ、長い窓でも年±1〜2% 動く＝結果は壊れやすい。(4) 3倍の実物の窓（2009〜）なら税・手数料の後も NISA の SPY に年+4.9〜+7.6% 勝つが、それは上げ相場の窓。実測の費用で較正した合成で2001年から回すと（事後・参考）1000万円で +2.1〜+4.0%/年、100万円で −0.6〜+2.1%/年。崩れてはいない（3倍なら税の後も向きはほぼ正）が、見込める上乗せは紙の +6.3%/年よりずっと小さく、ぶれは SPY の2倍以上",
+ "method": {
+  "data": "Yahoo の日足（v8 chart・interval=1d・period1 から最新まで・adjclose＝分割と配当で調整）: SSO / SPXL / UPRO / SPUU / SPY / ^GSPC / ^SP500TR / JPY=X。harness.cached で取り、キャッシュは scratchpad（out/_edge_cache には書いていない）。French 日次（Mkt-RF＋RF・〜2026-08-31）は既存のキャッシュの写しを読んだ",
+  "signal": "^GSPC（価格指数）の終値。日 d の持ち高＝ d−1 日の終値 > d−1 日までの200日の平均（d の値は使わない）。凍結の規則は French の配当込みの水準で作る——2001-01〜2026-08 の 6,453日で 97.86% 一致（入れ替え 171回 vs 175回）",
+  "variants": {
+   "A": "d−1 日の終値の信号で d−1 日の終値に入れ替え（凍結と同じ・delay0。日本からは不可能）",
+   "B": "1営業日遅れ（d−1 日の信号を d 日の終値で執行＝凍結の delay=1）",
+   "C": "d−1 日の信号を d 日の米国の寄付きで執行（夜間は旧の器・日中は新の器。寄付きは open×adjclose/close）"
+  },
+  "one_x_side_and_benchmark": "SPY（経費0.09%込み・配当込み）。相手＝同じ窓の SPY の持ち続け",
+  "costs": "凍結どおり入れ替え1回に 0.1%（滑り）。税の節ではさらに楽天の手数料（下）",
+  "stats": "harness.stats（月次の算術の超過の t・幾何の年率の超過）。最大下落は月次（harness）と日次の両方",
+  "window_end": "主は 2026-08-31（French の最後の日にそろえた）。実物だけ 2026-09-25 まで延ばした値を to_latest に併記",
+  "frozen_spec_untouched": "out/edge/spec_levtrend.json と night/edge/fam_levtrend.py は変えていない（fam_levtrend._rule_on を読むだけ）",
+  "code": "計算は scratchpad の core.py / syn.py / final.py / t9.py（repo に入れていない）"
+ },
+ "data_checks": {
+  "実物の日次 vs L×SPY の日次（差 >2pt の日）": {
+   "SSO": "17日（15日が 2008-09〜11 の混乱期・2009-07-16/17 の1日ずれ）",
+   "SPXL": "16日（2008-11 の上場直後・2009-07-16/17・2025-04-09）",
+   "UPRO": "11日（2009-07-16/17・2010-10・2011-01・2020-03-13/16/17・2025-04-09/10）",
+   "読み": "2009-07-16/17 は Yahoo の SPY の値が1日ずれている形（2日を足すと合う）。他は極端な日の ETF の市場価格と NAV の乖離として説明できる大きさ。系列はそのまま使った"
+  },
+  "動かない日（前日比0）": {
+   "SSO": 18,
+   "SPXL": 22,
+   "UPRO": 13
+  },
+  "SPUU": "2倍（Direxion・2014〜）は動かない日が62日・L×SPY と2pt超ずれる日が18日（出来高が薄く値が古い）＝使わなかった",
+  "SPY_vs_SP500TR": "SPY は S&P500 配当込みより年0.089% 低い（経費）",
+  "French市場_vs_SP500TR（2009-06〜）": "年 −0.02%（ほぼ同じ）",
+  "取れなかったもの": [
+   "3倍・2倍の実物の 2001-2006 と（3倍の）2008年——商品が存在しない",
+   "国内のレバレッジ投信の日次の基準価額の長い系列（取っていない＝測っていない）",
+   "SPY の 2014年以前の NISA——制度が無い（今の制度を過去へ当てた仮定）"
+  ]
+ },
+ "pretax_real_products": {
+  "about": "1倍の側と相手は SPY（adjclose・配当込み・経費0.09%込み）。信号は ^GSPC（価格指数）の200日平均。入れ替え1回に凍結の費用 0.1%。窓は各商品の上場日〜2026-08-31（French の最後の日にそろえた）。to_latest は 2026-09-25 まで",
+  "variants": {
+   "A": "A 凍結と同じ（前日の終値の信号で前日の終値に入れ替え＝delay0・日本からは不可能）",
+   "B": "B 1営業日遅れ（前日の終値の信号を当日の終値で執行＝delay1）",
+   "C": "C 前日の終値の信号を当日の米国の寄付きで執行（日本の夜に発注）"
+  },
+  "results": {
+   "SSO": {
+    "A": {
+     "from": 200606,
+     "to": 202608,
+     "years": 20.2,
+     "cagr": 15.42,
+     "bench_cagr": 11.38,
+     "excess": 4.04,
+     "t": 2.2,
+     "t_nw": 2.22,
+     "vol": 23.9,
+     "bench_vol": 15.2,
+     "maxdd": -58.2,
+     "bench_maxdd": -50.8,
+     "maxdd_daily": -62.2,
+     "bench_maxdd_daily": -55.2,
+     "sharpe": 0.72,
+     "bench_sharpe": 0.79,
+     "roll10_win": "11/11",
+     "switches_per_year": 6.59,
+     "to_latest": {
+      "last_day": 20260925,
+      "cagr": 15.41,
+      "bench_cagr": 11.37,
+      "excess": 4.04,
+      "t": 2.21
+     }
+    },
+    "B": {
+     "from": 200606,
+     "to": 202608,
+     "years": 20.2,
+     "cagr": 15.65,
+     "bench_cagr": 11.38,
+     "excess": 4.28,
+     "t": 2.27,
+     "t_nw": 2.21,
+     "vol": 23.6,
+     "bench_vol": 15.2,
+     "maxdd": -59.5,
+     "bench_maxdd": -50.8,
+     "maxdd_daily": -63.4,
+     "bench_maxdd_daily": -55.2,
+     "sharpe": 0.74,
+     "bench_sharpe": 0.79,
+     "roll10_win": "11/11",
+     "switches_per_year": 6.59,
+     "to_latest": {
+      "last_day": 20260925,
+      "cagr": 15.65,
+      "bench_cagr": 11.37,
+      "excess": 4.28,
+      "t": 2.28
+     }
+    },
+    "C": {
+     "from": 200606,
+     "to": 202608,
+     "years": 20.2,
+     "cagr": 15.7,
+     "bench_cagr": 11.38,
+     "excess": 4.32,
+     "t": 2.3,
+     "t_nw": 2.34,
+     "vol": 24.1,
+     "bench_vol": 15.2,
+     "maxdd": -56.0,
+     "bench_maxdd": -50.8,
+     "maxdd_daily": -60.2,
+     "bench_maxdd_daily": -55.2,
+     "sharpe": 0.73,
+     "bench_sharpe": 0.79,
+     "roll10_win": "11/11",
+     "switches_per_year": 6.59,
+     "to_latest": {
+      "last_day": 20260925,
+      "cagr": 15.69,
+      "bench_cagr": 11.37,
+      "excess": 4.32,
+      "t": 2.3
+     },
+     "open_missing_fallback_days": 0
+    },
+    "product_buy_and_hold": {
+     "from": 200606,
+     "to": 202608,
+     "years": 20.2,
+     "cagr": 15.74,
+     "bench_cagr": 11.38,
+     "excess": 4.36,
+     "t": 2.18,
+     "t_nw": 2.03,
+     "vol": 31.0,
+     "bench_vol": 15.2,
+     "maxdd": -81.3,
+     "bench_maxdd": -50.8,
+     "maxdd_daily": -84.7,
+     "bench_maxdd_daily": -55.2,
+     "sharpe": 0.63,
+     "bench_sharpe": 0.79,
+     "roll10_win": "11/11",
+     "switches_per_year": 0.0
+    }
+   },
+   "SPXL": {
+    "A": {
+     "from": 200811,
+     "to": 202608,
+     "years": 17.8,
+     "cagr": 25.32,
+     "bench_cagr": 14.4,
+     "excess": 10.91,
+     "t": 2.66,
+     "t_nw": 2.87,
+     "vol": 34.8,
+     "bench_vol": 14.9,
+     "maxdd": -44.8,
+     "bench_maxdd": -23.9,
+     "maxdd_daily": -55.9,
+     "bench_maxdd_daily": -33.7,
+     "sharpe": 0.83,
+     "bench_sharpe": 0.98,
+     "roll10_win": "8/8",
+     "switches_per_year": 6.01,
+     "to_latest": {
+      "last_day": 20260925,
+      "cagr": 25.29,
+      "bench_cagr": 14.38,
+      "excess": 10.91,
+      "t": 2.67
+     }
+    },
+    "B": {
+     "from": 200811,
+     "to": 202608,
+     "years": 17.8,
+     "cagr": 25.97,
+     "bench_cagr": 14.4,
+     "excess": 11.57,
+     "t": 2.74,
+     "t_nw": 2.93,
+     "vol": 34.4,
+     "bench_vol": 14.9,
+     "maxdd": -47.9,
+     "bench_maxdd": -23.9,
+     "maxdd_daily": -53.2,
+     "bench_maxdd_daily": -33.7,
+     "sharpe": 0.85,
+     "bench_sharpe": 0.98,
+     "roll10_win": "8/8",
+     "switches_per_year": 6.01,
+     "to_latest": {
+      "last_day": 20260925,
+      "cagr": 25.94,
+      "bench_cagr": 14.38,
+      "excess": 11.56,
+      "t": 2.75
+     }
+    },
+    "C": {
+     "from": 200811,
+     "to": 202608,
+     "years": 17.8,
+     "cagr": 25.19,
+     "bench_cagr": 14.4,
+     "excess": 10.78,
+     "t": 2.63,
+     "t_nw": 2.8,
+     "vol": 35.3,
+     "bench_vol": 14.9,
+     "maxdd": -46.9,
+     "bench_maxdd": -23.9,
+     "maxdd_daily": -57.8,
+     "bench_maxdd_daily": -33.7,
+     "sharpe": 0.82,
+     "bench_sharpe": 0.98,
+     "roll10_win": "8/8",
+     "switches_per_year": 6.01,
+     "to_latest": {
+      "last_day": 20260925,
+      "cagr": 25.16,
+      "bench_cagr": 14.38,
+      "excess": 10.78,
+      "t": 2.64
+     },
+     "open_missing_fallback_days": 0
+    },
+    "product_buy_and_hold": {
+     "from": 200811,
+     "to": 202608,
+     "years": 17.8,
+     "cagr": 28.52,
+     "bench_cagr": 14.4,
+     "excess": 14.12,
+     "t": 2.91,
+     "t_nw": 4.0,
+     "vol": 46.4,
+     "bench_vol": 14.9,
+     "maxdd": -62.6,
+     "bench_maxdd": -23.9,
+     "maxdd_daily": -76.9,
+     "bench_maxdd_daily": -33.7,
+     "sharpe": 0.79,
+     "bench_sharpe": 0.98,
+     "roll10_win": "8/8",
+     "switches_per_year": 0.0
+    }
+   },
+   "UPRO": {
+    "A": {
+     "from": 200906,
+     "to": 202608,
+     "years": 17.2,
+     "cagr": 26.85,
+     "bench_cagr": 15.08,
+     "excess": 11.77,
+     "t": 2.74,
+     "t_nw": 2.88,
+     "vol": 34.8,
+     "bench_vol": 14.3,
+     "maxdd": -44.7,
+     "bench_maxdd": -23.9,
+     "maxdd_daily": -56.0,
+     "bench_maxdd_daily": -33.7,
+     "sharpe": 0.86,
+     "bench_sharpe": 1.06,
+     "roll10_win": "8/8",
+     "switches_per_year": 6.05,
+     "to_latest": {
+      "last_day": 20260925,
+      "cagr": 26.81,
+      "bench_cagr": 15.05,
+      "excess": 11.76,
+      "t": 2.74
+     }
+    },
+    "B": {
+     "from": 200906,
+     "to": 202608,
+     "years": 17.2,
+     "cagr": 28.03,
+     "bench_cagr": 15.08,
+     "excess": 12.95,
+     "t": 2.9,
+     "t_nw": 2.98,
+     "vol": 34.3,
+     "bench_vol": 14.3,
+     "maxdd": -48.1,
+     "bench_maxdd": -23.9,
+     "maxdd_daily": -53.3,
+     "bench_maxdd_daily": -33.7,
+     "sharpe": 0.9,
+     "bench_sharpe": 1.06,
+     "roll10_win": "8/8",
+     "switches_per_year": 6.05,
+     "to_latest": {
+      "last_day": 20260925,
+      "cagr": 27.99,
+      "bench_cagr": 15.05,
+      "excess": 12.93,
+      "t": 2.91
+     }
+    },
+    "C": {
+     "from": 200906,
+     "to": 202608,
+     "years": 17.2,
+     "cagr": 26.52,
+     "bench_cagr": 15.08,
+     "excess": 11.44,
+     "t": 2.67,
+     "t_nw": 2.76,
+     "vol": 35.4,
+     "bench_vol": 14.3,
+     "maxdd": -47.1,
+     "bench_maxdd": -23.9,
+     "maxdd_daily": -57.8,
+     "bench_maxdd_daily": -33.7,
+     "sharpe": 0.85,
+     "bench_sharpe": 1.06,
+     "roll10_win": "8/8",
+     "switches_per_year": 6.05,
+     "to_latest": {
+      "last_day": 20260925,
+      "cagr": 26.48,
+      "bench_cagr": 15.05,
+      "excess": 11.42,
+      "t": 2.68
+     },
+     "open_missing_fallback_days": 0
+    },
+    "product_buy_and_hold": {
+     "from": 200906,
+     "to": 202608,
+     "years": 17.2,
+     "cagr": 32.78,
+     "bench_cagr": 15.08,
+     "excess": 17.7,
+     "t": 3.25,
+     "t_nw": 4.66,
+     "vol": 44.4,
+     "bench_vol": 14.3,
+     "maxdd": -62.7,
+     "bench_maxdd": -23.9,
+     "maxdd_daily": -76.8,
+     "bench_maxdd_daily": -33.7,
+     "sharpe": 0.87,
+     "bench_sharpe": 1.06,
+     "roll10_win": "8/8",
+     "switches_per_year": 0.0
+    }
+   }
+  }
+ },
+ "paper_same_window": {
+  "about": "凍結した規則（French 米国市場・3倍・外=1倍・費用は凍結どおり）を実際の商品と同じ窓で。月次の最大下落（日次より浅く出る）",
+  "full_holdout_2001_01_2026_08": {
+   "from": 200101,
+   "to": 202608,
+   "years": 25.7,
+   "cagr": 15.78,
+   "bench_cagr": 9.45,
+   "excess": 6.34,
+   "t": 2.38,
+   "vol": 34.2,
+   "bench_vol": 15.5,
+   "maxdd": -68.2,
+   "bench_maxdd": -50.2,
+   "sharpe": 0.55,
+   "bench_sharpe": 0.55,
+   "roll10_win": "14/16"
+  },
+  "L3_from_2006_06（SSOの窓）": {
+   "from": 200606,
+   "to": 202608,
+   "years": 20.2,
+   "cagr": 19.76,
+   "bench_cagr": 11.47,
+   "excess": 8.29,
+   "t": 2.42,
+   "vol": 35.7,
+   "bench_vol": 15.7,
+   "maxdd": -68.2,
+   "bench_maxdd": -50.2,
+   "sharpe": 0.64,
+   "bench_sharpe": 0.67,
+   "roll10_win": "11/11"
+  },
+  "L2_from_2006_06（SSOの窓・参考 L=2）": {
+   "from": 200606,
+   "to": 202608,
+   "years": 20.2,
+   "cagr": 15.61,
+   "bench_cagr": 11.47,
+   "excess": 4.14,
+   "t": 2.19,
+   "vol": 25.1,
+   "bench_vol": 15.7,
+   "maxdd": -60.0,
+   "bench_maxdd": -50.2,
+   "sharpe": 0.64,
+   "bench_sharpe": 0.67,
+   "roll10_win": "11/11"
+  },
+  "L3_from_2008_11（SPXLの窓）": {
+   "from": 200811,
+   "to": 202608,
+   "years": 17.8,
+   "cagr": 27.03,
+   "bench_cagr": 14.53,
+   "excess": 12.5,
+   "t": 2.86,
+   "vol": 36.3,
+   "bench_vol": 15.4,
+   "maxdd": -45.9,
+   "bench_maxdd": -24.9,
+   "sharpe": 0.81,
+   "bench_sharpe": 0.87,
+   "roll10_win": "8/8"
+  },
+  "L3_from_2009_06（UPROの窓）": {
+   "from": 200906,
+   "to": 202608,
+   "years": 17.2,
+   "cagr": 28.21,
+   "bench_cagr": 15.2,
+   "excess": 13.02,
+   "t": 2.86,
+   "vol": 36.6,
+   "bench_vol": 14.8,
+   "maxdd": -45.9,
+   "bench_maxdd": -24.9,
+   "sharpe": 0.83,
+   "bench_sharpe": 0.94,
+   "roll10_win": "8/8"
+  },
+  "L3_delay1_from_2009_06": {
+   "from": 200906,
+   "to": 202608,
+   "years": 17.2,
+   "cagr": 28.36,
+   "bench_cagr": 15.2,
+   "excess": 13.16,
+   "t": 2.87,
+   "vol": 35.9,
+   "bench_vol": 14.8,
+   "maxdd": -48.6,
+   "bench_maxdd": -24.9,
+   "sharpe": 0.84,
+   "bench_sharpe": 0.94,
+   "roll10_win": "8/8"
+  },
+  "★期間の分解_2001_01_2009_05": {
+   "from": 200101,
+   "to": 200905,
+   "years": 8.4,
+   "cagr": -6.06,
+   "bench_cagr": -1.46,
+   "excess": -4.6,
+   "t": -0.38,
+   "vol": 27.9,
+   "bench_vol": 16.5,
+   "maxdd": -68.2,
+   "bench_maxdd": -50.2,
+   "sharpe": -0.17,
+   "bench_sharpe": -0.16,
+   "roll10_win": null
+  },
+  "★期間の分解_2009_06_2026_08": {
+   "from": 200906,
+   "to": 202608,
+   "years": 17.2,
+   "cagr": 28.21,
+   "bench_cagr": 15.2,
+   "excess": 13.02,
+   "t": 2.86,
+   "vol": 36.6,
+   "bench_vol": 14.8,
+   "maxdd": -45.9,
+   "bench_maxdd": -24.9,
+   "sharpe": 0.83,
+   "bench_sharpe": 0.94,
+   "roll10_win": "8/8"
+  },
+  "期間の分解_2001_01_2006_05": {
+   "from": 200101,
+   "to": 200605,
+   "years": 5.4,
+   "cagr": 2.05,
+   "bench_cagr": 2.21,
+   "excess": -0.16,
+   "t": 0.34,
+   "vol": 27.9,
+   "bench_vol": 14.9,
+   "maxdd": -52.3,
+   "bench_maxdd": -37.3,
+   "sharpe": 0.13,
+   "bench_sharpe": 0.07,
+   "roll10_win": null
+  }
+ },
+ "cost_drag_vs_frozen_model": {
+  "about": "持ち続けで、実際の商品の日次 vs L×S&P500配当込み −(L−1)×(RF＋0.4%) −0.9%（凍結の費用モデル）。actual_cost_pa＝費用なしの合成との幾何の差",
+  "results": {
+   "SSO": {
+    "window": [
+     20060623,
+     20260831
+    ],
+    "L": 2,
+    "real_cagr": 15.88,
+    "model_cagr": 16.28,
+    "nocost_cagr": 17.8,
+    "actual_cost_pa": 1.91,
+    "frozen_model_cost_pa": 1.52,
+    "extra_vs_model_pa": 0.39,
+    "daily_beta_to_SP500TR": 1.949,
+    "real_minus_model_by_year_pt": {
+     "2006": -0.07,
+     "2007": -1.21,
+     "2008": -0.34,
+     "2009": 0.65,
+     "2010": 0.33,
+     "2011": -0.36,
+     "2012": 0.3,
+     "2013": -0.39,
+     "2014": -0.41,
+     "2015": -0.25,
+     "2016": -0.35,
+     "2017": -1.5,
+     "2018": -0.07,
+     "2019": -0.35,
+     "2020": -0.02,
+     "2021": -0.13,
+     "2022": -0.63,
+     "2023": -0.58,
+     "2024": -0.87,
+     "2025": 0.08,
+     "2026": -0.73
+    }
+   },
+   "SPXL": {
+    "window": [
+     20081107,
+     20260831
+    ],
+    "L": 3,
+    "real_cagr": 29.84,
+    "model_cagr": 30.69,
+    "nocost_cagr": 32.93,
+    "actual_cost_pa": 3.09,
+    "frozen_model_cost_pa": 2.24,
+    "extra_vs_model_pa": 0.85,
+    "daily_beta_to_SP500TR": 2.929,
+    "real_minus_model_by_year_pt": {
+     "2008": -1.98,
+     "2009": 6.02,
+     "2010": 4.03,
+     "2011": -3.59,
+     "2012": -2.2,
+     "2013": -1.36,
+     "2014": -1.46,
+     "2015": -0.83,
+     "2016": -1.01,
+     "2017": -4.35,
+     "2018": 0.06,
+     "2019": 0.15,
+     "2020": -0.71,
+     "2021": -0.23,
+     "2022": -0.69,
+     "2023": -0.8,
+     "2024": -1.85,
+     "2025": 0.36,
+     "2026": -1.23
+    }
+   },
+   "UPRO": {
+    "window": [
+     20090629,
+     20260831
+    ],
+    "L": 3,
+    "real_cagr": 33.05,
+    "model_cagr": 33.85,
+    "nocost_cagr": 36.15,
+    "actual_cost_pa": 3.1,
+    "frozen_model_cost_pa": 2.29,
+    "extra_vs_model_pa": 0.8,
+    "daily_beta_to_SP500TR": 2.968,
+    "real_minus_model_by_year_pt": {
+     "2009": -0.27,
+     "2010": 0.55,
+     "2011": -0.56,
+     "2012": 0.53,
+     "2013": -1.23,
+     "2014": -0.94,
+     "2015": -0.56,
+     "2016": -0.23,
+     "2017": -4.0,
+     "2018": 0.06,
+     "2019": -0.35,
+     "2020": -0.26,
+     "2021": -0.34,
+     "2022": -0.98,
+     "2023": -1.76,
+     "2024": -1.89,
+     "2025": 0.3,
+     "2026": -1.65
+    }
+   }
+  }
+ },
+ "same_risk_static_leverage（事後・参考）": {
+  "about": "タイミングが「同じリスクの固定の倍率」に勝つか。w×3倍（または2倍）＋(1−w)×SPY を毎月初に戻す固定の配合（回転×0.1%）で、ぶれを規則にそろえた w と、規則の平均の在中率にそろえた w。版A",
+  "results": {
+   "UPRO": {
+    "window_start": 20090625,
+    "rule_A": {
+     "cagr": 26.85,
+     "vol": 34.8,
+     "maxdd_daily": -56.0,
+     "sharpe": 0.86
+    },
+    "fixed_mix_same_vol": {
+     "w_leveraged": 0.68,
+     "cagr": 28.43,
+     "vol": 34.8,
+     "maxdd_daily": -64.7,
+     "sharpe": 0.9
+    },
+    "fixed_mix_same_avg_leverage": {
+     "w_leveraged": 0.83,
+     "cagr": 30.67,
+     "vol": 39.4,
+     "maxdd_daily": -70.6,
+     "sharpe": 0.89
+    },
+    "SPY": {
+     "cagr": 15.08,
+     "vol": 14.3,
+     "maxdd_daily": -33.7,
+     "sharpe": 1.06
+    }
+   },
+   "SSO": {
+    "window_start": 20060621,
+    "rule_A": {
+     "cagr": 15.42,
+     "vol": 23.9,
+     "maxdd_daily": -62.2,
+     "sharpe": 0.72
+    },
+    "fixed_mix_same_vol": {
+     "w_leveraged": 0.55,
+     "cagr": 14.22,
+     "vol": 23.9,
+     "maxdd_daily": -74.6,
+     "sharpe": 0.68
+    },
+    "fixed_mix_same_avg_leverage": {
+     "w_leveraged": 0.773,
+     "cagr": 15.07,
+     "vol": 27.4,
+     "maxdd_daily": -80.1,
+     "sharpe": 0.66
+    },
+    "SPY": {
+     "cagr": 11.38,
+     "vol": 15.2,
+     "maxdd_daily": -55.2,
+     "sharpe": 0.79
+    }
+   },
+   "SYN3": {
+    "window_start": 20010102,
+    "rule_A": {
+     "cagr": 15.11,
+     "vol": 32.2,
+     "maxdd_daily": -69.6,
+     "sharpe": 0.6
+    },
+    "fixed_mix_same_vol": {
+     "w_leveraged": 0.55,
+     "cagr": 11.32,
+     "vol": 32.3,
+     "maxdd_daily": -86.5,
+     "sharpe": 0.5
+    },
+    "fixed_mix_same_avg_leverage": {
+     "w_leveraged": 0.723,
+     "cagr": 11.12,
+     "vol": 37.7,
+     "maxdd_daily": -92.1,
+     "sharpe": 0.48
+    },
+    "SPY": {
+     "cagr": 9.12,
+     "vol": 15.1,
+     "maxdd_daily": -55.2,
+     "sharpe": 0.66
+    }
+   },
+   "SPXL": {
+    "window_start": 20081105,
+    "rule_A": {
+     "cagr": 25.32,
+     "vol": 34.8,
+     "maxdd_daily": -55.9,
+     "sharpe": 0.83
+    },
+    "fixed_mix_same_vol": {
+     "w_leveraged": 0.63,
+     "cagr": 25.18,
+     "vol": 34.8,
+     "maxdd_daily": -62.7,
+     "sharpe": 0.83
+    },
+    "fixed_mix_same_avg_leverage": {
+     "w_leveraged": 0.804,
+     "cagr": 27.09,
+     "vol": 40.3,
+     "maxdd_daily": -69.6,
+     "sharpe": 0.81
+    },
+    "SPY": {
+     "cagr": 14.4,
+     "vol": 14.9,
+     "maxdd_daily": -33.7,
+     "sharpe": 0.98
+    }
+   }
+  },
+  "読み": "2009〜の上げ相場（UPRO の窓）では同じぶれの固定配合のほうが年+1.6%高い（最大下落は −64.7 vs −56.0）。2001〜の合成（2001-03・2008 を含む）では規則のほうが年+3.8%高く最大下落も浅い（−69.6 vs −86.5）＝タイミングの効きは長い下げのある窓でだけ出る"
+ },
+ "synthetic_calibrated_2001（事後・参考）": {
+  "about": "⚠ 事後・参考。実際の3倍ETFは 2008-11（SPXL）/2009-06（UPRO）以前に存在しない＝2001-2003 の下げと2008年を3倍の実物で測ることはできない。代わりに S&P500 配当込み×L −(L−1)×(RF＋0.4%) −(0.9%＋実測の上乗せ) の合成（3倍は＋0.8%・2倍は＋0.4%＝③の実測）。1倍の側は SPY の実物",
+  "calibration_check": {
+   "SYN3_vs_UPRO": {
+    "buy_hold_cagr_syn": 32.74,
+    "buy_hold_cagr_real": 32.99,
+    "rule_A_cagr_syn": 26.57,
+    "rule_A_cagr_real": 27.03
+   },
+   "SYN3_vs_SPXL": {
+    "buy_hold_cagr_syn": 28.45,
+    "buy_hold_cagr_real": 28.62,
+    "rule_A_cagr_syn": 24.82,
+    "rule_A_cagr_real": 25.4
+   },
+   "SYN2_vs_SSO": {
+    "buy_hold_cagr_syn": 15.74,
+    "buy_hold_cagr_real": 15.81,
+    "rule_A_cagr_syn": 15.14,
+    "rule_A_cagr_real": 15.49
+   }
+  },
+  "results": {
+   "SYN3_A_2001_01_2026_08": {
+    "from": 200101,
+    "to": 202608,
+    "years": 25.7,
+    "cagr": 15.11,
+    "bench_cagr": 9.12,
+    "excess": 5.99,
+    "t": 2.33,
+    "t_nw": 2.33,
+    "vol": 32.2,
+    "bench_vol": 15.1,
+    "maxdd": -66.1,
+    "bench_maxdd": -50.8,
+    "maxdd_daily": -69.6,
+    "bench_maxdd_daily": -55.2,
+    "sharpe": 0.6,
+    "bench_sharpe": 0.66,
+    "roll10_win": "15/16",
+    "switches_per_year": 6.66
+   },
+   "SYN3_A_2001_01_2009_05": {
+    "from": 200101,
+    "to": 200905,
+    "years": 8.4,
+    "cagr": -4.11,
+    "bench_cagr": -2.14,
+    "excess": -1.97,
+    "t": -0.04,
+    "t_nw": -0.04,
+    "vol": 25.3,
+    "bench_vol": 16.2,
+    "maxdd": -66.1,
+    "bench_maxdd": -50.8,
+    "maxdd_daily": -69.6,
+    "bench_maxdd_daily": -55.2,
+    "sharpe": -0.04,
+    "bench_sharpe": -0.05,
+    "roll10_win": null,
+    "switches_per_year": 7.62
+   },
+   "SYN3_A_2009_06_2026_08": {
+    "from": 200906,
+    "to": 202608,
+    "years": 17.2,
+    "cagr": 25.68,
+    "bench_cagr": 14.92,
+    "excess": 10.75,
+    "t": 2.59,
+    "t_nw": 2.75,
+    "vol": 34.9,
+    "bench_vol": 14.3,
+    "maxdd": -44.5,
+    "bench_maxdd": -23.9,
+    "maxdd_daily": -55.9,
+    "bench_maxdd_daily": -33.7,
+    "sharpe": 0.84,
+    "bench_sharpe": 1.05,
+    "roll10_win": "8/8",
+    "switches_per_year": 6.2
+   },
+   "SYN3_B_2001_01_2026_08": {
+    "from": 200101,
+    "to": 202608,
+    "years": 25.7,
+    "cagr": 17.16,
+    "bench_cagr": 9.12,
+    "excess": 8.03,
+    "t": 2.78,
+    "t_nw": 2.72,
+    "vol": 31.8,
+    "bench_vol": 15.1,
+    "maxdd": -65.6,
+    "bench_maxdd": -50.8,
+    "maxdd_daily": -69.2,
+    "bench_maxdd_daily": -55.2,
+    "sharpe": 0.66,
+    "bench_sharpe": 0.66,
+    "roll10_win": "16/16",
+    "switches_per_year": 6.66
+   },
+   "SYN3_B_2001_01_2009_05": {
+    "from": 200101,
+    "to": 200905,
+    "years": 8.4,
+    "cagr": -0.59,
+    "bench_cagr": -2.14,
+    "excess": 1.55,
+    "t": 0.7,
+    "t_nw": 0.57,
+    "vol": 25.0,
+    "bench_vol": 16.2,
+    "maxdd": -65.6,
+    "bench_maxdd": -50.8,
+    "maxdd_daily": -69.2,
+    "bench_maxdd_daily": -55.2,
+    "sharpe": 0.1,
+    "bench_sharpe": -0.05,
+    "roll10_win": null,
+    "switches_per_year": 7.62
+   },
+   "SYN3_B_2009_06_2026_08": {
+    "from": 200906,
+    "to": 202608,
+    "years": 17.2,
+    "cagr": 26.76,
+    "bench_cagr": 14.92,
+    "excess": 11.83,
+    "t": 2.73,
+    "t_nw": 2.88,
+    "vol": 34.5,
+    "bench_vol": 14.3,
+    "maxdd": -48.2,
+    "bench_maxdd": -23.9,
+    "maxdd_daily": -53.6,
+    "bench_maxdd_daily": -33.7,
+    "sharpe": 0.87,
+    "bench_sharpe": 1.05,
+    "roll10_win": "8/8",
+    "switches_per_year": 6.2
+   },
+   "SYN2_A_2001_01_2026_08": {
+    "from": 200101,
+    "to": 202608,
+    "years": 25.7,
+    "cagr": 12.02,
+    "bench_cagr": 9.12,
+    "excess": 2.9,
+    "t": 2.04,
+    "t_nw": 2.01,
+    "vol": 23.0,
+    "bench_vol": 15.1,
+    "maxdd": -59.2,
+    "bench_maxdd": -50.8,
+    "maxdd_daily": -63.3,
+    "bench_maxdd_daily": -55.2,
+    "sharpe": 0.61,
+    "bench_sharpe": 0.66,
+    "roll10_win": "14/16",
+    "switches_per_year": 6.66
+   },
+   "SYN2_A_2001_01_2009_05": {
+    "from": 200101,
+    "to": 200905,
+    "years": 8.4,
+    "cagr": -3.47,
+    "bench_cagr": -2.14,
+    "excess": -1.32,
+    "t": -0.27,
+    "t_nw": -0.27,
+    "vol": 19.9,
+    "bench_vol": 16.2,
+    "maxdd": -59.2,
+    "bench_maxdd": -50.8,
+    "maxdd_daily": -63.3,
+    "bench_maxdd_daily": -55.2,
+    "sharpe": -0.08,
+    "bench_sharpe": -0.05,
+    "roll10_win": null,
+    "switches_per_year": 7.62
+   },
+   "SYN2_A_2009_06_2026_08": {
+    "from": 200906,
+    "to": 202608,
+    "years": 17.2,
+    "cagr": 20.29,
+    "bench_cagr": 14.92,
+    "excess": 5.37,
+    "t": 2.39,
+    "t_nw": 2.5,
+    "vol": 24.1,
+    "bench_vol": 14.3,
+    "maxdd": -35.2,
+    "bench_maxdd": -23.9,
+    "maxdd_daily": -45.9,
+    "bench_maxdd_daily": -33.7,
+    "sharpe": 0.89,
+    "bench_sharpe": 1.05,
+    "roll10_win": "8/8",
+    "switches_per_year": 6.2
+   },
+   "SYN2_B_2001_01_2026_08": {
+    "from": 200101,
+    "to": 202608,
+    "years": 25.7,
+    "cagr": 13.12,
+    "bench_cagr": 9.12,
+    "excess": 3.99,
+    "t": 2.54,
+    "t_nw": 2.46,
+    "vol": 22.8,
+    "bench_vol": 15.1,
+    "maxdd": -58.5,
+    "bench_maxdd": -50.8,
+    "maxdd_daily": -62.6,
+    "bench_maxdd_daily": -55.2,
+    "sharpe": 0.66,
+    "bench_sharpe": 0.66,
+    "roll10_win": "16/16",
+    "switches_per_year": 6.66
+   },
+   "SYN2_B_2001_01_2009_05": {
+    "from": 200101,
+    "to": 200905,
+    "years": 8.4,
+    "cagr": -1.44,
+    "bench_cagr": -2.14,
+    "excess": 0.7,
+    "t": 0.57,
+    "t_nw": 0.46,
+    "vol": 20.0,
+    "bench_vol": 16.2,
+    "maxdd": -58.5,
+    "bench_maxdd": -50.8,
+    "maxdd_daily": -62.6,
+    "bench_maxdd_daily": -55.2,
+    "sharpe": 0.03,
+    "bench_sharpe": -0.05,
+    "roll10_win": null,
+    "switches_per_year": 7.62
+   },
+   "SYN2_B_2009_06_2026_08": {
+    "from": 200906,
+    "to": 202608,
+    "years": 17.2,
+    "cagr": 20.81,
+    "bench_cagr": 14.92,
+    "excess": 5.89,
+    "t": 2.53,
+    "t_nw": 2.64,
+    "vol": 23.8,
+    "bench_vol": 14.3,
+    "maxdd": -35.8,
+    "bench_maxdd": -23.9,
+    "maxdd_daily": -41.7,
+    "bench_maxdd_daily": -33.7,
+    "sharpe": 0.92,
+    "bench_sharpe": 1.05,
+    "roll10_win": "8/8",
+    "switches_per_year": 6.2
+   },
+   "SYN3m_A_2001_01_2026_08": {
+    "from": 200101,
+    "to": 202608,
+    "years": 25.7,
+    "cagr": 15.78,
+    "bench_cagr": 9.12,
+    "excess": 6.66,
+    "t": 2.47,
+    "t_nw": 2.45,
+    "vol": 32.3,
+    "bench_vol": 15.1,
+    "maxdd": -66.0,
+    "bench_maxdd": -50.8,
+    "maxdd_daily": -69.5,
+    "bench_maxdd_daily": -55.2,
+    "sharpe": 0.62,
+    "bench_sharpe": 0.66,
+    "roll10_win": "15/16",
+    "switches_per_year": 6.66
+   },
+   "SYN3m_A_2001_01_2009_05": {
+    "from": 200101,
+    "to": 200905,
+    "years": 8.4,
+    "cagr": -3.73,
+    "bench_cagr": -2.14,
+    "excess": -1.59,
+    "t": 0.04,
+    "t_nw": 0.04,
+    "vol": 25.3,
+    "bench_vol": 16.2,
+    "maxdd": -66.0,
+    "bench_maxdd": -50.8,
+    "maxdd_daily": -69.5,
+    "bench_maxdd_daily": -55.2,
+    "sharpe": -0.02,
+    "bench_sharpe": -0.05,
+    "roll10_win": null,
+    "switches_per_year": 7.62
+   },
+   "SYN3m_A_2009_06_2026_08": {
+    "from": 200906,
+    "to": 202608,
+    "years": 17.2,
+    "cagr": 26.51,
+    "bench_cagr": 14.92,
+    "excess": 11.59,
+    "t": 2.71,
+    "t_nw": 2.86,
+    "vol": 34.9,
+    "bench_vol": 14.3,
+    "maxdd": -44.4,
+    "bench_maxdd": -23.9,
+    "maxdd_daily": -55.9,
+    "bench_maxdd_daily": -33.7,
+    "sharpe": 0.85,
+    "bench_sharpe": 1.05,
+    "roll10_win": "8/8",
+    "switches_per_year": 6.2
+   },
+   "SYN3m_B_2001_01_2026_08": {
+    "from": 200101,
+    "to": 202608,
+    "years": 25.7,
+    "cagr": 17.83,
+    "bench_cagr": 9.12,
+    "excess": 8.71,
+    "t": 2.92,
+    "t_nw": 2.84,
+    "vol": 31.9,
+    "bench_vol": 15.1,
+    "maxdd": -65.5,
+    "bench_maxdd": -50.8,
+    "maxdd_daily": -69.1,
+    "bench_maxdd_daily": -55.2,
+    "sharpe": 0.68,
+    "bench_sharpe": 0.66,
+    "roll10_win": "16/16",
+    "switches_per_year": 6.66
+   },
+   "SYN3m_B_2001_01_2009_05": {
+    "from": 200101,
+    "to": 200905,
+    "years": 8.4,
+    "cagr": -0.2,
+    "bench_cagr": -2.14,
+    "excess": 1.95,
+    "t": 0.79,
+    "t_nw": 0.64,
+    "vol": 25.0,
+    "bench_vol": 16.2,
+    "maxdd": -65.5,
+    "bench_maxdd": -50.8,
+    "maxdd_daily": -69.1,
+    "bench_maxdd_daily": -55.2,
+    "sharpe": 0.12,
+    "bench_sharpe": -0.05,
+    "roll10_win": null,
+    "switches_per_year": 7.62
+   },
+   "SYN3m_B_2009_06_2026_08": {
+    "from": 200906,
+    "to": 202608,
+    "years": 17.2,
+    "cagr": 27.6,
+    "bench_cagr": 14.92,
+    "excess": 12.68,
+    "t": 2.85,
+    "t_nw": 3.0,
+    "vol": 34.5,
+    "bench_vol": 14.3,
+    "maxdd": -48.1,
+    "bench_maxdd": -23.9,
+    "maxdd_daily": -53.5,
+    "bench_maxdd_daily": -33.7,
+    "sharpe": 0.89,
+    "bench_sharpe": 1.05,
+    "roll10_win": "8/8",
+    "switches_per_year": 6.2
+   }
+  },
+  "names": {
+   "SYN3": "3倍・実測で較正",
+   "SYN2": "2倍・実測で較正",
+   "SYN3m": "3倍・凍結の費用モデルそのまま"
+  }
+ },
+ "crisis_and_whipsaw": {
+  "about": "SYN3 は④の合成（2008年に3倍の実物は無い）。rule_dd_in_year は日次",
+  "results": {
+   "SSO": {
+    "A": {
+     "calendar_years": {
+      "2007": {
+       "rule": -7.5,
+       "SPY": 5.1,
+       "product_bh": 1.1,
+       "switches": 17,
+       "rule_dd_in_year": -20.8,
+       "SPY_dd_in_year": -9.9
+      },
+      "2008": {
+       "rule": -36.8,
+       "SPY": -36.8,
+       "product_bh": -67.9,
+       "switches": 0,
+       "rule_dd_in_year": -47.1,
+       "SPY_dd_in_year": -47.1
+      },
+      "2009": {
+       "rule": 41.1,
+       "SPY": 26.4,
+       "product_bh": 47.2,
+       "switches": 7,
+       "rule_dd_in_year": -27.1,
+       "SPY_dd_in_year": -27.1
+      },
+      "2020": {
+       "rule": 18.5,
+       "SPY": 18.3,
+       "product_bh": 21.5,
+       "switches": 10,
+       "rule_dd_in_year": -45.9,
+       "SPY_dd_in_year": -33.7
+      },
+      "2022": {
+       "rule": -32.1,
+       "SPY": -18.2,
+       "product_bh": -39.0,
+       "switches": 13,
+       "rule_dd_in_year": -36.3,
+       "SPY_dd_in_year": -24.5
+      }
+     },
+     "episodes": {
+      "GFC_2007-10-09→2009-03-09": {
+       "rule": -59.0,
+       "SPY": -54.8,
+       "product_bh": -84.4
+      },
+      "COVID_2020-02-19→2020-03-23": {
+       "rule": -45.4,
+       "SPY": -33.4,
+       "product_bh": -59.0
+      },
+      "2020-02-19→2020-12-31": {
+       "rule": 8.9,
+       "SPY": 13.1,
+       "product_bh": 11.6
+      },
+      "2022-01-03→2022-10-12": {
+       "rule": -35.6,
+       "SPY": -24.1,
+       "product_bh": -46.1
+      }
+     },
+     "switch_days_2020": [
+      20200228,
+      20200303,
+      20200304,
+      20200305,
+      20200306,
+      20200528,
+      20200612,
+      20200615,
+      20200629,
+      20200630
+     ],
+     "switch_days_2022": [
+      20220124,
+      20220201,
+      20220214,
+      20220216,
+      20220218,
+      20220323,
+      20220324,
+      20220325,
+      20220407,
+      20220408,
+      20220411,
+      20221201,
+      20221206
+     ]
+    },
+    "B": {
+     "calendar_years": {
+      "2007": {
+       "rule": -10.6,
+       "SPY": 5.1,
+       "product_bh": 1.1,
+       "switches": 17,
+       "rule_dd_in_year": -23.4,
+       "SPY_dd_in_year": -9.9
+      },
+      "2008": {
+       "rule": -36.8,
+       "SPY": -36.8,
+       "product_bh": -67.9,
+       "switches": 0,
+       "rule_dd_in_year": -47.1,
+       "SPY_dd_in_year": -47.1
+      },
+      "2009": {
+       "rule": 41.2,
+       "SPY": 26.4,
+       "product_bh": 47.2,
+       "switches": 7,
+       "rule_dd_in_year": -27.1,
+       "SPY_dd_in_year": -27.1
+      },
+      "2020": {
+       "rule": 30.0,
+       "SPY": 18.3,
+       "product_bh": 21.5,
+       "switches": 10,
+       "rule_dd_in_year": -41.0,
+       "SPY_dd_in_year": -33.7
+      },
+      "2022": {
+       "rule": -33.2,
+       "SPY": -18.2,
+       "product_bh": -39.0,
+       "switches": 13,
+       "rule_dd_in_year": -36.4,
+       "SPY_dd_in_year": -24.5
+      }
+     },
+     "episodes": {
+      "GFC_2007-10-09→2009-03-09": {
+       "rule": -60.2,
+       "SPY": -54.8,
+       "product_bh": -84.4
+      },
+      "COVID_2020-02-19→2020-03-23": {
+       "rule": -40.5,
+       "SPY": -33.4,
+       "product_bh": -59.0
+      },
+      "2020-02-19→2020-12-31": {
+       "rule": 19.4,
+       "SPY": 13.1,
+       "product_bh": 11.6
+      },
+      "2022-01-03→2022-10-12": {
+       "rule": -35.7,
+       "SPY": -24.1,
+       "product_bh": -46.1
+      }
+     },
+     "switch_days_2020": [
+      20200302,
+      20200304,
+      20200305,
+      20200306,
+      20200309,
+      20200529,
+      20200615,
+      20200616,
+      20200630,
+      20200701
+     ],
+     "switch_days_2022": [
+      20220125,
+      20220202,
+      20220215,
+      20220217,
+      20220222,
+      20220324,
+      20220325,
+      20220328,
+      20220408,
+      20220411,
+      20220412,
+      20221202,
+      20221207
+     ]
+    }
+   },
+   "SPXL": {
+    "A": {
+     "calendar_years": {
+      "2008": {
+       "rule": -5.4,
+       "SPY": -5.4,
+       "product_bh": -28.5,
+       "switches": 0,
+       "rule_dd_in_year": -21.6,
+       "SPY_dd_in_year": -21.6
+      },
+      "2009": {
+       "rule": 60.1,
+       "SPY": 26.4,
+       "product_bh": 65.2,
+       "switches": 7,
+       "rule_dd_in_year": -27.1,
+       "SPY_dd_in_year": -27.1
+      },
+      "2020": {
+       "rule": 17.6,
+       "SPY": 18.3,
+       "product_bh": 9.6,
+       "switches": 10,
+       "rule_dd_in_year": -55.9,
+       "SPY_dd_in_year": -33.7
+      },
+      "2022": {
+       "rule": -43.1,
+       "SPY": -18.2,
+       "product_bh": -56.6,
+       "switches": 13,
+       "rule_dd_in_year": -45.8,
+       "SPY_dd_in_year": -24.5
+      }
+     },
+     "episodes": {
+      "COVID_2020-02-19→2020-03-23": {
+       "rule": -55.3,
+       "SPY": -33.4,
+       "product_bh": -76.5
+      },
+      "2020-02-19→2020-12-31": {
+       "rule": 4.0,
+       "SPY": 13.1,
+       "product_bh": -3.0
+      },
+      "2022-01-03→2022-10-12": {
+       "rule": -44.9,
+       "SPY": -24.1,
+       "product_bh": -63.2
+      }
+     },
+     "switch_days_2020": [
+      20200228,
+      20200303,
+      20200304,
+      20200305,
+      20200306,
+      20200528,
+      20200612,
+      20200615,
+      20200629,
+      20200630
+     ],
+     "switch_days_2022": [
+      20220124,
+      20220201,
+      20220214,
+      20220216,
+      20220218,
+      20220323,
+      20220324,
+      20220325,
+      20220407,
+      20220408,
+      20220411,
+      20221201,
+      20221206
+     ]
+    },
+    "B": {
+     "calendar_years": {
+      "2008": {
+       "rule": -5.4,
+       "SPY": -5.4,
+       "product_bh": -28.5,
+       "switches": 0,
+       "rule_dd_in_year": -21.6,
+       "SPY_dd_in_year": -21.6
+      },
+      "2009": {
+       "rule": 57.8,
+       "SPY": 26.4,
+       "product_bh": 65.2,
+       "switches": 7,
+       "rule_dd_in_year": -27.1,
+       "SPY_dd_in_year": -27.1
+      },
+      "2020": {
+       "rule": 39.2,
+       "SPY": 18.3,
+       "product_bh": 9.6,
+       "switches": 10,
+       "rule_dd_in_year": -47.9,
+       "SPY_dd_in_year": -33.7
+      },
+      "2022": {
+       "rule": -45.0,
+       "SPY": -18.2,
+       "product_bh": -56.6,
+       "switches": 13,
+       "rule_dd_in_year": -46.8,
+       "SPY_dd_in_year": -24.5
+      }
+     },
+     "episodes": {
+      "COVID_2020-02-19→2020-03-23": {
+       "rule": -47.2,
+       "SPY": -33.4,
+       "product_bh": -76.5
+      },
+      "2020-02-19→2020-12-31": {
+       "rule": 23.1,
+       "SPY": 13.1,
+       "product_bh": -3.0
+      },
+      "2022-01-03→2022-10-12": {
+       "rule": -45.1,
+       "SPY": -24.1,
+       "product_bh": -63.2
+      }
+     },
+     "switch_days_2020": [
+      20200302,
+      20200304,
+      20200305,
+      20200306,
+      20200309,
+      20200529,
+      20200615,
+      20200616,
+      20200630,
+      20200701
+     ],
+     "switch_days_2022": [
+      20220125,
+      20220202,
+      20220215,
+      20220217,
+      20220222,
+      20220324,
+      20220325,
+      20220328,
+      20220408,
+      20220411,
+      20220412,
+      20221202,
+      20221207
+     ]
+    }
+   },
+   "UPRO": {
+    "A": {
+     "calendar_years": {
+      "2009": {
+       "rule": 64.2,
+       "SPY": 22.3,
+       "product_bh": 73.8,
+       "switches": 4,
+       "rule_dd_in_year": -16.6,
+       "SPY_dd_in_year": -5.7
+      },
+      "2020": {
+       "rule": 16.8,
+       "SPY": 18.3,
+       "product_bh": 10.1,
+       "switches": 10,
+       "rule_dd_in_year": -56.0,
+       "SPY_dd_in_year": -33.7
+      },
+      "2022": {
+       "rule": -43.0,
+       "SPY": -18.2,
+       "product_bh": -56.8,
+       "switches": 13,
+       "rule_dd_in_year": -45.7,
+       "SPY_dd_in_year": -24.5
+      }
+     },
+     "episodes": {
+      "COVID_2020-02-19→2020-03-23": {
+       "rule": -55.4,
+       "SPY": -33.4,
+       "product_bh": -76.5
+      },
+      "2020-02-19→2020-12-31": {
+       "rule": 3.2,
+       "SPY": 13.1,
+       "product_bh": -2.7
+      },
+      "2022-01-03→2022-10-12": {
+       "rule": -44.8,
+       "SPY": -24.1,
+       "product_bh": -63.3
+      }
+     },
+     "switch_days_2020": [
+      20200228,
+      20200303,
+      20200304,
+      20200305,
+      20200306,
+      20200528,
+      20200612,
+      20200615,
+      20200629,
+      20200630
+     ],
+     "switch_days_2022": [
+      20220124,
+      20220201,
+      20220214,
+      20220216,
+      20220218,
+      20220323,
+      20220324,
+      20220325,
+      20220407,
+      20220408,
+      20220411,
+      20221201,
+      20221206
+     ]
+    },
+    "B": {
+     "calendar_years": {
+      "2009": {
+       "rule": 71.1,
+       "SPY": 22.3,
+       "product_bh": 73.8,
+       "switches": 4,
+       "rule_dd_in_year": -16.6,
+       "SPY_dd_in_year": -5.7
+      },
+      "2020": {
+       "rule": 40.2,
+       "SPY": 18.3,
+       "product_bh": 10.1,
+       "switches": 10,
+       "rule_dd_in_year": -47.8,
+       "SPY_dd_in_year": -33.7
+      },
+      "2022": {
+       "rule": -45.1,
+       "SPY": -18.2,
+       "product_bh": -56.8,
+       "switches": 13,
+       "rule_dd_in_year": -46.9,
+       "SPY_dd_in_year": -24.5
+      }
+     },
+     "episodes": {
+      "COVID_2020-02-19→2020-03-23": {
+       "rule": -47.0,
+       "SPY": -33.4,
+       "product_bh": -76.5
+      },
+      "2020-02-19→2020-12-31": {
+       "rule": 23.9,
+       "SPY": 13.1,
+       "product_bh": -2.7
+      },
+      "2022-01-03→2022-10-12": {
+       "rule": -45.2,
+       "SPY": -24.1,
+       "product_bh": -63.3
+      }
+     },
+     "switch_days_2020": [
+      20200302,
+      20200304,
+      20200305,
+      20200306,
+      20200309,
+      20200529,
+      20200615,
+      20200616,
+      20200630,
+      20200701
+     ],
+     "switch_days_2022": [
+      20220125,
+      20220202,
+      20220215,
+      20220217,
+      20220222,
+      20220324,
+      20220325,
+      20220328,
+      20220408,
+      20220411,
+      20220412,
+      20221202,
+      20221207
+     ]
+    }
+   },
+   "SYN3": {
+    "A": {
+     "calendar_years": {
+      "2001": {
+       "rule": -10.1,
+       "SPY": -10.1,
+       "product_bh": -40.9,
+       "switches": 0,
+       "rule_dd_in_year": -28.8,
+       "SPY_dd_in_year": -28.8
+      },
+      "2002": {
+       "rule": -30.2,
+       "SPY": -21.6,
+       "product_bh": -64.2,
+       "switches": 8,
+       "rule_dd_in_year": -40.2,
+       "SPY_dd_in_year": -33.0
+      },
+      "2007": {
+       "rule": -21.2,
+       "SPY": 5.1,
+       "product_bh": -3.3,
+       "switches": 17,
+       "rule_dd_in_year": -36.3,
+       "SPY_dd_in_year": -9.9
+      },
+      "2008": {
+       "rule": -36.8,
+       "SPY": -36.8,
+       "product_bh": -86.0,
+       "switches": 0,
+       "rule_dd_in_year": -47.1,
+       "SPY_dd_in_year": -47.1
+      },
+      "2009": {
+       "rule": 56.9,
+       "SPY": 26.4,
+       "product_bh": 57.9,
+       "switches": 7,
+       "rule_dd_in_year": -27.1,
+       "SPY_dd_in_year": -27.1
+      },
+      "2020": {
+       "rule": 16.1,
+       "SPY": 18.3,
+       "product_bh": 9.5,
+       "switches": 10,
+       "rule_dd_in_year": -55.9,
+       "SPY_dd_in_year": -33.7
+      },
+      "2022": {
+       "rule": -42.9,
+       "SPY": -18.2,
+       "product_bh": -56.2,
+       "switches": 13,
+       "rule_dd_in_year": -45.6,
+       "SPY_dd_in_year": -24.5
+      }
+     },
+     "episodes": {
+      "GFC_2007-10-09→2009-03-09": {
+       "rule": -62.7,
+       "SPY": -54.8,
+       "product_bh": -95.5
+      },
+      "COVID_2020-02-19→2020-03-23": {
+       "rule": -55.3,
+       "SPY": -33.4,
+       "product_bh": -76.4
+      },
+      "2020-02-19→2020-12-31": {
+       "rule": 3.0,
+       "SPY": 13.1,
+       "product_bh": -2.9
+      },
+      "2022-01-03→2022-10-12": {
+       "rule": -44.6,
+       "SPY": -24.1,
+       "product_bh": -62.9
+      }
+     },
+     "switch_days_2020": [
+      20200228,
+      20200303,
+      20200304,
+      20200305,
+      20200306,
+      20200528,
+      20200612,
+      20200615,
+      20200629,
+      20200630
+     ],
+     "switch_days_2022": [
+      20220124,
+      20220201,
+      20220214,
+      20220216,
+      20220218,
+      20220323,
+      20220324,
+      20220325,
+      20220407,
+      20220408,
+      20220411,
+      20221201,
+      20221206
+     ]
+    },
+    "B": {
+     "calendar_years": {
+      "2001": {
+       "rule": -10.1,
+       "SPY": -10.1,
+       "product_bh": -40.9,
+       "switches": 0,
+       "rule_dd_in_year": -28.8,
+       "SPY_dd_in_year": -28.8
+      },
+      "2002": {
+       "rule": -26.9,
+       "SPY": -21.6,
+       "product_bh": -64.2,
+       "switches": 8,
+       "rule_dd_in_year": -39.8,
+       "SPY_dd_in_year": -33.0
+      },
+      "2007": {
+       "rule": -20.1,
+       "SPY": 5.1,
+       "product_bh": -3.3,
+       "switches": 17,
+       "rule_dd_in_year": -35.4,
+       "SPY_dd_in_year": -9.9
+      },
+      "2008": {
+       "rule": -36.8,
+       "SPY": -36.8,
+       "product_bh": -86.0,
+       "switches": 0,
+       "rule_dd_in_year": -47.1,
+       "SPY_dd_in_year": -47.1
+      },
+      "2009": {
+       "rule": 57.9,
+       "SPY": 26.4,
+       "product_bh": 57.9,
+       "switches": 7,
+       "rule_dd_in_year": -27.1,
+       "SPY_dd_in_year": -27.1
+      },
+      "2020": {
+       "rule": 37.1,
+       "SPY": 18.3,
+       "product_bh": 9.5,
+       "switches": 10,
+       "rule_dd_in_year": -48.6,
+       "SPY_dd_in_year": -33.7
+      },
+      "2022": {
+       "rule": -45.3,
+       "SPY": -18.2,
+       "product_bh": -56.2,
+       "switches": 13,
+       "rule_dd_in_year": -47.1,
+       "SPY_dd_in_year": -24.5
+      }
+     },
+     "episodes": {
+      "GFC_2007-10-09→2009-03-09": {
+       "rule": -64.5,
+       "SPY": -54.8,
+       "product_bh": -95.5
+      },
+      "COVID_2020-02-19→2020-03-23": {
+       "rule": -47.8,
+       "SPY": -33.4,
+       "product_bh": -76.4
+      },
+      "2020-02-19→2020-12-31": {
+       "rule": 21.6,
+       "SPY": 13.1,
+       "product_bh": -2.9
+      },
+      "2022-01-03→2022-10-12": {
+       "rule": -45.4,
+       "SPY": -24.1,
+       "product_bh": -62.9
+      }
+     },
+     "switch_days_2020": [
+      20200302,
+      20200304,
+      20200305,
+      20200306,
+      20200309,
+      20200529,
+      20200615,
+      20200616,
+      20200630,
+      20200701
+     ],
+     "switch_days_2022": [
+      20220125,
+      20220202,
+      20220215,
+      20220217,
+      20220222,
+      20220324,
+      20220325,
+      20220328,
+      20220408,
+      20220411,
+      20220412,
+      20221202,
+      20221207
+     ]
+    }
+   }
+  },
+  "time_in_leverage": {
+   "2001_2026_08": 0.723,
+   "UPRO_window": 0.83
+  },
+  "whipsaw_UPRO_window_A": {
+   "entries_into_3x": 51,
+   "exited_within_10_trading_days": 31,
+   "median_days_in": 5
+  }
+ },
+ "after_tax_jpy": {
+  "about": "一括投資・円建て（JPY=X の日次の終値で換算）。課税口座: 米国ETFの配当は 米国10%→残りに20.315%（外国税額控除なし＝28.28%）、売るたびに円で測った売却益に20.315%（源泉徴収ありの特定口座＝同じ年の中は損益通算で還付）、最後に全部売って清算。taxable_with_3yr_carryforward は確定申告で損失を3年繰り越した場合。NISA: 配当は米国の10%だけ・売却益は非課税。手数料は楽天の米国株（約定代金の0.495%・上限22ドル）: 3倍/2倍の売り・買いと SPY の売りは有料、SPY/VOO の買いは楽天の「買付手数料無料」（2026-09-28 に楽天の頁で確認）。滑りは凍結どおり 0.1%/入れ替え を別に引く。為替の手数料は両者で同じ（最初の円→ドルだけ）なので入れていない",
+  "⚠NISA の相手の仮定": "SPY を全額 NISA で持ち続けた場合。実際の新NISA は成長投資枠 年240万円・生涯1200万円（つみたて枠と合わせ1800万円）で、1000万円の一括は1年では入らない。2014年以前は NISA 自体が無い＝今の制度を過去の窓に当てた仮定",
+  "results": {
+   "SSO_2x_real_2006-06": {
+    "fx_start": 114.83,
+    "100万円": {
+     "SPY_pretax": {
+      "cagr_jpy": 13.26,
+      "multiple": 12.36
+     },
+     "SPY_NISA": {
+      "cagr_jpy": 13.05,
+      "multiple": 11.91
+     },
+     "SPY_taxable": {
+      "cagr_jpy": 11.62,
+      "multiple": 9.21
+     },
+     "rule_A": {
+      "pretax": {
+       "cagr_jpy": 17.38,
+       "multiple": 25.43
+      },
+      "with_rakuten_commission": {
+       "cagr_jpy": 15.44,
+       "multiple": 18.15,
+       "commission_total_pct_of_principal": 50.5
+      },
+      "taxable_withholding_only": {
+       "cagr_jpy": 10.91,
+       "multiple": 8.1,
+       "taxes_paid_x_principal": 2.14
+      },
+      "taxable_with_3yr_carryforward": {
+       "cagr_jpy": 11.65,
+       "multiple": 9.26
+      },
+      "vs_SPY_NISA_pa": -2.14,
+      "vs_SPY_NISA_pa_with_carry": -1.4,
+      "vs_SPY_taxable_pa": -0.71
+     },
+     "rule_B": {
+      "pretax": {
+       "cagr_jpy": 17.62,
+       "multiple": 26.5
+      },
+      "with_rakuten_commission": {
+       "cagr_jpy": 15.69,
+       "multiple": 18.96,
+       "commission_total_pct_of_principal": 50.5
+      },
+      "taxable_withholding_only": {
+       "cagr_jpy": 11.2,
+       "multiple": 8.53,
+       "taxes_paid_x_principal": 2.23
+      },
+      "taxable_with_3yr_carryforward": {
+       "cagr_jpy": 11.94,
+       "multiple": 9.75
+      },
+      "vs_SPY_NISA_pa": -1.85,
+      "vs_SPY_NISA_pa_with_carry": -1.11,
+      "vs_SPY_taxable_pa": -0.42
+     },
+     "rule_C": {
+      "pretax": {
+       "cagr_jpy": 17.67,
+       "multiple": 26.72
+      },
+      "with_rakuten_commission": {
+       "cagr_jpy": 15.83,
+       "multiple": 19.45,
+       "commission_total_pct_of_principal": 50.5
+      },
+      "taxable_withholding_only": {
+       "cagr_jpy": 11.31,
+       "multiple": 8.71,
+       "taxes_paid_x_principal": 2.29
+      },
+      "taxable_with_3yr_carryforward": {
+       "cagr_jpy": 12.0,
+       "multiple": 9.87
+      },
+      "vs_SPY_NISA_pa": -1.74,
+      "vs_SPY_NISA_pa_with_carry": -1.05,
+      "vs_SPY_taxable_pa": -0.31
+     }
+    },
+    "1000万円": {
+     "SPY_pretax": {
+      "cagr_jpy": 13.26,
+      "multiple": 12.36
+     },
+     "SPY_NISA": {
+      "cagr_jpy": 13.05,
+      "multiple": 11.91
+     },
+     "SPY_taxable": {
+      "cagr_jpy": 11.62,
+      "multiple": 9.21
+     },
+     "rule_A": {
+      "pretax": {
+       "cagr_jpy": 17.38,
+       "multiple": 25.43
+      },
+      "with_rakuten_commission": {
+       "cagr_jpy": 17.21,
+       "multiple": 24.7,
+       "commission_total_pct_of_principal": 5.1
+      },
+      "taxable_withholding_only": {
+       "cagr_jpy": 12.97,
+       "multiple": 11.73,
+       "taxes_paid_x_principal": 2.99
+      },
+      "taxable_with_3yr_carryforward": {
+       "cagr_jpy": 13.6,
+       "multiple": 13.14
+      },
+      "vs_SPY_NISA_pa": -0.08,
+      "vs_SPY_NISA_pa_with_carry": 0.55,
+      "vs_SPY_taxable_pa": 1.35
+     },
+     "rule_B": {
+      "pretax": {
+       "cagr_jpy": 17.62,
+       "multiple": 26.5
+      },
+      "with_rakuten_commission": {
+       "cagr_jpy": 17.45,
+       "multiple": 25.74,
+       "commission_total_pct_of_principal": 5.1
+      },
+      "taxable_withholding_only": {
+       "cagr_jpy": 13.21,
+       "multiple": 12.26,
+       "taxes_paid_x_principal": 3.1
+      },
+      "taxable_with_3yr_carryforward": {
+       "cagr_jpy": 13.85,
+       "multiple": 13.73
+      },
+      "vs_SPY_NISA_pa": 0.16,
+      "vs_SPY_NISA_pa_with_carry": 0.8,
+      "vs_SPY_taxable_pa": 1.59
+     },
+     "rule_C": {
+      "pretax": {
+       "cagr_jpy": 17.67,
+       "multiple": 26.72
+      },
+      "with_rakuten_commission": {
+       "cagr_jpy": 17.51,
+       "multiple": 25.99,
+       "commission_total_pct_of_principal": 5.1
+      },
+      "taxable_withholding_only": {
+       "cagr_jpy": 13.25,
+       "multiple": 12.34,
+       "taxes_paid_x_principal": 3.14
+      },
+      "taxable_with_3yr_carryforward": {
+       "cagr_jpy": 13.85,
+       "multiple": 13.73
+      },
+      "vs_SPY_NISA_pa": 0.2,
+      "vs_SPY_NISA_pa_with_carry": 0.8,
+      "vs_SPY_taxable_pa": 1.63
+     }
+    }
+   },
+   "SPXL_3x_real_2008-11": {
+    "fx_start": 98.22,
+    "100万円": {
+     "SPY_pretax": {
+      "cagr_jpy": 17.6,
+      "multiple": 17.97
+     },
+     "SPY_NISA": {
+      "cagr_jpy": 17.38,
+      "multiple": 17.39
+     },
+     "SPY_taxable": {
+      "cagr_jpy": 15.7,
+      "multiple": 13.45
+     },
+     "rule_A": {
+      "pretax": {
+       "cagr_jpy": 28.83,
+       "multiple": 91.25
+      },
+      "with_rakuten_commission": {
+       "cagr_jpy": 28.01,
+       "multiple": 81.46,
+       "commission_total_pct_of_principal": 34.8
+      },
+      "taxable_withholding_only": {
+       "cagr_jpy": 22.24,
+       "multiple": 35.82,
+       "taxes_paid_x_principal": 9.22
+      },
+      "taxable_with_3yr_carryforward": {
+       "cagr_jpy": 22.78,
+       "multiple": 38.74
+      },
+      "vs_SPY_NISA_pa": 4.86,
+      "vs_SPY_NISA_pa_with_carry": 5.4,
+      "vs_SPY_taxable_pa": 6.54
+     },
+     "rule_B": {
+      "pretax": {
+       "cagr_jpy": 29.5,
+       "multiple": 100.12
+      },
+      "with_rakuten_commission": {
+       "cagr_jpy": 28.71,
+       "multiple": 89.79,
+       "commission_total_pct_of_principal": 34.8
+      },
+      "taxable_withholding_only": {
+       "cagr_jpy": 22.84,
+       "multiple": 39.08,
+       "taxes_paid_x_principal": 10.01
+      },
+      "taxable_with_3yr_carryforward": {
+       "cagr_jpy": 23.3,
+       "multiple": 41.76
+      },
+      "vs_SPY_NISA_pa": 5.46,
+      "vs_SPY_NISA_pa_with_carry": 5.92,
+      "vs_SPY_taxable_pa": 7.14
+     },
+     "rule_C": {
+      "pretax": {
+       "cagr_jpy": 28.7,
+       "multiple": 89.57
+      },
+      "with_rakuten_commission": {
+       "cagr_jpy": 27.9,
+       "multiple": 80.15,
+       "commission_total_pct_of_principal": 34.8
+      },
+      "taxable_withholding_only": {
+       "cagr_jpy": 22.23,
+       "multiple": 35.76,
+       "taxes_paid_x_principal": 9.2
+      },
+      "taxable_with_3yr_carryforward": {
+       "cagr_jpy": 22.71,
+       "multiple": 38.34
+      },
+      "vs_SPY_NISA_pa": 4.85,
+      "vs_SPY_NISA_pa_with_carry": 5.33,
+      "vs_SPY_taxable_pa": 6.53
+     }
+    },
+    "1000万円": {
+     "SPY_pretax": {
+      "cagr_jpy": 17.6,
+      "multiple": 17.97
+     },
+     "SPY_NISA": {
+      "cagr_jpy": 17.38,
+      "multiple": 17.39
+     },
+     "SPY_taxable": {
+      "cagr_jpy": 15.7,
+      "multiple": 13.45
+     },
+     "rule_A": {
+      "pretax": {
+       "cagr_jpy": 28.83,
+       "multiple": 91.25
+      },
+      "with_rakuten_commission": {
+       "cagr_jpy": 28.75,
+       "multiple": 90.27,
+       "commission_total_pct_of_principal": 3.5
+      },
+      "taxable_withholding_only": {
+       "cagr_jpy": 23.09,
+       "multiple": 40.53,
+       "taxes_paid_x_principal": 10.35
+      },
+      "taxable_with_3yr_carryforward": {
+       "cagr_jpy": 23.6,
+       "multiple": 43.6
+      },
+      "vs_SPY_NISA_pa": 5.71,
+      "vs_SPY_NISA_pa_with_carry": 6.22,
+      "vs_SPY_taxable_pa": 7.39
+     },
+     "rule_B": {
+      "pretax": {
+       "cagr_jpy": 29.5,
+       "multiple": 100.12
+      },
+      "with_rakuten_commission": {
+       "cagr_jpy": 29.43,
+       "multiple": 99.08,
+       "commission_total_pct_of_principal": 3.5
+      },
+      "taxable_withholding_only": {
+       "cagr_jpy": 23.66,
+       "multiple": 43.97,
+       "taxes_paid_x_principal": 11.18
+      },
+      "taxable_with_3yr_carryforward": {
+       "cagr_jpy": 24.09,
+       "multiple": 46.77
+      },
+      "vs_SPY_NISA_pa": 6.28,
+      "vs_SPY_NISA_pa_with_carry": 6.71,
+      "vs_SPY_taxable_pa": 7.96
+     },
+     "rule_C": {
+      "pretax": {
+       "cagr_jpy": 28.7,
+       "multiple": 89.57
+      },
+      "with_rakuten_commission": {
+       "cagr_jpy": 28.62,
+       "multiple": 88.63,
+       "commission_total_pct_of_principal": 3.5
+      },
+      "taxable_withholding_only": {
+       "cagr_jpy": 23.06,
+       "multiple": 40.32,
+       "taxes_paid_x_principal": 10.29
+      },
+      "taxable_with_3yr_carryforward": {
+       "cagr_jpy": 23.51,
+       "multiple": 43.04
+      },
+      "vs_SPY_NISA_pa": 5.68,
+      "vs_SPY_NISA_pa_with_carry": 6.13,
+      "vs_SPY_taxable_pa": 7.36
+     }
+    }
+   },
+   "UPRO_3x_real_2009-06": {
+    "fx_start": 95.94,
+    "100万円": {
+     "SPY_pretax": {
+      "cagr_jpy": 18.63,
+      "multiple": 18.82
+     },
+     "SPY_NISA": {
+      "cagr_jpy": 18.42,
+      "multiple": 18.25
+     },
+     "SPY_taxable": {
+      "cagr_jpy": 16.68,
+      "multiple": 14.15
+     },
+     "rule_A": {
+      "pretax": {
+       "cagr_jpy": 30.81,
+       "multiple": 100.99
+      },
+      "with_rakuten_commission": {
+       "cagr_jpy": 30.13,
+       "multiple": 92.34,
+       "commission_total_pct_of_principal": 32.9
+      },
+      "taxable_withholding_only": {
+       "cagr_jpy": 24.24,
+       "multiple": 41.63,
+       "taxes_paid_x_principal": 10.81
+      },
+      "taxable_with_3yr_carryforward": {
+       "cagr_jpy": 24.65,
+       "multiple": 44.1
+      },
+      "vs_SPY_NISA_pa": 5.82,
+      "vs_SPY_NISA_pa_with_carry": 6.23,
+      "vs_SPY_taxable_pa": 7.56
+     },
+     "rule_B": {
+      "pretax": {
+       "cagr_jpy": 32.03,
+       "multiple": 118.49
+      },
+      "with_rakuten_commission": {
+       "cagr_jpy": 31.41,
+       "multiple": 109.27,
+       "commission_total_pct_of_principal": 32.9
+      },
+      "taxable_withholding_only": {
+       "cagr_jpy": 25.39,
+       "multiple": 48.8,
+       "taxes_paid_x_principal": 12.56
+      },
+      "taxable_with_3yr_carryforward": {
+       "cagr_jpy": 25.68,
+       "multiple": 50.75
+      },
+      "vs_SPY_NISA_pa": 6.97,
+      "vs_SPY_NISA_pa_with_carry": 7.26,
+      "vs_SPY_taxable_pa": 8.71
+     },
+     "rule_C": {
+      "pretax": {
+       "cagr_jpy": 30.46,
+       "multiple": 96.47
+      },
+      "with_rakuten_commission": {
+       "cagr_jpy": 29.79,
+       "multiple": 88.22,
+       "commission_total_pct_of_principal": 32.9
+      },
+      "taxable_withholding_only": {
+       "cagr_jpy": 24.03,
+       "multiple": 40.48,
+       "taxes_paid_x_principal": 10.47
+      },
+      "taxable_with_3yr_carryforward": {
+       "cagr_jpy": 24.39,
+       "multiple": 42.52
+      },
+      "vs_SPY_NISA_pa": 5.61,
+      "vs_SPY_NISA_pa_with_carry": 5.97,
+      "vs_SPY_taxable_pa": 7.35
+     }
+    },
+    "1000万円": {
+     "SPY_pretax": {
+      "cagr_jpy": 18.63,
+      "multiple": 18.82
+     },
+     "SPY_NISA": {
+      "cagr_jpy": 18.42,
+      "multiple": 18.25
+     },
+     "SPY_taxable": {
+      "cagr_jpy": 16.68,
+      "multiple": 14.15
+     },
+     "rule_A": {
+      "pretax": {
+       "cagr_jpy": 30.81,
+       "multiple": 100.99
+      },
+      "with_rakuten_commission": {
+       "cagr_jpy": 30.75,
+       "multiple": 100.13,
+       "commission_total_pct_of_principal": 3.3
+      },
+      "taxable_withholding_only": {
+       "cagr_jpy": 24.94,
+       "multiple": 45.89,
+       "taxes_paid_x_principal": 11.83
+      },
+      "taxable_with_3yr_carryforward": {
+       "cagr_jpy": 25.34,
+       "multiple": 48.49
+      },
+      "vs_SPY_NISA_pa": 6.52,
+      "vs_SPY_NISA_pa_with_carry": 6.92,
+      "vs_SPY_taxable_pa": 8.26
+     },
+     "rule_B": {
+      "pretax": {
+       "cagr_jpy": 32.03,
+       "multiple": 118.49
+      },
+      "with_rakuten_commission": {
+       "cagr_jpy": 31.97,
+       "multiple": 117.57,
+       "commission_total_pct_of_principal": 3.3
+      },
+      "taxable_withholding_only": {
+       "cagr_jpy": 26.03,
+       "multiple": 53.26,
+       "taxes_paid_x_principal": 13.62
+      },
+      "taxable_with_3yr_carryforward": {
+       "cagr_jpy": 26.31,
+       "multiple": 55.3
+      },
+      "vs_SPY_NISA_pa": 7.61,
+      "vs_SPY_NISA_pa_with_carry": 7.89,
+      "vs_SPY_taxable_pa": 9.35
+     },
+     "rule_C": {
+      "pretax": {
+       "cagr_jpy": 30.46,
+       "multiple": 96.47
+      },
+      "with_rakuten_commission": {
+       "cagr_jpy": 30.4,
+       "multiple": 95.64,
+       "commission_total_pct_of_principal": 3.3
+      },
+      "taxable_withholding_only": {
+       "cagr_jpy": 24.73,
+       "multiple": 44.58,
+       "taxes_paid_x_principal": 11.45
+      },
+      "taxable_with_3yr_carryforward": {
+       "cagr_jpy": 25.07,
+       "multiple": 46.73
+      },
+      "vs_SPY_NISA_pa": 6.31,
+      "vs_SPY_NISA_pa_with_carry": 6.65,
+      "vs_SPY_taxable_pa": 8.05
+     }
+    }
+   },
+   "SYN3_3x_calibrated_2001-01（事後・参考）": {
+    "fx_start": 114.4,
+    "100万円": {
+     "SPY_pretax": {
+      "cagr_jpy": 10.57,
+      "multiple": 13.16
+     },
+     "SPY_NISA": {
+      "cagr_jpy": 10.37,
+      "multiple": 12.57
+     },
+     "SPY_taxable": {
+      "cagr_jpy": 9.2,
+      "multiple": 9.56
+     },
+     "rule_A": {
+      "pretax": {
+       "cagr_jpy": 16.64,
+       "multiple": 51.88
+      },
+      "with_rakuten_commission": {
+       "cagr_jpy": 14.2,
+       "multiple": 30.2,
+       "commission_total_pct_of_principal": 64.3
+      },
+      "taxable_withholding_only": {
+       "cagr_jpy": 9.8,
+       "multiple": 11.02,
+       "taxes_paid_x_principal": 3.06
+      },
+      "taxable_with_3yr_carryforward": {
+       "cagr_jpy": 10.95,
+       "multiple": 14.4
+      },
+      "vs_SPY_NISA_pa": -0.57,
+      "vs_SPY_NISA_pa_with_carry": 0.58,
+      "vs_SPY_taxable_pa": 0.6
+     },
+     "rule_B": {
+      "pretax": {
+       "cagr_jpy": 18.71,
+       "multiple": 81.48
+      },
+      "with_rakuten_commission": {
+       "cagr_jpy": 16.93,
+       "multiple": 55.33,
+       "commission_total_pct_of_principal": 64.7
+      },
+      "taxable_withholding_only": {
+       "cagr_jpy": 12.44,
+       "multiple": 20.26,
+       "taxes_paid_x_principal": 5.48
+      },
+      "taxable_with_3yr_carryforward": {
+       "cagr_jpy": 13.37,
+       "multiple": 25.02
+      },
+      "vs_SPY_NISA_pa": 2.07,
+      "vs_SPY_NISA_pa_with_carry": 3.0,
+      "vs_SPY_taxable_pa": 3.24
+     }
+    },
+    "1000万円": {
+     "SPY_pretax": {
+      "cagr_jpy": 10.57,
+      "multiple": 13.16
+     },
+     "SPY_NISA": {
+      "cagr_jpy": 10.37,
+      "multiple": 12.57
+     },
+     "SPY_taxable": {
+      "cagr_jpy": 9.2,
+      "multiple": 9.56
+     },
+     "rule_A": {
+      "pretax": {
+       "cagr_jpy": 16.64,
+       "multiple": 51.88
+      },
+      "with_rakuten_commission": {
+       "cagr_jpy": 16.44,
+       "multiple": 49.68,
+       "commission_total_pct_of_principal": 6.5
+      },
+      "taxable_withholding_only": {
+       "cagr_jpy": 12.47,
+       "multiple": 20.41,
+       "taxes_paid_x_principal": 5.45
+      },
+      "taxable_with_3yr_carryforward": {
+       "cagr_jpy": 13.35,
+       "multiple": 24.93
+      },
+      "vs_SPY_NISA_pa": 2.1,
+      "vs_SPY_NISA_pa_with_carry": 2.98,
+      "vs_SPY_taxable_pa": 3.27
+     },
+     "rule_B": {
+      "pretax": {
+       "cagr_jpy": 18.71,
+       "multiple": 81.48
+      },
+      "with_rakuten_commission": {
+       "cagr_jpy": 18.56,
+       "multiple": 78.86,
+       "commission_total_pct_of_principal": 6.5
+      },
+      "taxable_withholding_only": {
+       "cagr_jpy": 14.38,
+       "multiple": 31.41,
+       "taxes_paid_x_principal": 8.31
+      },
+      "taxable_with_3yr_carryforward": {
+       "cagr_jpy": 15.17,
+       "multiple": 37.5
+      },
+      "vs_SPY_NISA_pa": 4.01,
+      "vs_SPY_NISA_pa_with_carry": 4.8,
+      "vs_SPY_taxable_pa": 5.18
+     }
+    }
+   },
+   "SYN2_2x_calibrated_2001-01（事後・参考）": {
+    "fx_start": 114.4,
+    "100万円": {
+     "SPY_pretax": {
+      "cagr_jpy": 10.57,
+      "multiple": 13.16
+     },
+     "SPY_NISA": {
+      "cagr_jpy": 10.37,
+      "multiple": 12.57
+     },
+     "SPY_taxable": {
+      "cagr_jpy": 9.2,
+      "multiple": 9.56
+     },
+     "rule_A": {
+      "pretax": {
+       "cagr_jpy": 13.5,
+       "multiple": 25.8
+      },
+      "with_rakuten_commission": {
+       "cagr_jpy": 11.02,
+       "multiple": 14.62,
+       "commission_total_pct_of_principal": 64.6
+      },
+      "taxable_withholding_only": {
+       "cagr_jpy": 6.94,
+       "multiple": 5.59,
+       "taxes_paid_x_principal": 1.6
+      },
+      "taxable_with_3yr_carryforward": {
+       "cagr_jpy": 7.96,
+       "multiple": 7.14
+      },
+      "vs_SPY_NISA_pa": -3.43,
+      "vs_SPY_NISA_pa_with_carry": -2.41,
+      "vs_SPY_taxable_pa": -2.26
+     },
+     "rule_B": {
+      "pretax": {
+       "cagr_jpy": 14.61,
+       "multiple": 33.1
+      },
+      "with_rakuten_commission": {
+       "cagr_jpy": 12.57,
+       "multiple": 20.84,
+       "commission_total_pct_of_principal": 64.7
+      },
+      "taxable_withholding_only": {
+       "cagr_jpy": 8.47,
+       "multiple": 8.05,
+       "taxes_paid_x_principal": 2.25
+      },
+      "taxable_with_3yr_carryforward": {
+       "cagr_jpy": 9.33,
+       "multiple": 9.87
+      },
+      "vs_SPY_NISA_pa": -1.9,
+      "vs_SPY_NISA_pa_with_carry": -1.04,
+      "vs_SPY_taxable_pa": -0.73
+     }
+    },
+    "1000万円": {
+     "SPY_pretax": {
+      "cagr_jpy": 10.57,
+      "multiple": 13.16
+     },
+     "SPY_NISA": {
+      "cagr_jpy": 10.37,
+      "multiple": 12.57
+     },
+     "SPY_taxable": {
+      "cagr_jpy": 9.2,
+      "multiple": 9.56
+     },
+     "rule_A": {
+      "pretax": {
+       "cagr_jpy": 13.5,
+       "multiple": 25.8
+      },
+      "with_rakuten_commission": {
+       "cagr_jpy": 13.31,
+       "multiple": 24.68,
+       "commission_total_pct_of_principal": 6.5
+      },
+      "taxable_withholding_only": {
+       "cagr_jpy": 9.73,
+       "multiple": 10.82,
+       "taxes_paid_x_principal": 2.89
+      },
+      "taxable_with_3yr_carryforward": {
+       "cagr_jpy": 10.47,
+       "multiple": 12.87
+      },
+      "vs_SPY_NISA_pa": -0.64,
+      "vs_SPY_NISA_pa_with_carry": 0.1,
+      "vs_SPY_taxable_pa": 0.53
+     },
+     "rule_B": {
+      "pretax": {
+       "cagr_jpy": 14.61,
+       "multiple": 33.1
+      },
+      "with_rakuten_commission": {
+       "cagr_jpy": 14.44,
+       "multiple": 31.87,
+       "commission_total_pct_of_principal": 6.5
+      },
+      "taxable_withholding_only": {
+       "cagr_jpy": 10.75,
+       "multiple": 13.73,
+       "taxes_paid_x_principal": 3.64
+      },
+      "taxable_with_3yr_carryforward": {
+       "cagr_jpy": 11.43,
+       "multiple": 16.07
+      },
+      "vs_SPY_NISA_pa": 0.38,
+      "vs_SPY_NISA_pa_with_carry": 1.06,
+      "vs_SPY_taxable_pa": 1.55
+     }
+    }
+   }
+  }
+ },
+ "instruments_for_japanese_individual": {
+  "rakuten_us_etf_list_2026_08_24（out/broker_lineup.json）": {
+   "SSO": {
+    "listed": true,
+    "name": "ProShares Ultra S&P500",
+    "expense_ratio_pct": "0.87"
+   },
+   "SPUU": {
+    "listed": true,
+    "name": "Direxion Daily S&P 500 Bull 2X ETF",
+    "expense_ratio_pct": "0.60"
+   },
+   "SPXL": {
+    "listed": true,
+    "name": "Direxion Daily S&P 500 Bull 3X ETF",
+    "expense_ratio_pct": "0.81"
+   },
+   "UPRO": {
+    "listed": true,
+    "name": "ProShares UltraPro S&P500",
+    "expense_ratio_pct": "0.89"
+   },
+   "SPY": {
+    "listed": true,
+    "name": "State Street SPDR S&P 500 ETF Trust",
+    "expense_ratio_pct": "0.09"
+   },
+   "VOO": {
+    "listed": true,
+    "name": "Vanguard 500 Index Fund ETF",
+    "expense_ratio_pct": "0.03"
+   },
+   "IVV": {
+    "listed": true,
+    "name": "iShares Core S&P 500 ETF",
+    "expense_ratio_pct": "0.03"
+   }
+  },
+  "rakuten_commission（2026-09-28 楽天の頁で確認）": "米国株・米国ETF: 約定代金の0.495%（税込）・上限22ドル（4,444.45ドル以上で22ドル）。売却時は別に SEC Fee。楽天指定の15銘柄は買付手数料無料——SPY・VOO・VTI は対象、SSO・SPXL・UPRO・IVV は対象外",
+  "nisa": "新NISA の成長投資枠は デリバティブで倍率を掛ける投資信託・ETF（レバレッジ型・インバース型）を対象外にしている（金融庁の制度）＝SSO/SPXL/UPRO と国内のレバレッジ投信は NISA で買えない。broker_lineup.json は NISA の可否を持っていない（⚠限界に明記）ので、この一覧では確認していない",
+  "domestic_leveraged_funds": "国内の2倍型の投信（iFreeレバレッジ S&P500・楽天レバレッジNASDAQ-100 など）も NISA 対象外で課税口座。約定は1日1回の基準価額（申込日の米国の引け）＝版Bに近いが、売却代金の受渡まで数営業日かかり、別の投信への乗り換えに現金の空白が出る。★この経路は測っていない（日次の基準価額の長い系列を取っていない）",
+  "execution": "信号（米国の前日の終値 vs 200日平均）は日本時間の朝に分かり、発注は当夜の米国の取引時間（22:30/23:30〜）＝版C（寄付き）か版B（引け）。版A（信号の日の引けで入れ替え）は日本からは原理的にできない"
+ },
+ "caveats": [
+  "実物の窓（2006/2008/2009〜）は米国の長い上げ相場にほぼ重なる。3倍の実物で長い下げ（2001-2003・2008）を経験した記録は無い",
+  "シャープ・同じリスクの比較は事後の追加（事前登録の判定の外）",
+  "1営業日のずれで結果が大きく変わる（2020年 +16.8% vs +40.2%）。どちらが「本当」ということはなく、ずれの幅そのものが不確かさ",
+  "税の計算は一括投資・最後に全部売る仮定。積立（毎月）は測っていない。外国税額控除（確定申告で配当の米国10%を取り戻す）は入れていない",
+  "楽天の手数料・無料の銘柄は 2026-09-28 の頁の写真。3倍 ETF の費用（スワップの上乗せ）は 2023-2024 に大きい（UPRO 実物−モデル 年−1.8pt）＝今後も凍結のモデルより重い見込み",
+  "3倍の ETF は S&P500 が1日で −33% 下げれば価値がほぼ0になる（1987-10-19 は −20.5%）。規則は時間の7〜8割を3倍で過ごす"
+ ]
+}

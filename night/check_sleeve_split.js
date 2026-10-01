@@ -156,7 +156,7 @@ const srv = http.createServer((q, r) => {
     { k: 'A', tw: 4, pos: 3.9, jpy: 50000 }, { k: 'F', tw: 60, pos: 70, frac: true }], 170000, 2420000));
   ok(ws2 && !ws2.buy.A && ws2.wait.some(x => x.k === 'A') && ws2.frac.F === 170000,
      '   不足が1株の半分未満なら待つ・投資信託が目標超過でも残りの円はそこへ（現金で残さない）');
-  // ⑧ 注文書の表示: 口座（NISA のどの枠か）と「特定口座では買わない」が出る
+  // ⑧ 注文書の表示
   const html = await pg.evaluate(() => {
     const px = { CW: 85600, LRCX: 50000 };
     const pass = [{ nm: 'CW', t: 'CW', pos: 0 }, { nm: 'LRCX', t: 'LRCX', pos: 0 }, { nm: 'VRSK', t: 'VRSK', pos: 0 }];
@@ -166,8 +166,9 @@ const srv = http.createServer((q, r) => {
       { t: 'SMH', tw: 20, pos: 15.7, jpy: 95800, label: '1株 ¥95,800' }, { t: 'XLK', tw: 0, pos: 30, jpy: 30000 }] };
     return ccfWholeShareBody(pass, tw, pxInfo, NO, 170000);
   });
-  ok(html && /NISA成長/.test(html.html) && /NISAつみたて/.test(html.html) && /特定口座では買わない/.test(html.html),
-     '⑧ 注文書に口座（NISA成長／NISAつみたて）と「特定口座では買わない」が出る');
+  // 2026-09-29 ユーザー指示「買付順位のNISAの文言は消して」→ 口座の文言が**出ない**ことを確かめる
+  ok(html && !/NISA|つみたて|特定口座/.test(html.html) && /iFreeNEXT/.test(html.html),
+     '⑧ 注文書に NISA・つみたて・特定口座の文言が出ない（行そのものは出る）');
   ok(html && !/VRSK/.test(html.html) && /XLK：目標0%/.test(html.html.replace(/<[^>]+>/g, '')),
      '   目標0%の門外例外（VRSK）は出さない・目標0%の ETF は「目標0%（売らない）」とまとめる');
   ok(html && (html.castle + html.net + html.rest) === 170000,

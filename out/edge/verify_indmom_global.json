@@ -1,0 +1,1729 @@
+{
+ "key": "indmom",
+ "lens": "global_etf",
+ "as_of": "2026-09-28",
+ "question": "凍結した indmom（過去12か月の上位3割を等加重・毎月入れ替え）を、楽天で買える iShares の世界の業種ETF 10本へ写すと、選ぶ腕（10本の等加重に対する超過）は費用後に残るか。この利用者（新NISA・楽天）が実際に取れるか",
+ "verdict": "弱まった",
+ "verdict_rule_fixed_before_results": {
+  "持ちこたえた": "主の窓・費用後・(a) に対する超過（年率の差）が +1.0%/年以上 かつ 月次超過の t ≥ 2.0",
+  "弱まった": "(a) に対する超過が正だが上の線に届かない",
+  "崩れた": "(a) に対する超過が 0 以下",
+  "測れなかった": "取れたETFが5本未満、または主の窓が120か月未満",
+  "note": "(b)(c)・1か月遅らせた版・Vanguard（事後・参考）・税は判定に入れず併記"
+ },
+ "verdict_reason": "主の窓 200212〜202608（23.8年・最初の約5年は5本・2007-10 から10本）で、費用後（0.1%/回転・年2.4回転）の規則は 年率 11.56% vs 等加重 9.53%＝超過 +2.03%/年・t 1.37（NW 1.6）・転がる10年 13/14。事前に決めた線（+1%/年かつ t≥2）の t に届かず『弱まった』。10本がそろう 2007-10〜 では +1.89（t 1.12）。3区間とも正だが どれも t<1（〜2007-12 2.44(t0.84), 2008-01〜2015-12 1.85(t0.68), 2016-01〜2026-08 1.97(t0.9)）。超過の 89% は上位4年（2024・2022・2005・2013）から来ており、その4年を除くと +0.25%/年（t 0.14）。相手を市場にすると ほぼ消える: SPY に +0.3%/年（t 0.18・10年窓 4/14）、ACWI（2008-04〜）に +1.67（t 0.78）。等加重10本そのものが SPY に -1.72%/年 負けていた（米国外と小さい部門へ傾くためと考えられる）ので、選ぶ腕の +2 はその負けを埋めただけ。1か月遅らせると +0.94（t 0.7）と半分に縮む。同じ月の紙（French 49業種の凍結した規則）は 等加重49業種に +1.57（t 1.0）で、器の腕は紙の腕に 傾き 0.673・相関 0.67 で連動＝器は賭けを取れているが、賭けそのものが2001年以降は弱い。第4回の確認（40か国中38・ならし +3.64 t4.53）は国の中で業種を並べ40か国をならした一本の系列で、国をまとめた世界の業種ETF（部門は国をまたいで同時に動く）はその分散を持たない——器でその強さは再現しなかった（なぜ差が出たかは推測で、直接は測っていない）。",
+ "independence_note": "⚠ 独立な証拠ではない。世界の業種ETFの中身の半分以上は米国株（ACWI の米国比率はおよそ6割・概数でこの作業では測っていない）で、2001年以降の米国は indmom の検定期間（French 49業種 +2.91%/年・t1.73・不合格）と重なる。実測でも、世界の業種ETFの選ぶ腕は 米国の業種ETF（Vanguard 10本・同じ規則）の選ぶ腕と 相関 0.788、French 米国49業種の選ぶ腕と 相関 0.67。同じ3部門を持った月は 44%（重なりの平均 Jaccard 0.71）。これは『器で取れるか』の確かめで、勢いの効果が本物かの証拠を足すものではない",
+ "method": {
+  "rule": "night/edge/fam_indmom.py の signal() と weights() を import してそのまま呼ぶ（spec_indmom.json: J=12・skip=0・等加重・同順位はティッカー名順・並べられる数が max(k+1,3) 未満の月は持たない）。k だけ ETF の本数 N に比例: k=max(1, floor(N×15/49+0.5))（confirm_indmom_world の k_of と同じ）＝10本→3・5本→2",
+  "turnover_cost": "回転は fam_indmom.run と同じ（流した後の重みとの差の半分・最初の月は1）。費用は片道の回転1あたり 0.10%（事前登録・ETFの入れ替え）。相手には費用なし（器の経費はどれも価格に入っている: 業種ETF 0.38〜0.39%・ACWI 0.31%・SPY 0.09%）",
+  "benchmarks": {
+   "(a) 主": "同じ月に signal で並べられる全ETFの等加重（毎月戻す・費用なし）＝選ぶ腕だけを測る",
+   "(b)": "ACWI（2008-04〜・adjclose）",
+   "(c)": "SPY"
+  },
+  "data": "Yahoo v8 chart の日次（period1=0〜）を harness.cached で取得（harness.CACHE を scratchpad に差し替え＝repo の out/_edge_cache には書いていない）。月末の日次 adjclose の比。2026-09 は途中の月なので落とした（最後の月 2026-08）。⚠ range=max で 1d を頼むと Yahoo は月足に落とす（実測 dataGranularity=1mo）ので日次は period で取った",
+  "windows": {
+   "主": "200212〜202608（2002-11 までは12か月の窓がそろわない。IXN/IXJ/IXG/IXC/IXP は 2001-11-26 設定、EXI/KXI/RXI/MXI/JXI は 2006-09-21〜27 設定）",
+   "10本そろう": "200710〜202608"
+  },
+  "fixed_before_results": "scratchpad/indmom_global/prefix.json（データを取る前に書いた。判定の線・相手・窓・課税の置き方）",
+  "EDGE_PHASE": "holdout をこのプロセスの中でだけ立てた（French 49業種と米国市場は紙の同じ月の比較にだけ使用）"
+ },
+ "data_checks": {
+  "adjclose_vs_close_plus_div": {
+   "IXN": {
+    "first_day": "2001-11-26",
+    "first_month": 200112,
+    "months": 297,
+    "n_div": 42,
+    "splits": 1,
+    "lost_div": [],
+    "diff_pct_yr": 0.0,
+    "max_abs_month_diff_pct": 0.02,
+    "broken": false,
+    "max_abs_diff_vs_1mo_bars_pct": 0.0
+   },
+   "IXJ": {
+    "first_day": "2001-11-26",
+    "first_month": 200112,
+    "months": 297,
+    "n_div": 47,
+    "splits": 1,
+    "lost_div": [],
+    "diff_pct_yr": -0.001,
+    "max_abs_month_diff_pct": 0.042,
+    "broken": false,
+    "max_abs_diff_vs_1mo_bars_pct": 0.0
+   },
+   "IXG": {
+    "first_day": "2001-11-26",
+    "first_month": 200112,
+    "months": 297,
+    "n_div": 46,
+    "splits": 0,
+    "lost_div": [],
+    "diff_pct_yr": -0.006,
+    "max_abs_month_diff_pct": 0.065,
+    "broken": false,
+    "max_abs_diff_vs_1mo_bars_pct": 0.0
+   },
+   "IXC": {
+    "first_day": "2001-11-26",
+    "first_month": 200112,
+    "months": 297,
+    "n_div": 45,
+    "splits": 1,
+    "lost_div": [],
+    "diff_pct_yr": -0.008,
+    "max_abs_month_diff_pct": 0.084,
+    "broken": false,
+    "max_abs_diff_vs_1mo_bars_pct": 0.0
+   },
+   "IXP": {
+    "first_day": "2001-11-26",
+    "first_month": 200112,
+    "months": 297,
+    "n_div": 46,
+    "splits": 0,
+    "lost_div": [],
+    "diff_pct_yr": 0.0,
+    "max_abs_month_diff_pct": 0.043,
+    "broken": false,
+    "max_abs_diff_vs_1mo_bars_pct": 0.0
+   },
+   "EXI": {
+    "first_day": "2006-09-27",
+    "first_month": 200610,
+    "months": 239,
+    "n_div": 40,
+    "splits": 0,
+    "lost_div": [],
+    "diff_pct_yr": -0.006,
+    "max_abs_month_diff_pct": 0.06,
+    "broken": false,
+    "max_abs_diff_vs_1mo_bars_pct": 0.0
+   },
+   "KXI": {
+    "first_day": "2006-09-22",
+    "first_month": 200610,
+    "months": 239,
+    "n_div": 40,
+    "splits": 1,
+    "lost_div": [],
+    "diff_pct_yr": -0.003,
+    "max_abs_month_diff_pct": 0.031,
+    "broken": false,
+    "max_abs_diff_vs_1mo_bars_pct": 0.0
+   },
+   "RXI": {
+    "first_day": "2006-09-21",
+    "first_month": 200610,
+    "months": 239,
+    "n_div": 40,
+    "splits": 0,
+    "lost_div": [],
+    "diff_pct_yr": -0.002,
+    "max_abs_month_diff_pct": 0.027,
+    "broken": false,
+    "max_abs_diff_vs_1mo_bars_pct": 0.0
+   },
+   "MXI": {
+    "first_day": "2006-09-22",
+    "first_month": 200610,
+    "months": 239,
+    "n_div": 40,
+    "splits": 0,
+    "lost_div": [],
+    "diff_pct_yr": -0.009,
+    "max_abs_month_diff_pct": 0.058,
+    "broken": false,
+    "max_abs_diff_vs_1mo_bars_pct": 0.0
+   },
+   "JXI": {
+    "first_day": "2006-09-22",
+    "first_month": 200610,
+    "months": 239,
+    "n_div": 39,
+    "splits": 0,
+    "lost_div": [],
+    "diff_pct_yr": -0.003,
+    "max_abs_month_diff_pct": 0.034,
+    "broken": false,
+    "max_abs_diff_vs_1mo_bars_pct": 0.0
+   },
+   "VGT": {
+    "first_day": "2004-01-30",
+    "first_month": 200402,
+    "months": 271,
+    "n_div": 54,
+    "splits": 1,
+    "lost_div": [],
+    "diff_pct_yr": 0.001,
+    "max_abs_month_diff_pct": 0.024,
+    "broken": false,
+    "max_abs_diff_vs_1mo_bars_pct": 0.0
+   },
+   "VHT": {
+    "first_day": "2004-01-30",
+    "first_month": 200402,
+    "months": 271,
+    "n_div": 54,
+    "splits": 0,
+    "lost_div": [],
+    "diff_pct_yr": 0.003,
+    "max_abs_month_diff_pct": 0.02,
+    "broken": false,
+    "max_abs_diff_vs_1mo_bars_pct": 0.0
+   },
+   "VFH": {
+    "first_day": "2004-01-30",
+    "first_month": 200402,
+    "months": 271,
+    "n_div": 87,
+    "splits": 0,
+    "lost_div": [],
+    "diff_pct_yr": 0.005,
+    "max_abs_month_diff_pct": 0.028,
+    "broken": false,
+    "max_abs_diff_vs_1mo_bars_pct": 0.0
+   },
+   "VDE": {
+    "first_day": "2004-09-29",
+    "first_month": 200410,
+    "months": 263,
+    "n_div": 54,
+    "splits": 0,
+    "lost_div": [],
+    "diff_pct_yr": 0.008,
+    "max_abs_month_diff_pct": 0.059,
+    "broken": false,
+    "max_abs_diff_vs_1mo_bars_pct": 0.0
+   },
+   "VIS": {
+    "first_day": "2004-09-29",
+    "first_month": 200410,
+    "months": 263,
+    "n_div": 54,
+    "splits": 0,
+    "lost_div": [],
+    "diff_pct_yr": 0.001,
+    "max_abs_month_diff_pct": 0.045,
+    "broken": false,
+    "max_abs_diff_vs_1mo_bars_pct": 0.0
+   },
+   "VDC": {
+    "first_day": "2004-01-30",
+    "first_month": 200402,
+    "months": 271,
+    "n_div": 55,
+    "splits": 0,
+    "lost_div": [],
+    "diff_pct_yr": 0.008,
+    "max_abs_month_diff_pct": 0.039,
+    "broken": false,
+    "max_abs_diff_vs_1mo_bars_pct": 0.0
+   },
+   "VPU": {
+    "first_day": "2004-01-30",
+    "first_month": 200402,
+    "months": 271,
+    "n_div": 86,
+    "splits": 0,
+    "lost_div": [],
+    "diff_pct_yr": 0.007,
+    "max_abs_month_diff_pct": 0.026,
+    "broken": false,
+    "max_abs_diff_vs_1mo_bars_pct": 0.0
+   },
+   "VAW": {
+    "first_day": "2004-01-30",
+    "first_month": 200402,
+    "months": 271,
+    "n_div": 54,
+    "splits": 0,
+    "lost_div": [],
+    "diff_pct_yr": -0.005,
+    "max_abs_month_diff_pct": 0.13,
+    "broken": false,
+    "max_abs_diff_vs_1mo_bars_pct": 0.0
+   },
+   "VCR": {
+    "first_day": "2004-01-30",
+    "first_month": 200402,
+    "months": 271,
+    "n_div": 53,
+    "splits": 0,
+    "lost_div": [],
+    "diff_pct_yr": -0.003,
+    "max_abs_month_diff_pct": 0.082,
+    "broken": false,
+    "max_abs_diff_vs_1mo_bars_pct": 0.0
+   },
+   "VOX": {
+    "first_day": "2004-09-29",
+    "first_month": 200410,
+    "months": 263,
+    "n_div": 54,
+    "splits": 0,
+    "lost_div": [],
+    "diff_pct_yr": 0.003,
+    "max_abs_month_diff_pct": 0.037,
+    "broken": false,
+    "max_abs_diff_vs_1mo_bars_pct": 0.0
+   },
+   "ACWI": {
+    "first_day": "2008-03-28",
+    "first_month": 200804,
+    "months": 221,
+    "n_div": 38,
+    "splits": 0,
+    "lost_div": [],
+    "diff_pct_yr": 0.001,
+    "max_abs_month_diff_pct": 0.038,
+    "broken": false,
+    "max_abs_diff_vs_1mo_bars_pct": 0.0
+   },
+   "SPY": {
+    "first_day": "1993-01-29",
+    "first_month": 199302,
+    "months": 403,
+    "n_div": 136,
+    "splits": 0,
+    "lost_div": [],
+    "diff_pct_yr": -0.002,
+    "max_abs_month_diff_pct": 0.023,
+    "broken": false,
+    "max_abs_diff_vs_1mo_bars_pct": 0.0
+   },
+   "QQQ": {
+    "first_day": "1999-03-10",
+    "first_month": 199904,
+    "months": 329,
+    "n_div": 90,
+    "splits": 1,
+    "lost_div": [],
+    "diff_pct_yr": -0.0,
+    "max_abs_month_diff_pct": 0.007,
+    "broken": false,
+    "max_abs_diff_vs_1mo_bars_pct": 0.0
+   }
+  },
+  "読み": "全23本で adjclose と close＋分配（権利落ち日に再投資）の差は 年0.01%以下・月0.13%以下＝壊れなし（線: 月0.5%・年0.10%）。月足（interval=1mo）の adjclose とも一致。主の系列は adjclose",
+  "missing_held_months": 0,
+  "missing_note": "持っているETFの月のリターンが欠けた月は0件（規則どおりなら0と置くところ）"
+ },
+ "headline": {
+  "main_vs_a_EW": {
+   "from": 200212,
+   "to": 202608,
+   "years": 23.8,
+   "cagr": 11.56,
+   "bench_cagr": 9.53,
+   "excess": 2.03,
+   "ex_arith": 1.84,
+   "t": 1.37,
+   "t_nw": 1.6,
+   "vol": 14.6,
+   "bench_vol": 14.6,
+   "maxdd": -45.1,
+   "bench_maxdd": -51.0,
+   "roll10_win": "13/14"
+  },
+  "main_vs_b_ACWI": {
+   "from": 200804,
+   "to": 202608,
+   "years": 18.4,
+   "cagr": 10.32,
+   "bench_cagr": 8.65,
+   "excess": 1.67,
+   "ex_arith": 1.32,
+   "t": 0.78,
+   "t_nw": 0.88,
+   "vol": 15.3,
+   "bench_vol": 16.6,
+   "maxdd": -44.5,
+   "bench_maxdd": -51.7,
+   "roll10_win": "8/9"
+  },
+  "main_vs_c_SPY": {
+   "from": 200212,
+   "to": 202608,
+   "years": 23.8,
+   "cagr": 11.56,
+   "bench_cagr": 11.25,
+   "excess": 0.3,
+   "ex_arith": 0.28,
+   "t": 0.18,
+   "t_nw": 0.19,
+   "vol": 14.6,
+   "bench_vol": 14.5,
+   "maxdd": -45.1,
+   "bench_maxdd": -50.8,
+   "roll10_win": "4/14"
+  },
+  "EW10_vs_SPY": {
+   "from": 200212,
+   "to": 202608,
+   "years": 23.8,
+   "cagr": 9.53,
+   "bench_cagr": 11.25,
+   "excess": -1.72,
+   "ex_arith": -1.56,
+   "t": -1.53,
+   "t_nw": -1.58,
+   "vol": 14.6,
+   "bench_vol": 14.5,
+   "maxdd": -51.0,
+   "bench_maxdd": -50.8,
+   "roll10_win": "2/14"
+  },
+  "EW10_vs_ACWI": {
+   "from": 200804,
+   "to": 202608,
+   "years": 18.4,
+   "cagr": 8.54,
+   "bench_cagr": 8.65,
+   "excess": -0.11,
+   "ex_arith": -0.26,
+   "t": -0.36,
+   "t_nw": -0.38,
+   "vol": 15.6,
+   "bench_vol": 16.6,
+   "maxdd": -47.9,
+   "bench_maxdd": -51.7,
+   "roll10_win": "2/9"
+  },
+  "all10_from_2007_10": {
+   "vs_a_EW": {
+    "from": 200710,
+    "to": 202608,
+    "years": 18.9,
+    "cagr": 9.65,
+    "bench_cagr": 7.76,
+    "excess": 1.89,
+    "ex_arith": 1.71,
+    "t": 1.12,
+    "t_nw": 1.29,
+    "vol": 15.3,
+    "bench_vol": 15.5,
+    "maxdd": -45.1,
+    "bench_maxdd": -51.0,
+    "roll10_win": "9/9"
+   },
+   "vs_SPY": {
+    "from": 200710,
+    "to": 202608,
+    "years": 18.9,
+    "cagr": 9.65,
+    "bench_cagr": 10.91,
+    "excess": -1.26,
+    "ex_arith": -1.2,
+    "t": -0.7,
+    "t_nw": -0.82,
+    "vol": 15.3,
+    "bench_vol": 15.6,
+    "maxdd": -45.1,
+    "bench_maxdd": -50.8,
+    "roll10_win": "0/9"
+   },
+   "vs_ACWI": {
+    "from": 200804,
+    "to": 202608,
+    "years": 18.4,
+    "cagr": 10.32,
+    "bench_cagr": 8.65,
+    "excess": 1.67,
+    "ex_arith": 1.32,
+    "t": 0.78,
+    "t_nw": 0.88,
+    "vol": 15.3,
+    "bench_vol": 16.6,
+    "maxdd": -44.5,
+    "bench_maxdd": -51.7,
+    "roll10_win": "8/9"
+   },
+   "EW_vs_SPY": {
+    "from": 200710,
+    "to": 202608,
+    "years": 18.9,
+    "cagr": 7.76,
+    "bench_cagr": 10.91,
+    "excess": -3.15,
+    "ex_arith": -2.91,
+    "t": -2.45,
+    "t_nw": -3.06,
+    "vol": 15.5,
+    "bench_vol": 15.6,
+    "maxdd": -51.0,
+    "bench_maxdd": -50.8,
+    "roll10_win": "0/9"
+   },
+   "EW_vs_ACWI": {
+    "from": 200804,
+    "to": 202608,
+    "years": 18.4,
+    "cagr": 8.54,
+    "bench_cagr": 8.65,
+    "excess": -0.11,
+    "ex_arith": -0.26,
+    "t": -0.36,
+    "t_nw": -0.38,
+    "vol": 15.6,
+    "bench_vol": 16.6,
+    "maxdd": -47.9,
+    "bench_maxdd": -51.7,
+    "roll10_win": "2/9"
+   }
+  },
+  "acwi_window_2008_04": {
+   "rule_vs_ACWI": {
+    "from": 200804,
+    "to": 202608,
+    "years": 18.4,
+    "cagr": 10.32,
+    "bench_cagr": 8.65,
+    "excess": 1.67,
+    "ex_arith": 1.32,
+    "t": 0.78,
+    "t_nw": 0.88,
+    "vol": 15.3,
+    "bench_vol": 16.6,
+    "maxdd": -44.5,
+    "bench_maxdd": -51.7,
+    "roll10_win": "8/9"
+   },
+   "EW_vs_ACWI": {
+    "from": 200804,
+    "to": 202608,
+    "years": 18.4,
+    "cagr": 8.54,
+    "bench_cagr": 8.65,
+    "excess": -0.11,
+    "ex_arith": -0.26,
+    "t": -0.36,
+    "t_nw": -0.38,
+    "vol": 15.6,
+    "bench_vol": 16.6,
+    "maxdd": -47.9,
+    "bench_maxdd": -51.7,
+    "roll10_win": "2/9"
+   },
+   "SPY_vs_ACWI": {
+    "from": 200804,
+    "to": 202608,
+    "years": 18.4,
+    "cagr": 12.04,
+    "bench_cagr": 8.65,
+    "excess": 3.4,
+    "ex_arith": 2.95,
+    "t": 2.84,
+    "t_nw": 3.33,
+    "vol": 15.7,
+    "bench_vol": 16.6,
+    "maxdd": -46.3,
+    "bench_maxdd": -51.7,
+    "roll10_win": "9/9"
+   },
+   "rule_vs_EW_same_window": {
+    "from": 200804,
+    "to": 202608,
+    "years": 18.4,
+    "cagr": 10.32,
+    "bench_cagr": 8.54,
+    "excess": 1.78,
+    "ex_arith": 1.58,
+    "t": 1.02,
+    "t_nw": 1.19,
+    "vol": 15.3,
+    "bench_vol": 15.6,
+    "maxdd": -44.5,
+    "bench_maxdd": -47.9,
+    "roll10_win": "9/9"
+   }
+  }
+ },
+ "subperiods": {
+  "〜2007-12": {
+   "vs_a_EW": {
+    "from": 200212,
+    "to": 200712,
+    "years": 5.1,
+    "cagr": 18.16,
+    "bench_cagr": 15.71,
+    "excess": 2.44,
+    "ex_arith": 2.26,
+    "t": 0.84,
+    "t_nw": 1.07,
+    "vol": 11.3,
+    "bench_vol": 9.9,
+    "maxdd": -7.4,
+    "bench_maxdd": -8.8,
+    "roll10_win": null
+   },
+   "vs_SPY": {
+    "from": 200212,
+    "to": 200712,
+    "years": 5.1,
+    "cagr": 18.16,
+    "bench_cagr": 11.12,
+    "excess": 7.04,
+    "ex_arith": 6.43,
+    "t": 1.87,
+    "t_nw": 2.5,
+    "vol": 11.3,
+    "bench_vol": 9.1,
+    "maxdd": -7.4,
+    "bench_maxdd": -9.2,
+    "roll10_win": null
+   },
+   "vs_ACWI": null
+  },
+  "2008-01〜2015-12": {
+   "vs_a_EW": {
+    "from": 200801,
+    "to": 201512,
+    "years": 8.0,
+    "cagr": 4.59,
+    "bench_cagr": 2.74,
+    "excess": 1.85,
+    "ex_arith": 1.67,
+    "t": 0.68,
+    "t_nw": 0.83,
+    "vol": 16.8,
+    "bench_vol": 17.5,
+    "maxdd": -44.5,
+    "bench_maxdd": -48.7,
+    "roll10_win": null
+   },
+   "vs_SPY": {
+    "from": 200801,
+    "to": 201512,
+    "years": 8.0,
+    "cagr": 4.59,
+    "bench_cagr": 6.46,
+    "excess": -1.88,
+    "ex_arith": -1.72,
+    "t": -0.64,
+    "t_nw": -0.93,
+    "vol": 16.8,
+    "bench_vol": 16.4,
+    "maxdd": -44.5,
+    "bench_maxdd": -48.2,
+    "roll10_win": null
+   },
+   "vs_ACWI": {
+    "from": 200804,
+    "to": 201512,
+    "years": 7.8,
+    "cagr": 5.54,
+    "bench_cagr": 3.57,
+    "excess": 1.97,
+    "ex_arith": 1.45,
+    "t": 0.5,
+    "t_nw": 0.68,
+    "vol": 16.8,
+    "bench_vol": 19.2,
+    "maxdd": -44.5,
+    "bench_maxdd": -51.7,
+    "roll10_win": null
+   }
+  },
+  "2016-01〜2026-08": {
+   "vs_a_EW": {
+    "from": 201601,
+    "to": 202608,
+    "years": 10.7,
+    "cagr": 13.92,
+    "bench_cagr": 11.95,
+    "excess": 1.97,
+    "ex_arith": 1.77,
+    "t": 0.9,
+    "t_nw": 0.96,
+    "vol": 14.1,
+    "bench_vol": 14.0,
+    "maxdd": -18.0,
+    "bench_maxdd": -22.6,
+    "roll10_win": "1/1"
+   },
+   "vs_SPY": {
+    "from": 201601,
+    "to": 202608,
+    "years": 10.7,
+    "cagr": 13.92,
+    "bench_cagr": 15.05,
+    "excess": -1.13,
+    "ex_arith": -1.15,
+    "t": -0.5,
+    "t_nw": -0.55,
+    "vol": 14.1,
+    "bench_vol": 15.1,
+    "maxdd": -18.0,
+    "bench_maxdd": -23.9,
+    "roll10_win": "0/1"
+   },
+   "vs_ACWI": {
+    "from": 201601,
+    "to": 202608,
+    "years": 10.7,
+    "cagr": 13.92,
+    "bench_cagr": 12.49,
+    "excess": 1.43,
+    "ex_arith": 1.22,
+    "t": 0.6,
+    "t_nw": 0.59,
+    "vol": 14.1,
+    "bench_vol": 14.4,
+    "maxdd": -18.0,
+    "bench_maxdd": -25.7,
+    "roll10_win": "1/1"
+   }
+  }
+ },
+ "turnover": {
+  "one_way_per_year_mean": 2.4,
+  "by_year": {
+   "2003": 2.09,
+   "2004": 2.56,
+   "2005": 3.61,
+   "2006": 1.08,
+   "2007": 3.03,
+   "2008": 2.44,
+   "2009": 3.39,
+   "2010": 2.39,
+   "2011": 2.41,
+   "2012": 2.38,
+   "2013": 1.37,
+   "2014": 1.38,
+   "2015": 1.39,
+   "2016": 3.35,
+   "2017": 1.75,
+   "2018": 2.4,
+   "2019": 3.72,
+   "2020": 2.43,
+   "2021": 2.39,
+   "2022": 3.12,
+   "2023": 3.38,
+   "2024": 0.75,
+   "2025": 2.42
+  },
+  "EW10_rebalance_one_way_per_year": 0.15,
+  "cost_drag_pct_yr_approx": 0.24
+ },
+ "top4_years": {
+  "vs_a_EW": {
+   "calendar_year_excess_pct": {
+    "2002": 3.57,
+    "2003": -9.61,
+    "2004": 1.35,
+    "2005": 8.24,
+    "2006": 6.52,
+    "2007": 0.76,
+    "2008": 7.55,
+    "2009": -11.55,
+    "2010": 1.57,
+    "2011": -2.79,
+    "2012": 0.59,
+    "2013": 8.2,
+    "2014": 3.91,
+    "2015": 3.24,
+    "2016": -6.4,
+    "2017": 3.84,
+    "2018": 0.44,
+    "2019": -5.27,
+    "2020": 6.6,
+    "2021": -3.98,
+    "2022": 12.8,
+    "2023": -7.58,
+    "2024": 14.12,
+    "2025": 0.17,
+    "2026": 4.83
+   },
+   "top4_years": {
+    "2024": 14.12,
+    "2022": 12.8,
+    "2005": 8.24,
+    "2013": 8.2
+   },
+   "rest_excess_pct_yr": 0.25,
+   "rest_t": 0.14,
+   "rest_months": 237,
+   "share_of_log_excess_from_top4": 0.89,
+   "total_log_excess": 0.435
+  },
+  "vs_c_SPY": {
+   "top4_years": {
+    "2022": 20.65,
+    "2005": 12.23,
+    "2006": 10.75,
+    "2007": 7.88
+   },
+   "rest_excess_pct_yr": -2.45,
+   "rest_t": -1.39,
+   "rest_months": 237,
+   "share_of_log_excess_from_top4": 7.69,
+   "total_log_excess": 0.065
+  },
+  "読み": "暦年の超過（年の複利の差）。等加重に対する超過の対数の 89% が上位4年。負けの年は 2003 −9.6・2009 −11.6（勢いの崩れ）・2016 −6.4・2019 −5.3・2023 −7.6"
+ },
+ "lag_one_month": {
+  "note": "月 m に fam_indmom.weights(r, None, m−1, …)（m−2 月末までの信号）を持つ",
+  "vs_a_EW": {
+   "from": 200301,
+   "to": 202608,
+   "years": 23.7,
+   "cagr": 10.76,
+   "bench_cagr": 9.82,
+   "excess": 0.94,
+   "ex_arith": 0.94,
+   "t": 0.7,
+   "t_nw": 0.8,
+   "vol": 15.1,
+   "bench_vol": 14.5,
+   "maxdd": -48.9,
+   "bench_maxdd": -51.0,
+   "roll10_win": "12/14"
+  },
+  "vs_c_SPY": {
+   "from": 200301,
+   "to": 202608,
+   "years": 23.7,
+   "cagr": 10.76,
+   "bench_cagr": 11.57,
+   "excess": -0.81,
+   "ex_arith": -0.64,
+   "t": -0.4,
+   "t_nw": -0.42,
+   "vol": 15.1,
+   "bench_vol": 14.5,
+   "maxdd": -48.9,
+   "bench_maxdd": -50.8,
+   "roll10_win": "2/14"
+  },
+  "vs_b_ACWI": {
+   "from": 200804,
+   "to": 202608,
+   "years": 18.4,
+   "cagr": 9.3,
+   "bench_cagr": 8.65,
+   "excess": 0.66,
+   "ex_arith": 0.48,
+   "t": 0.29,
+   "t_nw": 0.3,
+   "vol": 15.8,
+   "bench_vol": 16.6,
+   "maxdd": -48.9,
+   "bench_maxdd": -51.7,
+   "roll10_win": "8/9"
+  },
+  "subperiods_vs_EW": {
+   "〜2007-12": {
+    "from": 200301,
+    "to": 200712,
+    "years": 5.0,
+    "cagr": 18.31,
+    "bench_cagr": 17.26,
+    "excess": 1.05,
+    "ex_arith": 1.17,
+    "t": 0.42,
+    "t_nw": 0.55,
+    "vol": 12.1,
+    "bench_vol": 9.6,
+    "maxdd": -7.4,
+    "bench_maxdd": -4.6,
+    "roll10_win": null
+   },
+   "2008-01〜2015-12": {
+    "from": 200801,
+    "to": 201512,
+    "years": 8.0,
+    "cagr": 3.12,
+    "bench_cagr": 2.74,
+    "excess": 0.39,
+    "ex_arith": 0.49,
+    "t": 0.21,
+    "t_nw": 0.28,
+    "vol": 18.0,
+    "bench_vol": 17.5,
+    "maxdd": -48.9,
+    "bench_maxdd": -48.7,
+    "roll10_win": null
+   },
+   "2016-01〜2026-08": {
+    "from": 201601,
+    "to": 202608,
+    "years": 10.7,
+    "cagr": 13.3,
+    "bench_cagr": 11.95,
+    "excess": 1.34,
+    "ex_arith": 1.18,
+    "t": 0.58,
+    "t_nw": 0.58,
+    "vol": 13.8,
+    "bench_vol": 14.0,
+    "maxdd": -17.3,
+    "bench_maxdd": -22.6,
+    "roll10_win": "1/1"
+   }
+  }
+ },
+ "next_trading_day_exec（事後・参考）": {
+  "vs_EW": {
+   "from": 200212,
+   "to": 202608,
+   "years": 23.8,
+   "cagr": 11.34,
+   "bench_cagr": 9.52,
+   "excess": 1.81,
+   "ex_arith": 1.61,
+   "t": 1.13,
+   "t_nw": 1.41,
+   "vol": 15.8,
+   "bench_vol": 16.1,
+   "maxdd": -46.7,
+   "bench_maxdd": -52.4,
+   "roll10_win": "13/14"
+  },
+  "vs_SPY_same_days": {
+   "from": 200212,
+   "to": 202608,
+   "years": 23.8,
+   "cagr": 11.34,
+   "bench_cagr": 11.21,
+   "excess": 0.12,
+   "ex_arith": 0.07,
+   "t": 0.04,
+   "t_nw": 0.05,
+   "vol": 15.8,
+   "bench_vol": 16.0,
+   "maxdd": -46.7,
+   "bench_maxdd": -52.9,
+   "roll10_win": "3/14"
+  },
+  "vs_ACWI_same_days": {
+   "from": 200804,
+   "to": 202608,
+   "years": 18.4,
+   "cagr": 10.11,
+   "bench_cagr": 8.44,
+   "excess": 1.67,
+   "ex_arith": 1.23,
+   "t": 0.69,
+   "t_nw": 0.81,
+   "vol": 17.0,
+   "bench_vol": 18.7,
+   "maxdd": -46.7,
+   "bench_maxdd": -54.1,
+   "roll10_win": "8/9"
+  },
+  "note": "信号は月末の終値・持つのは翌月の最初の取引日の終値から次の月の最初の取引日の終値まで（日本の個人が朝に米国の月末の終値を見て注文する実際の遅れに近い）。相手も同じ日で測った"
+ },
+ "random_picks_null（事後・参考）": {
+  "sims": 2000,
+  "rule_excess_vs_EW": 2.03,
+  "random_median": -1.0,
+  "random_p5_p95": [
+   -3.09,
+   0.93
+  ],
+  "share_random_ge_rule": 0.005,
+  "note": "毎月、同じ土俵から同じ本数 k をでたらめに等加重・費用 0.1%/回転（でたらめは回転が大きいので費用も大きい）"
+ },
+ "neighbors（事後・参考・凍結した規則は J12 上位3割）": {
+  "J3 上位2割": {
+   "excess": 0.85,
+   "t": 0.54,
+   "from": 200212
+  },
+  "J3 上位3割（凍結）": {
+   "excess": 1.78,
+   "t": 1.35,
+   "from": 200212
+  },
+  "J3 上位4割": {
+   "excess": 1.97,
+   "t": 1.68,
+   "from": 200212
+  },
+  "J6 上位2割": {
+   "excess": 1.02,
+   "t": 0.62,
+   "from": 200212
+  },
+  "J6 上位3割（凍結）": {
+   "excess": 0.19,
+   "t": 0.14,
+   "from": 200212
+  },
+  "J6 上位4割": {
+   "excess": 0.35,
+   "t": 0.26,
+   "from": 200212
+  },
+  "J9 上位2割": {
+   "excess": 0.86,
+   "t": 0.53,
+   "from": 200212
+  },
+  "J9 上位3割（凍結）": {
+   "excess": 1.35,
+   "t": 0.89,
+   "from": 200212
+  },
+  "J9 上位4割": {
+   "excess": 1.47,
+   "t": 1.09,
+   "from": 200212
+  },
+  "J12 上位2割": {
+   "excess": 2.49,
+   "t": 1.33,
+   "from": 200212
+  },
+  "J12 上位3割（凍結）": {
+   "excess": 2.03,
+   "t": 1.37,
+   "from": 200212
+  },
+  "J12 上位4割": {
+   "excess": 2.03,
+   "t": 1.55,
+   "from": 200212
+  }
+ },
+ "paper_same_months": {
+  "rule_vs_US_market": {
+   "from": 200212,
+   "to": 202608,
+   "years": 23.8,
+   "cagr": 13.28,
+   "bench_cagr": 11.6,
+   "excess": 1.67,
+   "ex_arith": 1.69,
+   "t": 1.21,
+   "t_nw": 1.38,
+   "vol": 16.2,
+   "bench_vol": 15.0,
+   "maxdd": -44.6,
+   "bench_maxdd": -50.3,
+   "roll10_win": "10/14"
+  },
+  "rule_vs_EW49": {
+   "from": 200212,
+   "to": 202608,
+   "years": 23.8,
+   "cagr": 13.28,
+   "bench_cagr": 11.71,
+   "excess": 1.57,
+   "ex_arith": 1.34,
+   "t": 1.0,
+   "t_nw": 1.23,
+   "vol": 16.2,
+   "bench_vol": 16.6,
+   "maxdd": -44.6,
+   "bench_maxdd": -52.6,
+   "roll10_win": "13/14"
+  },
+  "etf_arm_on_paper_arm": {
+   "beta": 0.673,
+   "alpha_pct_yr": 0.94,
+   "alpha_t": 0.94,
+   "corr": 0.67,
+   "months": 285
+  },
+  "etf_arm_on_paper_vs_mkt": {
+   "beta": 0.421,
+   "alpha_pct_yr": 1.13,
+   "alpha_t": 0.94,
+   "corr": 0.441,
+   "months": 285
+  },
+  "subperiods": {
+   "〜2007-12": {
+    "vs_mkt": {
+     "from": 200212,
+     "to": 200712,
+     "years": 5.1,
+     "cagr": 18.14,
+     "bench_cagr": 12.26,
+     "excess": 5.88,
+     "ex_arith": 5.45,
+     "t": 1.78,
+     "t_nw": 2.48,
+     "vol": 12.3,
+     "bench_vol": 9.5,
+     "maxdd": -8.8,
+     "bench_maxdd": -9.6,
+     "roll10_win": null
+    },
+    "vs_EW49": {
+     "from": 200212,
+     "to": 200712,
+     "years": 5.1,
+     "cagr": 18.14,
+     "bench_cagr": 15.8,
+     "excess": 2.34,
+     "ex_arith": 2.22,
+     "t": 0.98,
+     "t_nw": 1.09,
+     "vol": 12.3,
+     "bench_vol": 10.5,
+     "maxdd": -8.8,
+     "bench_maxdd": -8.9,
+     "roll10_win": null
+    }
+   },
+   "2008-01〜2015-12": {
+    "vs_mkt": {
+     "from": 200801,
+     "to": 201512,
+     "years": 8.0,
+     "cagr": 7.86,
+     "bench_cagr": 6.8,
+     "excess": 1.06,
+     "ex_arith": 1.1,
+     "t": 0.49,
+     "t_nw": 0.66,
+     "vol": 17.3,
+     "bench_vol": 16.8,
+     "maxdd": -44.5,
+     "bench_maxdd": -47.7,
+     "roll10_win": null
+    },
+    "vs_EW49": {
+     "from": 200801,
+     "to": 201512,
+     "years": 8.0,
+     "cagr": 7.86,
+     "bench_cagr": 6.63,
+     "excess": 1.24,
+     "ex_arith": 0.77,
+     "t": 0.29,
+     "t_nw": 0.36,
+     "vol": 17.3,
+     "bench_vol": 19.4,
+     "maxdd": -44.5,
+     "bench_maxdd": -50.1,
+     "roll10_win": null
+    }
+   },
+   "2016-01〜2026-08": {
+    "vs_mkt": {
+     "from": 201601,
+     "to": 202608,
+     "years": 10.7,
+     "cagr": 15.19,
+     "bench_cagr": 15.02,
+     "excess": 0.17,
+     "ex_arith": 0.35,
+     "t": 0.16,
+     "t_nw": 0.18,
+     "vol": 17.0,
+     "bench_vol": 15.7,
+     "maxdd": -21.7,
+     "bench_maxdd": -24.8,
+     "roll10_win": "0/1"
+    },
+    "vs_EW49": {
+     "from": 201601,
+     "to": 202608,
+     "years": 10.7,
+     "cagr": 15.19,
+     "bench_cagr": 13.72,
+     "excess": 1.47,
+     "ex_arith": 1.34,
+     "t": 0.69,
+     "t_nw": 0.89,
+     "vol": 17.0,
+     "bench_vol": 16.7,
+     "maxdd": -21.7,
+     "bench_maxdd": -25.9,
+     "roll10_win": "1/1"
+    }
+   }
+  },
+  "note": "French 49業種の凍結した規則（fam_indmom.run・米国市場が相手）と、上位15−並べられる49業種の等加重（選ぶ腕）。器の腕（規則の費用後−等加重10本）をそれに回帰"
+ },
+ "overlap_with_us_sectors": {
+  "months": 227,
+  "same_3_sectors_share": 0.44,
+  "mean_jaccard": 0.71,
+  "arm_corr_global_vs_us_vanguard": {
+   "beta": 0.73,
+   "alpha_pct_yr": 1.29,
+   "alpha_t": 1.37,
+   "corr": 0.788,
+   "months": 227
+  },
+  "arm_on_paper_US49": {
+   "beta": 0.656,
+   "alpha_pct_yr": 0.89,
+   "alpha_t": 0.79,
+   "corr": 0.675,
+   "months": 227
+  }
+ },
+ "vanguard_us_sectors（事後・参考）": {
+  "window": [
+   200502,
+   202608
+  ],
+  "all10_from": 200510,
+  "vs_EW10": {
+   "from": 200502,
+   "to": 202608,
+   "years": 21.6,
+   "cagr": 10.76,
+   "bench_cagr": 10.42,
+   "excess": 0.34,
+   "ex_arith": 0.32,
+   "t": 0.21,
+   "t_nw": 0.24,
+   "vol": 15.0,
+   "bench_vol": 14.9,
+   "maxdd": -42.8,
+   "bench_maxdd": -49.1,
+   "roll10_win": "5/12"
+  },
+  "vs_SPY": {
+   "from": 200502,
+   "to": 202608,
+   "years": 21.6,
+   "cagr": 10.76,
+   "bench_cagr": 11.06,
+   "excess": -0.3,
+   "ex_arith": -0.25,
+   "t": -0.16,
+   "t_nw": -0.17,
+   "vol": 15.0,
+   "bench_vol": 14.8,
+   "maxdd": -42.8,
+   "bench_maxdd": -50.8,
+   "roll10_win": "2/12"
+  },
+  "EW10_vs_SPY": {
+   "from": 200502,
+   "to": 202608,
+   "years": 21.6,
+   "cagr": 10.42,
+   "bench_cagr": 11.06,
+   "excess": -0.64,
+   "ex_arith": -0.57,
+   "t": -0.74,
+   "t_nw": -0.78,
+   "vol": 14.9,
+   "bench_vol": 14.8,
+   "maxdd": -49.1,
+   "bench_maxdd": -50.8,
+   "roll10_win": "3/12"
+  },
+  "vs_QQQ": {
+   "from": 200502,
+   "to": 202608,
+   "years": 21.6,
+   "cagr": 10.76,
+   "bench_cagr": 15.52,
+   "excess": -4.77,
+   "ex_arith": -4.81,
+   "t": -1.89,
+   "t_nw": -2.04,
+   "vol": 15.0,
+   "bench_vol": 18.4,
+   "maxdd": -42.8,
+   "bench_maxdd": -49.7,
+   "roll10_win": "0/12"
+  },
+  "sub": {
+   "〜2007-12": {
+    "vs_EW10": {
+     "from": 200502,
+     "to": 200712,
+     "years": 2.9,
+     "cagr": 10.81,
+     "bench_cagr": 11.91,
+     "excess": -1.1,
+     "ex_arith": -0.75,
+     "t": -0.21,
+     "t_nw": -0.31,
+     "vol": 10.7,
+     "bench_vol": 8.1,
+     "maxdd": -5.9,
+     "bench_maxdd": -4.7,
+     "roll10_win": null
+    },
+    "vs_SPY": {
+     "from": 200502,
+     "to": 200712,
+     "years": 2.9,
+     "cagr": 10.81,
+     "bench_cagr": 9.59,
+     "excess": 1.22,
+     "ex_arith": 1.38,
+     "t": 0.33,
+     "t_nw": 0.47,
+     "vol": 10.7,
+     "bench_vol": 7.8,
+     "maxdd": -5.9,
+     "bench_maxdd": -5.0,
+     "roll10_win": null
+    }
+   },
+   "2008-01〜2015-12": {
+    "vs_EW10": {
+     "from": 200801,
+     "to": 201512,
+     "years": 8.0,
+     "cagr": 5.79,
+     "bench_cagr": 6.47,
+     "excess": -0.67,
+     "ex_arith": -0.69,
+     "t": -0.26,
+     "t_nw": -0.3,
+     "vol": 16.2,
+     "bench_vol": 16.5,
+     "maxdd": -42.8,
+     "bench_maxdd": -46.9,
+     "roll10_win": null
+    },
+    "vs_SPY": {
+     "from": 200801,
+     "to": 201512,
+     "years": 8.0,
+     "cagr": 5.79,
+     "bench_cagr": 6.46,
+     "excess": -0.67,
+     "ex_arith": -0.65,
+     "t": -0.24,
+     "t_nw": -0.27,
+     "vol": 16.2,
+     "bench_vol": 16.4,
+     "maxdd": -42.8,
+     "bench_maxdd": -48.2,
+     "roll10_win": null
+    }
+   },
+   "2016-01〜2026-08": {
+    "vs_EW10": {
+     "from": 201601,
+     "to": 202608,
+     "years": 10.7,
+     "cagr": 14.61,
+     "bench_cagr": 13.06,
+     "excess": 1.55,
+     "ex_arith": 1.36,
+     "t": 0.63,
+     "t_nw": 0.73,
+     "vol": 15.1,
+     "bench_vol": 15.1,
+     "maxdd": -19.0,
+     "bench_maxdd": -24.3,
+     "roll10_win": "1/1"
+    },
+    "vs_SPY": {
+     "from": 201601,
+     "to": 202608,
+     "years": 10.7,
+     "cagr": 14.61,
+     "bench_cagr": 15.05,
+     "excess": -0.44,
+     "ex_arith": -0.4,
+     "t": -0.17,
+     "t_nw": -0.19,
+     "vol": 15.1,
+     "bench_vol": 15.1,
+     "maxdd": -19.0,
+     "bench_maxdd": -23.9,
+     "roll10_win": "0/1"
+    }
+   }
+  },
+  "annual_turnover": 2.6,
+  "lag1_vs_EW10": {
+   "from": 200503,
+   "to": 202608,
+   "years": 21.5,
+   "cagr": 10.56,
+   "bench_cagr": 10.38,
+   "excess": 0.18,
+   "ex_arith": 0.22,
+   "t": 0.15,
+   "t_nw": 0.15,
+   "vol": 15.3,
+   "bench_vol": 14.9,
+   "maxdd": -45.8,
+   "bench_maxdd": -49.1,
+   "roll10_win": "6/12"
+  },
+  "top4_vs_EW10": {
+   "top4_years": {
+    "2022": 19.54,
+    "2020": 11.28,
+    "2026": 8.88,
+    "2008": 5.15
+   },
+   "rest_excess_pct_yr": -2.4,
+   "rest_t": -1.38,
+   "rest_months": 215,
+   "share_of_log_excess_from_top4": 6.72,
+   "total_log_excess": 0.066
+  },
+  "note": "米国の Vanguard 業種ETF 10本（VGT VHT VFH VDE VIS VDC VPU VAW VCR VOX）に同じ規則。窓は12か月がそろう 2005-02〜（VDE/VIS/VOX は 2004-09 設定）。世界の業種ETFの同じ窓は下の global_same_window"
+ },
+ "global_same_window_as_vanguard": {
+  "from": 200502,
+  "to": 202608,
+  "years": 21.6,
+  "cagr": 11.16,
+  "bench_cagr": 8.88,
+  "excess": 2.27,
+  "ex_arith": 2.09,
+  "t": 1.49,
+  "t_nw": 1.73,
+  "vol": 14.9,
+  "bench_vol": 14.8,
+  "maxdd": -45.1,
+  "bench_maxdd": -51.0,
+  "roll10_win": "11/12"
+ },
+ "current_picks_for_2026_09": {
+  "hold": [
+   "IXC",
+   "IXN",
+   "MXI"
+  ],
+  "N": 10,
+  "k": 3,
+  "score_12m_pct": {
+   "IXN": 49.4,
+   "IXC": 43.3,
+   "MXI": 30.4,
+   "IXJ": 20.7,
+   "IXG": 18.9,
+   "EXI": 18.5,
+   "JXI": 10.6,
+   "KXI": 6.6,
+   "IXP": 1.5,
+   "RXI": 1.5
+  }
+ },
+ "hold_frequency_share": {
+  "IXN": 0.49,
+  "IXC": 0.34,
+  "IXG": 0.33,
+  "IXJ": 0.31,
+  "IXP": 0.29,
+  "RXI": 0.25,
+  "MXI": 0.23,
+  "KXI": 0.22,
+  "JXI": 0.2,
+  "EXI": 0.13
+ },
+ "context_for_this_user": {
+  "rule_vs_QQQ": {
+   "from": 200212,
+   "to": 202608,
+   "years": 23.8,
+   "cagr": 11.56,
+   "bench_cagr": 15.51,
+   "excess": -3.95,
+   "ex_arith": -4.12,
+   "t": -1.66,
+   "t_nw": -1.66,
+   "vol": 14.6,
+   "bench_vol": 18.3,
+   "maxdd": -45.1,
+   "bench_maxdd": -49.7,
+   "roll10_win": "1/14"
+  },
+  "読み": "この利用者の主力（NASDAQ100）に対しては 年−3.95%・転がる10年 1/14。世界の業種の勢いは NASDAQ100 の代わりにはならない"
+ },
+ "implementability_for_this_user": {
+  "楽天の取扱（out/broker_lineup.json・2026-08-24）": "10本すべて在る（IXN IXJ IXG IXC IXP EXI KXI RXI MXI JXI・経費 0.38〜0.39%）。ACWI・SPY も在る。NISA成長投資枠の対象かは一覧に無い（未確認。米国上場の株式ETFは通常対象・レバレッジ型を除く）",
+  "NISA成長投資枠": "毎月の入れ替えは買うたびに年240万円の枠を使い、売った分の枠は年の枠としては戻らない（生涯1,800万円の簿価の枠が翌年に戻るだけ）。実測の買付は 年 2.4×平均残高 なので、年240万円で回し続けられる残高の上限は およそ 100万円（新しい入金の枠を0と置いても）。この利用者は成長投資枠を つみたて枠を超えた分の QQQM に使っているので、回すとその枠を食う。枠の外にはみ出す分は課税口座になる＝NISA では実質続けられない",
+  "課税口座（特定口座・源泉あり）": "売るたびに売却益に 20.315%（同じ年の中は損益通算・繰越控除は確定申告で3年）。分配は 28.28%（米国源泉10%＋国内20.315%・外国税額控除なしの置き方）",
+  "tax_simulation": {
+   "課税なし（参考）": {
+    "規則": {
+     "from": 200212,
+     "to": 202608,
+     "years": 23.8,
+     "final_multiple": 13.408,
+     "cagr_pct": 11.55,
+     "buys_per_year_over_avg_value": 2.4
+    },
+    "等加重10本（毎月戻す）": {
+     "from": 200212,
+     "to": 202608,
+     "years": 23.8,
+     "final_multiple": 8.645,
+     "cagr_pct": 9.51,
+     "buys_per_year_over_avg_value": 0.16
+    },
+    "SPY買い持ち": {
+     "from": 200212,
+     "to": 202608,
+     "years": 23.8,
+     "final_multiple": 12.583,
+     "cagr_pct": 11.25,
+     "buys_per_year_over_avg_value": 0.02
+    },
+    "規則（ACWIの窓）": {
+     "from": 200805,
+     "to": 202608,
+     "years": 18.3,
+     "final_multiple": 5.693,
+     "cagr_pct": 9.95,
+     "buys_per_year_over_avg_value": 2.3
+    },
+    "ACWI買い持ち": {
+     "from": 200805,
+     "to": 202608,
+     "years": 18.3,
+     "final_multiple": 4.257,
+     "cagr_pct": 8.22,
+     "buys_per_year_over_avg_value": 0.02
+    }
+   },
+   "NISA成長投資枠（米国の源泉10%だけ）": {
+    "規則": {
+     "from": 200212,
+     "to": 202608,
+     "years": 23.8,
+     "final_multiple": 12.838,
+     "cagr_pct": 11.35,
+     "buys_per_year_over_avg_value": 2.4
+    },
+    "等加重10本（毎月戻す）": {
+     "from": 200212,
+     "to": 202608,
+     "years": 23.8,
+     "final_multiple": 8.213,
+     "cagr_pct": 9.27,
+     "buys_per_year_over_avg_value": 0.16
+    },
+    "SPY買い持ち": {
+     "from": 200212,
+     "to": 202608,
+     "years": 23.8,
+     "final_multiple": 12.051,
+     "cagr_pct": 11.05,
+     "buys_per_year_over_avg_value": 0.02
+    },
+    "規則（ACWIの窓）": {
+     "from": 200805,
+     "to": 202608,
+     "years": 18.3,
+     "final_multiple": 5.499,
+     "cagr_pct": 9.74,
+     "buys_per_year_over_avg_value": 2.3
+    },
+    "ACWI買い持ち": {
+     "from": 200805,
+     "to": 202608,
+     "years": 18.3,
+     "final_multiple": 4.113,
+     "cagr_pct": 8.02,
+     "buys_per_year_over_avg_value": 0.02
+    }
+   },
+   "特定口座・繰越控除なし": {
+    "規則": {
+     "from": 200212,
+     "to": 202608,
+     "years": 23.8,
+     "final_multiple": 7.638,
+     "cagr_pct": 8.94,
+     "buys_per_year_over_avg_value": 2.39
+    },
+    "等加重10本（毎月戻す）": {
+     "from": 200212,
+     "to": 202608,
+     "years": 23.8,
+     "final_multiple": 5.792,
+     "cagr_pct": 7.68,
+     "buys_per_year_over_avg_value": 0.16
+    },
+    "SPY買い持ち": {
+     "from": 200212,
+     "to": 202608,
+     "years": 23.8,
+     "final_multiple": 9.262,
+     "cagr_pct": 9.83,
+     "buys_per_year_over_avg_value": 0.01
+    },
+    "規則（ACWIの窓）": {
+     "from": 200805,
+     "to": 202608,
+     "years": 18.3,
+     "final_multiple": 3.761,
+     "cagr_pct": 7.49,
+     "buys_per_year_over_avg_value": 2.29
+    },
+    "ACWI買い持ち": {
+     "from": 200805,
+     "to": 202608,
+     "years": 18.3,
+     "final_multiple": 3.361,
+     "cagr_pct": 6.83,
+     "buys_per_year_over_avg_value": 0.01
+    }
+   },
+   "特定口座・確定申告で3年の繰越控除": {
+    "規則": {
+     "from": 200212,
+     "to": 202608,
+     "years": 23.8,
+     "final_multiple": 7.96,
+     "cagr_pct": 9.13,
+     "buys_per_year_over_avg_value": 2.39
+    },
+    "等加重10本（毎月戻す）": {
+     "from": 200212,
+     "to": 202608,
+     "years": 23.8,
+     "final_multiple": 5.817,
+     "cagr_pct": 7.7,
+     "buys_per_year_over_avg_value": 0.16
+    },
+    "SPY買い持ち": {
+     "from": 200212,
+     "to": 202608,
+     "years": 23.8,
+     "final_multiple": 9.262,
+     "cagr_pct": 9.83,
+     "buys_per_year_over_avg_value": 0.01
+    },
+    "規則（ACWIの窓）": {
+     "from": 200805,
+     "to": 202608,
+     "years": 18.3,
+     "final_multiple": 3.919,
+     "cagr_pct": 7.73,
+     "buys_per_year_over_avg_value": 2.29
+    },
+    "ACWI買い持ち": {
+     "from": 200805,
+     "to": 202608,
+     "years": 18.3,
+     "final_multiple": 3.361,
+     "cagr_pct": 6.83,
+     "buys_per_year_over_avg_value": 0.01
+    }
+   }
+  },
+  "tax_summary": {
+   "課税なし（参考）": "規則 11.55% / SPY買い持ち 11.25% / 等加重10本 9.51%",
+   "NISA（枠が無限と仮定）": "規則 11.35% / SPY 11.05%",
+   "特定口座・繰越控除なし": "規則 8.94% / SPY買い持ち 9.83% / 等加重10本 7.68% ／ ACWIの窓（2008-05〜）規則 7.49% vs ACWI 6.83%",
+   "特定口座・3年の繰越控除": "規則 9.13% / SPY買い持ち 9.83%",
+   "読み": "税を入れると規則は SPY の買い持ちに 年0.7〜0.9% 負ける（毎月の実現益への課税が複利を削る。SPY は最後に一度だけ払う）。最後に全部売って税を払った後の年率。為替（円での課税）は入れていない（両方に同じくかかる）",
+   "check": "課税なしの模擬（月末の終値＋分配・総平均法）は規則 11.55% で、adjclose で測った費用後 11.56% と一致"
+  }
+ },
+ "lookahead_test": {
+  "truncate_cuts": [
+   200512,
+   200809,
+   201203,
+   201606,
+   202003,
+   202312
+  ],
+  "months_compared_ret_tv_held": 843,
+  "mismatch": 0,
+  "positions_prefix_checked": 284,
+  "positions_mismatch": 0,
+  "power_future_window_mismatch": "284/284",
+  "note": "比較は 1e-12 の許容（set の並びで和の順が変わる 1e-16 の丸めだけを許す）"
+ },
+ "limits": [
+  "世界の業種の中身の半分以上は米国＝米国の検定期間と重なる。独立な証拠ではない（independence_note）",
+  "最初の約5年（2002-12〜2007-09）は5本（テック・ヘルスケア・金融・エネルギー・通信）しか無く、5本から2本を選んでいる（上位4割）",
+  "部門の定義が途中で変わる: 2018-09 の GICS 改定で GOOGL・META・NFLX などが IXP（旧 通信→コミュニケーション）へ移り、2023-03 の改定で V・MA などが IXN から IXG へ移った。ETF の中身の連続性は崩れている（器の実績としてはそのまま測った）",
+  "器の顔ぶれは2026年に取れる生き残り（この10本は閉じていない）。相手の等加重10本も同じ器なので経費の差は無い",
+  "税の模擬は米ドル建て（日本の課税は円での損益）・分配は権利落ちの月に受け取り翌月に再投資・外国税額控除なし・NISA の枠は上限を置かずに計算（上限は別に書いた）",
+  "1か月遅らせた版は課題の指定。実際の日本の個人の遅れは1営業日前後で、その版（事後）は +1.81（t1.13）"
+ ],
+ "files": {
+  "scripts": "scratchpad/indmom_global/{fetch,data,run,main,part2,part3,tax,assemble}.py（repo には置いていない・source に全文）",
+  "prefix": "scratchpad/indmom_global/prefix.json（結果の前に書いた）"
+ },
+ "prefix_json": {
+  "written": "2026-09-28（器のリターンを1本も計算する前・データを取る前）",
+  "question": "凍結した indmom（spec_indmom.json・fam_indmom.signal/weights）を、楽天で買える iShares の世界の業種ETF 10本へ写すと、選ぶ腕（10本の等加重に対する超過）は費用後に残るか",
+  "universe_main": [
+   "IXN",
+   "IXJ",
+   "IXG",
+   "IXC",
+   "IXP",
+   "EXI",
+   "KXI",
+   "RXI",
+   "MXI",
+   "JXI"
+  ],
+  "universe_ref_post_hoc": [
+   "VGT",
+   "VHT",
+   "VFH",
+   "VDE",
+   "VIS",
+   "VDC",
+   "VPU",
+   "VAW",
+   "VCR",
+   "VOX"
+  ],
+  "rule_mapping": {
+   "信号と重み": "fam_indmom.signal(r, m, 12, 0) と fam_indmom.weights(r, None, m, spec) を import してそのまま呼ぶ（窓12か月・直近月を含む・等加重・同順位はティッカー名順・並べられるETFが max(k+1,3) 未満の月は持たない）",
+   "k": "N＝月 m に signal で並べられるETFの数（m−1 月と窓の12か月がそろうもの）。k＝max(1, floor(N×15/49＋0.5))（confirm_indmom_world の k_of と同じ）。10本なら k=3・5本なら k=2",
+   "回転": "fam_indmom.run と同じ（前月の重みを当月のリターンで流した後と新しい重みの差の絶対値の和の半分・最初の月は1）",
+   "費用": "片道の回転1あたり 0.10%（事前登録・ETFの入れ替え）。相手には費用を掛けない（相手の経費は価格に入っている＝器どうしで公平）"
+  },
+  "data": {
+   "取り方": "Yahoo v8 chart（interval=1d と 1mo・range=max・events=div|split|capitalGain）を harness.cached で。harness.CACHE をこの scratchpad の cache/ へ差し替える（repo の out/_edge_cache には書かない）",
+   "月末の値": "日次の最後の取引日の値。リターンは月末どうしの比（2026-09 は途中の月なので落とす＝最後の月は 2026-08）",
+   "主の系列": "日次 adjclose の月末どうし",
+   "壊れの検査": "日次の close と分配（権利落ち日に再投資）で作り直した月次と比べ、|差|>0.5%/月 の月が1つでもあるか、年率の差が 0.10%/年を超えたら壊れと見なし、そのティッカーは close＋分配の系列を使う（両方の数を出す）"
+  },
+  "benchmarks": {
+   "(a) 主": "同じ月に signal で並べられる全ETFの等加重（毎月戻す・費用なし）＝選ぶ腕だけを測る",
+   "(b)": "ACWI（2008-04〜・adjclose）",
+   "(c)": "SPY"
+  },
+  "windows": {
+   "主": "規則が最初に持てる月〜2026-08（ETFの本数は途中で増える）",
+   "副": "10本がそろって並べられる月〜2026-08",
+   "区間": [
+    "〜2007-12",
+    "2008-01〜2015-12",
+    "2016-01〜2026-08"
+   ]
+  },
+  "verdict_rule": {
+   "持ちこたえた": "主の窓・費用後・(a) に対する超過（年率の差）が +1.0%/年以上 かつ 月次超過の t ≥ 2.0",
+   "弱まった": "(a) に対する超過が正だが上の線に届かない",
+   "崩れた": "(a) に対する超過が 0 以下",
+   "測れなかった": "取れたETFが5本未満、または主の窓が120か月未満",
+   "note": "(b)(c)・1か月遅らせた版・Vanguard（事後・参考）・税は判定に入れず併記"
+  },
+  "extra_reported_not_verdict": [
+   "1か月遅らせた版: 月 m に fam_indmom.weights(r, None, m−1, …)（m−2 月末までの信号）を持つ",
+   "上位4年の寄与: 暦年ごとの超過（年の複利の差）の上位4年を除いた月での超過と t",
+   "転がる10年（harness.stats の roll10_win）",
+   "紙の同じ月: French 49業種の凍結した規則（fam_indmom.run）の米国市場に対する超過と、上位15−全49等加重（選ぶ腕）。ETFの選ぶ腕との月次相関",
+   "NISA: 年間の買付＝回転×残高 → 成長投資枠240万円/年で回せる残高の上限",
+   "課税口座: 特定口座（源泉あり）で売るたびに 20.315%（同じ年の中は損益通算）・分配は 28.28%（米国源泉10%＋国内20.315%・外国税額控除なし）。繰越控除あり（確定申告・3年）となしの2通り。最後に全部売って税を払った後の年率を相手（SPY・等加重10本）と比べる"
+  ],
+  "independence_note": "世界の業種ETFの中身の半分以上は米国株で、2001年以降の米国は indmom の検定期間（+2.91%/年・t1.73・不合格）と重なる。これは独立な証拠ではなく『器で取れるか』の確かめ"
+ },
+ "source": {
+  "fetch.py": "\"\"\"Yahoo の日次・月次を harness.cached で取る（キャッシュは scratchpad だけ）\"\"\"\nimport os, sys, json, time\nos.environ['EDGE_PHASE'] = 'holdout'\nsys.path.insert(0, '/home/user/ccf-gate/night/edge')\nimport harness as h\nSP = os.path.dirname(os.path.abspath(__file__))\nh.CACHE = os.path.join(SP, 'cache')\nSYMS = 'IXN IXJ IXG IXC IXP EXI KXI RXI MXI JXI ACWI SPY VGT VHT VFH VDE VIS VDC VPU VAW VCR VOX QQQ'.split()\nURL = 'https://query1.finance.yahoo.com/v8/finance/chart/{s}?interval={iv}&range=max&events=div%7Csplit%7CcapitalGain&includeAdjustedClose=true'\n# range=max で 1d を頼むと Yahoo は月足に落とす（実測: IXN 1d が 299 本・dataGranularity=1mo）→ 日次は period1/period2 で頼む\nURL_D = 'https://query1.finance.yahoo.com/v8/finance/chart/{s}?interval=1d&period1=0&period2=1790000000&events=div%7Csplit%7CcapitalGain&includeAdjustedClose=true'\ndef get(s, iv):\n    b = h.cached(f'yh_{s}_{iv}.json', (URL_D if iv == '1d' else URL).format(s=s, iv=iv), 5)\n    return json.loads(b)\nif __name__ == '__main__':\n    for s in (sys.argv[1:] or SYMS):\n        for iv in ('1d', '1mo'):\n            try:\n                j = get(s, iv)\n                r = j['chart']['result'][0]\n                print(s, iv, len(r['timestamp']), r['meta'].get('firstTradeDate'), r['meta'].get('exchangeTimezoneName'), len((r.get('events') or {}).get('dividends', {})))\n            except Exception as e:\n                print(s, iv, 'ERR', e)\n            time.sleep(0.5)\n",
+  "data.py": "\"\"\"日次から月末の系列を作る（adjclose と close＋分配の2通り）＋壊れの検査\"\"\"\nimport os, sys, json, math, datetime\nsys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))\nimport fetch as FE\nh = FE.h\nLAST = 202608              # 2026-09 は途中の月\n\ndef daily(sym):\n    r = FE.get(sym, '1d')['chart']['result'][0]\n    q = r['indicators']['quote'][0]\n    adj = r['indicators']['adjclose'][0]['adjclose']\n    ev = r.get('events') or {}\n    divs = {}\n    for kind in ('dividends', 'capitalGains'):\n        for k, v in (ev.get(kind) or {}).items():\n            d = datetime.datetime.utcfromtimestamp(int(v['date'])).date()\n            divs[d] = divs.get(d, 0.0) + float(v['amount'])\n    splits = ev.get('splits') or {}\n    rows = []\n    for t, c, a in zip(r['timestamp'], q['close'], adj):\n        if c is None or a is None:\n            continue\n        rows.append((datetime.datetime.utcfromtimestamp(t).date(), float(c), float(a)))\n    return rows, divs, splits\n\ndef monthly(sym):\n    rows, divs, splits = daily(sym)\n    # adjclose の月末\n    me_adj, me_cls = {}, {}\n    for d, c, a in rows:\n        m = d.year * 100 + d.month\n        me_adj[m] = a; me_cls[m] = c\n    ks = sorted(me_adj)\n    ret_adj = {b: me_adj[b] / me_adj[a] - 1 for a, b in zip(ks, ks[1:]) if h.add_months(a, 1) == b}\n    # close＋分配（権利落ち日に再投資）\n    idx = 1.0; me_tr = {}\n    prev = None\n    used = set()\n    for d, c, a in rows:\n        if prev is not None:\n            dv = divs.get(d, 0.0)\n            if dv:\n                used.add(d)\n            idx *= (c + dv) / prev\n        prev = c\n        me_tr[d.year * 100 + d.month] = idx\n    ret_tr = {b: me_tr[b] / me_tr[a] - 1 for a, b in zip(ks, ks[1:]) if h.add_months(a, 1) == b}\n    lost = sorted(str(d) for d in divs if d not in used and d >= rows[0][0])\n    # 最初の月（途中から始まる月）は落とす: 最初の月末から数える＝ret は2か月目から（上の作り方で自然にそうなる）\n    ret_adj = {m: v for m, v in ret_adj.items() if m <= LAST}\n    ret_tr = {m: v for m, v in ret_tr.items() if m <= LAST}\n    return ret_adj, ret_tr, {'first_day': str(rows[0][0]), 'last_day': str(rows[-1][0]), 'n_div': len(divs), 'splits': len(splits), 'lost_div': lost}\n\ndef check(sym):\n    ra, rt, info = monthly(sym)\n    ms = sorted(set(ra) & set(rt))\n    diffs = [(m, (ra[m] - rt[m]) * 100) for m in ms]\n    ca = h.cagr(ra, ms[0], ms[-1]); ct = h.cagr(rt, ms[0], ms[-1])\n    worst = sorted(diffs, key=lambda x: -abs(x[1]))[:3]\n    broken = any(abs(x[1]) > 0.5 for x in diffs) or abs(ca - ct) * 100 > 0.10\n    # 月足（interval=1mo）の adjclose とも照らす\n    j = FE.get(sym, '1mo')['chart']['result'][0]\n    mo = {}\n    for t, a in zip(j['timestamp'], j['indicators']['adjclose'][0]['adjclose']):\n        if a is None: continue\n        d = datetime.datetime.utcfromtimestamp(t + (j['meta'].get('gmtoffset') or 0))\n        mo[d.year * 100 + d.month] = a\n    rmo = {m: v for m, v in h.px_to_ret(mo).items() if m <= LAST}\n    ms2 = sorted(set(rmo) & set(ra))\n    d2 = max((abs(rmo[m] - ra[m]) * 100 for m in ms2), default=None)\n    return dict(info, months=len(ms), first_month=ms[0], cagr_adjclose=round(ca * 100, 3), cagr_close_plus_div=round(ct * 100, 3),\n                diff_pct_yr=round((ca - ct) * 100, 3), max_abs_month_diff_pct=round(max(abs(x[1]) for x in diffs), 3),\n                worst=[[m, round(v, 3)] for m, v in worst], broken=broken,\n                max_abs_diff_vs_1mo_bars_pct=round(d2, 3) if d2 is not None else None)\n\ndef series(sym):\n    \"\"\"主の系列: 壊れていなければ adjclose、壊れていれば close＋分配\"\"\"\n    ra, rt, info = monthly(sym)\n    c = check(sym)\n    return (rt if c['broken'] else ra), c\n\nif __name__ == '__main__':\n    for s in FE.SYMS:\n        print(s, json.dumps(check(s), ensure_ascii=False))\n",
+  "run.py": "\"\"\"凍結した indmom を世界の業種ETF 10本へ写す（検証・壊しに行く側）。読むだけ。書くのは scratchpad と out/edge/verify_indmom_global.json だけ\"\"\"\nimport os, sys, json, math, statistics as S, datetime, copy\nSP = os.path.dirname(os.path.abspath(__file__))\nsys.path.insert(0, SP)\nimport fetch as FE                      # EDGE_PHASE=holdout を立て、harness.CACHE を scratchpad へ差し替える\nimport data as D\nh = FE.h\nassert h.PHASE == 'holdout'\nsys.path.insert(0, '/home/user/ccf-gate/night/edge')\nimport fam_indmom as F                  # 凍結した規則の関数をそのまま呼ぶ\n\nSPEC_DOC = json.load(open('/home/user/ccf-gate/out/edge/spec_indmom.json', encoding='utf-8'))\nFROZEN = SPEC_DOC['spec']\nFRAC = FROZEN['k'] / FROZEN['n']\nCOST = 0.001\nMAIN = 'IXN IXJ IXG IXC IXP EXI KXI RXI MXI JXI'.split()\nVANG = 'VGT VHT VFH VDE VIS VDC VPU VAW VCR VOX'.split()\nLAST = D.LAST\n\n\ndef k_of(N):\n    return max(1, int(math.floor(N * FRAC + 0.5)))\n\n\ndef decide(r, m):\n    \"\"\"月 m に持つもの（m−1 月末までのデータだけ）→ (重み or None, 並べられた集合, N, k)\"\"\"\n    sc = F.signal(r, m, FROZEN['J'], FROZEN.get('skip', 0))\n    N = len(sc); k = k_of(N)\n    w = F.weights(r, None, m, dict(FROZEN, k=k))\n    return w, sorted(sc), N, k\n\n\ndef run_rule(r, lag=0, rhold=None, months=None, leak=0):\n    \"\"\"lag=1: 月 m に decide(r, m−1) を持つ。rhold: 持っている期間のリターン（既定は r）。leak: 検出力の検査用に未来へずらす\"\"\"\n    rhold = rhold or r\n    months = months or sorted(set().union(*[set(s) for s in r.values()]))\n    ret, ew, tv, tv_ew, held, info = {}, {}, {}, {}, {}, {'missing_held': [], 'N_k': {}}\n    wp = wpe = None\n    for m in months:\n        if m > LAST:\n            break\n        md = h.add_months(m, -lag + leak)\n        w, univ, N, k = decide(r, md)\n        if w is None:\n            wp = wpe = None\n            continue\n        fill = {}\n        for i in univ:\n            if m in rhold.get(i, {}):\n                fill[i] = rhold[i][m]\n            else:\n                fill[i] = 0.0\n                if i in w:\n                    info['missing_held'].append((m, i))\n        rp = sum(wi * fill[i] for i, wi in w.items())\n        we = {i: 1 / len(univ) for i in univ}\n        re = sum(we[i] * fill[i] for i in univ)\n        tv[m] = 1.0 if wp is None else 0.5 * sum(abs(w.get(i, 0) - wp.get(i, 0)) for i in set(w) | set(wp))\n        tv_ew[m] = 1.0 if wpe is None else 0.5 * sum(abs(we.get(i, 0) - wpe.get(i, 0)) for i in set(we) | set(wpe))\n        ret[m], ew[m], held[m] = rp, re, sorted(w)\n        info['N_k'][m] = (N, k)\n        wp = {i: wi * (1 + fill[i]) / (1 + rp) for i, wi in w.items()} if rp > -1 else None\n        wpe = {i: wi * (1 + fill[i]) / (1 + re) for i, wi in we.items()} if re > -1 else None\n    return {'ret': ret, 'ew': ew, 'tv': tv, 'tv_ew': tv_ew, 'held': held, 'info': info}\n\n\ndef st(ret, bench, a=None, b=None, tv=None, cost=COST):\n    x = h.stats(ret, bench, None, a, b, turnover=tv, cost=cost if tv else 0.0)\n    if x:\n        x.pop('sharpe', None); x.pop('bench_sharpe', None)\n    return x\n\n\ndef net(ret, tv, cost=COST):\n    return {m: ret[m] - tv.get(m, 0.0) * cost for m in ret}\n\n\ndef cal_year_excess(rn, bench, ms):\n    out = {}\n    for y in sorted({m // 100 for m in ms}):\n        mm = [m for m in ms if m // 100 == y]\n        a = math.prod(1 + rn[m] for m in mm) - 1\n        b = math.prod(1 + bench[m] for m in mm) - 1\n        out[y] = round((a - b) * 100, 2)\n    return out\n\n\ndef top4(rn, bench, ms):\n    cy = cal_year_excess(rn, bench, ms)\n    tops = sorted(cy, key=lambda y: -cy[y])[:4]\n    rest = [m for m in ms if m // 100 not in tops]\n    xr = {m: rn[m] for m in rest}; xb = {m: bench[m] for m in rest}\n    s_rest = h.stats(xr, xb)\n    # 対数の寄与の割合\n    tot = sum(math.log(1 + rn[m]) - math.log(1 + bench[m]) for m in ms)\n    part = sum(math.log(1 + rn[m]) - math.log(1 + bench[m]) for m in ms if m // 100 in tops)\n    return {'calendar_year_excess_pct': cy, 'top4_years': {str(y): cy[y] for y in tops},\n            'rest_excess_pct_yr': s_rest['excess'] if s_rest else None, 'rest_t': s_rest['t'] if s_rest else None,\n            'rest_months': len(rest), 'share_of_log_excess_from_top4': round(part / tot, 2) if tot else None,\n            'total_log_excess': round(tot, 3)}\n\n\ndef capm(y, x, ms):\n    ys = [y[m] for m in ms]; xs = [x[m] for m in ms]\n    mx, my = S.mean(xs), S.mean(ys)\n    sxx = sum((a - mx) ** 2 for a in xs); sxy = sum((a - mx) * (b - my) for a, b in zip(xs, ys))\n    beta = sxy / sxx\n    res = [b - my - beta * (a - mx) for a, b in zip(xs, ys)]\n    alpha = my - beta * mx\n    se_a = math.sqrt(sum(e * e for e in res) / (len(ms) - 2) / len(ms))\n    corr = sxy / math.sqrt(sxx * sum((b - my) ** 2 for b in ys))\n    return {'beta': round(beta, 3), 'alpha_pct_yr': round(alpha * 1200, 2), 'alpha_t': round(alpha / se_a, 2), 'corr': round(corr, 3), 'months': len(ms)}\n\n\ndef ann_turnover(tv, ms):\n    by = {}\n    for m in ms[1:]:\n        by.setdefault(m // 100, []).append(tv.get(m, 0.0))\n    full = {y: sum(v) for y, v in by.items() if len(v) == 12}\n    return round(S.mean(full.values()), 2) if full else None, {str(y): round(v, 2) for y, v in full.items()}\n",
+  "main.py": "import os, sys, json, math, statistics as S, datetime, random\nSP = os.path.dirname(os.path.abspath(__file__))\nsys.path.insert(0, SP)\nfrom run import *\n\nOUTR = {}\nchecks = {}\nser = {}\nfor s in MAIN + VANG + ['ACWI', 'SPY', 'QQQ']:\n    ser[s], checks[s] = D.series(s)\nrmain = {s: ser[s] for s in MAIN}\nspy, acwi, qqq = ser['SPY'], ser['ACWI'], ser['QQQ']\n\nR = run_rule(rmain)\nms = sorted(R['ret'])\nrn = net(R['ret'], R['tv'])\nN_of = {m: R['info']['N_k'][m][0] for m in ms}\nms10 = [m for m in ms if N_of[m] == 10]\nprint('main window', ms[0], ms[-1], len(ms), 'all10 from', ms10[0], 'missing_held', R['info']['missing_held'][:5])\nprint('N,k by first months', [(m, R['info']['N_k'][m]) for m in (ms[0], ms10[0])])\n\ndef block(ret, tv, ew, a=None, b=None):\n    o = {'vs_a_EW': st(ret, ew, a, b, tv), 'vs_SPY': st(ret, spy, a, b, tv), 'vs_ACWI': st(ret, acwi, max(a or 0, 200804), b, tv),\n         'EW_vs_SPY': st(ew, spy, a, b), 'EW_vs_ACWI': st(ew, acwi, max(a or 0, 200804), b)}\n    return o\n\nmain = block(R['ret'], R['tv'], R['ew'])\nsub10 = block(R['ret'], R['tv'], R['ew'], ms10[0])\nprint('MAIN vs EW', main['vs_a_EW']); print('MAIN vs SPY', main['vs_SPY']); print('MAIN vs ACWI', main['vs_ACWI'])\nprint('EW vs SPY', main['EW_vs_SPY'])\nprint('SUB10 vs EW', sub10['vs_a_EW'])\nperiods = {'〜2007-12': (None, 200712), '2008-01〜2015-12': (200801, 201512), '2016-01〜2026-08': (201601, 202608)}\nsub = {}\nfor nm, (a, b) in periods.items():\n    sub[nm] = {'vs_a_EW': st(R['ret'], R['ew'], a, b, R['tv']), 'vs_SPY': st(R['ret'], spy, a, b, R['tv']),\n               'vs_ACWI': st(R['ret'], acwi, max(a or 0, 200804), b, R['tv']) if (b or 999999) >= 200804 + 24 else None}\n    print(nm, 'EW', {k: sub[nm]['vs_a_EW'][k] for k in ('from', 'to', 'excess', 't')}, 'SPY', {k: sub[nm]['vs_SPY'][k] for k in ('excess', 't')})\nann, ann_by = ann_turnover(R['tv'], ms)\nann_ew, _ = ann_turnover(R['tv_ew'], ms)\nprint('annual one-way turnover', ann, 'EW', ann_ew)\nt4_ew = top4(rn, R['ew'], ms); t4_spy = top4(rn, spy, ms)\nprint('top4 EW', t4_ew['top4_years'], t4_ew['rest_excess_pct_yr'], t4_ew['rest_t'], t4_ew['share_of_log_excess_from_top4'])\nprint('top4 SPY', t4_spy['top4_years'], t4_spy['rest_excess_pct_yr'], t4_spy['rest_t'])\n\n# 1か月遅らせた版\nL1 = run_rule(rmain, lag=1)\nlag1 = block(L1['ret'], L1['tv'], L1['ew'])\nprint('LAG1 vs EW', lag1['vs_a_EW'])\nlag1_sub = {nm: st(L1['ret'], L1['ew'], a, b, L1['tv']) for nm, (a, b) in periods.items()}\n\nOUTR.update(dict(R=R, ms=ms, ms10=ms10, main=main, sub10=sub10, sub=sub, ann=ann, ann_by=ann_by, ann_ew=ann_ew,\n                 t4_ew=t4_ew, t4_spy=t4_spy, L1=L1, lag1=lag1, lag1_sub=lag1_sub, checks=checks))\njson.dump({k: v for k, v in OUTR.items() if k not in ('R', 'L1')}, open(os.path.join(SP, 'main_part1.json'), 'w'), ensure_ascii=False, indent=1, default=str)\nimport pickle\npickle.dump({'R': R, 'L1': L1, 'ser': ser}, open(os.path.join(SP, 'part1.pkl'), 'wb'))\n",
+  "part2.py": "import os, sys, json, math, statistics as S, datetime, random, pickle\nSP = os.path.dirname(os.path.abspath(__file__))\nsys.path.insert(0, SP)\nfrom run import *\nP = pickle.load(open(os.path.join(SP, 'part1.pkl'), 'rb'))\nR, L1, ser = P['R'], P['L1'], P['ser']\nspy, acwi, qqq = ser['SPY'], ser['ACWI'], ser['QQQ']\nrmain = {s: ser[s] for s in MAIN}\nms = sorted(R['ret'])\nrn = net(R['ret'], R['tv'])\nO = {}\n\n# ── 紙の同じ月: French 49業種の凍結した規則（fam_indmom.run） ──\npr = F.run(FROZEN)\nr49, _cap = F._load(49)\npms = [m for m in ms if m in pr['ret']]\nprint('paper months', pms[0], pms[-1], len(pms))\npaper_vs_mkt = st(pr['ret'], pr['bench'], pms[0], pms[-1], pr['turnover'])\new49 = {}\nfor m in pms:\n    sc = F.signal(r49, m, FROZEN['J'], FROZEN.get('skip', 0))\n    ew49[m] = S.mean(r49[i].get(m, 0.0) for i in sc)\npaper_vs_ew49 = st(pr['ret'], ew49, pms[0], pms[-1], pr['turnover'])\npnet = net(pr['ret'], pr['turnover'])\narm_etf = {m: rn[m] - R['ew'][m] for m in pms}\narm_paper = {m: pnet[m] - ew49[m] for m in pms}\narm_paper_mkt = {m: pnet[m] - pr['bench'][m] for m in pms}\nO['paper_same_months'] = {'rule_vs_US_market': paper_vs_mkt, 'rule_vs_EW49': paper_vs_ew49,\n                          'etf_arm_on_paper_arm': capm(arm_etf, arm_paper, pms),\n                          'etf_arm_on_paper_vs_mkt': capm(arm_etf, arm_paper_mkt, pms)}\nprint('paper vs mkt', paper_vs_mkt); print('paper vs ew49', paper_vs_ew49); print('regress', O['paper_same_months']['etf_arm_on_paper_arm'])\nper = {'〜2007-12': (None, 200712), '2008-01〜2015-12': (200801, 201512), '2016-01〜2026-08': (201601, 202608)}\nO['paper_sub'] = {nm: {'vs_mkt': st(pr['ret'], pr['bench'], a or pms[0], b, pr['turnover']), 'vs_EW49': st(pr['ret'], ew49, a or pms[0], b, pr['turnover'])} for nm, (a, b) in per.items()}\nfor nm, v in O['paper_sub'].items():\n    print('paper', nm, v['vs_mkt']['excess'], v['vs_mkt']['t'], '| vs EW49', v['vs_EW49']['excess'], v['vs_EW49']['t'])\n\n# ── Vanguard（事後・参考） ──\nrv = {s: ser[s] for s in VANG}\nV = run_rule(rv)\nvms = sorted(V['ret'])\nNv = {m: V['info']['N_k'][m][0] for m in vms}\nvms10 = [m for m in vms if Nv[m] == 10]\nO['vanguard'] = {'window': [vms[0], vms[-1]], 'all10_from': vms10[0],\n                 'vs_EW10': st(V['ret'], V['ew'], tv=V['tv']), 'vs_SPY': st(V['ret'], spy, tv=V['tv']),\n                 'EW10_vs_SPY': st(V['ew'], spy), 'vs_QQQ': st(V['ret'], qqq, tv=V['tv']),\n                 'sub': {nm: {'vs_EW10': st(V['ret'], V['ew'], a, b, V['tv']), 'vs_SPY': st(V['ret'], spy, a, b, V['tv'])} for nm, (a, b) in per.items()},\n                 'annual_turnover': ann_turnover(V['tv'], vms)[0]}\nVL1 = run_rule(rv, lag=1)\nO['vanguard']['lag1_vs_EW10'] = st(VL1['ret'], VL1['ew'], tv=VL1['tv'])\nvn = net(V['ret'], V['tv'])\nO['vanguard']['top4_vs_EW10'] = {k: v for k, v in top4(vn, V['ew'], vms).items() if k != 'calendar_year_excess_pct'}\nprint('VANG', O['vanguard']['window'], 'vs EW', O['vanguard']['vs_EW10']); print('VANG vs SPY', O['vanguard']['vs_SPY']); print('VANG lag1', O['vanguard']['lag1_vs_EW10'])\nfor nm, v in O['vanguard']['sub'].items():\n    if v['vs_EW10']: print('  V', nm, v['vs_EW10']['excess'], v['vs_EW10']['t'])\n# 米国の業種（Vanguard）の選ぶ腕と、世界の業種ETFの選ぶ腕の重なり\nPAIR = dict(zip(MAIN, ['VGT', 'VHT', 'VFH', 'VDE', 'VOX', 'VIS', 'VDC', 'VCR', 'VAW', 'VPU']))\ncommon = [m for m in ms if m in V['ret'] and m in vms10 and m in R['info']['N_k'] and R['info']['N_k'][m][0] == 10]\nsame = sum(1 for m in common if {PAIR[x] for x in R['held'][m]} == set(V['held'][m]))\njac = S.mean(len({PAIR[x] for x in R['held'][m]} & set(V['held'][m])) / len({PAIR[x] for x in R['held'][m]} | set(V['held'][m])) for m in common)\narm_v = {m: vn[m] - V['ew'][m] for m in common}\nO['overlap_with_us_sectors'] = {'months': len(common), 'same_3_sectors_share': round(same / len(common), 2), 'mean_jaccard': round(jac, 2),\n                                'arm_corr_global_vs_us_vanguard': capm({m: arm_etf.get(m, rn[m] - R['ew'][m]) for m in common}, arm_v, common),\n                                'arm_on_paper_US49': capm({m: rn[m] - R['ew'][m] for m in common if m in arm_paper}, arm_paper, [m for m in common if m in arm_paper])}\nprint('overlap', O['overlap_with_us_sectors'])\n\n# ── 翌営業日に執行（事後・参考）: 信号は月末、持つのは翌月の最初の取引日の終値から次の月の最初の取引日の終値まで ──\ndef first_day_series(sym):\n    rows, divs, spl = D.daily(sym)\n    fd = {}\n    for d, c, a in rows:\n        m = d.year * 100 + d.month\n        if m not in fd:\n            fd[m] = a\n    ks = sorted(fd)\n    return {a: fd[b] / fd[a] - 1 for a, b in zip(ks, ks[1:]) if h.add_months(a, 1) == b and b <= 202609}\nrhold = {s: first_day_series(s) for s in MAIN}\nspy_h = first_day_series('SPY'); acwi_h = first_day_series('ACWI')\nD1 = run_rule(rmain, rhold=rhold)\nO['next_day_exec'] = {'vs_EW': st(D1['ret'], D1['ew'], tv=D1['tv']), 'vs_SPY_same_days': st(D1['ret'], spy_h, tv=D1['tv']),\n                      'vs_ACWI_same_days': st(D1['ret'], acwi_h, 200804, tv=D1['tv'])}\nprint('next day exec', O['next_day_exec']['vs_EW'])\n\n# ── 今の持ち物（2026-08 末までの信号で 2026-09 に持つもの） ──\nw, univ, N, k = decide(rmain, 202609)\nsc = F.signal(rmain, 202609, 12, 0)\nO['current_picks_for_2026_09'] = {'hold': sorted(w), 'N': N, 'k': k, 'score_12m_pct': {i: round(v * 100, 1) for i, v in sorted(sc.items(), key=lambda kv: -kv[1])}}\nprint('current', O['current_picks_for_2026_09'])\nfreq = {}\nfor m in ms:\n    for i in R['held'][m]:\n        freq[i] = freq.get(i, 0) + 1\nO['hold_frequency_months'] = dict(sorted(freq.items(), key=lambda kv: -kv[1]))\nO['hold_frequency_share'] = {i: round(v / len(ms), 2) for i, v in O['hold_frequency_months'].items()}\nprint('freq', O['hold_frequency_share'])\n\n# ── QQQ（この利用者の主力と同じ指数）との比較・参考 ──\nO['vs_QQQ'] = st(R['ret'], qqq, tv=R['tv'])\nprint('vs QQQ', O['vs_QQQ'])\n\n# ── 先読みの検査 ──\ndef trunc(r, M):\n    return {s: {m: v for m, v in x.items() if m <= M} for s, x in r.items()}\ncuts = [200512, 200809, 201203, 201606, 202003, 202312]\nbad = 0; checked = 0\nfor M in cuts:\n    T = run_rule(trunc(rmain, M))\n    for m in T['ret']:\n        checked += 1\n        if abs(T['ret'][m] - R['ret'][m]) > 1e-12 or abs(T['tv'][m] - R['tv'][m]) > 1e-12 or T['held'][m] != R['held'][m]:   # 1e-12: set の並びで和の順が変わる丸め（1e-16）だけを許す\n            bad += 1\n# 持ち物の前置き検査: 月 M までで切ったデータで決めた「月 M+1 の持ち物」が全データのそれと一致するか（全ての月で）\npos_bad = pos_n = 0\nleak_bad = 0\nfor M in [m for m in ms if m < 202608]:\n    T = trunc(rmain, M)\n    m1 = h.add_months(M, 1)\n    wt = decide(T, m1)[0]; wf = decide(rmain, m1)[0]\n    pos_n += 1\n    pos_bad += (wt != wf)\n    # 検出力: 窓を1か月未来へずらした版（月 M+1 に decide(M+2) を持つ＝M+1 月のリターンを覗く）\n    lt = decide(T, h.add_months(M, 2))[0]; lf = decide(rmain, h.add_months(M, 2))[0]\n    leak_bad += (lt != lf)\nO['lookahead_test'] = {'truncate_cuts': cuts, 'months_compared_ret_tv_held': checked, 'mismatch': bad,\n                       'positions_prefix_checked': pos_n, 'positions_mismatch': pos_bad,\n                       'power_future_window_mismatch': f'{leak_bad}/{pos_n}',\n                       'note': '比較は 1e-12 の許容（set の並びで和の順が変わる 1e-16 の丸めだけを許す）'}\nprint('lookahead', O['lookahead_test'])\njson.dump(O, open(os.path.join(SP, 'part2.json'), 'w'), ensure_ascii=False, indent=1, default=str)\npickle.dump({'V': V, 'D1': D1, 'pr_ret': pr['ret'], 'pr_bench': pr['bench'], 'pr_tv': pr['turnover'], 'ew49': ew49}, open(os.path.join(SP, 'part2.pkl'), 'wb'))\n",
+  "part3.py": "import os, sys, json, math, random, pickle, statistics as S\nSP = os.path.dirname(os.path.abspath(__file__))\nsys.path.insert(0, SP)\nfrom run import *\nP = pickle.load(open(os.path.join(SP, 'part1.pkl'), 'rb'))\nR, ser = P['R'], P['ser']\nrmain = {s: ser[s] for s in MAIN}\nspy, acwi = ser['SPY'], ser['ACWI']\nms = sorted(R['ret'])\nO = {}\n# 同じ土俵・同じ本数を毎月でたらめに選ぶ（費用も同じ）＝偶然の分布\nuniv = {m: sorted(F.signal(rmain, m, 12, 0)) for m in ms}\nkk = {m: R['info']['N_k'][m][1] for m in ms}\nrule_ex = st(R['ret'], R['ew'], tv=R['tv'])['excess']\nrnd = []; rnd_g = []\nrandom.seed(20260928)\nfor it in range(2000):\n    ret, tv = {}, {}\n    wp = None\n    for m in ms:\n        pick = random.sample(univ[m], kk[m])\n        w = {i: 1 / len(pick) for i in pick}\n        rp = sum(w[i] * rmain[i][m] for i in w)\n        tv[m] = 1.0 if wp is None else 0.5 * sum(abs(w.get(i, 0) - wp.get(i, 0)) for i in set(w) | set(wp))\n        ret[m] = rp\n        wp = {i: wi * (1 + rmain[i][m]) / (1 + rp) for i, wi in w.items()}\n    a = st(ret, R['ew'], tv=tv); g = st(ret, R['ew'])\n    rnd.append(a['excess']); rnd_g.append(g['ex_arith'])\nrnd.sort(); rnd_g.sort()\nrule_g = st(R['ret'], R['ew'])['ex_arith']\nO['random_picks_null'] = {'sims': 2000, 'rule_excess_vs_EW': rule_ex, 'random_median': round(S.median(rnd), 2),\n                          'random_p5_p95': [rnd[int(0.05 * 2000)], rnd[int(0.95 * 2000)]],\n                          'share_random_ge_rule': round(sum(x >= rule_ex for x in rnd) / 2000, 3),\n                          'gross_arith': {'rule': rule_g, 'random_median': round(S.median(rnd_g), 2), 'random_p5_p95': [rnd_g[100], rnd_g[1900]],\n                                          'share_random_ge_rule': round(sum(x >= rule_g for x in rnd_g) / 2000, 3)},\n                          'note': '費用前の算術の超過（gross_arith）がでたらめとの公平な比べ方（費用後の幾何はでたらめの回転の多さと3本持ちのぶれの損で不利になる）。毎月、同じ土俵から同じ本数 k をでたらめに等加重・費用 0.1%/回転（でたらめは回転が大きいので費用も大きい）'}\nprint(O['random_picks_null'])\n# 近所の規則（事後・参考。凍結した規則は J=12・上位3割）\nnb = {}\nfor J in (3, 6, 9, 12):\n    for frac_name, fr in (('上位2割', 0.2), ('上位3割（凍結）', 15 / 49), ('上位4割', 0.4)):\n        ret, ew, tv = {}, {}, {}\n        wp = None\n        for m in sorted(set().union(*[set(s) for s in rmain.values()])):\n            if m > 202608: break\n            sc = F.signal(rmain, m, J, 0)\n            N = len(sc); k = max(1, int(math.floor(N * fr + 0.5)))\n            w = F.weights(rmain, None, m, {'n': N, 'J': J, 'skip': 0, 'k': k, 'weight': 'ew'})\n            if w is None:\n                wp = None; continue\n            if m < ms[0]:\n                continue                          # 主の窓にそろえる\n            rp = sum(w[i] * rmain[i][m] for i in w)\n            ew[m] = S.mean(rmain[i][m] for i in sc)\n            tv[m] = 1.0 if wp is None else 0.5 * sum(abs(w.get(i, 0) - wp.get(i, 0)) for i in set(w) | set(wp))\n            ret[m] = rp\n            wp = {i: wi * (1 + rmain[i][m]) / (1 + rp) for i, wi in w.items()}\n        s = st(ret, ew, tv=tv)\n        nb[f'J{J} {frac_name}'] = {'excess': s['excess'], 't': s['t'], 'from': s['from']}\nO['neighbors_post_hoc'] = nb\nfor k, v in nb.items(): print(k, v)\n# ACWI の窓での等加重と SPY\nO['acwi_window'] = {'rule_vs_ACWI': st(R['ret'], acwi, 200804, tv=R['tv']), 'EW_vs_ACWI': st(R['ew'], acwi, 200804),\n                    'SPY_vs_ACWI': st(spy, acwi, 200804), 'rule_vs_EW_same_window': st(R['ret'], R['ew'], 200804, tv=R['tv'])}\nfor k, v in O['acwi_window'].items(): print(k, {x: v[x] for x in ('from', 'excess', 't', 'vol', 'bench_vol', 'maxdd', 'bench_maxdd', 'roll10_win')})\n# Vanguard と同じ窓（2005-02〜）での世界ETF\nO['global_same_window_as_vanguard'] = st(R['ret'], R['ew'], 200502, tv=R['tv'])\nprint('global from 200502', O['global_same_window_as_vanguard'])\njson.dump(O, open(os.path.join(SP, 'part3.json'), 'w'), ensure_ascii=False, indent=1)\n",
+  "tax.py": "\"\"\"税の模擬（特定口座・源泉あり／NISA）。月末の終値（分割調整済み）と月ごとの分配（権利落ち日の月）で、銘柄ごとに総平均法の取得単価を持つ\"\"\"\nimport os, sys, json, math, pickle, statistics as S\nSP = os.path.dirname(os.path.abspath(__file__))\nsys.path.insert(0, SP)\nfrom run import *\nP = pickle.load(open(os.path.join(SP, 'part1.pkl'), 'rb'))\nR, ser = P['R'], P['ser']\nrmain = {s: ser[s] for s in MAIN}\n\ndef px_div(sym):\n    rows, divs, spl = D.daily(sym)\n    close, dv = {}, {}\n    for d, c, a in rows:\n        m = d.year * 100 + d.month\n        close[m] = c\n    for d, amt in divs.items():\n        m = d.year * 100 + d.month\n        dv[m] = dv.get(m, 0.0) + amt\n    return close, dv\nPX = {s: px_div(s) for s in MAIN + ['SPY', 'ACWI']}\n\ndef simulate(targets, rate_gain, rate_div, carry=False, cost=0.001):\n    ms = sorted(targets)\n    units, avg = {}, {}\n    cash = 1.0\n    G = T = 0.0\n    cf = []                     # [(年, 残り)]\n    buys_by_year, val_by_year = {}, {}\n    V = 1.0\n    for idx, m in enumerate(ms):\n        p0m = h.add_months(m, -1)\n        P0 = {i: PX[i][0][p0m] for i in set(units) | set(targets[m])}\n        Vpre = cash + sum(units.get(i, 0) * P0[i] for i in units)\n        y = m // 100\n        if idx > 0 and ms[idx - 1] // 100 != y:     # 年が替わった: 繰越の整理と年の締め\n            G_prev = G\n            if carry:\n                if G_prev < 0:\n                    cf.append([y - 1, -G_prev])\n                cf = [c for c in cf if c[0] >= y - 3]\n            G = T = 0.0\n        w = targets[m]\n        pay = 0.0\n        for _ in range(6):\n            Vt = Vpre - pay\n            real = 0.0; sells = buys = 0.0\n            for i in set(units) | set(w):\n                cur = units.get(i, 0) * P0[i]\n                d = w.get(i, 0) * Vt - cur\n                if d < 0:\n                    real += (-d / P0[i]) * (P0[i] - avg[i]); sells += -d\n                else:\n                    buys += d\n            tc = cost * (buys + sells) / 2\n            cfa = sum(c[1] for c in cf) if carry else 0.0\n            req = rate_gain * max(0.0, G + real - cfa)\n            newpay = (req - T) + tc\n            if abs(newpay - pay) < 1e-12:\n                break\n            pay = newpay\n        # 実行\n        Vt = Vpre - pay\n        for i in set(units) | set(w):\n            cur = units.get(i, 0) * P0[i]\n            d = w.get(i, 0) * Vt - cur\n            if d < 0:\n                u = -d / P0[i]\n                G += u * (P0[i] - avg[i])\n                units[i] -= u\n                if units[i] < 1e-15:\n                    units.pop(i); avg.pop(i)\n            elif d > 0:\n                u = d / P0[i]\n                avg[i] = (units.get(i, 0) * avg.get(i, 0) + d) / (units.get(i, 0) + u)\n                units[i] = units.get(i, 0) + u\n        cfa = sum(c[1] for c in cf) if carry else 0.0\n        req = rate_gain * max(0.0, G - cfa)\n        T = req\n        cash = 0.0\n        buys_by_year[y] = buys_by_year.get(y, 0.0) + buys\n        # 月 m の中: 分配（税引き後は現金・翌月の入れ替えで再投資）\n        dcash = sum(units[i] * PX[i][1].get(m, 0.0) for i in units) * (1 - rate_div)\n        cash += dcash\n        V = cash + sum(units[i] * PX[i][0][m] for i in units)\n        val_by_year.setdefault(y, []).append(V)\n    # 最後に全部売る\n    m = ms[-1]\n    real = sum(units[i] * (PX[i][0][m] - avg[i]) for i in units)\n    G += real\n    if carry:\n        # 同じ年の G に繰越を当てる\n        cfa = sum(c[1] for c in cf)\n    else:\n        cfa = 0.0\n    req = rate_gain * max(0.0, G - cfa)\n    V_final = V - (req - T)\n    yrs = len(ms) / 12\n    turn = {y: buys_by_year[y] / S.mean(val_by_year[y]) for y in buys_by_year if len(val_by_year[y]) == 12}\n    return {'from': ms[0], 'to': ms[-1], 'years': round(yrs, 1), 'final_multiple': round(V_final, 3), 'cagr_pct': round((V_final ** (1 / yrs) - 1) * 100, 2),\n            'buys_per_year_over_avg_value': round(S.mean(list(turn.values())[1:]), 2) if len(turn) > 1 else None}\n\nms = sorted(R['ret'])\ntg_rule = {m: {i: 1 / len(R['held'][m]) for i in R['held'][m]} for m in ms}\ntg_ew = {}\nfor m in ms:\n    sc = F.signal(rmain, m, 12, 0)\n    tg_ew[m] = {i: 1 / len(sc) for i in sc}\ntg_spy = {m: {'SPY': 1.0} for m in ms}\nms_a = [m for m in ms if m >= 200805]\ntg_acwi = {m: {'ACWI': 1.0} for m in ms_a}\nREG = {'課税なし（参考）': (0, 0, False), 'NISA成長投資枠（米国の源泉10%だけ）': (0, 0.10, False),\n       '特定口座・繰越控除なし': (0.20315, 0.2828, False), '特定口座・確定申告で3年の繰越控除': (0.20315, 0.2828, True)}\nO = {}\nfor nm, (rg, rd, cy) in REG.items():\n    O[nm] = {'規則': simulate(tg_rule, rg, rd, cy), '等加重10本（毎月戻す）': simulate(tg_ew, rg, rd, cy), 'SPY買い持ち': simulate(tg_spy, rg, rd, cy)}\n    tg_rule_a = {m: tg_rule[m] for m in ms_a}\n    O[nm]['規則（ACWIの窓）'] = simulate(tg_rule_a, rg, rd, cy)\n    O[nm]['ACWI買い持ち'] = simulate(tg_acwi, rg, rd, cy)\n    for k in ('規則', '等加重10本（毎月戻す）', 'SPY買い持ち'):\n        print(nm, k, O[nm][k])\n    print(nm, 'ACWI win: rule', O[nm]['規則（ACWIの窓）']['cagr_pct'], 'ACWI', O[nm]['ACWI買い持ち']['cagr_pct'])\njson.dump(O, open(os.path.join(SP, 'tax.json'), 'w'), ensure_ascii=False, indent=1)\n"
+ }
+}

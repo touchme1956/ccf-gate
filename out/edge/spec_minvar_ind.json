@@ -1,0 +1,455 @@
+{
+ "key": "minvar_ind",
+ "frozen": "2026-09-28",
+ "phase": "select",
+ "sel_end": 200012,
+ "spec": {
+  "n": 49,
+  "N": 36,
+  "wmax": 0.1,
+  "shrink": 0.5,
+  "reb": "Q"
+ },
+ "rationale": "業種の最小分散。低いリスクの資産ほどリスク当たりの報酬が高い「低リスクの異常」（Black 1972・Haugen & Baker 1991・Frazzini & Pedersen 2014＝借入に制約のある投資家が高ベータを買い上げる）は個別株だけでなく業種・国の水準でも出る（Baker, Bradley & Taliaferro 2014 の「マクロの低リスク効果」）。最小分散は将来の平均リターンを推定せず共分散だけを使うので推定誤差に強く（Clarke, de Silva & Thorley 2006）、空売りなし・上限の制約は共分散の縮小推定と同じ働きをする（Jagannathan & Ma 2003）。前月末までの過去36か月の共分散を対角へ半分縮め、空売りなし・1業種の上限10%で解き、四半期ごと（12・3・6・9月末の情報）に作り直す。選定期間（全変種共通の1936-07〜2000-12）の費用後の超過は +1.14%/年（算術 +0.68）・t 0.95、ぶれ 13.5% 対 市場 15.8%・最大下落 -39.3% 対 -49.5%（同じリスク以下）。36変種の中で t が最大かつ超過 +1%/年以上の変種として機械的に選んだ（次点は毎月作り直す同じ設定 t 0.93）。変種の面はなめらか（上限が低いほど・窓が短いほど良い）で、特定の月や数字だけで効く形ではない。⚠ ただし t は1に届かず、超過は 1960〜1979 年に集中する（+4.03%/年・t 4.47／1936〜59 +0.32／1980〜2000 -0.84）。幾何の超過の多くは、ぶれが小さい分の複利の目減りの差で、算術の超過は小さい。49業種の等加重と比べると算術で -0.14（t -0.18）＝市場に対する上乗せの一部は時価加重をやめて業種へ分散したこと（上限10%が最低10業種に散らす）から来ている。",
+ "n_variants_tried": 36,
+ "selection_stats": {
+  "common_193607_200012": {
+   "from": 193607,
+   "to": 200012,
+   "years": 64.5,
+   "cagr": 12.77,
+   "bench_cagr": 11.63,
+   "excess": 1.14,
+   "ex_arith": 0.68,
+   "t": 0.95,
+   "t_nw": 0.76,
+   "vol": 13.5,
+   "bench_vol": 15.8,
+   "maxdd": -39.3,
+   "bench_maxdd": -49.5,
+   "sharpe": 0.66,
+   "bench_sharpe": 0.52,
+   "roll10_win": "40/55"
+  },
+  "full_selection": {
+   "from": 192907,
+   "to": 200012,
+   "years": 71.5,
+   "cagr": 11.02,
+   "bench_cagr": 9.94,
+   "excess": 1.08,
+   "ex_arith": 0.46,
+   "t": 0.6,
+   "t_nw": 0.52,
+   "vol": 16.4,
+   "bench_vol": 19.4,
+   "maxdd": -80.0,
+   "bench_maxdd": -83.7,
+   "sharpe": 0.49,
+   "bench_sharpe": 0.39,
+   "roll10_win": "44/62"
+  },
+  "subperiods": {
+   "193607-195912": {
+    "excess": 0.32,
+    "t": -0.18,
+    "vol": 13.3,
+    "bench_vol": 16.7
+   },
+   "196001-197912": {
+    "excess": 4.03,
+    "t": 4.47,
+    "vol": 14.2,
+    "bench_vol": 14.9
+   },
+   "198001-200012": {
+    "excess": -0.84,
+    "t": -0.71,
+    "vol": 13.1,
+    "bench_vol": 15.5
+   }
+  },
+  "turnover_per_year": 0.5,
+  "diagnostic_vs_equal_weight_49": {
+   "excess": 0.5,
+   "ex_arith": -0.14,
+   "t": -0.18,
+   "vol": 13.5,
+   "bench_vol": 17.3
+  }
+ },
+ "implement": "楽天証券の米国株口座（特定口座）で、米国の業種ETFを最小分散の重みで持つ。粗い業種（12〜17）なら SPDR の Select Sector 11本〔XLU・XLP・XLV・XLF・XLE・XLI・XLY・XLB・XLK・XLRE・XLC〕で近似でき、細かい業種（30・49）は iShares/SPDR の業種ETF〔IYT・ITA・XHB・KBE・XOP・XME・IHI・XPH など〕を足して近似する（49業種の完全な再現はできない）。毎月（または四半期）末に過去 N か月の月次リターンから共分散を計算し、重みを表計算で解いて入れ替える。⚠ NISA の成長投資枠でも業種ETFは買えるが、定期的な入れ替えは売るたびに枠を消費し翌年まで戻らないので続けられない＝課税口座で行う（売却益に20.315%・事前登録どおり主の判定には入れない）。同じ考え方の既製品として iShares MSCI USA Min Vol Factor ETF（USMV・個別株の最小分散・業種の偏りに上限）や Invesco S&P 500 Low Volatility（SPLV）が楽天で買え NISA 成長枠にも入るが、これは個別株の最小分散で本規則そのものではない",
+ "name": "業種の最小分散（過去のぶれと連動から、いちばん揺れない業種の組を毎月作る・空売りなし・1業種の上限つき）",
+ "lookahead_test": "(1) 検査月ごとに、m 以降のデータを消した表・m 以降を乱数に置き換えた表・元の表の3つから作った重みが1ビットも一致（38か月）。(2) データを1990-12で切って規則全体を走らせた成績と回転が、全データ（〜2000-12）の成績と1990-12 までの全 738 か月で1ビットも一致。(3) active-set の解が加速射影勾配の解と目的関数で一致（最悪の相対差 2.2e-16）。窓の最後の月が m−1 であることを assert で毎回確認。同じ月の先読み（m 月の重みに m 月のリターンを使う）はコードで確認: weights(r,m) は month_range(m−N, m−1) しか読まない",
+ "lookahead_result": {
+  "weight_months_checked": 38,
+  "prefix_months_equal": 738,
+  "cut": 199012,
+  "optimality_worst_rel_gap_vs_pgd": 2.1937173173347193e-16
+ },
+ "variants_table": [
+  {
+   "name": "n49_N36_w10_d0.5_M",
+   "excess": 1.12,
+   "t": 0.93,
+   "vol": 13.5,
+   "maxdd": -38.7,
+   "full_excess": 1.11,
+   "full_t": 0.64,
+   "turnover_yr": 0.78
+  },
+  {
+   "name": "n49_N36_w15_d0.5_M",
+   "excess": 0.97,
+   "t": 0.63,
+   "vol": 13.2,
+   "maxdd": -38.3,
+   "full_excess": 0.87,
+   "full_t": 0.2,
+   "turnover_yr": 0.84
+  },
+  {
+   "name": "n49_N36_w25_d0.5_M",
+   "excess": 0.6,
+   "t": 0.11,
+   "vol": 12.8,
+   "maxdd": -38.5,
+   "full_excess": 0.61,
+   "full_t": -0.17,
+   "turnover_yr": 0.87
+  },
+  {
+   "name": "n49_N60_w10_d0.5_M",
+   "excess": 1.05,
+   "t": 0.84,
+   "vol": 13.5,
+   "maxdd": -41.2,
+   "full_excess": 0.86,
+   "full_t": 0.41,
+   "turnover_yr": 0.54
+  },
+  {
+   "name": "n49_N60_w15_d0.5_M",
+   "excess": 0.77,
+   "t": 0.39,
+   "vol": 13.1,
+   "maxdd": -41.1,
+   "full_excess": 0.51,
+   "full_t": -0.13,
+   "turnover_yr": 0.57
+  },
+  {
+   "name": "n49_N60_w25_d0.5_M",
+   "excess": 0.36,
+   "t": -0.15,
+   "vol": 12.7,
+   "maxdd": -41.0,
+   "full_excess": 0.14,
+   "full_t": -0.59,
+   "turnover_yr": 0.57
+  },
+  {
+   "name": "n49_N120_w10_d0.5_M",
+   "excess": 0.46,
+   "t": 0.16,
+   "vol": 13.8,
+   "maxdd": -41.1,
+   "full_excess": 0.46,
+   "full_t": 0.16,
+   "turnover_yr": 0.35
+  },
+  {
+   "name": "n49_N120_w15_d0.5_M",
+   "excess": 0.28,
+   "t": -0.17,
+   "vol": 13.2,
+   "maxdd": -40.5,
+   "full_excess": 0.28,
+   "full_t": -0.17,
+   "turnover_yr": 0.35
+  },
+  {
+   "name": "n49_N120_w25_d0.5_M",
+   "excess": 0.0,
+   "t": -0.53,
+   "vol": 12.8,
+   "maxdd": -39.7,
+   "full_excess": 0.0,
+   "full_t": -0.53,
+   "turnover_yr": 0.35
+  },
+  {
+   "name": "n49_N36_w10_d0.5_Q",
+   "excess": 1.14,
+   "t": 0.95,
+   "vol": 13.5,
+   "maxdd": -39.3,
+   "full_excess": 1.08,
+   "full_t": 0.6,
+   "turnover_yr": 0.5
+  },
+  {
+   "name": "n49_N36_w15_d0.5_Q",
+   "excess": 0.98,
+   "t": 0.63,
+   "vol": 13.1,
+   "maxdd": -38.7,
+   "full_excess": 0.83,
+   "full_t": 0.16,
+   "turnover_yr": 0.54
+  },
+  {
+   "name": "n49_N36_w25_d0.5_Q",
+   "excess": 0.62,
+   "t": 0.13,
+   "vol": 12.7,
+   "maxdd": -38.2,
+   "full_excess": 0.61,
+   "full_t": -0.18,
+   "turnover_yr": 0.56
+  },
+  {
+   "name": "n49_N60_w10_d0.5_Q",
+   "excess": 1.0,
+   "t": 0.77,
+   "vol": 13.5,
+   "maxdd": -41.4,
+   "full_excess": 0.78,
+   "full_t": 0.33,
+   "turnover_yr": 0.34
+  },
+  {
+   "name": "n49_N60_w15_d0.5_Q",
+   "excess": 0.73,
+   "t": 0.34,
+   "vol": 13.1,
+   "maxdd": -41.7,
+   "full_excess": 0.4,
+   "full_t": -0.25,
+   "turnover_yr": 0.36
+  },
+  {
+   "name": "n49_N60_w25_d0.5_Q",
+   "excess": 0.26,
+   "t": -0.25,
+   "vol": 12.7,
+   "maxdd": -41.7,
+   "full_excess": 0.0,
+   "full_t": -0.72,
+   "turnover_yr": 0.36
+  },
+  {
+   "name": "n49_N120_w10_d0.5_Q",
+   "excess": 0.46,
+   "t": 0.15,
+   "vol": 13.8,
+   "maxdd": -40.9,
+   "full_excess": 0.46,
+   "full_t": 0.15,
+   "turnover_yr": 0.23
+  },
+  {
+   "name": "n49_N120_w15_d0.5_Q",
+   "excess": 0.27,
+   "t": -0.19,
+   "vol": 13.2,
+   "maxdd": -40.9,
+   "full_excess": 0.27,
+   "full_t": -0.19,
+   "turnover_yr": 0.23
+  },
+  {
+   "name": "n49_N120_w25_d0.5_Q",
+   "excess": -0.0,
+   "t": -0.54,
+   "vol": 12.8,
+   "maxdd": -40.2,
+   "full_excess": -0.0,
+   "full_t": -0.54,
+   "turnover_yr": 0.23
+  },
+  {
+   "name": "n49_N60_w10_d0.0_M",
+   "excess": 1.0,
+   "t": 0.72,
+   "vol": 13.5,
+   "maxdd": -40.0,
+   "full_excess": 0.78,
+   "full_t": 0.31,
+   "turnover_yr": 0.63
+  },
+  {
+   "name": "n49_N60_w15_d0.0_M",
+   "excess": 0.89,
+   "t": 0.48,
+   "vol": 13.2,
+   "maxdd": -38.8,
+   "full_excess": 0.42,
+   "full_t": -0.19,
+   "turnover_yr": 0.71
+  },
+  {
+   "name": "n49_N60_w25_d0.0_M",
+   "excess": 0.3,
+   "t": -0.17,
+   "vol": 12.9,
+   "maxdd": -38.3,
+   "full_excess": -0.03,
+   "full_t": -0.67,
+   "turnover_yr": 0.77
+  },
+  {
+   "name": "n49_N120_w10_d0.0_M",
+   "excess": 0.44,
+   "t": 0.12,
+   "vol": 13.8,
+   "maxdd": -40.4,
+   "full_excess": 0.44,
+   "full_t": 0.12,
+   "turnover_yr": 0.45
+  },
+  {
+   "name": "n49_N120_w15_d0.0_M",
+   "excess": 0.19,
+   "t": -0.24,
+   "vol": 13.3,
+   "maxdd": -40.3,
+   "full_excess": 0.19,
+   "full_t": -0.24,
+   "turnover_yr": 0.45
+  },
+  {
+   "name": "n49_N120_w25_d0.0_M",
+   "excess": -0.32,
+   "t": -0.78,
+   "vol": 12.7,
+   "maxdd": -37.7,
+   "full_excess": -0.32,
+   "full_t": -0.78,
+   "turnover_yr": 0.44
+  },
+  {
+   "name": "n30_N60_w15_d0.5_M",
+   "excess": 0.98,
+   "t": 0.67,
+   "vol": 13.2,
+   "maxdd": -41.3,
+   "full_excess": 0.97,
+   "full_t": 0.37,
+   "turnover_yr": 0.48
+  },
+  {
+   "name": "n30_N60_w25_d0.5_M",
+   "excess": 0.61,
+   "t": 0.13,
+   "vol": 12.7,
+   "maxdd": -41.0,
+   "full_excess": 0.72,
+   "full_t": -0.04,
+   "turnover_yr": 0.5
+  },
+  {
+   "name": "n30_N120_w15_d0.5_M",
+   "excess": 0.43,
+   "t": 0.03,
+   "vol": 13.3,
+   "maxdd": -40.5,
+   "full_excess": 0.43,
+   "full_t": 0.03,
+   "turnover_yr": 0.3
+  },
+  {
+   "name": "n30_N120_w25_d0.5_M",
+   "excess": 0.14,
+   "t": -0.38,
+   "vol": 12.8,
+   "maxdd": -39.6,
+   "full_excess": 0.14,
+   "full_t": -0.38,
+   "turnover_yr": 0.31
+  },
+  {
+   "name": "n17_N60_w15_d0.5_M",
+   "excess": 0.63,
+   "t": 0.55,
+   "vol": 14.1,
+   "maxdd": -43.1,
+   "full_excess": 0.65,
+   "full_t": 0.34,
+   "turnover_yr": 0.36
+  },
+  {
+   "name": "n17_N60_w25_d0.5_M",
+   "excess": 0.61,
+   "t": 0.32,
+   "vol": 13.6,
+   "maxdd": -43.9,
+   "full_excess": 0.63,
+   "full_t": 0.07,
+   "turnover_yr": 0.4
+  },
+  {
+   "name": "n17_N120_w15_d0.5_M",
+   "excess": 0.33,
+   "t": 0.11,
+   "vol": 14.2,
+   "maxdd": -42.6,
+   "full_excess": 0.33,
+   "full_t": 0.11,
+   "turnover_yr": 0.25
+  },
+  {
+   "name": "n17_N120_w25_d0.5_M",
+   "excess": 0.3,
+   "t": -0.07,
+   "vol": 13.7,
+   "maxdd": -43.3,
+   "full_excess": 0.3,
+   "full_t": -0.07,
+   "turnover_yr": 0.26
+  },
+  {
+   "name": "n12_N60_w15_d0.5_M",
+   "excess": 0.76,
+   "t": 0.68,
+   "vol": 13.8,
+   "maxdd": -41.8,
+   "full_excess": 0.68,
+   "full_t": 0.42,
+   "turnover_yr": 0.29
+  },
+  {
+   "name": "n12_N60_w25_d0.5_M",
+   "excess": 0.53,
+   "t": 0.07,
+   "vol": 12.9,
+   "maxdd": -39.7,
+   "full_excess": 0.43,
+   "full_t": -0.24,
+   "turnover_yr": 0.33
+  },
+  {
+   "name": "n12_N120_w15_d0.5_M",
+   "excess": 0.59,
+   "t": 0.4,
+   "vol": 13.8,
+   "maxdd": -41.2,
+   "full_excess": 0.59,
+   "full_t": 0.4,
+   "turnover_yr": 0.21
+  },
+  {
+   "name": "n12_N120_w25_d0.5_M",
+   "excess": 0.28,
+   "t": -0.24,
+   "vol": 13.0,
+   "maxdd": -38.6,
+   "full_excess": 0.28,
+   "full_t": -0.24,
+   "turnover_yr": 0.21
+  }
+ ],
+ "markets": [],
+ "selection_note": "選び方は事前登録どおり: 共通期間（1936-07〜2000-12）の費用後の超過 t が最大、かつ超過 +1%/年以上。該当は5変種（t 0.95/0.93/0.84/0.77/0.72）",
+ "variant_plan": "結果を見る前に固定した36変種: 49業種×{毎月,四半期}×N{36,60,120}×上限{10,15,25%}（δ=0.5）18／49業種・縮小なし N{60,120}×上限3 で6／30・17・12業種×N{60,120}×上限{15,25%} で12"
+}

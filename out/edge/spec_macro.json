@@ -1,0 +1,701 @@
+{
+ "key": "macro",
+ "frozen": "2026-09-28",
+ "phase": "select",
+ "sel_end": 200012,
+ "spec": {
+  "mode": "macro_only",
+  "macro": [
+   {
+    "s": "yc_inv",
+    "k": 1,
+    "lag": 1
+   }
+  ],
+  "exp": {
+   "good": 1.0,
+   "both": 0.0
+  }
+ },
+ "rationale": "規則: 毎月末に、前月（m−1月）の10年国債利回り（GS10）と3か月物国債利回り（TB3MS）の月平均を比べ、10年<3か月（逆イールド）なら翌月は米国株を全部売って短期金利（T-bill）、そうでなければ米国株を全部持つ。\n経済的な理由: 逆イールドは米国の景気後退の最もよく知られた先行指標（Estrella & Hardouvelis 1991, Estrella & Mishkin 1998）で、金融引き締めが効いて短期金利が長期金利を上回った状態。この間は株の期待リターンが短期金利より低くなりやすく、かつ降りた先の短期金利そのものが高い（1973-74・1980-81は年8〜15%）。閾値は0（曲線の符号）で、数字を合わせていない。\n選定: 結果を見る前に書いた変種34本（参照2本を含む）を、全信号が定義される共通の窓 1956-01〜2000-12 で比べ、事前登録どおり「費用後の超過 ≥ +1%/年 のうち t が最大」を選んだ。共通の窓で +1%/年 に届いたのは V14（逆イールド 1.48%/年・t 1.21）と V32（GTT＋1.5倍 +1.08%/年・t 1.12）の2本だけ。\n選定期間の成績（1953-05〜2000-12・費用後）: 年率 13.93% 対 市場 12.52%、超過 +1.41%/年（t 1.21・Newey-West 1.18）、ぶれ 13.4% 対 14.8%、最大下落 -29.9% 対 -46.5%、転がる10年で市場に勝ったのは 18/38。平均で年0.38回の片道回転、降りていた月は約11%。\n弱さ: t は1.2で偶然と区別できない。降りた局面は9回だけで、超過はほぼ 1973-07〜74-07・1980-12〜81-09・2000-09〜12 の3回から来ている（1966-67・1979-80 は降りて損をした）。1953〜1969年だけなら −0.5%/年。1か月遅らせる（m−2月の月平均）と +1.05%/年・t 0.83 に弱まる。有名な景気の指標（失業率の趨勢＝GTT、鉱工業生産、雇用者数、サーム、信用スプレッド）は どれも共通の窓で +0.5%/年以下か負けで、単独で降りる形はすべて −2〜−5%/年 負けた。いつも1.5倍（参照R2）は +1.64%/年・t 2.58 と どの景気の規則より大きく、景気の時機を足して借りる変種（V24〜V26・V32）はそれを上回らなかった。",
+ "n_variants_tried": 35,
+ "selection_stats": {
+  "from": 195305,
+  "to": 200012,
+  "years": 47.7,
+  "cagr": 13.93,
+  "bench_cagr": 12.52,
+  "excess": 1.41,
+  "ex_arith": 1.07,
+  "t": 1.21,
+  "t_nw": 1.18,
+  "vol": 13.4,
+  "bench_vol": 14.8,
+  "maxdd": -29.9,
+  "bench_maxdd": -46.5,
+  "sharpe": 0.65,
+  "bench_sharpe": 0.52,
+  "roll10_win": "18/38"
+ },
+ "implement": "月末に1回だけ判断する。米国株の持ち高は 楽天証券の特定口座で VTI（または VOO／eMAXIS Slim 米国株式・楽天・全米株式）、降りる先は 米ドルMMF・短期米国債ETF（BIL／SHV）・円の現金。判断に使う数字は FRED で無料で見られる（UNRATE＝毎月第1金曜の雇用統計・その他）。NISA 成長投資枠でも持てるが、降りるたびに売ると年の買付枠（240万円）を再び使うので、切替は特定口座が向く（売却益に約20.3%の税）。持ち高1倍を超える変種は SSO（2倍・毎日リセット）を VOO と混ぜて作る＝NISA 不可・特定口座のみ。",
+ "lookahead_test": "先読みの検査（fam_macro.lookahead_test）: 12の切り月 c（1957〜2000）で、市場の系列は c より後・発表の遅れる統計（UNRATE・INDPRO・PAYEMS・CPI）は c−1 より後の値をでたらめに変えても（リターンは±30%を足す・水準は0.3〜1.7倍）、また c（統計は c−1）でデータを切り捨てても、全34変種で m ≤ c+1 の持ち高が1つも変わらないことを確かめた（違反0）。検査に効き目があることを、わざと先読みさせた5本（失業率 lag0・lag1、生産 lag1、金利 lag0、価格を当月の引けまで）が全部落ちることで確かめた（5/5 検出）。結果: {'specs_checked': 34, 'cuts': [195712, 196305, 196911, 197403, 197708, 198006, 198407, 198710, 199012, 199403, 199808, 200009], 'perturb_violations': 0, 'truncate_violations': 0, 'negative_controls': '5/5 の先読み規則（統計 lag0・lag1・生産 lag1・金利 lag0・価格 lag0）を検出'}",
+ "selection_basis": "共通の窓 1956-01〜2000-12 で選んだ（変種ごとにデータの始まりが違うため・結果を見る前に決めた）。evaluate.py が再計算する選定期間の成績は 1953-05〜2000-12（全期間）",
+ "selection_common_window": {
+  "from": 195601,
+  "to": 200012,
+  "years": 45.0,
+  "cagr": 13.08,
+  "bench_cagr": 11.6,
+  "excess": 1.48,
+  "ex_arith": 1.13,
+  "t": 1.21,
+  "t_nw": 1.18,
+  "vol": 13.6,
+  "bench_vol": 14.9,
+  "maxdd": -29.9,
+  "bench_maxdd": -46.5,
+  "sharpe": 0.57,
+  "bench_sharpe": 0.44,
+  "roll10_win": "19/36"
+ },
+ "subperiods_same_rule": {
+  "195305-197612": {
+   "excess": 1.22,
+   "t": 0.67,
+   "vol": 12.5,
+   "bench_vol": 14.1,
+   "maxdd": -27.7,
+   "bench_maxdd": -46.5
+  },
+  "197701-200012": {
+   "excess": 1.61,
+   "t": 1.07,
+   "vol": 14.3,
+   "bench_vol": 15.4,
+   "maxdd": -29.9,
+   "bench_maxdd": -29.9
+  },
+  "195305-196912": {
+   "excess": -0.5,
+   "t": -0.66,
+   "vol": 11.8,
+   "bench_vol": 12.1,
+   "maxdd": -23.1,
+   "bench_maxdd": -23.1
+  },
+  "197001-198412": {
+   "excess": 3.58,
+   "t": 1.08,
+   "vol": 13.3,
+   "bench_vol": 16.6,
+   "maxdd": -21.2,
+   "bench_maxdd": -46.5
+  },
+  "198501-200012": {
+   "excess": 1.34,
+   "t": 1.43,
+   "vol": 15.1,
+   "bench_vol": 15.5,
+   "maxdd": -29.9,
+   "bench_maxdd": -29.9
+  }
+ },
+ "alternative_if_full_span": "各変種の全期間（データの始まり〜2000-12）で同じ選び方をすると V25（GTT＋両方良いとき2倍・全期間 +1.57%/年 t1.69・共通の窓では +0.79%/年で線に届かない）が選ばれる。採らなかった",
+ "variants_table": [
+  {
+   "name": "V01 失業率>12か月平均で降りる",
+   "selectable": true,
+   "common_1956_2000": {
+    "excess": -2.27,
+    "t": -1.73,
+    "vol": 11.4,
+    "maxdd": -29.9
+   },
+   "full_span": {
+    "from": 194902,
+    "excess": -3.49,
+    "t": -2.71
+   },
+   "avg_exposure": 0.613,
+   "turnover_per_year": 1.38
+  },
+  {
+   "name": "V02 GTT: 失業率>12か月平均 ∧ 価格<10か月平均",
+   "selectable": true,
+   "common_1956_2000": {
+    "excess": 0.47,
+    "t": 0.24,
+    "vol": 13.6,
+    "maxdd": -29.9
+   },
+   "full_span": {
+    "from": 194902,
+    "excess": 0.38,
+    "t": 0.19
+   },
+   "avg_exposure": 0.894,
+   "turnover_per_year": 0.58
+  },
+  {
+   "name": "V03 GTT(勢い): 失業率>12か月平均 ∧ 12か月の勢い<短期金利",
+   "selectable": true,
+   "common_1956_2000": {
+    "excess": -1.23,
+    "t": -1.25,
+    "vol": 13.1,
+    "maxdd": -29.9
+   },
+   "full_span": {
+    "from": 194902,
+    "excess": -1.3,
+    "t": -1.45
+   },
+   "avg_exposure": 0.854,
+   "turnover_per_year": 0.53
+  },
+  {
+   "name": "V04 サーム0.5で降りる",
+   "selectable": true,
+   "common_1956_2000": {
+    "excess": -4.61,
+    "t": -3.88,
+    "vol": 12.8,
+    "maxdd": -42.9
+   },
+   "full_span": {
+    "from": 194905,
+    "excess": -5.5,
+    "t": -4.87
+   },
+   "avg_exposure": 0.759,
+   "turnover_per_year": 0.36
+  },
+  {
+   "name": "V05 サーム0.5 ∧ 価格<10か月平均",
+   "selectable": true,
+   "common_1956_2000": {
+    "excess": -0.79,
+    "t": -1.11,
+    "vol": 14.1,
+    "maxdd": -39.9
+   },
+   "full_span": {
+    "from": 194905,
+    "excess": -0.76,
+    "t": -1.17
+   },
+   "avg_exposure": 0.948,
+   "turnover_per_year": 0.36
+  },
+  {
+   "name": "V06 鉱工業生産の前年比<0で降りる",
+   "selectable": true,
+   "common_1956_2000": {
+    "excess": -3.32,
+    "t": -3.11,
+    "vol": 13.3,
+    "maxdd": -46.5
+   },
+   "full_span": {
+    "from": 192607,
+    "excess": -2.71,
+    "t": -2.16
+   },
+   "avg_exposure": 0.809,
+   "turnover_per_year": 0.62
+  },
+  {
+   "name": "V07 鉱工業生産の前年比<0 ∧ 価格<10か月平均",
+   "selectable": true,
+   "common_1956_2000": {
+    "excess": 0.03,
+    "t": -0.09,
+    "vol": 14.4,
+    "maxdd": -46.5
+   },
+   "full_span": {
+    "from": 192705,
+    "excess": 0.78,
+    "t": 0.04
+   },
+   "avg_exposure": 0.952,
+   "turnover_per_year": 0.27
+  },
+  {
+   "name": "V08 鉱工業生産<12か月平均 ∧ 価格<10か月平均",
+   "selectable": true,
+   "common_1956_2000": {
+    "excess": -0.56,
+    "t": -0.84,
+    "vol": 14.1,
+    "maxdd": -45.1
+   },
+   "full_span": {
+    "from": 192705,
+    "excess": 0.82,
+    "t": 0.12
+   },
+   "avg_exposure": 0.943,
+   "turnover_per_year": 0.36
+  },
+  {
+   "name": "V09 雇用者数の前年比<0で降りる",
+   "selectable": true,
+   "common_1956_2000": {
+    "excess": -3.3,
+    "t": -3.77,
+    "vol": 13.9,
+    "maxdd": -46.5
+   },
+   "full_span": {
+    "from": 194003,
+    "excess": -4.79,
+    "t": -5.85
+   },
+   "avg_exposure": 0.852,
+   "turnover_per_year": 0.36
+  },
+  {
+   "name": "V10 雇用者数の前年比<0 ∧ 価格<10か月平均",
+   "selectable": true,
+   "common_1956_2000": {
+    "excess": -0.03,
+    "t": -0.16,
+    "vol": 14.8,
+    "maxdd": -46.5
+   },
+   "full_span": {
+    "from": 194003,
+    "excess": -0.11,
+    "t": -0.42
+   },
+   "avg_exposure": 0.978,
+   "turnover_per_year": 0.09
+  },
+  {
+   "name": "V11 {失業率↑・生産の前年比<0・雇用の前年比<0}の2つ以上で降りる",
+   "selectable": true,
+   "common_1956_2000": {
+    "excess": -3.38,
+    "t": -3.15,
+    "vol": 13.2,
+    "maxdd": -46.5
+   },
+   "full_span": {
+    "from": 194902,
+    "excess": -4.39,
+    "t": -4.26
+   },
+   "avg_exposure": 0.802,
+   "turnover_per_year": 0.58
+  },
+  {
+   "name": "V12 同2つ以上 ∧ 価格<10か月平均",
+   "selectable": true,
+   "common_1956_2000": {
+    "excess": 0.03,
+    "t": -0.09,
+    "vol": 14.4,
+    "maxdd": -46.5
+   },
+   "full_span": {
+    "from": 194902,
+    "excess": -0.08,
+    "t": -0.26
+   },
+   "avg_exposure": 0.952,
+   "turnover_per_year": 0.27
+  },
+  {
+   "name": "V13 {失業率・生産・雇用が12か月平均より悪い}のどれか ∧ 価格<10か月平均",
+   "selectable": true,
+   "common_1956_2000": {
+    "excess": 0.47,
+    "t": 0.24,
+    "vol": 13.6,
+    "maxdd": -29.9
+   },
+   "full_span": {
+    "from": 194902,
+    "excess": 0.38,
+    "t": 0.19
+   },
+   "avg_exposure": 0.894,
+   "turnover_per_year": 0.58
+  },
+  {
+   "name": "V14 逆イールドの間は降りる",
+   "selectable": true,
+   "common_1956_2000": {
+    "excess": 1.48,
+    "t": 1.21,
+    "vol": 13.6,
+    "maxdd": -29.9
+   },
+   "full_span": {
+    "from": 195305,
+    "excess": 1.41,
+    "t": 1.21
+   },
+   "avg_exposure": 0.894,
+   "turnover_per_year": 0.38
+  },
+  {
+   "name": "V15 直近12か月に逆イールドがあれば降りる",
+   "selectable": true,
+   "common_1956_2000": {
+    "excess": 0.92,
+    "t": 0.36,
+    "vol": 12.2,
+    "maxdd": -29.9
+   },
+   "full_span": {
+    "from": 195404,
+    "excess": 0.89,
+    "t": 0.36
+   },
+   "avg_exposure": 0.787,
+   "turnover_per_year": 0.2
+  },
+  {
+   "name": "V16 直近24か月に逆イールド ∧ 価格<10か月平均",
+   "selectable": true,
+   "common_1956_2000": {
+    "excess": 0.53,
+    "t": 0.25,
+    "vol": 13.3,
+    "maxdd": -29.9
+   },
+   "full_span": {
+    "from": 195504,
+    "excess": 0.52,
+    "t": 0.25
+   },
+   "avg_exposure": 0.898,
+   "turnover_per_year": 0.47
+  },
+  {
+   "name": "V17 直近24か月に逆イールド ∧ 失業率>12か月平均",
+   "selectable": true,
+   "common_1956_2000": {
+    "excess": -0.63,
+    "t": -0.74,
+    "vol": 12.7,
+    "maxdd": -29.9
+   },
+   "full_span": {
+    "from": 195504,
+    "excess": -0.62,
+    "t": -0.74
+   },
+   "avg_exposure": 0.804,
+   "turnover_per_year": 0.36
+  },
+  {
+   "name": "V18 信用スプレッド(BAA−AAA)>12か月平均 ∧ 価格<10か月平均",
+   "selectable": true,
+   "common_1956_2000": {
+    "excess": -1.22,
+    "t": -1.2,
+    "vol": 12.8,
+    "maxdd": -32.2
+   },
+   "full_span": {
+    "from": 192705,
+    "excess": -0.25,
+    "t": -0.69
+   },
+   "avg_exposure": 0.831,
+   "turnover_per_year": 1.18
+  },
+  {
+   "name": "V19 信用スプレッド>12か月平均で降りる",
+   "selectable": true,
+   "common_1956_2000": {
+    "excess": -3.58,
+    "t": -2.35,
+    "vol": 10.2,
+    "maxdd": -31.7
+   },
+   "full_span": {
+    "from": 192607,
+    "excess": -2.74,
+    "t": -2.07
+   },
+   "avg_exposure": 0.541,
+   "turnover_per_year": 1.8
+  },
+  {
+   "name": "V20 3か月物が1年前より高い ∧ 価格<10か月平均",
+   "selectable": true,
+   "common_1956_2000": {
+    "excess": 0.72,
+    "t": 0.37,
+    "vol": 13.1,
+    "maxdd": -24.5
+   },
+   "full_span": {
+    "from": 193502,
+    "excess": 0.45,
+    "t": 0.18
+   },
+   "avg_exposure": 0.817,
+   "turnover_per_year": 1.13
+  },
+  {
+   "name": "V21 物価の前年比が加速 ∧ 価格<10か月平均",
+   "selectable": true,
+   "common_1956_2000": {
+    "excess": -1.13,
+    "t": -1.12,
+    "vol": 12.7,
+    "maxdd": -24.5
+   },
+   "full_span": {
+    "from": 194903,
+    "excess": -0.99,
+    "t": -1.12
+   },
+   "avg_exposure": 0.804,
+   "turnover_per_year": 1.22
+  },
+  {
+   "name": "V22 失業率↑で半分・価格↓で半分降りる",
+   "selectable": true,
+   "common_1956_2000": {
+    "excess": -1.71,
+    "t": -1.77,
+    "vol": 10.5,
+    "maxdd": -27.0
+   },
+   "full_span": {
+    "from": 194902,
+    "excess": -2.36,
+    "t": -2.47
+   },
+   "avg_exposure": 0.68,
+   "turnover_per_year": 1.26
+  },
+  {
+   "name": "V23 {失業率・生産・逆イールド12・価格}の悪い割合だけ降りる",
+   "selectable": true,
+   "common_1956_2000": {
+    "excess": -1.38,
+    "t": -1.71,
+    "vol": 11.0,
+    "maxdd": -28.4
+   },
+   "full_span": {
+    "from": 195404,
+    "excess": -1.69,
+    "t": -2.02
+   },
+   "avg_exposure": 0.739,
+   "turnover_per_year": 0.81
+  },
+  {
+   "name": "V24 GTT＋両方良いとき1.5倍",
+   "selectable": true,
+   "common_1956_2000": {
+    "excess": 0.77,
+    "t": 0.92,
+    "vol": 17.1,
+    "maxdd": -40.7
+   },
+   "full_span": {
+    "from": 194902,
+    "excess": 1.11,
+    "t": 1.31
+   },
+   "avg_exposure": 1.127,
+   "turnover_per_year": 1.52
+  },
+  {
+   "name": "V25 GTT＋両方良いとき2倍",
+   "selectable": true,
+   "common_1956_2000": {
+    "excess": 0.79,
+    "t": 1.15,
+    "vol": 21.0,
+    "maxdd": -51.3
+   },
+   "full_span": {
+    "from": 194902,
+    "excess": 1.57,
+    "t": 1.69
+   },
+   "avg_exposure": 1.359,
+   "turnover_per_year": 2.42
+  },
+  {
+   "name": "V26 GTT＋両方良いとき1.25倍",
+   "selectable": true,
+   "common_1956_2000": {
+    "excess": 0.65,
+    "t": 0.65,
+    "vol": 15.2,
+    "maxdd": -35.3
+   },
+   "full_span": {
+    "from": 194902,
+    "excess": 0.78,
+    "t": 0.86
+   },
+   "avg_exposure": 1.011,
+   "turnover_per_year": 1.05
+  },
+  {
+   "name": "V27 GTT(失業率は6か月平均)",
+   "selectable": true,
+   "common_1956_2000": {
+    "excess": -0.13,
+    "t": -0.33,
+    "vol": 13.5,
+    "maxdd": -29.9
+   },
+   "full_span": {
+    "from": 194808,
+    "excess": -0.46,
+    "t": -0.69
+   },
+   "avg_exposure": 0.887,
+   "turnover_per_year": 0.76
+  },
+  {
+   "name": "V28 GTT(価格は12か月平均)",
+   "selectable": true,
+   "common_1956_2000": {
+    "excess": 0.33,
+    "t": 0.1,
+    "vol": 13.5,
+    "maxdd": -29.9
+   },
+   "full_span": {
+    "from": 194902,
+    "excess": 0.25,
+    "t": 0.05
+   },
+   "avg_exposure": 0.891,
+   "turnover_per_year": 0.58
+  },
+  {
+   "name": "V29 GTT(失業率の遅れ3か月＝より保守的)",
+   "selectable": true,
+   "common_1956_2000": {
+    "excess": 0.49,
+    "t": 0.22,
+    "vol": 13.4,
+    "maxdd": -29.9
+   },
+   "full_span": {
+    "from": 194903,
+    "excess": 0.33,
+    "t": 0.11
+   },
+   "avg_exposure": 0.891,
+   "turnover_per_year": 0.71
+  },
+  {
+   "name": "V30 価格<10か月平均 ∧ (失業率↑ か 直近12か月に逆イールド)",
+   "selectable": true,
+   "common_1956_2000": {
+    "excess": 0.41,
+    "t": 0.12,
+    "vol": 13.2,
+    "maxdd": -29.9
+   },
+   "full_span": {
+    "from": 195404,
+    "excess": 0.4,
+    "t": 0.12
+   },
+   "avg_exposure": 0.867,
+   "turnover_per_year": 0.73
+  },
+  {
+   "name": "V31 価格<10か月平均 ∧ (失業率↑・生産↓・雇用↓・逆イールド12・信用↑ のどれか)",
+   "selectable": true,
+   "common_1956_2000": {
+    "excess": -0.61,
+    "t": -0.71,
+    "vol": 12.4,
+    "maxdd": -29.9
+   },
+   "full_span": {
+    "from": 195404,
+    "excess": -0.59,
+    "t": -0.71
+   },
+   "avg_exposure": 0.8,
+   "turnover_per_year": 1.18
+  },
+  {
+   "name": "V32 GTT＋両方良く かつ 直近12か月に逆イールド無しのとき1.5倍",
+   "selectable": true,
+   "common_1956_2000": {
+    "excess": 1.08,
+    "t": 1.12,
+    "vol": 16.7,
+    "maxdd": -40.7
+   },
+   "full_span": {
+    "from": 195404,
+    "excess": 1.27,
+    "t": 1.31
+   },
+   "avg_exposure": 1.11,
+   "turnover_per_year": 1.45
+  },
+  {
+   "name": "R1 参照: 価格<10か月平均だけで降りる（trend 系統の規則）",
+   "selectable": false,
+   "common_1956_2000": {
+    "excess": -1.47,
+    "t": -1.28,
+    "vol": 11.9,
+    "maxdd": -24.5
+   },
+   "full_span": {
+    "from": 192705,
+    "excess": -0.81,
+    "t": -1.04
+   },
+   "avg_exposure": 0.746,
+   "turnover_per_year": 1.53
+  },
+  {
+   "name": "R2 参照: いつも1.5倍（借りるだけ・時機なし）",
+   "selectable": false,
+   "common_1956_2000": {
+    "excess": 1.64,
+    "t": 2.58,
+    "vol": 22.5,
+    "maxdd": -64.2
+   },
+   "full_span": {
+    "from": 192607,
+    "excess": 1.7,
+    "t": 3.37
+   },
+   "avg_exposure": 1.5,
+   "turnover_per_year": 0.1
+  },
+  {
+   "name": "D1 確認: V14 の金利を m−2 月の月平均にする（1か月遅らせる）",
+   "selectable": false,
+   "common_1956_2000": {
+    "excess": 1.05,
+    "t": 0.83,
+    "vol": 13.7,
+    "maxdd": -34.0
+   },
+   "full_span": {
+    "from": 195306,
+    "excess": 1.0,
+    "t": 0.83
+   }
+  }
+ ],
+ "markets": [],
+ "expectation_disclosed": "調べる側は 2001年以降の逆イールド（2000-07〜01・2006-07〜07・2019・2022-11〜24）と その後の相場を知っている。2006-07・2019・2022-24 の逆イールドの間 米国株は上がったので、この規則はホールドアウトで負ける見込みが高いと考える。選び方は事前登録どおりで、この予想で選び直していない"
+}
