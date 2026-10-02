@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-01",
+ "generated": "2026-10-02",
  "note": "「今日、何をすればいいか」だけを集めた表示専用の在庫。**判定には一切使わない**——Ω・四関門・売却規律・配分のどれにも触れない。期限の判定は ops_status.build() をそのまま呼ぶ（二重実装を作らない）。**blind（読めなかった入力）を必ず出す**のがこの道具の本体で、盲目のときに「異常なし」へ倒れる fail-open を画面の側で塞ぐためにある。",
  "buy": [
   "CW",
@@ -17,7 +17,7 @@
   "now": 0,
   "today": 1,
   "month": 27,
-  "waiting": 27,
+  "waiting": 28,
   "blind": 0,
   "src": 18
  },
@@ -34,74 +34,74 @@
  ],
  "month": [
   {
-   "k": "fresh:parity:本体が5日動いていない（",
+   "k": "fresh:parity:本体が6日動いていない（",
    "level": "month",
    "title": "中身/入力が前進していない: 門と端末の一致",
-   "why": "本体が5日動いていない（期限4日）",
+   "why": "本体が6日動いていない（期限4日）",
    "how": "python3 night/check_freshness.py",
    "src": "鮮度"
   },
   {
-   "k": "fresh:logos:本体が45日動いていない",
+   "k": "fresh:logos:本体が46日動いていない",
    "level": "month",
    "title": "中身/入力が前進していない: 銘柄アイコンと代表色",
-   "why": "本体が45日動いていない（期限40日）",
+   "why": "本体が46日動いていない（期限40日）",
    "how": "python3 night/check_freshness.py",
    "src": "鮮度"
   },
   {
-   "k": "fresh:irr85hist:本体が53日動いていない",
+   "k": "fresh:irr85hist:本体が54日動いていない",
    "level": "month",
    "title": "中身/入力が前進していない: irr=85の実績台帳",
-   "why": "本体が53日動いていない（期限40日）",
+   "why": "本体が54日動いていない（期限40日）",
    "how": "python3 night/check_freshness.py",
    "src": "鮮度"
   },
   {
-   "k": "fresh:irr70mech:本体が7日動いていない（",
+   "k": "fresh:irr70mech:本体が8日動いていない（",
    "level": "month",
    "title": "中身/入力が前進していない: 機構文の年次diff(irr=70)",
-   "why": "本体が7日動いていない（期限4日）",
+   "why": "本体が8日動いていない（期限4日）",
    "how": "python3 night/check_freshness.py",
    "src": "鮮度"
   },
   {
-   "k": "fresh:irr85scope:本体が51日動いていない",
+   "k": "fresh:irr85scope:本体が52日動いていない",
    "level": "month",
    "title": "中身/入力が前進していない: 機構の射程と認定の寿命",
-   "why": "本体が51日動いていない（期限40日）",
+   "why": "本体が52日動いていない（期限40日）",
    "how": "python3 night/check_freshness.py",
    "src": "鮮度"
   },
   {
-   "k": "fresh:stalebs:本体が8日動いていない（",
+   "k": "fresh:stalebs:本体が9日動いていない（",
    "level": "month",
    "title": "中身/入力が前進していない: 期末後の重大事象の検査",
-   "why": "本体が8日動いていない（期限4日）",
+   "why": "本体が9日動いていない（期限4日）",
    "how": "python3 night/check_freshness.py",
    "src": "鮮度"
   },
   {
-   "k": "fresh:pending:本体が8日動いていない（",
+   "k": "fresh:pending:本体が9日動いていない（",
    "level": "month",
    "title": "中身/入力が前進していない: 未完了の重大事象の検査",
+   "why": "本体が9日動いていない（期限4日）",
+   "how": "python3 night/check_freshness.py",
+   "src": "鮮度"
+  },
+  {
+   "k": "fresh:packstale:本体が8日動いていない（",
+   "level": "month",
+   "title": "中身/入力が前進していない: パックの会計年度の遅れ",
    "why": "本体が8日動いていない（期限4日）",
    "how": "python3 night/check_freshness.py",
    "src": "鮮度"
   },
   {
-   "k": "fresh:packstale:本体が7日動いていない（",
-   "level": "month",
-   "title": "中身/入力が前進していない: パックの会計年度の遅れ",
-   "why": "本体が7日動いていない（期限4日）",
-   "how": "python3 night/check_freshness.py",
-   "src": "鮮度"
-  },
-  {
-   "k": "fresh:xwatch:本体が45日動いていない",
+   "k": "fresh:xwatch:本体が46日動いていない",
    "level": "month",
    "title": "中身/入力が前進していない: X監視表(開通ライン)",
-   "why": "本体が45日動いていない（期限40日）",
+   "why": "本体が46日動いていない（期限40日）",
    "how": "python3 night/check_freshness.py",
    "src": "鮮度"
   },
@@ -631,6 +631,14 @@
     "YORW",
     "ZWS"
    ]
+  },
+  {
+   "k": "todo:reformers_forward_2027",
+   "kind": "予約",
+   "title": "Reformers 指数（Smart-i Pro 米国リブート75）の前向きの検定: ファンドの基準価額が半年以上貯まったら、同じ円建てのS&P500・NASDAQ-100 連動の投信と比べる",
+   "due": "2027-03-31",
+   "owner": "人",
+   "tickers": []
   }
  ],
  "blind": []
