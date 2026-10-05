@@ -185,6 +185,33 @@ const srv = http.createServer((q, r) => {
   ok(stop && stop.castle === 0 && /出口条件/.test(stop.html) && stop.net === 170000,
      '⑨ 出口条件の線を割った社は注文から外し、名指しする（個別 ' + (stop && stop.castle) + ' / ETF ' + (stop && stop.net) + '）');
 
+  // ⑩ 席の順位で重み（v9.9.198・2026-10-05 ユーザー明示指示「門を10銘柄にして。…上位5社は比率を高めにして。」）
+  //   ccfRankWeights は相対の重みを個別の按分枠へ正規化する。正本の重みは写さず、ここでは合成の数字で判定そのものを見る
+  const rk = await pg.evaluate(() => {
+    const L = n => Array.from({ length: n }, (_, i) => ({ t: 'S' + (i + 1) }));
+    const U = [5, 5, 5, 5, 5, 3, 3, 3, 3, 3];
+    return {
+      full: ccfRankWeights(L(10), 20, Infinity, U),
+      nine: ccfRankWeights(L(9), 20, Infinity, U),
+      ex: ccfRankWeights(L(3).concat([{ t: 'EX', ex: true }]), 20, Infinity, [5, 3]),
+      bad: ccfRankWeights(L(3), 20, Infinity, [5, 0, 3]), none: ccfRankWeights(L(3), 20, Infinity, null)
+    };
+  });
+  const r2 = x => Math.round(x * 100) / 100, sum = o => r2(Object.values(o || {}).reduce((a, v) => a + v, 0));
+  ok(rk.full && rk.full.mode === 'rank' && r2(rk.full.w.S1) === 2.5 && r2(rk.full.w.S5) === 2.5 && r2(rk.full.w.S6) === 1.5
+     && r2(rk.full.w.S10) === 1.5 && sum(rk.full.w) === 20 && rk.full.tier.S6 === '席6位',
+     '⑩ 席の順位で重み: 10社 [5×5,3×5]・個別20% → 上位5社 2.5% / 6〜10位 1.5%・合計20%（' + (rk.full && r2(rk.full.w.S1)) + ' / ' + (rk.full && r2(rk.full.w.S6)) + '）');
+  ok(rk.nine && r2(rk.nine.w.S1) === 2.7 && r2(rk.nine.w.S9) === 1.62 && sum(rk.nine.w) === 20,
+     '   席が埋まらない月（9社）は先頭の9個で正規化 → 2.70% / 1.62%・合計20%（' + (rk.nine && r2(rk.nine.w.S1)) + ' / ' + (rk.nine && r2(rk.nine.w.S9)) + '）');
+  ok(rk.ex && rk.ex.unit.S3 === 3 && rk.ex.unit.EX === 3 && rk.ex.tier.EX === '門外例外' && sum(rk.ex.w) === 20,
+     '   重みが足りない順位と按分に入る門外例外は最後の重み（S3 ' + (rk.ex && rk.ex.unit.S3) + ' / EX ' + (rk.ex && rk.ex.unit.EX) + '）');
+  ok(rk.bad === null && rk.none === null, '   0以下の重み・重みなしは null（門が均等へ倒して名指しする）');
+  // 保有ゼロどうしは「不足÷目標」が同点（1）——同点は目標の大きい社から（v9.9.198）。旧の「安い順」なら B だけが買われる
+  const ws3 = await pg.evaluate(() => ccfWholeSharePlan([
+    { k: 'A', tw: 2.7, pos: 0, jpy: 60000 }, { k: 'B', tw: 1.62, pos: 0, jpy: 30000 }], 70000, 2420000));
+  ok(ws3 && ws3.buy.A && ws3.buy.A.sh === 1 && !ws3.buy.B && ws3.short.some(x => x.k === 'B'),
+     '   保有ゼロの同点は目標の大きい社（A 2.7%）から1株・入金が尽きた B（1.62%）は来月（' + JSON.stringify(ws3 && ws3.buy) + '）');
+
   ok(errs.length === 0, 'pageerror 0件' + (errs.length ? '（' + errs[0].slice(0, 120) + '）' : ''));
   await pg.evaluate(() => localStorage.removeItem('pf:monthly_total'));
   await b.close(); srv.close();

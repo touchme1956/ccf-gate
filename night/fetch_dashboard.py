@@ -57,6 +57,17 @@ def tickers():
                 s.add(str(r.get("t", "")).upper())
     except Exception:
         pass
+    # ★2026-10-05: 門外例外のうち注文書が買う社（in_castle_split:true か weight_pct>0＝成長期待枠 VRT/ANET）も価格を採る。
+    #   Ω72 未満・監視リストの外なので、ここに足さないと注文書に単価が無く1株も買えない
+    #   （2026-10-05 の影の計測で「VRT null株・ANET null株」として発覚。推測の価格は置かない＝ルール7）
+    try:
+        for it in (json.load(open("gate_exceptions.json", encoding="utf-8")).get("items") or []):
+            if it.get("in_castle_split") or (it.get("weight_pct") or 0) > 0:
+                t = str(it.get("t") or "").strip().upper()
+                if t:
+                    s.add(t)
+    except Exception:
+        pass
     # ── 網(ETF)も価格を採る（2026-08-20 ユーザー指示「買付順位にETFもいれて」）──────────
     #   Ⅵ買付順位が網の5本を出すようになったので、**株数を出すには価格が要る**。
     #   出所は portfolio.json の **target.ami_names（目標の5本）** と **positions（実際に持っている本）**

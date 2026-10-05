@@ -38,7 +38,12 @@ def annual(ns_tag_list, flow=True):
                 else:
                     if e.get('start'): continue
                 y = int(en[:4])
-                if y not in best or fl > best[y][1]: best[y] = (float(e['val']), fl)
+                # 残高（瞬時値）は同じ暦年に四半期末の値もある——提出日だけで選ぶと、後の10-Qの比較の列に
+                # 載った第1四半期末が年末の値を上書きする（2026-10-05 実測 CLS: 2025年の自己資本に 2025-03-31 の
+                # 1,556.8 が出て、年末の 2,216.3 が隠れた）。年次報告の値 → その年の遅い期末 → 新しい提出 の順で採る
+                ann = 1 if (flow or e.get('form') in ('10-K','10-K/A','20-F','40-F')) else 0
+                key = (ann, en, fl)
+                if y not in best or key > best[y][1]: best[y] = (float(e['val']), key)
             for y,(v,_) in best.items(): d[y] = v
     return out
 

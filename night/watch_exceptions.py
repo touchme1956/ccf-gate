@@ -24,6 +24,14 @@ night/watch_exceptions.py — **門外例外で買った社を、門が止めて
 対象は `todo_list.json` の `gate_exception_*` 項目が持つ `tickers` から採る（固定リストにしない
 ——例外が増減したら自動で追随する）。**表示専用・判定には一切使わない**（売りは S1/S2/S3 のみ）。
 
+【成長期待枠（2026-10-05〜・gate_exceptions.json の kind=成長期待枠）】門の外で決めた社は、門が止めている
+  指標ではなく**成長の見込み**で見張る。出口条件の線（どれか一つを割ったら新規の買付を止める・売りではない）:
+  ・`exit_rev_growth_min` … アナリスト予想の**来期の売上の伸び**（今の会計年度の次の年度÷今の年度−1）。
+    Alpha Vantage EARNINGS_ESTIMATES を環境変数 AV_KEY で引く（ops.yml の Secrets）。
+    **鍵が無い・取れないときは『測れない』と名指しして止めない**（未測定を割ったとは読まない＝ルール7）
+  ・`exit_nde_max` … 純有利子負債/EBITDA（直近4四半期・下の nde_ttm と同じ数字）
+  ・`exit_intcov_min` … 利払いの余裕（TDG で使った線・従来どおり）
+
 使い方: python3 night/watch_exceptions.py [--json]
 出力: out/exception_watch.json
 """
@@ -59,6 +67,50 @@ AMO = ["AmortizationOfIntangibleAssets"]
 INT = ["InterestExpense", "InterestExpenseDebt", "InterestAndDebtExpense",
        "InterestExpenseNonoperating", "InterestIncomeExpenseNet"]
 EQ = ["StockholdersEquity"]
+AVK = os.environ.get('AV_KEY') or ''
+
+
+def rev_growth_from_estimates(j, today=None):
+    """Alpha Vantage EARNINGS_ESTIMATES の応答から**来期の売上の伸び（%）**を出す。
+    「今の会計年度」＝期末が今日以降で最初の会計年度、「来期」＝その次の会計年度。返り値 (伸び%, 根拠の一行)。
+    取れないときは (None, 理由)——0 や前回値で埋めない（ルール7）。"""
+    est = (j or {}).get('estimates') if isinstance(j, dict) else None
+    if not isinstance(est, list):
+        msg = ((j or {}).get('Information') or (j or {}).get('Note') or (j or {}).get('Error Message')
+               if isinstance(j, dict) else None) or '予想の欄が無い'
+        return None, str(msg)[:120]
+    today = today or time.strftime('%Y-%m-%d')
+    fy = []
+    for x in est:
+        if x.get('horizon') != 'fiscal year' or not x.get('date'):
+            continue
+        try:
+            v = float(x.get('revenue_estimate_average'))
+        except (TypeError, ValueError):
+            continue
+        if v > 0:
+            fy.append((x['date'], v, x.get('revenue_estimate_analyst_count')))
+    fy = sorted(z for z in fy if z[0] >= today)
+    if len(fy) < 2:
+        return None, '今の会計年度と来期の売上の予想が2本そろわない'
+    (d0, v0, _), (d1, v1, n1) = fy[0], fy[1]
+    n = f"{float(n1):.0f}名" if n1 not in (None, '') else '人数不明'
+    return (v1 / v0 - 1) * 100, f"{d0} {v0 / 1e9:.2f}十億$ → {d1} {v1 / 1e9:.2f}十億$（{n}・Alpha Vantage）"
+
+
+def av_rev_growth(t):
+    """来期の売上の伸び（アナリスト予想）を Alpha Vantage から。鍵が無ければ引かない。"""
+    if not AVK:
+        return None, 'AV_KEY が無い（ops.yml の Secrets）＝予想を取れない'
+    url = f"https://www.alphavantage.co/query?function=EARNINGS_ESTIMATES&symbol={t}&apikey={AVK}"
+    try:
+        r = urllib.request.urlopen(urllib.request.Request(url, headers={'User-Agent': 'ccf-gate'}), timeout=60)
+        j = json.loads(r.read())
+    except Exception as e:
+        return None, f'予想の取得に失敗（{type(e).__name__}）'
+    finally:
+        time.sleep(1.2)                  # 無料枠は1秒1回
+    return rev_growth_from_estimates(j)
 
 
 def http(url, tries=3):
@@ -173,7 +225,9 @@ def main():
     # ★2026-09-29: **按分に入っている門外例外（gate_exceptions.json の in_castle_split:true）は必ず見張る**。
     #   todo の gate_exception_* が全部 done になり、2026-09-26 に按分へ戻した TDG が見張られていなかった
     #   （点検で発覚）。あわせて出口条件の数字の線（exit_intcov_min）をここで判定する。
-    exits = {}
+    #   ★2026-10-05: **特別枠の重み（weight_pct>0）を持つ例外も必ず見張る**（成長期待枠 VRT/ANET がこの形）。
+    #   出口条件は社ごとに複数の線を持てるようにした（intcov_min / nde_max / rev_growth_min）。
+    exits, kinds = {}, {}
     try:
         gx = json.load(open('gate_exceptions.json', encoding='utf-8'))
     except Exception:
@@ -182,12 +236,29 @@ def main():
         t = str(it.get('t') or '').upper()
         if not t:
             continue
-        if it.get('exit_intcov_min') is not None:
-            exits[t] = float(it['exit_intcov_min'])
-        if it.get('in_castle_split') and t not in [x[0] for x in targets]:
-            targets.append((t, 'gate_exceptions.json', '按分に入っている門外例外'))
+        kinds[t] = it.get('kind') or ''
+        ex = {}
+        for k, nk in (('exit_intcov_min', 'intcov_min'), ('exit_nde_max', 'nde_max'),
+                      ('exit_rev_growth_min', 'rev_growth_min')):
+            if it.get(k) is not None:
+                ex[nk] = float(it[k])
+        if ex:
+            exits[t] = ex
+        on = bool(it.get('in_castle_split')) or (it.get('weight_pct') or 0) > 0
+        if on and t not in [x[0] for x in targets]:
+            targets.append((t, 'gate_exceptions.json',
+                            '按分・特別枠に入っている門外例外' + (f"（{it.get('kind')}）" if it.get('kind') else '')))
     if not targets:
-        print('■ 門外例外は登録されていない（todo_list.json の gate_exception_* に tickers を持たせる）')
+        # ★2026-10-05: 見張る社が0になっても**空の結果を書く**（成長期待枠をやめて weight 0 になった日に発覚）。
+        #   書かずに戻ると out/exception_watch.json に古い行（やめた社の出口条件）が残り、asof も止まって
+        #   回転盤（ops_status の excwatch・四半期）が100日後に『停止疑い』と鳴る＝回っているのに止まって見える。
+        print('■ 見張る門外例外は無い（按分・特別枠に入る社も、未完了の gate_exception_* の tickers も無い）')
+        json.dump({'generated': time.strftime('%Y-%m-%d'), 'asof': time.strftime('%Y-%m-%d'),
+                   'line': LINE, 'n': 0,
+                   'note': '見張る門外例外は無い（gate_exceptions.json の按分・特別枠に入る社が0社で、'
+                           'todo_list.json の未完了の gate_exception_* も tickers を持たない）。表示専用・判定には使わない',
+                   'rows': []}, open(OUT, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+        print(f'→ {OUT}（空）')
         return 0
 
     tk = http("https://www.sec.gov/files/company_tickers.json")
@@ -225,6 +296,19 @@ def main():
         dep, _ = ttm(F, DEP)
         amo, _ = ttm(F, AMO)
         ie, _ = ttm(F, INT, sign='expense')
+        # ★2026-10-05（ANET で実測）: 無借金になった社は有利子負債のタグが**昔の日付で止まる**（ANET は 2014-06-30）。
+        #   そのまま使うと「2014年の負債 ÷ 今日の EBITDA」になり、前四半期比 −100% という嘘の数字まで出る。
+        #   → 最新の現金の日付より400日以上古い負債は使わない。**タグが無いことを0とは読まない**（ルール7）ので、
+        #     nde(TTM) は測れないとし、出口条件の判定はパックの年次 nde（審査で確定した値）へ倒す（下の exit 節）。
+        if tot and cash:
+            c_last, d_last = max(cash), max(tot)
+            if _d(c_last) - _d(d_last) > 400:
+                rec['nulls']['debt'] = (f"有利子負債のタグが {d_last} で止まっている（最新の現金は {c_last}）"
+                                        "＝無借金になった可能性があるが、タグが無いことを0とは読まない（ルール7）")
+                tot = {}
+                rec['asof'] = c_last
+                rec['cash'] = cash.get(c_last)
+                rec['equity'] = eq.get(c_last)
         if tot:
             ends = sorted(tot)
             e0 = ends[-1]
@@ -252,6 +336,8 @@ def main():
             rec['ttm_end'] = opq
             if rec.get('debt') is not None and rec.get('cash') is not None and ebitda > 0:
                 rec['nde_ttm'] = (rec['debt'] - rec['cash']) / ebitda
+            elif rec.get('debt') is None:
+                rec['nulls'].setdefault('nde_ttm', '有利子負債が測れない（nulls.debt を見よ）')
             if ie and ie > 0:
                 rec['intcov_ttm'] = op / ie
             elif ie == 0:
@@ -261,11 +347,16 @@ def main():
                     '⚠**自己資本マイナス＋高レバの社ではこれが最も見たい数字**なので、'
                     '原本(10-Q損益計算書)から手で確認すること')
         else:
-            rec['nulls']['nde_ttm'] = '四半期が4本そろわない（提出体裁により TTM を組めない）'
+            # setdefault: 上の「残高の日付とTTMの終わりが揃わない」の理由を上書きしない（2026-10-05 に上書きを発見）
+            rec['nulls'].setdefault('nde_ttm', '四半期が4本そろわない（提出体裁により TTM を組めない）')
 
         # 判定——**線に近づいたか離れたか**。売買の判定には使わない（表示と気づきのため）
         n, pn = rec.get('nde_ttm'), rec.get('pack_nde')
-        if n is None:
+        if kinds.get(t.upper()) == '成長期待枠':
+            # 成長期待枠は門の nde の線（財務キル4倍）で止められている社ではない——「門が自力で取り込む」は嘘になる。
+            #   見張る線は下の出口条件（成長の見込み・nde 2倍）だけ
+            rec['verdict'] = f"成長期待枠（門の外で決めた社・nde(TTM) {f'{n:.2f}' if n is not None else '測れない'}）"
+        elif n is None:
             rec['verdict'] = '測定不能'
         elif n <= LINE:
             rec['verdict'] = '✓線の下（次の年次報告で門が自力で取り込む見込み）'
@@ -292,18 +383,50 @@ def main():
                 rec['verdict'] += '／債務超過（パックに反映ずみ）'
         if rec.get('debt_chg') is not None and rec['debt_chg'] > 0.10:
             rec['verdict'] += f"／⚠新規借入 前四半期比 +{rec['debt_chg']*100:.0f}%"
-        # ★出口条件の数字の線（gate_exceptions.json の exit_intcov_min）。割ったら**新規の買付を止める**（売りではない）。
-        #   index.html の注文書がこの exit_stop を読んで、その社を今月の注文から外す（表示と注文だけ・採点は不変）
-        mn = exits.get(t.upper())
-        if mn is not None:
-            rec['exit_intcov_min'] = mn
-            ic = rec.get('intcov_ttm')
-            if isinstance(ic, (int, float)):
-                rec['exit_stop'] = ic < mn
-                rec['verdict'] = ((f"⛔出口条件: 利払いの余裕 {ic:.2f}倍 < {mn:.1f}倍＝新規の買付を止める（売りではない）／"
-                                   if ic < mn else f"出口条件の線 {mn:.1f}倍の上（{ic:.2f}倍）／") + rec.get('verdict', ''))
-            else:
-                rec['verdict'] = f"⚠出口条件（利払いの余裕 {mn:.1f}倍）が測れない／" + rec.get('verdict', '')
+        # ★出口条件の数字の線（gate_exceptions.json の exit_*）。**どれか一つでも割ったら新規の買付を止める**（売りではない）。
+        #   index.html の注文書がこの exit_stop / exit_reason を読んで、その社を今月の注文から外す（表示と注文だけ・採点は不変）。
+        #   ⚠ 測れない線は「割った」と読まない（ルール7）——止めずに『測れない』と名指しする。
+        ex = exits.get(t.upper()) or {}
+        if ex:
+            hit, ok, unk = [], [], []
+            mn = ex.get('intcov_min')
+            if mn is not None:
+                rec['exit_intcov_min'] = mn
+                ic = rec.get('intcov_ttm')
+                if isinstance(ic, (int, float)):
+                    (hit if ic < mn else ok).append(f"利払いの余裕 {ic:.2f}倍{' < ' if ic < mn else ' ≥ '}{mn:.1f}倍")
+                else:
+                    unk.append(f"利払いの余裕（線 {mn:.1f}倍）")
+            mx = ex.get('nde_max')
+            if mx is not None:
+                rec['exit_nde_max'] = mx
+                # 直近4四半期で測れなければ、パックの年次 nde（審査で原本から確定した値）へ倒す——どちらで測ったかを書く
+                n, lab = rec.get('nde_ttm'), '直近4四半期'
+                if not isinstance(n, (int, float)) and isinstance(rec.get('pack_nde'), (int, float)):
+                    n, lab = rec['pack_nde'], f"年次・パック {rec.get('pack_rdate') or ''}".strip()
+                if isinstance(n, (int, float)):
+                    rec['exit_nde_used'] = {'value': n, 'basis': lab}
+                    (hit if n > mx else ok).append(f"純有利子負債/EBITDA {n:.2f}倍（{lab}）{' > ' if n > mx else ' ≤ '}{mx:.1f}倍")
+                else:
+                    unk.append(f"純有利子負債/EBITDA（線 {mx:.1f}倍）")
+            gm = ex.get('rev_growth_min')
+            if gm is not None:
+                rec['exit_rev_growth_min'] = gm
+                g, info = av_rev_growth(t)
+                rec['rev_growth_fwd'] = g
+                rec['rev_growth_src'] = info
+                if isinstance(g, (int, float)):
+                    (hit if g < gm else ok).append(f"来期の売上の伸び（予想）{g:+.1f}%{' < ' if g < gm else ' ≥ '}+{gm:.0f}%")
+                else:
+                    unk.append(f"来期の売上の伸び（予想・線 +{gm:.0f}%）: {info}")
+            rec['exit_stop'] = bool(hit)
+            if hit:
+                rec['exit_reason'] = '・'.join(hit)
+            pre = (f"⛔出口条件: {'・'.join(hit)}＝新規の買付を止める（売りではない）／" if hit
+                   else (f"出口条件の線の内側（{'・'.join(ok)}）／" if ok else ''))
+            if unk:
+                pre += f"⚠測れない出口条件（止めない）: {'／'.join(unk)}／"
+            rec['verdict'] = pre + rec.get('verdict', '')
         rows.append(rec)
 
     print(f'■ 門外例外の四半期監視　対象 {len(rows)}社　線 nde>{LINE}')
