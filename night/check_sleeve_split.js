@@ -125,7 +125,8 @@ const srv = http.createServer((q, r) => {
   sp = await split(1000000);
   // ★'name'（2026-09-25 新設・銘柄ごとの不足から）は台帳が空のこの検査では材料（銘柄の不足）が無いので
   //   門は 'gap_fallback' と**名乗って** gap へ倒す＝どちらも「正本の name が効いている」の正しい姿
-  const want = (live === 'gap') ? ['gap'] : (live === 'name') ? ['name', 'gap_fallback'] : ['fixed'];
+  // ★'cat'（2026-10-05 新設・区分の比率が最優先）も台帳が空だと材料（区分の今の%）が無いので 'cat_fallback' と名乗って gap へ倒す
+  const want = (live === 'gap') ? ['gap'] : (live === 'name') ? ['name', 'gap_fallback'] : (live === 'cat') ? ['cat', 'cat_fallback'] : ['fixed'];
   ok(sp && want.includes(sp.mode),
      "⑤ 正本(portfolio.json)の mode='" + live + "' が門にそのまま効いている（判定 " + (sp && sp.mode) + '）'
      + ' → 城 ¥' + (sp && sp.castle && sp.castle.toLocaleString()) + ' / 網 ¥' + (sp && sp.net && sp.net.toLocaleString()));
@@ -211,6 +212,89 @@ const srv = http.createServer((q, r) => {
     { k: 'A', tw: 2.7, pos: 0, jpy: 60000 }, { k: 'B', tw: 1.62, pos: 0, jpy: 30000 }], 70000, 2420000));
   ok(ws3 && ws3.buy.A && ws3.buy.A.sh === 1 && !ws3.buy.B && ws3.short.some(x => x.k === 'B'),
      '   保有ゼロの同点は目標の大きい社（A 2.7%）から1株・入金が尽きた B（1.62%）は来月（' + JSON.stringify(ws3 && ws3.buy) + '）');
+
+  // ⑪ 区分の比率が最優先（割り方 'cat'・2026-10-05 ユーザー明示指示「買付順位のETF投資信託個別株の比率を最重要として」）
+  //   合成の数字で判定そのものを見る（正本の比率・保有は写さない）
+  const cat = await pg.evaluate(() => {
+    const K = { tot: 2440000, c: { t: 20, now: 38.2 }, e: { t: 40, now: 46.1 }, f: { t: 40, now: 15.8 } };
+    const B = ccfCatBudget(K, 170000);
+    const items = [
+      { k: 'LRCX', g: 'c', tw: 2.7, pos: 0, jpy: 50000 }, { k: 'MCO', g: 'c', tw: 2.7, pos: 0, jpy: 80000 },
+      { k: 'MSFT', g: 'c', tw: 2.7, pos: 26, jpy: 79000 }, { k: 'SMH', g: 'e', tw: 20, pos: 15.8, jpy: 95800 },
+      { k: 'XLK', g: 'e', tw: 20, pos: 30.3, jpy: 39000 }, { k: 'IFREE', g: 'f', tw: 40, pos: 15.8, frac: true }];
+    const P = ccfCatSharePlan(items, 170000, 2440000, K);
+    // 区分が目標を下回る月: 個別10%・ETF35%・投資信託55%（投資信託だけ超過）
+    const K2 = { tot: 2000000, c: { t: 20, now: 10 }, e: { t: 40, now: 35 }, f: { t: 40, now: 55 } };
+    const B2 = ccfCatBudget(K2, 170000);
+    const P2 = ccfCatSharePlan([
+      { k: 'LRCX', g: 'c', tw: 10, pos: 5, jpy: 50000 }, { k: 'MCO', g: 'c', tw: 10, pos: 5, jpy: 80000 },
+      { k: 'SMH', g: 'e', tw: 20, pos: 15, jpy: 95800 }, { k: 'IFREE', g: 'f', tw: 40, pos: 55, frac: true }], 170000, 2000000, K2);
+    // 全区分がほぼ目標どおり（不足の合計が入金より小さい）→ 不足を埋めた残りを目標比で
+    const B3 = ccfCatBudget({ tot: 2000000, c: { t: 20, now: 20 }, e: { t: 40, now: 40 }, f: { t: 40, now: 40 } }, 170000);
+    return { B, P, B2, P2, B3 };
+  });
+  const bsum = o => ['c', 'e', 'f'].reduce((a, k) => a + ((o[k] && o[k].b) || 0), 0);
+  ok(cat.B.c.b === 0 && cat.B.e.b === 0 && cat.B.f.b === 170000 && bsum(cat.B) === 170000,
+     "⑪ 割り方 'cat': 個別38.2%・ETF46.1%（どちらも目標超過）・投資信託15.8% → 取り分 個別¥0／ETF¥0／投資信託¥170,000（" + [cat.B.c.b, cat.B.e.b, cat.B.f.b].join(' / ') + '）');
+  ok(!Object.keys(cat.P.buy).length && cat.P.frac.IFREE === 170000 && cat.P.rest === 0
+     && ['LRCX', 'MCO', 'SMH'].every(k => cat.P.catfull.some(x => x.k === k)),
+     '   保有ゼロの LRCX・MCO や SMH 単体の不足があっても、区分が目標超過なら買わない（catfull）・全額 iFreeNEXT（' + JSON.stringify(cat.P.buy) + ' / frac ' + cat.P.frac.IFREE + '）');
+  ok(cat.B2.c.b === 98956 && cat.B2.e.b === 71044 && cat.B2.f.b === 0 && bsum(cat.B2) === 170000,
+     '   区分の不足で割る: 個別の不足¥234,000・ETF¥168,000・投資信託0 → ¥98,956／¥71,044／¥0（端数1円は不足の大きい区分へ）（' + [cat.B2.c.b, cat.B2.e.b, cat.B2.f.b].join(' / ') + '）');
+  ok(cat.P2.buy.LRCX && cat.P2.buy.LRCX.sh === 1 && !cat.P2.buy.MCO && cat.P2.buy.SMH && cat.P2.buy.SMH.sh === 1
+     && cat.P2.frac.IFREE === 24200 && cat.P2.rest === 0 && cat.P2.cat.c.spent === 50000 && cat.P2.cat.e.spent === 95800,
+     '   区分の中は1株単位: 個別は LRCX 1株（MCO は残りでは買えず来月）・ETF は SMH 1株（不足は投資信託の取り分から）・端数¥24,200 は投資信託（'
+     + JSON.stringify(cat.P2.buy) + ' / frac ' + cat.P2.frac.IFREE + ' / rest ' + cat.P2.rest + '）');
+  ok(cat.B3.c.b === 34000 && cat.B3.e.b === 68000 && cat.B3.f.b === 68000,
+     '   全区分が目標どおりなら目標比で割る（¥34,000／¥68,000／¥68,000）（' + [cat.B3.c.b, cat.B3.e.b, cat.B3.f.b].join(' / ') + '）');
+  const catHtml = await pg.evaluate(() => {
+    const px = { LRCX: 50000, MCO: 80000 };
+    const pass = [{ nm: 'LRCX', t: 'LRCX', pos: 0 }, { nm: 'MCO', t: 'MCO', pos: 0 }];
+    const pxInfo = r => px[r.t] ? { jpy: px[r.t], px: px[r.t] / 150, ccy: 'USD', label: '$' + (px[r.t] / 150).toFixed(2) } : null;
+    const NO = { tot: 2440000, rows: [{ t: 'IFREE-NDX', nm: 'iFreeNEXT', tw: 40, pos: 15.8, jpy: 5.8, fund: { navPer: 10000 }, alias: ['QQQM'], alPos: 15.8 },
+      { t: 'SMH', tw: 20, pos: 15.8, jpy: 95800, label: '1株 ¥95,800' }, { t: 'XLK', tw: 20, pos: 30.3, jpy: 39000, label: '1株 ¥39,000' },
+      { t: 'QQQM', tw: 0, pos: 15.8, jpy: 46000, sameAs: 'IFREE-NDX' }] };
+    const K = { tot: 2440000, c: { t: 20, now: 38.2 }, e: { t: 40, now: 46.1 }, f: { t: 40, now: 15.8 } };
+    return ccfWholeShareBody(pass, () => 2.7, pxInfo, NO, 170000, K);
+  });
+  const ct = catHtml.html.replace(/<[^>]+>/g, '');
+  ok(/区分の比率（いちばん先に守る）/.test(ct) && /🏰 個別株/.test(ct) && /📈 投資信託/.test(ct) && /同じ指数の QQQM を含む/.test(ct),
+     '   注文書の先頭に区分の比率（目標・今・買った後・今月の円）を出し、個別株／ETF／投資信託に分けて並べる');
+  ok(/区分が目標を超えているので今月なし/.test(ct) && catHtml.fund === 170000 && catHtml.castle === 0 && catHtml.etf === 0
+     && (catHtml.castle + catHtml.net + catHtml.rest) === 170000,
+     '   区分が目標超過で買わない本は理由を名指し・個別株＋ETF＋投資信託＋残り＝入金額（' + [catHtml.castle, catHtml.etf, catHtml.fund, catHtml.rest].join(' / ') + '）');
+  // 画面: 正本を 'cat' にした門で「区分の比率が最優先」と出る（台帳が空なので注文書は無いが、割り方の1行は出る）
+  await load(withMode('cat'));
+  sp = await pg.evaluate(() => { window.__ccfCat = { tot: 2440000, c: { t: 20, now: 38.2 }, e: { t: 40, now: 46.1 }, f: { t: 40, now: 15.8 } };
+    window.__ccfNameGap = { c: 9, n: 30 }; localStorage.setItem('pf:monthly_total', '170000'); return ccfSleeveSplit(); });
+  ok(sp && sp.mode === 'cat' && sp.castle === 0 && sp.net === 170000 && sp.nCastle === Math.round(170000 * 9 / 39),
+     "   ccfSleeveSplit も mode='cat' で同じ取り分（個別 ¥" + (sp && sp.castle) + '）・採らなかったほう（銘柄ごとの不足から 個別 ¥' + (sp && sp.nCastle) + '）を持つ');
+  sp = await pg.evaluate(() => { window.__ccfCat = null; return ccfSleeveSplit(); });
+  ok(sp && sp.mode === 'cat_fallback', "   材料が無ければ 'cat_fallback' と名乗って gap へ倒す（黙って別の割り方にしない）");
+
+  // ⑫ 実データ（state.json の保有＋全パック）で、注文書と ◈ ETF の節が同じことを言う（2026-10-05 実測で食い違っていた:
+  //    注文書は QQQM を買わないのに、裏で走る旧の組み方（mkNb）が置いた「つみたて枠を超えた分」を節が読んで「QQQM 今月 買う」と出た）
+  const ST = JSON.parse(fs.readFileSync(path.join(ROOT, 'state.json'), 'utf8'));
+  for (const m of ['cat', 'name']) {
+    OVER = withMode(m);
+    await pg.goto('http://localhost:' + PORT + '/index.html'); await pg.waitForTimeout(600);
+    await pg.evaluate(st => { localStorage.clear(); for (const k in st.data) localStorage.setItem(k, st.data[k]);
+      localStorage.setItem('ccf:stateSavedAt', st.savedAt); }, ST);
+    await pg.reload(); await pg.waitForTimeout(1500);
+    await pg.evaluate(() => ccfImportAllPacks()); await pg.waitForTimeout(1800);
+    await pg.evaluate(() => { localStorage.setItem('pf:monthly_total', '170000'); showPage(5); }); await pg.waitForTimeout(3200);
+    const r12 = await pg.evaluate(() => {
+      const OB = window.__ccfOrderNet || null;
+      const sec = [...document.querySelectorAll('#pg5 .led.planrow')].filter(e => e.querySelector('.bctl'))
+        .map(e => ({ t: e.querySelector('.bctl').dataset.t, buy: /今月 買う/.test(e.innerText), none: /今月なし/.test(e.innerText) }))
+        .filter(x => x.buy || x.none);
+      return { OB, sec };
+    });
+    const bad = r12.OB ? r12.sec.filter(x => x.buy !== ((+r12.OB[x.t] || 0) > 0)) : [{ t: '注文書の円が無い' }];
+    ok(r12.sec.length >= 3 && !bad.length,
+       `⑫ 割り方 '${m}'（実データ・入金17万）: ◈ ETF の節の「今月 買う」が注文書の円と一致（` +
+       r12.sec.map(x => x.t + (x.buy ? '◯' : '—') + '¥' + (r12.OB ? (+r12.OB[x.t] || 0) : '?')).join(' ') + (bad.length ? ' ／ 食い違い ' + bad.map(x => x.t).join('・') : '') + '）');
+  }
 
   ok(errs.length === 0, 'pageerror 0件' + (errs.length ? '（' + errs[0].slice(0, 120) + '）' : ''));
   await pg.evaluate(() => localStorage.removeItem('pf:monthly_total'));
