@@ -1,35 +1,52 @@
 {
- "generated": "2026-10-03",
+ "generated": "2026-10-05",
  "note": "「今日、何をすればいいか」だけを集めた表示専用の在庫。**判定には一切使わない**——Ω・四関門・売却規律・配分のどれにも触れない。期限の判定は ops_status.build() をそのまま呼ぶ（二重実装を作らない）。**blind（読めなかった入力）を必ず出す**のがこの道具の本体で、盲目のときに「異常なし」へ倒れる fail-open を画面の側で塞ぐためにある。",
  "buy": [
   "CW",
-  "MSFT",
   "LRCX",
-  "ASML"
- ],
- "next": [
+  "MSFT",
+  "ASML",
   "MCO",
   "IDXX",
+  "KLAC",
   "GOOGL",
   "SAP"
  ],
+ "next": [],
  "counts": {
-  "now": 0,
-  "today": 1,
+  "now": 1,
+  "today": 2,
   "month": 27,
   "waiting": 28,
   "blind": 0,
   "src": 18
  },
- "now": [],
+ "now": [
+  {
+   "k": "wacc",
+   "level": "now",
+   "title": "WACC が更新どき",
+   "why": "市場 5.24% vs 門 5.01%（乖離 0.23 > 刻み 0.1）",
+   "how": "✎採点機の WACC 欄を更新（規約の変更ではなく入力の更新）",
+   "src": "wacc_drift"
+  }
+ ],
  "today": [
   {
-   "k": "exc:TDG",
+   "k": "alert:4071:2026-10-02",
    "level": "today",
-   "title": "門外例外の見張り: TDG",
-   "why": "出口条件の線 2.0倍の上（2.40倍）／—横ばい（線の上）／債務超過（パックに反映ずみ）",
-   "how": "python3 night/watch_exceptions.py",
-   "src": "例外監視"
+   "title": "8-K警報: 4071（2026-10-02）",
+   "why": "臨時報告書＝重要事象（役員異動・訂正等）の可能性——原本を読む(EDINETでdocID検索)",
+   "how": "⚙自動化タブの「審査」で門2再審査の依頼文を作る",
+   "src": "8-K監視"
+  },
+  {
+   "k": "earn:CTAS",
+   "level": "today",
+   "title": "決算: CTAS（2026-10-08）",
+   "why": "3日後",
+   "how": "発表後に python3 kessan_check.py（判定は警報のみ・株価は使わない）",
+   "src": "決算カレンダー"
   }
  ],
  "month": [
@@ -228,7 +245,7 @@
   {
    "k": "kes:SAP",
    "level": "month",
-   "title": "四半期点検が不能: SAP 🔵次点",
+   "title": "四半期点検が不能: SAP 🟢投下可",
    "why": "要審査: 点検不能（10-Q/10-K系列なし＝20-F/40-F発行体の可能性。手動確認要）（採取の穴＝再審査では直らない）",
    "how": "kessan_checklist.md §C の手動確認",
    "src": "四半期点検"
