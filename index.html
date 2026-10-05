@@ -1161,7 +1161,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.199</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.200</span></h1>
     <div style="margin:6px 0 2px"><button id="hintBtn" onclick="ccfToggleHints()" style="padding:5px 11px;background:none;border:1px solid var(--line);border-radius:7px;color:var(--dim);font-size:11.5px;cursor:pointer">欄の注記を出す</button></div>
   <div class="sub"><details class="why plain" data-fold="6"><summary>ℹ この画面について</summary><div class="why-body"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——絶対MOAT指数をΩの直接項に加え(実効≒22%)、<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%。⚠率そのものは退場社の抜けた母集団で測った下限の側で、2013年の質実証プールでは4.2〜19.2%の幅がある〔2026-09-23 に退場日を是正した後の値・是正前は2.0〜25.7%〕）。</div></details></div>
   </div>
@@ -3757,10 +3757,13 @@ function ccfBought(btn){
     try{ const db=document.getElementById('dashBox');
          if(typeof ccfDash==='function'&&db&&db.innerHTML.trim())ccfDash(); }catch(_){}
   };
-  /* ★投資信託は種類も渡す（2026-10-05）——渡さないと新しい行が「ETF」と記録され、🏦保有で口数が「株」と出る */
+  /* ★投資信託は種類も渡す（2026-10-05）——渡さないと新しい行が「ETF」と記録され、🏦保有で口数が「株」と出る。
+     ★約定日も渡す（同日・ユーザー「iFREENEXTを、成績にいれて」）——旧はここから記録した買付に**日付が無く**、
+       📈成績が「同じ円を同じ日に S&P500 へ」を作れずに比較とグラフから外していた。ここは買った直後に押す欄なので今日の日付を入れる
+       （別の日に買った分は 🏦保有の「＋ 買った」で約定日を選んで記録する） */
   frame.contentWindow.postMessage({type:'ccfPfBuy',id:id,t:inp.dataset.t,nm:inp.dataset.nm,
     sh:sh,px:parseFloat(inp.dataset.px)||0,ccy:inp.dataset.ccy,sleeve:inp.dataset.sleeve,...(fJpy>0?{jpy:fJpy}:{}),
-    ...(isFund?{kind:'投資信託'}:{})},'*');
+    ...(isFund?{kind:'投資信託'}:{}),date:ccfTradeToday()},'*');
   setTimeout(()=>{ if(!done&&window.__ccfBuyWait[id]){ delete window.__ccfBuyWait[id];
     out.style.color='#d69a3c'; out.textContent='🏦保有から返事がありません（Ⅶタブを一度開いてから）'; } },3000);
 }
@@ -4990,9 +4993,12 @@ function ccfPerfHTML(R,S){
      ⇒ 対象と除外を**先頭に常に名指し**する（v9.9.52 の作法——黙って外さない）。全銘柄の損益は④と🏦保有。 */
   if(S&&S.tickers&&R.positions){
     const inc=S.tickers, allT=(R.positions||[]).map(r=>r.t), exc=allT.filter(t=>inc.indexOf(t)<0);
+    /* ★外した理由は銘柄ごとに出す（2026-10-05）——旧は一律「買付日が記録されていない」と書き、
+       値段が取れない行（例: 旧の投資信託）まで買付日の話にしていた */
+    const why=t=>{ const r=(R.positions||[]).find(x=>x.t===t)||{}; return String(r.skip||r.cmp_out||'買付日が記録されていない').replace(/\*\*/g,''); };
     if(exc.length) out+=`<div class="panel" style="margin:10px 0;border-left:4px solid var(--rb-warn,#9a5b00);font-size:12.5px;line-height:1.75">`
-      +`<b>①〜③のグラフと S&amp;P500 との比較は ${inc.length}銘柄（${inc.join('・')}）だけ</b>で計算しています。`
-      +`<br><b>${exc.join('・')}</b> は<b>買付日が記録されていない</b>ので、同じ日の S&amp;P500 と比べられず外しています。`
+      +`<b>①〜③のグラフと S&amp;P500 との比較は ${inc.length}銘柄（${inc.join('・')}）だけ</b>で計算しています。外しているもの:`
+      +exc.map(t=>`<br>・<b>${t}</b>：${why(t)}`).join('')
       +`<br>全${allT.length}銘柄の損益は下の ④ と 🏦保有 を見てください。買付日を入れれば①〜③にも入ります。</div>`;
   }
   if(S&&S.days&&S.days.length>1){
@@ -5129,11 +5135,14 @@ function ccfReturnsHTML(R){
       ? `<span title="取得の記録は ${r.cost_partial.known}株ぶんだけで、保有は ${r.cost_partial.sh}株。`
         + `残りの株の約定が未確認なので、取得額はその分だけ概算（単価を全株へ広げている）`
         + `" style="font-size:9.5px;color:#d69a3c;margin-left:4px">取得 ${r.cost_partial.known}/${r.cost_partial.sh}株</span>` : '';
-    rows+=`<div class="led"><span class="ln">${ccfIcon(r.t)}${r.t}${est}${jpc}${est2}${bds}${cp}</span>`
+    /* ★積立（投資信託・2026-10-05）: 買付ごとの入口から指数を走らせて足している＝「入口」は最初の買付の日 */
+    const lg=(r.legs_n>1)
+      ? `<span title="積立: 買付 ${r.legs_n}回（${r.bd}〜${r.bd_last}）。S&amp;P500・QQQM・irr=85 のかごとは、買付ごとに同じ円・同じ日で比べて足している" style="font-size:9.5px;color:var(--jade,#3f8f6b);margin-left:4px">積立${r.legs_n}回</span>` : '';
+    rows+=`<div class="led"><span class="ln">${ccfIcon(r.t)}${r.t}${est}${jpc}${est2}${bds}${cp}${lg}</span>`
       +`<span style="font-size:11px;min-width:74px;text-align:center;color:var(--dim)"`
-      +` title="この日に買ったものとして計算している。指数もこの日から走らせる`
+      +` title="${r.legs_n>1?'最初の買付の日。指数は買付ごとの日から走らせている':'この日に買ったものとして計算している。指数もこの日から走らせる'}`
       +(r.fx0?`。入口のドル円 ${r.fx0.toFixed(2)} → 出口 ${(r.fx1||0).toFixed(2)}`:'')
-      +`">${r.bd||'—'}</span>`
+      +`">${r.bd||'—'}${r.legs_n>1?'〜':''}</span>`
       +`<span style="font-size:12px;min-width:92px;text-align:right;color:var(--ink-soft)">${yen(r.cost_jpy)}</span>`
       +`<span style="font-size:12px;min-width:92px;text-align:right;color:var(--ink)">${yen(r.val_jpy)}</span>`
       +`<span style="font-size:12px;min-width:96px;text-align:right;color:${col(r.pl_jpy)}">${r.pl_jpy>0?'+':''}${yen(r.pl_jpy)}</span>`
