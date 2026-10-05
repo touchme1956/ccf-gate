@@ -38,10 +38,12 @@
 ⚠ 予想の売上の伸びが将来のリターンを上乗せする証拠は無い（門の歴史検証では過去の高成長はむしろ逆の信号だった）。
   これは候補の一覧で、買う判断は人がする。
 
-使い方: python3 night/growth_rank.py [--no-fetch] [--refresh] [--need] [--quiet]
+使い方: python3 night/growth_rank.py [--yahoo] [--strict] [--no-fetch] [--refresh] [--need] [--quiet]
   --no-fetch  ネットに出ない（キャッシュだけで並べる）
   --refresh   段2のキャッシュを取り直す
   --need      予想・時価総額がまだ無い社を書き出す（out/growth_need.json）——取りに行く順の名簿
+  --yahoo     Alpha Vantage の無料枠で足りない予想を Yahoo の earningsTrend で補う
+  --strict    厳しい判定を足す（L1＝数字を一段上げた仮の線・参考／L2＝門の既存の線: 最大顧客<20%・acqS5≤0.311・FCF転換≥65%）
 """
 import datetime
 import json
@@ -77,6 +79,14 @@ STAGE1_MIN_RATIO = 1.20  # 段1: 2年で1.20倍未満だけ外す（②より緩
 G_FWD, G_2Y, ROIC_MIN, NDE_MAX, DIL_MAX, MCAP_MIN, ETF_MAX = 20.0, 15.0, 15.0, 2.0, 1.0, 20e9, 1.0
 # IFRS の会社は SEC frames に無い——大型の外国株を名指しで足す（⚠ 網羅ではない。足したら理由を書く）
 EXTRA = ['TSM', 'ASML', 'SAP', 'ARM', 'SPOT', 'SE', 'NU', 'SHOP', 'NVO', 'RACE', 'CLS', 'NBIS', 'BABA', 'PDD', 'TCOM']
+
+# 厳しい判定（--strict）。L1＝数字を一段上げた仮の線（新しい数字なので参考どまり）／
+#   L2＝門が既に持っている『危うさ』の線を借りる（新しい数字は作らない）
+CUST = 'out/growth_customers.json'
+L1 = dict(fwd=25.0, cur=20.0, g2=20.0, g1=15.0, roic=20.0, nde=1.0, dil=0.5, mcap=30e9, etf=0.5)
+L2_CUST = 20.0    # moatW の 50 の線（最大の顧客が売上の20%以上＝単一顧客への依存・v9.9.120）
+L2_ACQ = 0.311    # ccfAcqBand の「大きく買う」の下限（7ビンテージで最下位の帯・v9.9.181）
+L2_CONV = 65.0    # 売却規律 S2 の「FCF転換<65%」の線
 
 FLAGS = set(sys.argv[1:])
 FETCH = '--no-fetch' not in FLAGS
@@ -277,6 +287,72 @@ def rev_alt(facts):
     return None, '年次報告の比較の列が3年そろわない', None
 
 
+def acq_strength(c):
+    """acqS5＝直近5会計年度の買収支出 ÷ 期初総資産（night/fill_acqS5.py と同じ定義・同じ関数）。基準年＝最新の年次報告の期末。
+    IFRS から米国基準へ移った社（CLS）は、同じ概念の二つのタグを年でつなぐ——候補は『代替』（同じものの別名）なので
+    足し合わせず、年ごとに先に見つかったほうを採る。通貨が違うタグはつながない（通貨をまたいで割らない）。"""
+    fn = os.path.join(CACHE, f'acq_{c}.json')
+    if os.path.exists(fn) and (not FETCH or fresh(fn, 20)):
+        return json.load(open(fn))
+    if not FETCH:
+        return {'acqS5': None, 'why': 'キャッシュ無し（--no-fetch）'}
+    import fill_acqS5 as A
+    f = A._facts(c) or {}
+
+    def merged(cands, kind):
+        m, unit = {}, None
+        for tax, name in cands:
+            node = (f.get(tax) or {}).get(name)
+            uk = A._pick_unit((node or {}).get('units', {})) if node else None
+            if not uk or (unit and uk != unit):
+                continue
+            unit = unit or uk
+            for k, v in A._parse(node['units'][uk], kind).items():
+                m.setdefault(k, v)
+        return m
+
+    fe = None
+    for tax in ('us-gaap', 'ifrs-full'):
+        for name in H.TAGS['rev']:
+            for ents in ((f.get(tax) or {}).get(name) or {}).get('units', {}).values():
+                for e in ents:
+                    if e.get('form') in ('10-K', '10-K/A', '20-F', '40-F') and e.get('start') and e.get('end') \
+                            and 330 <= _days(e['start'], e['end']) <= 400 and (fe is None or e['end'] > fe):
+                        fe = e['end']
+    rec = {'fe': fe}
+    if not fe:
+        rec.update(acqS5=None, why='年次報告の期末が取れない')
+    else:
+        fd = A.d2(fe)
+        b = A.near(merged(A.ASSETS, 'inst'), A.back(fd, 5))
+        pm = merged(A.PAY, 'dur')
+        if not b or not b[1] or b[1] <= 0:
+            rec.update(acqS5=None, why=f'期初総資産（{A.back(fd, 5)} の前後45日）が取れない＝分母を推測しない（分社・上場が5年以内など）')
+        elif A._misaligned(pm, fd):
+            rec.update(acqS5=None, why='年次の期末が錨に乗らない＝年次の窓を組めない')
+        else:
+            tot, hits = 0.0, []
+            for k in range(5):
+                e = A.near(pm, A.back(fd, k))
+                if e:
+                    v = max(0.0, e[1])
+                    tot += v
+                    if v > 0:
+                        hits.append(f"{e[2]} {v / 1e6:,.0f}百万")
+            if tot <= 0:
+                gm = merged(A.GWA, 'dur')
+                got = sum(((A.near(gm, A.back(fd, k)) or (0, 0, 0))[1] or 0) for k in range(5))
+                if got > 0:
+                    rec.update(acqS5=None, why=f'買収支出の行が無いのに のれん増加/取得対価 {got / 1e6:,.0f}百万 ＝測れない（MSFT 型）')
+                    json.dump(rec, open(fn, 'w'), ensure_ascii=False)
+                    return rec
+            rec.update(acqS5=round(tot / b[1], 3),
+                       src=f"買収支出5年 {tot / 1e6:,.0f}百万 ÷ 期初総資産（{b[2]}）{b[1] / 1e6:,.0f}百万" + (f"（{' / '.join(hits)}）" if hits else '（5年で買収支出なし）'))
+    os.makedirs(CACHE, exist_ok=True)
+    json.dump(rec, open(fn, 'w'), ensure_ascii=False)
+    return rec
+
+
 def stage2_one(c):
     os.makedirs(CACHE, exist_ok=True)
     fn = os.path.join(CACHE, f'{c}.json')
@@ -461,6 +537,72 @@ def mcap_of(t, rec, mc, dash):
     return None, '時価総額が無い'
 
 
+def cur_growth(e, rec):
+    """今の会計年度の売上の伸び（予想）＝今期の予想 ÷ 直近の実績 − 1。今期の期末の年が実績の年の次でなければ測れない"""
+    if not rec.get('rev0') or not rec.get('rev_y0'):
+        return None
+    f0 = None
+    if e and e.get('fy'):
+        fy = sorted((x for x in e['fy'] if x.get('date') and x['date'] >= (e.get('asof') or TODAY) and x.get('rev')), key=lambda x: x['date'])
+        f0 = fy[0] if fy else None
+    if not f0:
+        f0 = next((x for x in ((e or {}).get('yahoo') or {}).get('fy') or [] if x.get('period') == '0y'), None)
+    try:
+        v0, y0 = float(f0['rev']), int(str(f0['date'])[:4])
+    except Exception:
+        return None
+    if y0 - int(rec['rev_y0']) != 1 or v0 <= 0:
+        return None
+    return (v0 / rec['rev0'] - 1) * 100
+
+
+def strict_eval(A, B, C, recs_by_t, est):
+    """厳しい判定。L1＝数字を一段上げた仮の線（参考）／L2＝門が既に持つ危うさの線（最大顧客<20%・acqS5≤0.311・FCF転換≥65%）。
+    測れない項目は『満たさない』と読まない（unk に名指し）"""
+    cust = (jload(CUST, {}) or {}).get('items') or {}
+    tk = jload(os.path.join(FCACHE, 'company_tickers.json'), {}) or {}
+    t2c = {}
+    for v in tk.values():
+        t2c.setdefault(str(v['ticker']).upper(), int(v['cik_str']))
+    pool = [('A', r) for r in A] + [('B', r) for r in B] + [('C', r) for r in C if (r['fwd'] or 0) >= G_FWD]
+    out = []
+    for tier, r in pool:
+        t, rec = r['t'], recs_by_t.get(r['t']) or {}
+        cg = cur_growth(est.get(t), rec)
+        L1c = {
+            '来期の売上の伸び ≥25%': None if r['fwd'] is None else r['fwd'] >= L1['fwd'],
+            '今期の売上の伸び（予想）≥20%': None if cg is None else cg >= L1['cur'],
+            '直近2年 ≥20%/年': None if r.get('g2') is None else r['g2'] >= L1['g2'],
+            '直近1年 ≥15%': None if r.get('g1') is None else r['g1'] >= L1['g1'],
+            'ROIC ≥20%': None if r.get('roic') is None else r['roic'] >= L1['roic'],
+            'nde <1': None if r.get('nde') is None else r['nde'] < L1['nde'],
+            '株数 ≤0.5%/年': None if r.get('dilNet') is None else r['dilNet'] <= L1['dil'],
+            '時価総額 ≥300億ドル': None if not r['mcap'] else r['mcap'] * 1e9 >= L1['mcap'],
+            'ETF経由 <0.5%': r['etf_pct'] < L1['etf'],
+        }
+        cu = cust.get(t) or {}
+        cu_ok = True if cu.get('lt10') else (None if cu.get('max_pct') is None else cu['max_pct'] < L2_CUST)
+        aq = acq_strength(t2c[t]) if t in t2c else {'acqS5': None, 'why': 'CIK 不明'}
+        conv = rec.get('conv')
+        L2c = {
+            '最大の顧客 <20%（moatW の線）': cu_ok,
+            '買収が「大きく買う」帯でない（acqS5≤0.311）': None if aq.get('acqS5') is None else aq['acqS5'] <= L2_ACQ,
+            'FCF転換 ≥65%（S2 の線）': None if conv is None else conv >= L2_CONV,
+        }
+        out.append({'t': t, 'tier': tier, 'fwd': r['fwd'], 'cur': None if cg is None else round(cg, 1),
+                    'cust': (f"{cu['max_pct']}%" if cu.get('max_pct') is not None else ('<10%' if cu.get('lt10') else None)),
+                    'cust_src': cu.get('src'), 'acqS5': aq.get('acqS5'), 'acq_src': aq.get('src') or aq.get('why'), 'conv': conv,
+                    'L1_out': [k for k, v in L1c.items() if v is False], 'L1_unk': [k for k, v in L1c.items() if v is None],
+                    'L2_out': [k for k, v in L2c.items() if v is False], 'L2_unk': [k for k, v in L2c.items() if v is None]})
+    return {
+        'lines': {'L1（仮の一段・参考）': L1, 'L2（門の既存の線）': {'最大の顧客<': L2_CUST, 'acqS5≤': L2_ACQ, 'FCF転換≥': L2_CONV}},
+        'pass_L1': [x['t'] for x in out if x['tier'] == 'A' and not x['L1_out']],
+        'pass_L2': [x['t'] for x in out if x['tier'] == 'A' and not x['L2_out']],
+        'pass_both': [x['t'] for x in out if x['tier'] == 'A' and not x['L1_out'] and not x['L2_out']],
+        'rows': out,
+    }
+
+
 def main():
     c2t, t2c = ticker_maps()
     if not c2t:
@@ -484,6 +626,7 @@ def main():
             packs[t] = pk.get('data') or pk
     sicm = jload('out/sic_by_cik.json', {}) or {}
 
+    recs_by_t = {c2t.get(c): rec for c, rec in zip(ciks, recs)}
     rows = []
     for c, rec in zip(ciks, recs):
         t = c2t.get(c) or '?'
@@ -589,6 +732,9 @@ def main():
         gy, _ = fwd_growth({'yahoo': e['yahoo']})
         if ga is not None and gy is not None:
             xcheck.append({'t': t, 'av': round(ga, 1), 'yahoo': round(gy, 1), 'diff': round(gy - ga, 1)})
+    strict = None
+    if '--strict' in FLAGS:
+        strict = strict_eval(A, B, C, recs_by_t, est)
     out = {
         'asof': TODAY,
         'tool': 'night/growth_rank.py',
@@ -597,6 +743,7 @@ def main():
                  '測れない数字は「満たさない」と読まず unk に名指し。⚠予想の伸びがリターンを上乗せする証拠は無い'),
         'stage1': s1,
         'xcheck': xcheck,
+        'strict': strict,
         'etf': {'asof': etf_asof, 'used': etf_used},
         'counts': {'段2で測った社': len(rows), '②を満たす': len(gate2), 'A 全条件': len(A), 'B ②③④は満たす（①が足りない・予想なし）': len(B),
                    'C ②③④の1つだけ外れる・測れない': len(C), 'D 参考（大型の高成長・③④の2つ以上で外れる）': len(D)},
@@ -644,6 +791,14 @@ def main():
         print('\n■ C ②③④の1つだけ外れる・測れない（上位40）'); [print('  ' + line(r)) for r in C[:40]]
         print('\n■ D 参考: 大型の高成長だが③④の2つ以上で外れる'); [print('  ' + line(r)) for r in D[:60]]
         print(f"\n■ 予想を取りに行く順（{len(av_next)}社）: {' '.join(av_next)}")
+        if strict:
+            print('\n■ 厳しい判定（--strict）: L1＝数字を一段上げた仮の線／L2＝門の既存の危うさの線')
+            for x in strict['rows']:
+                print(f"  {x['tier']} {x['t']:<5} 来期{('%+.1f' % x['fwd']) if x['fwd'] is not None else '—':>7} 今期{('%+.0f' % x['cur']) if x['cur'] is not None else '—':>5} "
+                      f"最大顧客 {x['cust'] or '—':>5} acqS5 {x['acqS5'] if x['acqS5'] is not None else '—'!s:>6} FCF転換 {x['conv'] if x['conv'] is not None else '—'!s:>6}"
+                      f"  L1外れ {'・'.join(x['L1_out']) or 'なし'}  L2外れ {'・'.join(x['L2_out']) or 'なし'}"
+                      + (f"  L2測れない {'・'.join(x['L2_unk'])}" if x['L2_unk'] else ''))
+            print(f"  A のうち L1 を通る {strict['pass_L1']} ／ L2 を通る {strict['pass_L2']} ／ 両方 {strict['pass_both']}")
         print(f'\n→ {OUT}')
     return 0
 
