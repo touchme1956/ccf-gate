@@ -341,13 +341,15 @@ function render(){
        if(showMoney){
          if(p._v>0){
            const sh=+p.sh||0, px=(+p.npx||0)>0?+p.npx:(+p.bpx||0);
-           const det=(sh>0&&px>0)?`${sh}株@${px}${p.ccy==='JPY'?'円':'$'}${p.npxAuto?`〔自動${String(p.npxAuto).slice(5)}〕`:''} `:'';
+           const det=(sh>0&&px>0)?((p.kind==='投資信託')
+             ? `${pfNum(sh)}口・基準価額¥${Math.round(px*(+p.navPer||10000)).toLocaleString()}${(+p.navPer||10000)===10000?'/万口':'/'+pfNum(+p.navPer)+'口'}`
+             : `${sh}株@${px}${p.ccy==='JPY'?'円':'$'}`)+`${p.npxAuto?`〔自動${String(p.npxAuto).slice(5)}〕`:''} `:'';
            amtTxt=`${det}<b style="color:var(--ink,#dfe6f2)">¥${Math.round(p._v).toLocaleString()}</b>${total>0?`（${(p._v/total*100).toFixed(1)}%）`:''}`;
          } else if(p.sleeve!=='cash'){ amtTxt='<span style="color:var(--muted)">金額未入力（✎編集で株数と単価を）</span>'; }
        }
        // v9.9.169: ETFは「門の裁きではない」と行に書く——出口判定が付かない理由を画面に出す（v9.9.52）
        const kindTxt = p.sleeve==='cash' ? '現金'
-                     : p.sleeve==='net'  ? 'ETF・門の裁きではない' : '';
+                     : p.sleeve==='net'  ? ((p.kind==='投資信託'?'投資信託':'ETF')+'・門の裁きではない') : '';
        const info=[p.t||'', kindTxt, amtTxt, vTxt].filter(Boolean).join(' · ');
        // □スイッチ(2026-08-03 ユーザー指示): チェック=保有中。外すと売却として記録し「売却済み」へ移す
        // v9.9.169: ETFにも□スイッチを出す——出さないと**売却を記録する経路が無く行を外せない**
@@ -468,7 +470,7 @@ const numv=v=>(v!=null&&v!==0?v:'');
 function liveVal(p){
  const fx=+draftFxVal||0, sh=+p.sh||0, npx=+p.npx||0, bpx=+p.bpx||0, px=npx>0?npx:bpx;
  if(sh>0&&px>0){ const cur=p.ccy==='JPY'?'¥':'$'; const raw=sh*px; const v=(p.ccy==='JPY')?raw:raw*fx;
-   return `評価額 ≈ <b>${yen(v)}</b>（${sh}株 × ${cur}${px}${p.ccy!=='JPY'?' × '+fx+'円':''}）`; }
+   return `評価額 ≈ <b>${yen(v)}</b>（${pfNum(sh)}${pfUnit(p)} × ${cur}${px}${p.ccy!=='JPY'?' × '+fx+'円':''}）`; }
  const v=+p.v||0; return v>0?`金額(円)直接 = <b>${yen(v)}</b>`:'株数＋単価、または金額(円)を入力';
 }
 function refreshPrev(i){ const el=document.getElementById('prev'+i); if(el)el.innerHTML=liveVal(draft[i]); }
@@ -480,14 +482,14 @@ function renderEdit(){
     <div class="ehd">
       <input value="${esc(p.t)}" oninput="draft[${i}].t=this.value" placeholder="TICKER" style="max-width:96px">
       <input value="${esc(p.nm)}" oninput="draft[${i}].nm=this.value" placeholder="銘柄名">
-      <select onchange="draft[${i}].sleeve=this.value">${opt('castle',p.sleeve,'個別')}${opt('cash',p.sleeve,'現金')}</select>
+      <select onchange="draft[${i}].sleeve=this.value">${opt('castle',p.sleeve,'個別')}${opt('net',p.sleeve,'ETF・投資信託')}${opt('cash',p.sleeve,'現金')}</select>
       <div class="del" onclick="delRow(${i})">✕</div>
     </div>
     <div class="efields">
       <label class="efld wdate">買付日<input type="date" value="${esc(p.bd)}" oninput="draft[${i}].bd=this.value"></label>
-      <label class="efld">株数<input type="number" inputmode="decimal" value="${numv(p.sh)}" oninput="draft[${i}].sh=parseFloat(this.value)||0;refreshPrev(${i})" placeholder="株"></label>
-      <label class="efld">買付単価<input type="number" inputmode="decimal" value="${numv(p.bpx)}" oninput="draft[${i}].bpx=parseFloat(this.value)||0;refreshPrev(${i})" placeholder="取得"></label>
-      <label class="efld">現在株価<input type="number" inputmode="decimal" value="${numv(p.npx)}" oninput="draft[${i}].npx=parseFloat(this.value)||0;refreshPrev(${i})" placeholder="現在"></label>
+      <label class="efld">${p.kind==='投資信託'?'口数':'株数'}<input type="number" inputmode="decimal" value="${numv(p.sh)}" oninput="draft[${i}].sh=parseFloat(this.value)||0;refreshPrev(${i})" placeholder="${p.kind==='投資信託'?'口':'株'}"></label>
+      <label class="efld">${p.kind==='投資信託'?'買付単価(1口・円)':'買付単価'}<input type="number" inputmode="decimal" value="${numv(p.bpx)}" oninput="draft[${i}].bpx=parseFloat(this.value)||0;refreshPrev(${i})" placeholder="取得"></label>
+      <label class="efld">${p.kind==='投資信託'?'基準価額(1口・円)':'現在株価'}<input type="number" inputmode="decimal" value="${numv(p.npx)}" oninput="draft[${i}].npx=parseFloat(this.value)||0;refreshPrev(${i})" placeholder="現在"></label>
       <label class="efld">通貨<select onchange="draft[${i}].ccy=this.value;refreshPrev(${i})">${opt('USD',p.ccy||'USD','$USD')}${opt('JPY',p.ccy||'USD','¥JPY')}</select></label>
       <label class="efld">金額(円)直接<input type="number" inputmode="numeric" value="${numv(p.v)}" oninput="draft[${i}].v=parseFloat(this.value)||0;refreshPrev(${i})" placeholder="株数無い時"></label>
     </div>
@@ -752,6 +754,9 @@ setTimeout(pfReportHeight,300); setTimeout(pfReportHeight,900);
    親が localStorage を直接書くと、このページが抱えている P は古いままなので、
    次の persist() が黙って巻き戻す——**v9.9.131 で実際に踏んだ順序の事故**と同型。
    だから親からは「足してくれ」と頼むだけにして、実際の加算・保存・再描画はここでやる。 ---------- */
+/* 単位（2026-10-05）: 投資信託は「口」、それ以外は「株」。口数は桁が大きいので区切って出す */
+function pfUnit(p){ return (p&&p.kind==='投資信託')?'口':'株'; }
+function pfNum(n){ return (+n||0).toLocaleString('ja-JP',{maximumFractionDigits:4}); }
 function pfAddShares(d){
  const t=String(d.t||'').trim(), sh=+d.sh||0, px=+d.px||0, jpy=+d.jpy||0;
  const bd=/^\d{4}-\d{2}-\d{2}$/.test(d.date||'')?d.date:'';
@@ -767,8 +772,16 @@ function pfAddShares(d){
  if(!t)   return {ok:false, msg:'銘柄コードが空'};
  if(!(sh>0)) return {ok:false, msg:'株数が0以下'};
  const up=t.toUpperCase();
+ /* ★投資信託（2026-10-05 ユーザー明示指示「投資信託を購入した際に保有から入力できるように」）: 頼む側が kind:'投資信託' を渡す。
+    行は ETF側(net)・円(JPY)・株数の欄に**口数**・単価は**1口あたりの円**（基準価額÷navPer）。表示の単位は「口」 */
+ const isF=(d.kind==='投資信託');
  let p = P.positions.find(x=>String(x.t||'').toUpperCase()===up)
       || (d.nm ? P.positions.find(x=>x.nm&&x.nm===d.nm) : null);
+ /* ⚠ 旧の記入欄で「＋ 新しい銘柄」から投資信託を入れると、個別株・ドル建ての行ができていた。その上に口数を足すと
+    評価額が 口数×単価×ドル円 のまま膨らむので、黙って足さずに直してもらう */
+ if(p&&isF&&(p.sleeve!=='net'||(p.ccy&&p.ccy!=='JPY')))
+  return {ok:false, msg:t+' は'+[p.sleeve==='net'?'':'個別株', (p.ccy&&p.ccy!=='JPY')?'ドル建て':''].filter(Boolean).join('・')
+    +'で記録されています。投資信託（ETF側・円）として足せないので、先に🏦保有の✎編集で袖を「ETF・投資信託」・通貨を円に直してください。'};
  if(p){
   const old=+p.sh||0;
   /* ⚠ 金額(円)だけで記録されている行に株数を足すと、posValue が株数側へ切り替わって
@@ -791,20 +804,22 @@ function pfAddShares(d){
   if(!(+p.npx>0)&&px>0) p.npx=px;
   if(!p.ccy&&d.ccy) p.ccy=d.ccy;
   if(lot){ if(!Array.isArray(p.bdLots)) p.bdLots=[]; p.bdLots.push(lot); }
+  if(isF&&p.kind!=='投資信託'){ p.kind='投資信託'; if(+d.navPer>0&&!(+p.navPer>0)) p.navPer=+d.navPer; }   // 買付順位の「＋円」で作った旧の行（kind 'ETF'）を直す
  }else{
   /* v9.9.169: 袖(個別/ETF)は**頼む側が言う**。言わなければ従来どおり個別＝既定は変えない。
      ⚠ ETFの行に出口判定は付かない（門Ωは指数を裁かない）ので、この一語が
        「門が裁く対象か」を分ける唯一の印になる。 */
   const sl = (d.sleeve==='net') ? 'net' : 'castle';
-  const row={t:up, nm:d.nm||up, sleeve:sl, kind:(sl==='net'?'ETF':'個別'),
-                    ccy:d.ccy||'USD', bd:bd, sh:sh, bpx:px||0, npx:px||0, v:0};
+  const row={t:up, nm:d.nm||up, sleeve:(isF?'net':sl), kind:(isF?'投資信託':(sl==='net'?'ETF':'個別')),
+                    ccy:(isF?'JPY':(d.ccy||'USD')), bd:bd, sh:sh, bpx:px||0, npx:px||0, v:0};
+  if(isF) row.navPer=(+d.navPer>0)?+d.navPer:10000;
   if(jpy>0) row.bjpy=Math.round(jpy);
   if(lot) row.bdLots=[lot];
   P.positions.push(row);
  }
  persist(); render();
- const now=(P.positions.find(x=>String(x.t||'').toUpperCase()===up)||{}).sh;
- return {ok:true, msg:t+' を +'+sh+'株（保有 '+now+'株）'+(warn?'　⚠ '+warn:''), sh:now};
+ const rw=P.positions.find(x=>String(x.t||'').toUpperCase()===up)||{}, now=rw.sh, u=pfUnit(rw);
+ return {ok:true, msg:t+' を +'+pfNum(sh)+u+'（保有 '+pfNum(now)+u+'）'+(warn?'　⚠ '+warn:''), sh:now};
 }
 
 /* ---------- 一部売却（2026-09-23新設・ユーザー「新規で買付や売却がない」）
@@ -820,8 +835,9 @@ function pfSellShares(d){
  if(idx<0) return {ok:false, msg:t+' は保有にありません'};
  const p=P.positions[idx], old=+p.sh||0;
  if(!(sh>0)) return {ok:false, msg:'株数が0以下'};
- if(!(old>0)) return {ok:false, msg:t+' は株数が未記録（金額だけの行）——✎編集で直してください'};
- if(sh>old) return {ok:false, msg:t+' の保有は '+old+'株です（'+sh+'株は売れない）'};
+ const u=pfUnit(p);
+ if(!(old>0)) return {ok:false, msg:t+' は'+(u==='口'?'口数':'株数')+'が未記録（金額だけの行）——✎編集で直してください'};
+ if(sh>old) return {ok:false, msg:t+' の保有は '+pfNum(old)+u+'です（'+pfNum(sh)+u+'は売れない）'};
  const {_v,...raw}=p;
  const soldPart=Object.assign({},raw,{sh:sh});
  const bj=+p.bjpy||0;
@@ -836,10 +852,10 @@ function pfSellShares(d){
   p.sh=old-sh;
   if(bj>0) p.bjpy=Math.round(bj*(old-sh)/old);
   /* ⚠ bdLots は按分しない（どのロットを売ったかは画面から判らない）。note に残し、Claude が反映時に直す */
-  p.note=((p.note||'')+'　'+date+' '+sh+'株売却（門で記録）').trim();
+  p.note=((p.note||'')+'　'+date+' '+pfNum(sh)+u+'売却（門で記録）').trim();
  }
  persist(); render();
- return {ok:true, msg:t+' を −'+sh+'株'+(sh>=old?'（全株・保有から外した）':'（残り '+(old-sh)+'株）'), sh:Math.max(0,old-sh)};
+ return {ok:true, msg:t+' を −'+pfNum(sh)+u+(sh>=old?'（全'+(u==='口'?'口':'株')+'・保有から外した）':'（残り '+pfNum(old-sh)+u+'）'), sh:Math.max(0,old-sh)};
 }
 window.addEventListener('message',function(e){
  const d=e&&e.data; if(!d||(d.type!=='ccfPfBuy'&&d.type!=='ccfPfSell'))return;

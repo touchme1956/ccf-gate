@@ -62,15 +62,19 @@ const yenOf = s => +String(s).replace(/[¥,\s]/g, '');
     if (packs) { await pg.evaluate(() => ccfImportAllPacks()); await pg.waitForTimeout(1500); }
   };
   // 入金額を入れて買付順位を描き直し、注文書の数字を読む（表示層の数字＝人が見て発注する数字）
-  const plan = async (yen) => pg.evaluate(async y => {
+  const plan = async (yen) => pg.evaluate(async ([y, ovt]) => {
     localStorage.setItem('pf:monthly_total', String(y));
     showPage(5);
     await new Promise(r => setTimeout(r, 2600));
     const sp = ccfSleeveSplit();
     const txt = (document.getElementById('pg5') || document.body).innerText;
+    // ◈ ETF の節の、その本の行だけ（「ETFの門」の札があるのは節の行だけ）。2026-10-05: 旧の正規表現は 400字の窓で
+    //   iFreeNEXT の行の「うち QQQM 15.6%」と「今月 買う」をつないで、QQQM が買われていなくても通っていた
+    const sec = [...document.querySelectorAll('#pg5 .led.planrow')].filter(e => { const c = e.querySelector('.bctl');
+      return c && c.dataset.t === ovt && /ETFの門/.test(e.innerText); });
     return { net: sp ? sp.net : null, castle: sp ? sp.castle : null, over: JSON.parse(JSON.stringify(window.__ccfNetOver || {})),
-             txt };
-  }, yen);
+             txt, secBuy: sec.length ? /今月 買う/.test(sec[0].innerText) : null };
+  }, [yen, OVT]);
   // 注文書の ETF の部分だけを切り出す（見出しだけの行「◈ ETF」から、行頭が「合計」の行まで）
   //   ⚠ 「◈ ETFの門 ↗」（ページ上部のリンク）や割り方の行の「袖の合計で測るなら」に引っかからないよう、行単位で探す
   const etfBlock = t => { const m = t.match(/\n◈ ETF\n([\s\S]*?\n合計[^\n]*)/); return m ? m[1] : ''; };
@@ -83,7 +87,10 @@ const yenOf = s => +String(s).replace(/[¥,\s]/g, '');
 
   // ⚠ 台帳が空だと買付順位は早い道（ccfMonthPlanBox([])・ETF の行なし）を通るので、**全部の場面で全パックを取り込む**
   //   （実際の門は台帳が入っている。空の台帳で ETF の注文書が出ないのは今回の変更と無関係の既存の挙動）
-  const total = t => { const m = t.match(/合計 約¥([\d,]+)（個別 ¥([\d,]+)／ETF ¥([\d,]+)）(?:／残り¥([\d,]+))?/)
+  // ★割り方 'cat'（2026-10-05〜・区分の比率が最優先）の合計の行は「（個別株 ¥…／ETF ¥…／投資信託 ¥…）」——3区分の形も読む
+  const total = t => { const c = t.match(/合計 約¥([\d,]+)（個別株 ¥([\d,]+)／ETF ¥([\d,]+)／投資信託 ¥([\d,]+)）(?:／残り¥([\d,]+))?/);
+    if (c) return { all: yenOf(c[1]), rest: c[5] ? yenOf(c[5]) : 0, line: c[0] };
+    const m = t.match(/合計 約¥([\d,]+)（個別 ¥([\d,]+)／ETF ¥([\d,]+)）(?:／残り¥([\d,]+))?/)
                        || t.match(/合計 ¥([\d,]+)(?:／残り¥([\d,]+))?/);
     if (!m) return null; return m.length > 4 ? { all: yenOf(m[1]), rest: m[4] ? yenOf(m[4]) : 0, line: m[0] } : { all: yenOf(m[1]), rest: m[2] ? yenOf(m[2]) : 0, line: m[0] }; };
 
@@ -99,7 +106,7 @@ const yenOf = s => +String(s).replace(/[¥,\s]/g, '');
   ok(!!orow && qq > 0 && Math.abs(orow.sh - orow.over / qq) < 1 && orow.cost <= orow.over && orow.over - orow.cost < qq + 1, `① 株数＝超えた額÷1株の円 の切り捨て（${orow ? orow.over : '?'}÷${qq ? Math.round(qq) : '?'}）`);
   const ov = p.over[OVT];
   ok(!!ov && orow && ov.sh === orow.sh && Math.abs(ov.cost - orow.cost) <= 1, '③ 注文書の数字と window.__ccfNetOver が一致');
-  ok(new RegExp(OVT+'[\\s\\S]{0,400}?今月 買う').test(p.txt) && !/つみたて枠/.test(p.txt), `③ ◈ ETF の節の ${OVT} が「今月 買う」と出る（つみたて枠の文言は 2026-09-29 に撤去）`);
+  ok(p.secBuy === true && !/つみたて枠/.test(p.txt), `③ ◈ ETF の節の ${OVT} の行が「今月 買う」と出る（${p.secBuy === null ? '行が無い' : p.secBuy ? '今月 買う' : '今月なし'}・つみたて枠の文言は 2026-09-29 に撤去）`);
   ok(!!tt && Math.abs(tt.all + tt.rest - 1000000) < 300, '② お金が消えない（合計＋残り ≒ 入金額・丸めの差 <300円）');
 
   // ④ 上限に届かない月（5万）
