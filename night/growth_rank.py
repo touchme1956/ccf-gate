@@ -21,7 +21,9 @@
   取りこぼさないため）。比べられる組が無い社は外さない。
 ■ 段2（候補・SEC companyfacts）
   採取器 hachimon_fetch.build_numbers をそのまま回す（二重実装しない）→ roic・nde・dilNet。
-  ②は採取器と同じ売上の系列（hachimon_fetch.series・会計年度）で測る。株数は dei の表紙の最新。
+  ②は**最新の年次報告の比較の列**（同じ提出の3年分＝同じ基準）を先に使い、無ければ採取器の売上の系列（hachimon_fetch.series・会計年度）。
+  系列と1pt超食い違えば列を採り、系列の値を series に残す（2026-10-05: APP は Apps 事業の売却で系列が売却前の連結売上を割っていた
+  ＝系列 29.2% vs 列 72.5%）。株数は dei の表紙の最新。
   キャッシュ out/_growth_cache/{CIK}.json（gitignore・20日で取り直す）
 ■ 段3
   時価総額: out/growth_mcap.json（取得日つき）→ 無ければ out/dashboard.json の株価 × 表紙の株数。
@@ -264,27 +266,55 @@ def dil_alt(facts):
     return None, '加重平均株数が年次報告に無い（IFRS の会社など）'
 
 
-def rev_alt(facts):
-    """売上の2年の伸び（年率%）を**最新の年次報告の比較の列**（同じ提出の3年分）から測る——会計基準の切替
-    （IFRS→米国基準）や分社で採取器の系列が2年しか無い社の代わり（実測 CLS・SNDK）。ドル建ての米国基準のタグだけ。"""
+def rev_same(facts):
+    """売上の伸びを**最新の年次報告の比較の列**（同じ提出の3年分）から測る——同じ提出の中は全部の列に同じ組み替え
+    （非継続事業・会計方針の変更）が掛かっている＝基準が揃う。採取器の系列は年ごとに別の提出から値を拾うので、
+    事業を売った社では売却前の連結の年と売却後の継続事業の年を割ってしまう（実測 2026-10-05 APP: Apps 事業を
+    2025-06 に売却 → 系列の2年は 2023 連結 32.8億$ → 2025 継続 54.8億$ で 29.2%、同じ提出の列なら 18.4億$ → 54.8億$ で 72.5%）。
+    タグは『最新の提出が一番新しいもの』を採る（改称前の古いタグの古い提出の列を拾わない）。ドル建ての米国基準のタグだけ。
+    返り値 {'g1','g2','y0','src'}（測れないときは {'why'}）。"""
     us = (facts.get('facts') or {}).get('us-gaap') or {}
-    for tag in H.TAGS['rev']:
+    best = None
+    for i, tag in enumerate(H.TAGS['rev']):
         units = ((us.get(tag) or {}).get('units') or {}).get('USD') or []
         ann = [x for x in units if x.get('form') in ('10-K', '10-K/A', '20-F', '40-F') and x.get('start') and x.get('end')
                and 330 <= _days(x['start'], x['end']) <= 380 and (x.get('val') or 0) > 0]
         if not ann:
             continue
-        last = max(ann, key=lambda x: (x.get('filed') or '', x.get('end') or ''))
-        cols = sorted({x['end']: x['val'] for x in ann if x.get('accn') == last.get('accn')}.items())
-        if len(cols) < 3:
-            continue
-        (e0, v0), (e1, v1) = cols[-3], cols[-1]
+        last = max(ann, key=lambda x: (x.get('end') or '', x.get('filed') or ''))
+        key = (last.get('end') or '', last.get('filed') or '', -i)
+        if best is None or key > best[0]:
+            best = (key, tag, last, ann)
+    if not best:
+        return {'why': '米国基準・ドルの年次の売上が無い（IFRS の会社など）'}
+    _, tag, last, ann = best
+    cols = sorted({x['end']: x['val'] for x in ann if x.get('accn') == last.get('accn')}.items())
+    if len(cols) < 2:
+        return {'why': f'最新の年次報告（{last.get("form")} {last.get("filed")}）に比較の列が無い'}
+    out = {'y0': int(cols[-1][0][:4])}
+    (e1, v1) = cols[-1]
+    e_1, v_1 = cols[-2]
+    y1 = _days(e_1, e1) / 365.25
+    if 0.9 <= y1 <= 1.1:
+        out['g1'] = round(((v1 / v_1) ** (1 / y1) - 1) * 100, 1)
+    if len(cols) >= 3:
+        e0, v0 = cols[-3]
         yrs = _days(e0, e1) / 365.25
-        if yrs < 1.8:
-            continue
-        return round(((v1 / v0) ** (1 / yrs) - 1) * 100, 1), (f"{tag}（{last.get('form')} {last.get('filed')}・{e0} {v0 / 1e9:,.2f}十億$ → "
-                                                              f"{e1} {v1 / 1e9:,.2f}十億$・同じ提出の比較の列）"), int(e1[:4])
-    return None, '年次報告の比較の列が3年そろわない', None
+        if yrs >= 1.8:
+            out['g2'] = round(((v1 / v0) ** (1 / yrs) - 1) * 100, 1)
+            out['src'] = (f"{tag}（{last.get('form')} {last.get('filed')}・{e0} {v0 / 1e9:,.2f}十億$ → "
+                          f"{e1} {v1 / 1e9:,.2f}十億$・同じ提出の比較の列）")
+    if 'src' not in out:
+        out['src'] = f"{tag}（{last.get('form')} {last.get('filed')}・{e_1} {v_1 / 1e9:,.2f}十億$ → {e1} {v1 / 1e9:,.2f}十億$・同じ提出の比較の列は2年分）"
+    return out
+
+
+def rev_alt(facts):
+    """売上の2年の伸び（年率%）を最新の年次報告の比較の列から——rev_same の2年の値（採取器の系列が2年しか無い社の代わり・実測 CLS・SNDK）。"""
+    o = rev_same(facts)
+    if o.get('g2') is None:
+        return None, o.get('why') or '年次報告の比較の列が3年そろわない', None
+    return o['g2'], o['src'], o['y0']
 
 
 def acq_strength(c):
@@ -361,7 +391,9 @@ def stage2_one(c):
         # 2026-10-05 に足した欄（加重平均株数の伸び）を持たない古いキャッシュは取り直す
         need_dil = 'dil_alt' not in old and old.get('dilNet') is None
         need_g2 = 'g2_alt' not in old and old.get('g2') is None and old.get('rev0')
-        if not (need_dil or need_g2) or not FETCH or old.get('err'):
+        # 同じ提出の比較の列（rev_same・2026-10-05 夜に足した）を持たない古いキャッシュは取り直す
+        need_same = 'rev_same' not in old and old.get('rev0')
+        if not (need_dil or need_g2 or need_same) or not FETCH or old.get('err'):
             return old
     if not FETCH:
         return {'cik': c, 'err': 'キャッシュ無し（--no-fetch）'}
@@ -396,6 +428,7 @@ def stage2_one(c):
     sh, end = latest_dei_shares(facts)
     rec['shares'], rec['shares_end'] = sh, end
     rec['dil_alt'], rec['dil_alt_src'] = dil_alt(facts)
+    rec['rev_same'] = rev_same(facts)
     if rec.get('g2') is None:
         rec['g2_alt'], rec['g2_alt_src'], rec['g2_alt_y'] = rev_alt(facts)
     json.dump(rec, open(fn, 'w'), ensure_ascii=False)
@@ -643,6 +676,23 @@ def main():
             rec['g2'] = rec['g2_alt']
             rec['rev_y0'] = rec.get('g2_alt_y') or rec.get('rev_y0')
             r['fill']['g2'] = '売上 ' + str(rec.get('g2_alt_src') or '')
+        # ②と直近1年は同じ提出の比較の列を先に使う（基準が揃う）。系列と1pt超食い違えば列を採り、系列の値を残す
+        rsm = rec.get('rev_same') or {}
+        if rsm.get('y0') and (rec.get('rev_y0') is None or rsm['y0'] >= rec['rev_y0']):
+            for k in ('g2', 'g1'):
+                v = rsm.get(k)
+                if not isinstance(v, (int, float)):
+                    continue
+                sv = rec.get(k)
+                if sv is None or abs(sv - v) > 1.0:
+                    if sv is not None:
+                        r.setdefault('series', {})[k] = sv
+                        r.setdefault('basis', []).append(f"{'②直近2年' if k == 'g2' else '直近1年'}: 系列 {sv}% と同じ提出の列 {v}% が食い違う（組み替え〔事業の売却・会計方針の変更〕の疑い）＝列を採った")
+                    rec[k] = v
+                    if k == 'g2':
+                        r['fill']['g2'] = '売上 ' + str(rsm.get('src') or '')
+            if isinstance(rsm.get('g2'), (int, float)):
+                rec['rev_y0'] = rsm['y0']
         if rec.get('dilNet') is None and isinstance(rec.get('dil_alt'), (int, float)):
             rec['dilNet'] = rec['dil_alt']
             r['fill']['dilNet'] = '加重平均株数 ' + str(rec.get('dil_alt_src') or '')
@@ -746,12 +796,13 @@ def main():
         'strict': strict,
         'etf': {'asof': etf_asof, 'used': etf_used},
         'counts': {'段2で測った社': len(rows), '②を満たす': len(gate2), 'A 全条件': len(A), 'B ②③④は満たす（①が足りない・予想なし）': len(B),
-                   'C ②③④の1つだけ外れる・測れない': len(C), 'D 参考（大型の高成長・③④の2つ以上で外れる）': len(D)},
+                   'C ②③④の1つだけ外れる・測れない': len(C), 'D 参考（大型の高成長・③④の2つ以上で外れる）': len(D),
+                   '②で系列と同じ提出の列が食い違った社（列を採った）': sum(1 for r in rows if (r.get('series') or {}).get('g2') is not None)},
         'A': [r['t'] for r in A], 'B': [r['t'] for r in B], 'C': [r['t'] for r in C], 'D': [r['t'] for r in D], 'av_next': av_next,
         # 一本の並び（A→B→C→D の順・各段の中は来期の売上の伸びの予想の大きい順、予想が無い社は直近2年の伸びの順で後ろ）
         'ranking': [dict(rank=i + 1, tier=tier, t=r['t'], name=r.get('name'), fwd=r['fwd'], g2=r.get('g2'), roic=r.get('roic'),
                          nde=r.get('nde'), dilNet=r.get('dilNet'), mcap=r['mcap'], etf_pct=r['etf_pct'],
-                         out=k234(r), unk=u234(r), now=r.get('now'), fin=r.get('fin'))
+                         out=k234(r), unk=u234(r), now=r.get('now'), fin=r.get('fin'), g2_series=(r.get('series') or {}).get('g2'))
                     for i, (tier, r) in enumerate([('A', x) for x in A] + [('B', x) for x in B] + [('C', x) for x in C] + [('D', x) for x in D])],
         # rows は②（直近2年の売上 ≥15%/年）を満たす社だけ——全社の測定値は out/_growth_cache/（gitignore）にある
         'rows': sorted([r for r in rows if g2ok(r)], key=lambda r: (-(r.get('g2') or -999))),
@@ -784,7 +835,8 @@ def main():
                     f"2年{('%.1f%%' % r['g2']) if r.get('g2') is not None else '—':>7} ROIC{r.get('roic', '—')!s:>6} nde{r.get('nde', '—')!s:>6} "
                     f"株数{r.get('dilNet', '—')!s:>6} 時価{('%.0f' % r['mcap']) if r['mcap'] else '—':>6} ETF{r['etf_pct']:>5.2f}"
                     + (f"  外れ: {'・'.join(k234(r))}" if k234(r) else '') + (f"  測れない: {'・'.join(u234(r))}" if u234(r) else '')
-                    + (f"  [今: {r['now']}]" if r.get('now') else ''))
+                    + (f"  [今: {r['now']}]" if r.get('now') else '')
+                    + (f"  ⚠基準: 系列の2年 {r['series']['g2']}% → 同じ提出の列" if (r.get('series') or {}).get('g2') is not None else ''))
         print(f"\n■ {json.dumps(out['counts'], ensure_ascii=False)}")
         print('\n■ A 全条件（①の大きい順）'); [print('  ' + line(r)) for r in A]
         print('\n■ B ②③④は満たす（①が20%未満・予想なし）'); [print('  ' + line(r)) for r in B[:40]]
