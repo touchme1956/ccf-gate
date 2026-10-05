@@ -145,7 +145,7 @@ def collect():
     todo = [c for c in need if not os.path.exists(os.path.join(CACHE, '%010d.json' % c))]
     print(f'社 {len(need)}（未取得 {len(todo)}）／CIK不明 { {y: len(v) for y, v in unmapped.items()} }', flush=True)
     done = 0
-    with cf.ThreadPoolExecutor(max_workers=8) as ex:
+    with cf.ThreadPoolExecutor(max_workers=6) as ex:
         futs = {ex.submit(fetch, mod, c): c for c in todo}
         for fu in cf.as_completed(futs):
             c = futs[fu]
@@ -154,6 +154,7 @@ def collect():
                 print('取得失敗（次回また取りに行く）:', c, flush=True)
                 continue
             rec = {'cik': c, 'items': {}}
+            f = None
             for t, y in need[c]:
                 key = '%s|%d' % (t, y)
                 if not facts:
@@ -178,6 +179,11 @@ def collect():
                 rec['items'][key] = {'rows': [dict(r) for r in mod._CAPTURE], 'ltms': lt,
                                      'machine_roic': (ev or {}).get('roic') if isinstance(ev, dict) else None}
             json.dump(rec, open(os.path.join(CACHE, '%010d.json' % c), 'w'))
+            # 取り終えた companyfacts を手放す（Future が結果を握ったままだと全社分がメモリに残り、
+            # 2026-10-05 の初回は約750社目で黙って落ちた＝強制終了でトレースバックも出なかった）
+            futs.pop(fu, None)
+            fu._result = None
+            del facts, f
             done += 1
             if done % 50 == 0:
                 print(f'  {done}/{len(todo)}', flush=True)
