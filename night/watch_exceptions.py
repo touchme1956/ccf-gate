@@ -249,7 +249,16 @@ def main():
             targets.append((t, 'gate_exceptions.json',
                             '按分・特別枠に入っている門外例外' + (f"（{it.get('kind')}）" if it.get('kind') else '')))
     if not targets:
-        print('■ 門外例外は登録されていない（todo_list.json の gate_exception_* に tickers を持たせる）')
+        # ★2026-10-05: 見張る社が0になっても**空の結果を書く**（成長期待枠をやめて weight 0 になった日に発覚）。
+        #   書かずに戻ると out/exception_watch.json に古い行（やめた社の出口条件）が残り、asof も止まって
+        #   回転盤（ops_status の excwatch・四半期）が100日後に『停止疑い』と鳴る＝回っているのに止まって見える。
+        print('■ 見張る門外例外は無い（按分・特別枠に入る社も、未完了の gate_exception_* の tickers も無い）')
+        json.dump({'generated': time.strftime('%Y-%m-%d'), 'asof': time.strftime('%Y-%m-%d'),
+                   'line': LINE, 'n': 0,
+                   'note': '見張る門外例外は無い（gate_exceptions.json の按分・特別枠に入る社が0社で、'
+                           'todo_list.json の未完了の gate_exception_* も tickers を持たない）。表示専用・判定には使わない',
+                   'rows': []}, open(OUT, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+        print(f'→ {OUT}（空）')
         return 0
 
     tk = http("https://www.sec.gov/files/company_tickers.json")

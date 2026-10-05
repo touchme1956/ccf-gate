@@ -6,7 +6,8 @@
 自分のお金のうち、その二つの業種にどれだけ乗っているかを出す。方法は out/industry_peak_prereg.json の lookthrough_method。
 
   今の保有 … state.json の pf:portfolio（個別）と portfolio.json（ETF）を night/lookthrough.py でそのまま読む
-  目標の姿 … portfolio.json の target（個別＝席〔out/score_all.json の buy〕＋按分に入る門外例外を等分／ETF＝ami_weights）
+  目標の姿 … portfolio.json の target（個別＝席〔out/score_all.json の buy〕＋按分に入る門外例外を castle_weighting どおりに分ける
+             〔equal＝等分／rank＝席の順位の相対の重み castle_rank_weights・v9.9.198〕・特別枠〔weight_pct〕は先に取る／ETF＝ami_weights）
              iFreeNEXT NASDAQ100（IFREE-NDX）は同じ指数の QQQ の中身で代える
   業種    … SEC EDGAR の SIC → French の Siccodes49（100年のデータと同じ物差し）
 
@@ -66,13 +67,33 @@ def target_mix(prof, same=None):
     pf = jload(os.path.join(BASE, 'portfolio.json'), {})
     tg = pf.get('target') or {}
     castle_pct = tg.get('shiro_castle_pct') or 0
-    seats = [r['t'] for r in jload(os.path.join(BASE, 'out', 'score_all.json'), []) if r.get('buy')]
-    ex = [x.get('t') for x in (jload(os.path.join(BASE, 'gate_exceptions.json'), {}) or {}).get('items', [])
-          if x.get('in_castle_split')]
+    # 席の順＝Ωの降順（門の ccfAllocTop・🛒買付順位の行の順と同じ）。rank の重みはこの順で付く
+    seats = [r['t'] for r in sorted((r for r in jload(os.path.join(BASE, 'out', 'score_all.json'), []) if r.get('buy')),
+                                    key=lambda r: -(r.get('s') or 0))]
+    items = (jload(os.path.join(BASE, 'gate_exceptions.json'), {}) or {}).get('items', [])
+    ex = [x.get('t') for x in items if x.get('in_castle_split')]
+    # 特別枠（in_castle_split:false ∧ weight_pct>0）は個別の内側から先に取る＝門の exFixed と同じ（2026-10-05 の成長期待枠がこの形だった）
+    special = {x.get('t'): (x.get('weight_pct') or 0) / 100 for x in items
+               if not x.get('in_castle_split') and (x.get('weight_pct') or 0) > 0}
+    city = max(0.0, castle_pct / 100 - sum(special.values()))
     names = seats + [t for t in ex if t not in seats]
-    if tg.get('castle_weighting') != 'equal':
-        raise SystemExit(f"castle_weighting={tg.get('castle_weighting')!r}: 等分以外の按分はこの道具では組んでいない")
-    mix = {t: castle_pct / 100 / len(names) for t in names} if names else {}
+    wmode = tg.get('castle_weighting')
+    if wmode == 'equal':
+        mix = {t: city / len(names) for t in names} if names else {}
+    elif wmode == 'rank':
+        U = tg.get('castle_rank_weights') or []
+        if not U or any(not isinstance(u, (int, float)) or u <= 0 for u in U):
+            raise SystemExit(f'castle_rank_weights={U!r}: 席の順位の重みが読めない（門は均等へ倒すが、この道具は止まる）')
+        unit = {t: (U[i] if i < len(U) else U[-1]) for i, t in enumerate(seats)}
+        unit.update({t: U[-1] for t in names if t not in unit})      # 按分に入る門外例外は最後の重み（門と同じ）
+        us = sum(unit[t] for t in names)
+        mix = {t: city * unit[t] / us for t in names} if names else {}
+    else:
+        raise SystemExit(f"castle_weighting={wmode!r}: equal と rank 以外の按分はこの道具では組んでいない")
+    for t, w in special.items():
+        mix[t] = mix.get(t, 0) + w
+        if t not in names:
+            names = names + [t]
     etf = {}
     for t, w in (tg.get('ami_weights') or {}).items():
         if w:
@@ -144,8 +165,14 @@ def main():
 
     now = breakdown(c_now, n_now, prof, sic, f49, f'今の保有（個別 {c_asof}・ETF {n_asof}）')
     T = 1_000_000
+    # 見出しはデータから組む（2026-10-05: 手書きの『等分／iFreeNEXT 60・SMH 20』が 10-01 の配合変更と v9.9.198 の順位の重みに置き去りになっていた）
+    tg = (jload(os.path.join(BASE, 'portfolio.json'), {}) or {}).get('target') or {}
+    wtxt = {'equal': '等分', 'rank': '席の順位の重み'}.get(tg.get('castle_weighting'), str(tg.get('castle_weighting')))
+    etxt = '・'.join(f'{k} {v:g}' for k, v in (tg.get('ami_weights') or {}).items() if v)
     tgt = breakdown({t: w * T for t, w in t_castle.items()}, {e: w * T for e, w in t_etf.items()}, prof, sic, f49,
-                    '目標の姿（個別20%＝' + '・'.join(names) + ' を等分／ETF80%＝iFreeNEXT NASDAQ100 60〔QQQ の中身〕・SMH 20）')
+                    f'目標の姿（個別{sum(t_castle.values()) * 100:g}%＝'
+                    + '・'.join(f'{t} {t_castle[t] * 100:.2f}%' for t in names) + f'〔{wtxt}〕'
+                    + f'／ETF{sum(t_etf.values()) * 100:g}%＝{etxt}〔IFREE-NDX は QQQ の中身で代える〕）')
     # 事前登録は iFreeNEXT を QQQ の中身で代えると決めた。QQQM（同じ指数・中身の日付が1か月新しい）で代えた場合も並べる
     q_castle, q_etf, _ = target_mix(prof, {'IFREE-NDX': 'QQQM'})
     tq = breakdown({t: w * T for t, w in q_castle.items()}, {e: w * T for e, w in q_etf.items()}, prof, sic, f49, 'QQQM')

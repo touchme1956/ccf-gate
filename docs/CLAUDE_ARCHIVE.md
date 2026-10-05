@@ -17738,3 +17738,33 @@ dom・irr・moatW は私の独立読みと一致。『』の引用は CLS 71・A
 **やめ方**: 1社やめるならその行の `weight_pct` を0へ（売らない・行と経緯は残す）。朝の2社×2.5%へ戻すなら VRT・ANET を2.5・CLS・APP を0。
 
 **再現**: `node night/shadow_seats.js --seats 4` ／ `node night/score_all.js --only CLS,APP` ／ `python3 night/validate_packs.py CLS APP` ／ `python3 night/growth_rank.py --strict --no-fetch`
+
+## 成長期待枠をやめ、席を4→10にして上位5社を厚くした（v9.9.198・2026-10-05・ユーザー明示指示「やはり成長枠はいらない。変わりに門を10銘柄にして。足りない1社を候補の名から基準に足るものがないかもう一度探して。上位5社は比率を高めにして。」）——10社目は正当に足せる社が無く、席は9社で埋まる
+
+**何を変えたか**
+- **成長期待枠をやめた**: `gate_exceptions.json` の CLS・VRT・ANET・APP を `weight_pct` 0（in_castle_split:false のまま・`ended`・decided に指示を引用）。4社とも保有ゼロ＝売りなし。行と経緯は残す（復帰は weight_pct を戻すだけ）。todo の `gate_exception_growth_2026_10` は done（見張りも終わり）。
+- **席**: index.html の `var CCF_SEATS` 4→10。
+- **重み**: `portfolio.json` の `target.castle_weighting`='rank' と `target.castle_rank_weights`=[5,5,5,5,5,3,3,3,3,3]（席の1位から順の相対の重み・個別の按分枠へ正規化＝固定%ではない）。門の単一実装 `ccfRankWeights`。席10が埋まれば上位5社 2.5%・6〜10位 1.5%（個別20%）。席が埋まらない月は先頭の n 個だけで正規化（今日は9社＝上位5社 2.70%・6〜9位 1.62%）。足りない順位と按分に入る門外例外は最後の重み。重みが読めなければ均等へ倒して名指し（rankMiss）。
+  - **比 5:3 は私の既定**（指示は「高めに」で比は未指定）。席の線の近くの Ω の差は雑音の中（:17522）で、Ωの順位がリターンを分けるという測定は無い → 強く傾けない控えめな段差にした。3:1 にするなら [3,3,3,3,3,1,1,1,1,1]（上位5社 3%・6〜10位 1%）。
+- **注文書の同点の鍵**: `ccfWholeSharePlan` の並び「不足÷目標の大きい順 → 同じなら1株の安い順」の間に「**目標の大きい順**」を足した。保有ゼロの社は不足÷目標がそろって1（同点）になるので、旧のままだと1か月目は6〜9位の安い3社（KLAC・GOOGL・SAP）だけを買っていた。足した後は LRCX・MCO・KLAC。12か月後の姿は両方で同じ（価格一定・月17万・scratchpad で両方を回して確認）。目標が均等なら従来と同じ。
+- **道具**: `night/industry_exposure.py` が rank を読む（旧は equal 以外で SystemExit＝月次の ops で落ちるところだった）・特別枠（weight_pct）を先に取る（旧は成長期待枠を数えていなかった）・目標の見出しをデータから組む（手書きの『等分／iFreeNEXT 60・SMH 20』が 10-01 の配合変更から置き去りだった。計算は正しかった）。`night/watch_exceptions.py` は見張る社が0でも空の結果を書く（書かずに戻ると古い行が残り、asof が止まって回転盤 excwatch が100日後に停止疑いと鳴る）。`night/shadow_seats.js` は社ごとの目標％を出す（旧は『各X%』＝均等の前提）。門は `window.__ccfCastleW` を公開（判定は不変）。
+- **不変**: Ω・採点式・四関門・堀の関門70・売却規律S1/S2/S3・個別20%/ETF80%・ETFの中の重み。
+
+**10社目の探索（結論: 正当に足せる社は無い）**
+- 四関門の通過は**9社**（CW 86.5・LRCX 84.0・MSFT 83.4・ASML 82.5・MCO 82.3・IDXX 82.2・KLAC 81.8・GOOGL 78.8・SAP 75.8）。席10なら全員が入り、10席目は空く。通過が10社を超えたら Ω の上位10社だけが入る（従来どおり）。
+- **VRSK（Ω83.9・堀91.1）**: 未完了の重大事象（AccuLynx 23.5億$・完了後のれんの55.8%が新規）。デラウェア州衡平法裁判所が 2026-08-07 に完了へ進むよう命令 → VRSK が 08-18 に州最高裁へ上訴。10-05 時点で SEC の提出は 09-08 の8-K（人事）以降に8-Kなし＝未完了のまま。完了または解除の確定でパックを作り直せば戻りうる（Ωは3位相当）。
+- **RBC（Ω74.9・堀76.1）**: 0.1pt 足りない。主因は成長の軌道の減点（cagrT −27.33pt）。2021年の Dodge 買収で FY2022・FY2023 の売上が +54.8%・+55.8% になり、前の3年の伸びが膨らんだ。cagrT の定義は買収を除かない（歴史検証の accel と同一・:3728／:3677）ので、ここを直すのは規約の変更＝明示指示の領分。`node night/score_all.js --only RBC --set cagrT=0` なら Ω78.4（仮定の計測・採点は不変）。規約どおりなら FY2027 の決算（10-K は例年5月）で買収の年が窓から外れ、前の3年の年次の伸びの中央値が 6.2% に下がって B案が正になる＝この減点はほぼ確実に消える。
+- **ADBE（Ω83.7・堀68.8）**: 堀の道は dur 55→75 だけで、2026-09-23 の再審査が原本（10-K の『limited barriers to entry』・ブランドとカテゴリーの首位を挙げる記述）で55と決めた。正当な道なし。
+- **3923（Ω83.1・堀68.9）**: 残る道は irr→85 だけ（SaaS は顧客側の再認定の型に当たらない）。
+- **HWM（76.5・堀66.0）・RELX（76.2・66.8）**: dom 50 は構造の記述で確定（HWM『多くの製品は競合が作れる』／RELX は上位N社≥80%の構造なし）。
+- **CDNS（73.1・堀73.6）** は Ω 1.9pt 不足。BR（71.5）・FISV（72.4・警告）・IRMD（72.4・堀69.6）・NEU（72.8・69.5）も届かない。BR の人の拒否権は Ω が75を割ったので今は効いていない。
+- **成長期待枠の候補**（CLS 45.6・VRT 62.6・ANET 65.5・APP 72.4・MELI 15.7・MPWR 53.9・未審査の FIX・SNDK・NBIS）: 堀の重み（dom .30・irr .45・rep .10・dur .06・moatW .09）では、他の3本が最上段でも **dom50∧irr50 で 58.4／dom70∧irr50 で 64.6／dom85∧irr50 で 68.5／dom50∧irr70 で 68.0**。関門70に届くには irr≥70（名指しできる乗り換えの機構）と dom≥70（上位3社≥80%）の両方、または irr 85、または dom 100（irr50 でも 71.1）が要る。審査済みの6社はすべて irr 50。FIX は10-Kが業界を highly fragmented と書き（dom 50）工事は入札、SNDK の NAND は上位3社で80%に届かずコモディティ、NBIS は赤字で ROIC がキルに当たる＝3社とも審査しても関門を通る道が無い。
+
+**今月の注文書**（実ブラウザ・全パック取込・入金17万円・保有は state.json 9/23・`night/shadow_seats.js --seats 10`）: 個別 ¥157,143＝**LRCX 1株（¥54,839）・MCO 1株（¥69,653）・KLAC 1株（¥32,650）**／ETF ¥12,800（iFreeNEXT）。CW（1位）は1株 ¥86,110 が残りに届かず来月、IDXX・GOOGL・SAP も来月、MSFT・ASML は目標超過、SMH は入金が尽きて来月。12か月（価格一定）: 個別 ¥602,246／ETF ¥1,437,655、個別の比率 38%→最大45.3%（3か月後）→34.2%（12か月後）。12か月後 CW 1株 1.9%・LRCX 2株 2.42%・MCO 2株 3.07%・IDXX 1株 1.8%・KLAC 2株 1.44%・GOOGL 1株 1.2%・SAP 2株 1.45%（MSFT 14.4%・ASML 6.5% は売らないので超過のまま）。
+**集中**: 席9社のうち半導体連鎖は3社（LRCX・ASML・KLAC＝席の33%）。目標の姿（industry_exposure）で記録の二業種 61.5%（French寄せ）・半導体の連鎖 46.6%。
+
+**検査**: score_all（投下可9社・上位10社）・check_gate_parity（Ω 376/376・投下可9社一致・pageerror 0）・check_sleeve_split（全項目・⑩ 席の順位の重みと同点の鍵を追加）・shadow_seats --seats 10・audit_docs・check_html・audit_todo・validate_state。
+
+**戻し方**: 席は `var CCF_SEATS` の1語。等分へは castle_weighting='equal'。成長期待枠は各行の weight_pct を戻す。同点の鍵は ccfWholeSharePlan の sort から `((+b.it.tw)-(+a.it.tw))||` を消す。
+
+**再現**: `NODE_PATH=$(npm root -g) node night/shadow_seats.js --seats 10` ／ `node night/score_all.js` ／ `NODE_PATH=$(npm root -g) node night/check_sleeve_split.js` ／ `node night/score_all.js --only RBC --set cagrT=0 --out /tmp/x.json`

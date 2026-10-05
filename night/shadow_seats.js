@@ -120,7 +120,8 @@ const srv = http.createServer((q, r) => {
       }
       const end = items.filter(it => it.k[0] === 'C').map(it => ({ t: label[it.k] || it.k, target_pct: +(+it.tw).toFixed(2),
         pct: +(100 * H[it.k] / TOT).toFixed(2), shares: it.jpy > 0 ? Math.round(H[it.k] / it.jpy) : null }));
-      return { seats: CCF_SEATS, buy, order_text: box ? box.innerText : null, start_pct, months, end, tot0: Math.round(cap.TOT) };
+      return { seats: CCF_SEATS, buy, order_text: box ? box.innerText : null, start_pct, months, end, tot0: Math.round(cap.TOT),
+               castle_w: window.__ccfCastleW || null };   // 門が配った目標％（席の順位の重みなど・v9.9.198）
     }, { M: MONTHLY });
     if (run.seats !== N) { bad++; console.log(`  ✗ 席 ${N}: 門の CCF_SEATS が ${run.seats}（差し替えが効いていない）`); continue; }
     // 関門が眠ったまま描いた注文書は「測れなかった」であって結果ではない（check_gate_parity と同じ・ルール7）
@@ -129,7 +130,10 @@ const srv = http.createServer((q, r) => {
     out.runs[N] = run;
     const y1 = run.months.reduce((a, x) => a + x.castle_yen, 0), e1 = run.months.reduce((a, x) => a + x.etf_yen, 0);
     const pk = run.months.reduce((a, x) => (x.castle_pct > a.castle_pct ? x : a), run.months[0]);
-    console.log(`\n■ 席 ${N}: 投下可 ${run.buy.length}社（${run.buy.join(' ')}）／目標 各${run.end[0] ? run.end[0].target_pct : '?'}%`);
+    // 目標％は社ごとに違いうる（v9.9.198 の席の順位の重み）——全社が同じときだけ「各」とまとめる
+    const tws = run.end.filter(x => x.target_pct > 0), same = tws.length && tws.every(x => x.target_pct === tws[0].target_pct);
+    const twTxt = !tws.length ? '?' : same ? `各${tws[0].target_pct}%` : tws.map(x => `${x.t} ${x.target_pct}%`).join(' / ');
+    console.log(`\n■ 席 ${N}: 投下可 ${run.buy.length}社（${run.buy.join(' ')}）／目標 ${twTxt}${run.castle_w ? `（重みの付け方 ${run.castle_w.mode}${run.castle_w.rankMiss ? '・⚠重みが読めず均等' : ''}）` : ''}`);
     console.log(`  今月  個別 ¥${run.months[0].castle_yen.toLocaleString()}（${run.months[0].castle_bought || 'なし'}） ／ ETF ¥${run.months[0].etf_yen.toLocaleString()}`);
     console.log(`  1年   個別 ¥${y1.toLocaleString()} ／ ETF ¥${e1.toLocaleString()}　個別の比率 ${run.start_pct}%（いま）→ ${run.months[0].castle_pct}%（1か月後）→ 最大 ${pk.castle_pct}%（${pk.m}か月後）→ ${run.months[11].castle_pct}%（12か月後）`);
     console.log('  12か月後の個別: ' + run.end.map(x => `${x.t} ${x.shares}株 ${x.pct}%`).join(' / '));
