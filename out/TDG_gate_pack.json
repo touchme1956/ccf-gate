@@ -29,15 +29,15 @@
  "geopol": 1,
  "nrr": 105,
  "beta": 0.906,
- "per": 33.54,
- "perF": null,
+ "per": 33.61,
+ "perF": 23.14,
  "evebit": 24.9,
- "px": 1090.38,
+ "px": 1092.66,
  "shy": null,
  "gr": null,
  "gcap": null,
- "analysts": null,
- "instOwn": null,
+ "analysts": 22,
+ "instOwn": 97.219,
  "gls": null,
  "idx": null,
  "indG": null,
@@ -118,7 +118,10 @@
    "eps": "**FY2025 希薄化後EPS = 32.08$**（SEC XBRL `EarningsPerShareDiluted`・10-K FY2025。FY2024 25.62 / FY2023 22.03 / FY2022 13.40）。**パックの 35.6 は報告値と一致しない**——採取器の割り算（純利益÷株数）由来と見られる。TDGは**債務超過(eq=neg)**で希薄化後株数 58.2百万株（`WeightedAverageNumberOfDilutedSharesOutstanding` FY2025）。⚠ **要審査**: 報告値32.08を採るのが規約（KLACで確立した作法＝報告値優先）だが、per/px との整合を審査官が確かめてから差し替えるべき（epsは compute() で使われず価格更新時の per 再計算にのみ効くので、判定への実害は無い）。今日は値を動かさず食い違いを明記する。",
    "dilNet": "**+0.2%/年（ほぼ横ばい）**。希薄化後株数は FY2022 58.2 → FY2023 57.2 → FY2024 57.8 → FY2025 58.2百万株（SEC XBRL `WeightedAverageNumberOfDilutedSharesOutstanding`）＝**3年で実質ゼロ成長**で +0.2%/年 と整合する。TDGは大規模な自社株買いと転換社債・株式報酬が拮抗する構造。機械が再現不能としたのは、同社が特別配当を自社株買いの代わりに使うため還元系タグの構成が標準形と違うため。",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 5,103,000,000 → 2023年 6,585,000,000 → 2025年 8,831,000,000。A案(端点) 直近2年CAGR 15.80% − その前3年CAGR 8.87% = +6.93pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = +2.75pt ／ 年次YoY {'2021': -6.0, '2022': 13.2, '2023': 21.3, '2024': 20.6, '2025': 11.2} → **採用 +6.93pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
-   "acqS5": "買収支出 5年ぶん合計 4928百万$ ÷ 期初総資産(2020-09-30) 18395百万$ ＝ 0.268／内訳: 2025-09-30 419百万$ / 2024-09-30 2347百万$ / 2023-09-30 762百万$ / 2022-09-30 437百万$ / 2021-09-30 963百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）"
+   "acqS5": "買収支出 5年ぶん合計 4928百万$ ÷ 期初総資産(2020-09-30) 18395百万$ ＝ 0.268／内訳: 2025-09-30 419百万$ / 2024-09-30 2347百万$ / 2023-09-30 762百万$ / 2022-09-30 437百万$ / 2021-09-30 963百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）",
+   "perF": "市場データ機械充填 2026-10-06: market_fetch/market_data.json（常識帯(1.0, 500.0)を通過）",
+   "analysts": "市場データ機械充填 2026-10-06: market_fetch/market_data.json（常識帯—を通過）",
+   "instOwn": "市場データ機械充填 2026-10-06: market_fetch/market_data.json（常識帯—を通過）"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要→市場データ手入力後に算出可",
@@ -129,10 +132,11 @@
   },
   "kenshi_z": "2026-07-20 監査: Z未入力を新旧一貫基準でXBRL補完 z=1.16",
   "market": {
-   "date": "2026-07-29",
+   "date": "2026-10-06",
    "filled": [
-    "shy",
-    "evebit"
+    "perF",
+    "analysts",
+    "instOwn"
    ],
    "src": "market_fetch/market_data.json"
   },
@@ -152,23 +156,27 @@
    "p1": "machine",
    "roic": "machine",
    "cagrT": "machine",
-   "acqS5": "machine"
+   "acqS5": "machine",
+   "perF": "market",
+   "analysts": "market",
+   "instOwn": "market"
   },
   "basis": {
    "roic": "through-cycle-med5(?年)",
    "_note": "roic/roicg がどの基準で作られているか。v9.9.72 で through-cycle(5年中央値)へ移行したが、採取器とパックが食い違う社・系列が3年未満の社には当てていないため**台帳に二つの基準が混在する**。文字列一致で見分けるのは脆いので機械可読にした"
   },
   "px": {
-   "date": "2026-10-03",
+   "date": "2026-10-06",
    "day": null,
    "ccy": "USD",
    "src": "Finnhub",
-   "px_old": 1097.24,
-   "px_new": 1090.38,
-   "pct": -0.63,
+   "px_old": 1090.38,
+   "px_new": 1092.66,
+   "pct": 0.21,
    "conv": "基準保存式 per_new = per_old × (px_new÷px_old)／shy は 1/比率",
    "fields": {
-    "per": 33.54
+    "per": 33.61,
+    "perF": 23.14
    }
   },
   "mech": {
@@ -246,6 +254,6 @@
  "roiic": 39.8,
  "roiic5": 45.9,
  "cagrT": 6.93,
- "ddate": "2026-10-03",
+ "ddate": "2026-10-06",
  "acqS5": 0.2679
 }
