@@ -109,15 +109,18 @@ const srv = http.createServer((q, r) => {
       let TOT = cap.TOT; const H = {}; items.forEach(it => H[it.k] = (+it.pos || 0) * TOT / 100);
       const start_pct = +items.filter(it => it.k[0] === 'C').reduce((a, it) => a + (+it.pos || 0), 0).toFixed(1);
       let carry = 0; const months = [];
-      // 割り方 'cat' なら区分の保有（席の外の城・目標0%のETFも含む）を区分ごとに持って回す＝門が毎月 __ccfCat を作り直すのと同じ
-      const CI = cap.catIn || null, HC = CI ? { c: CI.c.now * TOT / 100, e: CI.e.now * TOT / 100, f: CI.f.now * TOT / 100 } : null;
+      // 割り方 'cat' なら区分の保有（席の外の城も含む）を区分ごとに持って回す＝門が毎月 __ccfCat を作り直すのと同じ。
+      //   区分の鍵は門の ccfCatKeys そのもの（v9.9.201 から 個別株 c と ETF側の各本 n:{本}）。目標0%の本は区分の外で、総資産にだけ残る
+      const CI = cap.catIn || null, CK = CI ? window.ccfCatKeys(CI) : [];
+      const HC = CI ? Object.fromEntries(CK.map(k => [k, CI[k].now * TOT / 100])) : null;
+      const catNow = () => Object.assign({}, CI, { tot: TOT }, Object.fromEntries(CK.map(k => [k, Object.assign({}, CI[k], { now: 100 * HC[k] / TOT })])));
       for (let m = 1; m <= 12; m++) {
         items.forEach(it => it.pos = 100 * H[it.k] / TOT);
         const T = M + carry;
-        const P = CI ? window.__wcpOrig(items, T, TOT, { tot: TOT, c: { t: CI.c.t, now: 100 * HC.c / TOT }, e: { t: CI.e.t, now: 100 * HC.e / TOT }, f: { t: CI.f.t, now: 100 * HC.f / TOT } })
-                     : window.__wspOrig(items, T, TOT);
-        let spent = 0, cs = 0, ns = 0; const got = [];
-        if (HC) items.forEach(it => { const g = it.g || 'e', bb = P.buy[it.k], fy = P.frac[it.k]; if (bb) HC[g] += bb.cost; if (fy) HC[g] += fy; });
+        const P = CI ? window.__wcpOrig(items, T, TOT, catNow()) : window.__wspOrig(items, T, TOT);
+        let spent = 0, cs = 0, ns = 0; const got = [], cy = {};
+        if (HC) items.forEach(it => { const g = it.g, bb = P.buy[it.k], fy = P.frac[it.k]; if (HC[g] == null) return;
+          const y = (bb ? bb.cost : 0) + (fy || 0); HC[g] += y; cy[g] = (cy[g] || 0) + y; });
         items.forEach(it => {
           const bb = P.buy[it.k]; if (bb) { H[it.k] += bb.cost; spent += bb.cost; if (it.k[0] === 'C') { cs += bb.cost; got.push((label[it.k] || it.k) + '×' + bb.sh); } else { ns += bb.cost; got.push('ETF' + it.k + '×' + bb.sh); } }
           const fy = P.frac[it.k]; if (fy) { H[it.k] += fy; spent += fy; ns += fy; }
@@ -125,12 +128,15 @@ const srv = http.createServer((q, r) => {
         carry = T - spent; TOT += spent;
         const castle = HC ? HC.c : items.filter(it => it.k[0] === 'C').reduce((a, it) => a + H[it.k], 0);
         months.push(Object.assign({ m, castle_yen: Math.round(cs), etf_yen: Math.round(ns), castle_pct: +(100 * castle / TOT).toFixed(1), castle_bought: got.filter(x => !/^ETF/.test(x)).join(' ') },
-          HC ? { etf_pct: +(100 * HC.e / TOT).toFixed(1), fund_pct: +(100 * HC.f / TOT).toFixed(1), etf_bought: got.filter(x => /^ETF/.test(x)).join(' ') } : {}));
+          HC ? { cat_pct: Object.fromEntries(CK.map(k => [k, +(100 * HC[k] / TOT).toFixed(1)])),
+                 cat_yen: Object.fromEntries(CK.map(k => [k, Math.round(cy[k] || 0)])),
+                 etf_bought: got.filter(x => /^ETF/.test(x)).join(' ') } : {}));
       }
       const end = items.filter(it => it.k[0] === 'C').map(it => ({ t: label[it.k] || it.k, target_pct: +(+it.tw).toFixed(2),
         pct: +(100 * H[it.k] / TOT).toFixed(2), shares: it.jpy > 0 ? Math.round(H[it.k] / it.jpy) : null }));
       return { seats: CCF_SEATS, buy, order_text: box ? box.innerText : null, start_pct: CI ? +CI.c.now.toFixed(1) : start_pct, months, end, tot0: Math.round(cap.TOT),
-               cat_in: CI, split_mode: (typeof ccfSleeveTarget === 'function') ? ccfSleeveTarget().mode : null,
+               cat_in: CI, cat_keys: CK, cat_names: CI ? Object.fromEntries(CK.map(k => [k, (typeof ccfCatLabel === 'function') ? ccfCatLabel(CI, k, { plain: true }) : k])) : null,
+               split_mode: (typeof ccfSleeveTarget === 'function') ? ccfSleeveTarget().mode : null,
                castle_w: window.__ccfCastleW || null };   // 門が配った目標％（席の順位の重みなど・v9.9.198）
     }, { M: MONTHLY });
     if (run.seats !== N) { bad++; console.log(`  ✗ 席 ${N}: 門の CCF_SEATS が ${run.seats}（差し替えが効いていない）`); continue; }
@@ -148,12 +154,12 @@ const srv = http.createServer((q, r) => {
     console.log(`  1年   個別 ¥${y1.toLocaleString()} ／ ETF ¥${e1.toLocaleString()}　個別の比率 ${run.start_pct}%（いま）→ ${run.months[0].castle_pct}%（1か月後）→ 最大 ${pk.castle_pct}%（${pk.m}か月後）→ ${run.months[11].castle_pct}%（12か月後）`);
     console.log('  12か月後の個別: ' + run.end.map(x => `${x.t} ${x.shares}株 ${x.pct}%`).join(' / '));
     // 割り方 'cat'（区分の比率が最優先）の月は、区分の比率の推移を出す
-    if (run.cat_in && run.months[0].fund_pct != null) {
-      const ci = run.cat_in, mm = [1, 3, 6, 12].map(k => run.months[k - 1]).filter(Boolean);
-      console.log(`  区分の比率（割り方 ${run.split_mode}）: 目標 個別株${ci.c.t}% / ETF${ci.e.t}% / 投資信託${ci.f.t}%　いま ${ci.c.now.toFixed(1)} / ${ci.e.now.toFixed(1)} / ${ci.f.now.toFixed(1)}`);
-      console.log('    ' + mm.map(x => `${x.m}か月後 ${x.castle_pct} / ${x.etf_pct} / ${x.fund_pct}`).join('　'));
-      const firstC = run.months.find(x => x.castle_yen > 0), firstE = run.months.find(x => x.etf_bought);
-      console.log(`    個別株を初めて買う月: ${firstC ? firstC.m + 'か月目（' + firstC.castle_bought + '）' : '12か月のうちに無い'}／ETF: ${firstE ? firstE.m + 'か月目（' + firstE.etf_bought + '）' : '12か月のうちに無い'}`);
+    if (run.cat_in && run.months[0].cat_pct) {
+      const ci = run.cat_in, ks = run.cat_keys, nm = run.cat_names || {}, mm = [1, 3, 6, 12].map(k => run.months[k - 1]).filter(Boolean);
+      console.log(`  区分の比率（割り方 ${run.split_mode}）: 目標 ${ks.map(k => nm[k] + ' ' + ci[k].t + '%').join(' / ')}　いま ${ks.map(k => ci[k].now.toFixed(1)).join(' / ')}`);
+      console.log('    ' + mm.map(x => `${x.m}か月後 ${ks.map(k => x.cat_pct[k]).join(' / ')}`).join('　'));
+      console.log('    初めて新しいお金が入る月: ' + ks.map(k => { const f = run.months.find(x => (x.cat_yen[k] || 0) > 0);
+        return `${nm[k]} ${f ? f.m + 'か月目' + (k === 'c' ? '（' + f.castle_bought + '）' : '') : '12か月のうちに無い'}`; }).join('／'));
     }
   }
   out.pageerrors = errs;
