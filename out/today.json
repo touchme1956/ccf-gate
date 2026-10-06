@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-05",
+ "generated": "2026-10-06",
  "note": "「今日、何をすればいいか」だけを集めた表示専用の在庫。**判定には一切使わない**——Ω・四関門・売却規律・配分のどれにも触れない。期限の判定は ops_status.build() をそのまま呼ぶ（二重実装を作らない）。**blind（読めなかった入力）を必ず出す**のがこの道具の本体で、盲目のときに「異常なし」へ倒れる fail-open を画面の側で塞ぐためにある。",
  "buy": [
   "CW",
@@ -43,81 +43,57 @@
    "k": "earn:CTAS",
    "level": "today",
    "title": "決算: CTAS（2026-10-08）",
-   "why": "3日後",
+   "why": "2日後",
    "how": "発表後に python3 kessan_check.py（判定は警報のみ・株価は使わない）",
    "src": "決算カレンダー"
   }
  ],
  "month": [
   {
-   "k": "fresh:parity:本体が7日動いていない（",
-   "level": "month",
-   "title": "中身/入力が前進していない: 門と端末の一致",
-   "why": "本体が7日動いていない（期限4日）",
-   "how": "python3 night/check_freshness.py",
-   "src": "鮮度"
-  },
-  {
-   "k": "fresh:logos:本体が47日動いていない",
-   "level": "month",
-   "title": "中身/入力が前進していない: 銘柄アイコンと代表色",
-   "why": "本体が47日動いていない（期限40日）",
-   "how": "python3 night/check_freshness.py",
-   "src": "鮮度"
-  },
-  {
-   "k": "fresh:irr85hist:本体が55日動いていない",
+   "k": "fresh:irr85hist:本体が58日動いていない",
    "level": "month",
    "title": "中身/入力が前進していない: irr=85の実績台帳",
-   "why": "本体が55日動いていない（期限40日）",
+   "why": "本体が58日動いていない（期限40日）",
    "how": "python3 night/check_freshness.py",
    "src": "鮮度"
   },
   {
-   "k": "fresh:irr70mech:本体が9日動いていない（",
+   "k": "fresh:irr70mech:本体が12日動いていない",
    "level": "month",
    "title": "中身/入力が前進していない: 機構文の年次diff(irr=70)",
-   "why": "本体が9日動いていない（期限4日）",
+   "why": "本体が12日動いていない（期限4日）",
    "how": "python3 night/check_freshness.py",
    "src": "鮮度"
   },
   {
-   "k": "fresh:irr85scope:本体が53日動いていない",
+   "k": "fresh:irr85audit:本体が6日動いていない（",
    "level": "month",
-   "title": "中身/入力が前進していない: 機構の射程と認定の寿命",
-   "why": "本体が53日動いていない（期限40日）",
+   "title": "中身/入力が前進していない: irr=85の根拠監査",
+   "why": "本体が6日動いていない（期限4日）",
    "how": "python3 night/check_freshness.py",
    "src": "鮮度"
   },
   {
-   "k": "fresh:stalebs:本体が10日動いていない",
+   "k": "fresh:irr85myrule:本体が6日動いていない（",
+   "level": "month",
+   "title": "中身/入力が前進していない: irr=85をあなたの基準で採点",
+   "why": "本体が6日動いていない（期限4日）",
+   "how": "python3 night/check_freshness.py",
+   "src": "鮮度"
+  },
+  {
+   "k": "fresh:stalebs:本体が13日動いていない",
    "level": "month",
    "title": "中身/入力が前進していない: 期末後の重大事象の検査",
-   "why": "本体が10日動いていない（期限4日）",
+   "why": "本体が13日動いていない（期限4日）",
    "how": "python3 night/check_freshness.py",
    "src": "鮮度"
   },
   {
-   "k": "fresh:pending:本体が10日動いていない",
-   "level": "month",
-   "title": "中身/入力が前進していない: 未完了の重大事象の検査",
-   "why": "本体が10日動いていない（期限4日）",
-   "how": "python3 night/check_freshness.py",
-   "src": "鮮度"
-  },
-  {
-   "k": "fresh:packstale:本体が9日動いていない（",
+   "k": "fresh:packstale:本体が12日動いていない",
    "level": "month",
    "title": "中身/入力が前進していない: パックの会計年度の遅れ",
-   "why": "本体が9日動いていない（期限4日）",
-   "how": "python3 night/check_freshness.py",
-   "src": "鮮度"
-  },
-  {
-   "k": "fresh:xwatch:本体が47日動いていない",
-   "level": "month",
-   "title": "中身/入力が前進していない: X監視表(開通ライン)",
-   "why": "本体が47日動いていない（期限40日）",
+   "why": "本体が12日動いていない（期限4日）",
    "how": "python3 night/check_freshness.py",
    "src": "鮮度"
   },
@@ -156,9 +132,9 @@
   {
    "k": "kes:4828",
    "level": "month",
-   "title": "四半期点検で要審査: 4828 （空振りの可能性）",
-   "why": "要審査: 警報:誠  ※数値は自己検算で破棄（警報のみで判定）  ★パックの原本が既にこの四半期を含む（期末2026-03-31 ≥ 四半期末2026-03-31）",
-   "how": "既に審査済かを _meta.kenshi で確かめる。新規事象なら門2再審査へ",
+   "title": "四半期点検で要審査: 4828 ",
+   "why": "要審査: 警報:誠  ※数値は自己検算で破棄（警報のみで判定）",
+   "how": "⚙自動化タブの「審査」で門2再審査／night/enqueue_reaudit.py で順位を見る",
    "src": "四半期点検"
   },
   {
@@ -194,6 +170,14 @@
    "src": "四半期点検"
   },
   {
+   "k": "kes:BWXT",
+   "level": "month",
+   "title": "四半期点検で要審査: BWXT ",
+   "why": "要審査: 警報:減損（XBRL実額 GainLossOnSalesOfAssetsAndAssetImpairmentCharges $0.0M）",
+   "how": "⚙自動化タブの「審査」で門2再審査／night/enqueue_reaudit.py で順位を見る",
+   "src": "四半期点検"
+  },
+  {
    "k": "kes:CELH",
    "level": "month",
    "title": "四半期点検で要審査: CELH ",
@@ -206,6 +190,14 @@
    "level": "month",
    "title": "四半期点検で要審査: ENTG ",
    "why": "要審査: 警報:減損（XBRL実額 EquityMethodInvestmentOtherThanTemporaryImpairment $6.7M / AssetImpairmentCharges ",
+   "how": "⚙自動化タブの「審査」で門2再審査／night/enqueue_reaudit.py で順位を見る",
+   "src": "四半期点検"
+  },
+  {
+   "k": "kes:FTNT",
+   "level": "month",
+   "title": "四半期点検で要審査: FTNT ",
+   "why": "要審査: 警報:集(新規出現)  ☀吉報:吉流通（第二S字・流通の兆候→原文スニペット確認）",
    "how": "⚙自動化タブの「審査」で門2再審査／night/enqueue_reaudit.py で順位を見る",
    "src": "四半期点検"
   },
@@ -239,6 +231,14 @@
    "title": "四半期点検が不能: RELX ",
    "why": "要審査: 点検不能（10-Q/10-K系列なし＝20-F/40-F発行体の可能性。手動確認要）（採取の穴＝再審査では直らない）",
    "how": "kessan_checklist.md §C の手動確認",
+   "src": "四半期点検"
+  },
+  {
+   "k": "kes:RMD",
+   "level": "month",
+   "title": "四半期点検で要審査: RMD （空振りの可能性）",
+   "why": "要審査: 警報:減損（XBRL実額 EquityMethodInvestmentOtherThanTemporaryImpairment $  ★パックの原本が既にこの四半期を含む（期末2026-06-30 ≥ 四半期末2026-03-31）",
+   "how": "既に審査済かを _meta.kenshi で確かめる。新規事象なら門2再審査へ",
    "src": "四半期点検"
   },
   {
