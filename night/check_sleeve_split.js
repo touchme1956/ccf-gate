@@ -16,6 +16,7 @@
  *   ⑤ 比率を変えると（城50/網50）追随する＝比率を書き写していない
  *   ⑪ 割り方 'cat'（区分の比率が最優先・2026-10-05）／⑬ 区分は ETF側の各本と個別株（v9.9.201・NASDAQ100/XLK/SMH/個別株）
  *   ⑫ 実データ（state.json＋全パック）で 注文書・◈ ETF の節・上の1行・区分の比率の表が同じことを言う
+ *   ⑭ iDeCo（v9.9.202）: 自動引き落としの分は注文書で配らず、'cat' では NASDAQ100 の区分を先に買ったものとして数える
  *
  * playwright が要るので CI には入れていない。使い方: node night/check_sleeve_split.js
  */
@@ -359,6 +360,73 @@ const srv = http.createServer((q, r) => {
     ok(r12.sec.length >= 3 && !bad.length,
        `⑫ 割り方 '${m}'（実データ・入金17万）: ◈ ETF の節の「今月 買う」が注文書の円と一致（` +
        r12.sec.map(x => x.t + (x.buy ? '◯' : '—') + '¥' + (r12.OB ? (+r12.OB[x.t] || 0) : '?')).join(' ') + (bad.length ? ' ／ 食い違い ' + bad.map(x => x.t).join('・') : '') + '）');
+  }
+
+  // ⑭ iDeCo（v9.9.202・2026-10-06 ユーザー明示指示「それで入れて」）: 自動引き落としの分は注文書で配らず、
+  //    割り方 'cat' では NASDAQ100 の区分を先に買ったものとして数える（ccfCatBudget の pre）。期待値は式から作る（数字を写さない）
+  const q14 = await pg.evaluate(() => {
+    const TOT = 2490000, P = 40000, T = 140000;
+    const K = { tot: TOT, 'n:IFREE-NDX': { t: 40, now: 15.6, nm: 'NASDAQ100', fund: true }, 'n:XLK': { t: 20, now: 30.4, nm: 'XLK' },
+      'n:SMH': { t: 20, now: 16.0, nm: 'SMH' }, c: { t: 20, now: 38.0, nm: '個別株' } };
+    const Bp = ccfCatBudget(Object.assign({}, K, { pre: { g: 'n:IFREE-NDX', jpy: P } }), T);
+    const B0 = ccfCatBudget(K, T), Ball = ccfCatBudget(K, T + P);      // iDeCo なしで 入金だけ／入金＋iDeCo の全体
+    const Bx = ccfCatBudget(Object.assign({}, K, { pre: { g: 'n:NOPE', jpy: P } }), T);
+    // iDeCo だけで NASDAQ100 の取り分を超える月（NASDAQ100 が目標超過）: NASDAQ100 は iDeCo だけ・入金は残りの区分で
+    const KB = { tot: 2000000, 'n:IFREE-NDX': { t: 40, now: 45, fund: true }, 'n:XLK': { t: 20, now: 25 }, 'n:SMH': { t: 20, now: 10 }, c: { t: 20, now: 20 } };
+    const Bb = ccfCatBudget(Object.assign({}, KB, { pre: { g: 'n:IFREE-NDX', jpy: P } }), T);
+    const items = [{ k: 'LRCX', g: 'c', tw: 2.9, pos: 0, jpy: 52000 }, { k: 'SMH', g: 'n:SMH', tw: 20, pos: 16.0, jpy: 99500 },
+      { k: 'XLK', g: 'n:XLK', tw: 20, pos: 30.4, jpy: 40000 }, { k: 'IFREE', g: 'n:IFREE-NDX', tw: 40, pos: 15.6, frac: true }];
+    const Pp = ccfCatSharePlan(items, T, TOT, Object.assign({}, K, { pre: { g: 'n:IFREE-NDX', jpy: P } }));
+    // 設定の読み方と、注文書が配る額
+    const t0 = { ami_funds: { 'RPLUS-NDX': { name: 'x' } }, ideco: { members: [{ who: 'A', jpy: 20000 }, { who: 'B', jpy: 20000 }, { who: 'C', jpy: 0 }], fund: 'RPLUS-NDX', bucket: 'IFREE-NDX', start: '2000-01' } };
+    const cPast = ccfIdecoCfg(t0), cFut = ccfIdecoCfg(Object.assign({}, t0, { ideco: Object.assign({}, t0.ideco, { start: '2999-12' }) })),
+          cBad = ccfIdecoCfg(Object.assign({}, t0, { ideco: Object.assign({}, t0.ideco, { start: '2027/01' }) }));
+    const keep = window.__ccfIdeco; localStorage.setItem('pf:monthly_total', '180000');
+    window.__ccfIdeco = cPast; const oa1 = ccfOrderAmt(), ia1 = ccfIdecoAmt();
+    window.__ccfIdeco = cFut; const oa2 = ccfOrderAmt(), ia2 = ccfIdecoAmt();
+    window.__ccfIdeco = keep;
+    return { TOT, P, T, Bp, B0, Ball, Bx, Bb, Pp, cPast, cFut, cBad, oa1, ia1, oa2, ia2 };
+  });
+  const keys14 = ['n:IFREE-NDX', 'n:XLK', 'n:SMH', 'c'];
+  const baseP = q14.TOT + q14.P + q14.T;
+  const sumB = o => keys14.reduce((a, k) => a + o[k].b, 0);
+  // 「入金＋iDeCo」の全体を区分の不足で割った取り分と同じ（NASDAQ100 だけ iDeCo の分を引く）＝iDeCo があっても無くても区分ごとの新しいお金は同じ
+  const sameAsAll = keys14.every(k => q14.Bp[k].b === q14.Ball[k].b - (k === 'n:IFREE-NDX' ? q14.P : 0));
+  ok(sameAsAll && sumB(q14.Bp) === q14.T && q14.Bp['n:IFREE-NDX'].pre === q14.P,
+     '⑭ iDeCo: 「入金＋iDeCo」の全体を区分の不足で割り、NASDAQ100 の取り分から iDeCo を引く（SMH ¥' + q14.Bp['n:SMH'].b + '＝iDeCo なしで18万を割ったとき ¥' + q14.Ball['n:SMH'].b
+     + '・NASDAQ100 ¥' + q14.Bp['n:IFREE-NDX'].b + '＋iDeCo ¥' + q14.P.toLocaleString() + '）');
+  const bb = q14.Bb, rest = ['n:XLK', 'n:SMH', 'c'];
+  ok(bb['n:IFREE-NDX'].b === 0 && rest.reduce((a, k) => a + bb[k].b, 0) === q14.T && bb['n:SMH'].b > 0 && bb['n:XLK'].b === 0,
+     '   iDeCo だけで NASDAQ100 の取り分を超える月（目標超過）: NASDAQ100 は iDeCo だけ・入金 ¥' + q14.T.toLocaleString() + ' は残りの区分へ（SMH ¥' + bb['n:SMH'].b + '・個別株 ¥' + bb.c.b + '）');
+  ok(keys14.every(k => q14.Bx[k].b === q14.B0[k].b && q14.Bx[k].pre === 0), '   iDeCo の区分が目標に無ければ数えない（取り分は iDeCo なしで入金だけを割ったのと同じ）');
+  const ndx = q14.Pp.cat['n:IFREE-NDX'], expAfter = (ndx.now * q14.TOT / 100 + q14.P + ndx.spent) / baseP * 100;
+  ok(q14.Pp.pre === q14.P && ndx.pre === q14.P && Math.abs(ndx.after - expAfter) < 1e-9 && (q14.Pp.frac.IFREE + (q14.Pp.buy.SMH ? q14.Pp.buy.SMH.cost : 0) + q14.Pp.rest) === q14.T,
+     '   注文書の計画は iDeCo を配らない（配るのは ¥' + q14.T.toLocaleString() + '）・NASDAQ100 の「買った後」は iDeCo を含む（' + ndx.after.toFixed(2) + '%）');
+  ok(q14.cPast && q14.cPast.active && q14.cPast.jpy === 40000 && q14.cPast.members.length === 2 && q14.cFut && !q14.cFut.active && q14.cBad && !q14.cBad.active,
+     '   設定: 開始月を過ぎたら有効（掛金0の名義は外す・合計 ¥' + (q14.cPast && q14.cPast.jpy) + '）・開始月の前／形の違う開始月は無効');
+  ok(q14.oa1 === 140000 && q14.ia1 === 40000 && q14.oa2 === 180000 && q14.ia2 === 0,
+     '   注文書が配る額: 有効なら 18万−4万＝¥' + q14.oa1.toLocaleString() + '・開始月の前は ¥' + q14.oa2.toLocaleString());
+  // 実データ（state.json＋全パック）: 開始月を過ぎた設定なら注文書は入金額−iDeCo を配り iDeCo の行を出す／開始月の前なら全額
+  const withIdeco = (st) => { const o = withMode('cat'); if (o.target.ideco) o.target.ideco.start = st; return o; };
+  if (!base.target || !base.target.ideco) ok(true, '   ⑭ 実データ: portfolio.json に target.ideco が無い（飛ばす）');
+  else for (const [st, act] of [['2000-01', true], ['2999-12', false]]) {
+    OVER = withIdeco(st);
+    await pg.goto('http://localhost:' + PORT + '/index.html'); await pg.waitForTimeout(600);
+    await pg.evaluate(stt => { localStorage.clear(); for (const k in stt.data) localStorage.setItem(k, stt.data[k]);
+      localStorage.setItem('ccf:stateSavedAt', stt.savedAt); }, ST);
+    await pg.reload(); await pg.waitForTimeout(1500);
+    await pg.evaluate(() => ccfImportAllPacks()); await pg.waitForTimeout(1800);
+    await pg.evaluate(() => { localStorage.setItem('pf:monthly_total', '180000'); showPage(5); }); await pg.waitForTimeout(3200);
+    const r14 = await pg.evaluate(() => {
+      const box = [...document.querySelectorAll('#pg5 div')].find(d => /📋 今月の注文書/.test(d.innerText) && /合計 約/.test(d.innerText) && d.innerText.length < 8000);
+      const t = box ? box.innerText : '', m = t.match(/合計 約¥([\d,]+)/), rr = t.match(/残り¥([\d,]+)/);
+      return { row: /🏦 iDeCo（自動引き落とし・注文書では買わない）/.test(t), pre: !!(window.__ccfCat && window.__ccfCat.pre),
+        tot: m ? +m[1].replace(/,/g, '') : null, rest: rr ? +rr[1].replace(/,/g, '') : 0, ia: ccfIdecoAmt() };
+    });
+    const IA = act ? (base.target.ideco.members || []).reduce((a, x) => a + (+x.jpy || 0), 0) : 0;
+    ok(r14.row === act && r14.pre === act && r14.ia === IA && r14.tot != null && r14.tot + r14.rest <= 180000 - IA && r14.tot + r14.rest >= 180000 - IA - 300,
+       '⑭ 実データ・開始月 ' + st + (act ? '（有効）' : '（前）') + ': iDeCo の行 ' + (r14.row ? 'あり' : 'なし') + '・注文書の合計 ¥' + (r14.tot || 0).toLocaleString()
+       + (r14.rest ? '＋残り ¥' + r14.rest.toLocaleString() : '') + '（入金18万−iDeCo ¥' + IA.toLocaleString() + '）');
   }
 
   ok(errs.length === 0, 'pageerror 0件' + (errs.length ? '（' + errs[0].slice(0, 120) + '）' : ''));

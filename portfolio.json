@@ -265,7 +265,8 @@
   },
   "ami_same_index": {
    "IFREE-NDX": [
-    "QQQM"
+    "QQQM",
+    "RPLUS-NDX"
    ]
   },
   "ami_same_index_note": "同じ指数（NASDAQ100）を持つ本の保有を、目標の本の保有%に数える。QQQM は新規資金を回さない（0%）が売らないので、その保有 16%前後は iFreeNEXT の目標50%の一部として扱う——数えないと、同じ指数を目標より多く積み増すことになる。",
@@ -286,7 +287,39 @@
      "tsumitate_monthly_cap_jpy": 100000,
     "overflow_to": "QQQM",
     "cap_note": "2026-09-28 ユーザー明示指示「つみたて枠を超えた分はQQQMにして」。注文書は iFreeNEXT をつみたて投資枠の月の上限（年120万÷12＝10万円）までにし、超えた分は同じ NASDAQ100 の QQQM（信託報酬0.15%・成長投資枠 年240万→その先は特定口座）を丸株で買う。根拠は歴史検証の穴⑤（out/gaps_cost.json・つみたて枠の外は iFreeNEXT 0.495% より QQQM が安く、月17万で+0.2%・月30万で+1.9%）。按分の比率は不変（NASDAQ100 の目標は同じ・QQQM の保有は ami_same_index で iFreeNEXT の目標に数える）。上限を変えるならこの数字1つ、やめるなら overflow_to を消す"
+   },
+   "RPLUS-NDX": {
+    "name": "楽天・プラス・NASDAQ-100インデックス・ファンド",
+    "short": "楽天・プラス・NASDAQ-100",
+    "index": "NASDAQ100",
+    "co": "楽天投信投資顧問",
+    "isin": "JP90C000QF22",
+    "associFundCd": "9I314241",
+    "unit": "口",
+    "navPer": 10000,
+    "fee_pct_tax_incl": 0.198,
+    "account": "iDeCo",
+    "alias_label": "iDeCo",
+    "buy": "iDeCo の自動引き落とし（注文書では買わない）",
+    "src": "投資信託協会 投信総合検索ライブラリー（ISIN・協会コード・信託報酬 税抜0.18%＝税込0.198% を 2026-10-06 に確認）。基準価額は night/fetch_dashboard.py が毎営業日 out/dashboard.json の quotes[\"RPLUS-NDX\"] に1口あたりの円で入れる",
+    "note": "2026-10-06 ユーザー明示指示「それで入れて」。iDeCo（target.ideco）で毎月自動で買う本。同じ NASDAQ100 なので ami_same_index で IFREE-NDX（NASDAQ100 の区分）に数える。楽天証券の iDeCo の品ぞろえに 2025-05-15 から（楽天証券のプレスリリース）。iFreeNEXT（税込0.495%）より安い。ETF側の注文書の行には出さない（ami_names に入れない＝門の注文書では買わない）"
    }
+  },
+  "ideco": {
+   "members": [
+    {
+     "who": "まほ",
+     "jpy": 20000
+    },
+    {
+     "who": "ゆうすけ",
+     "jpy": 20000
+    }
+   ],
+   "fund": "RPLUS-NDX",
+   "bucket": "IFREE-NDX",
+   "start": "2027-01",
+   "note": "2026-10-06 ユーザー明示指示「それで入れて」——iDeCo を2人とも各2万円（楽天証券・楽天・プラス・NASDAQ-100 を100%）・戻った税金は NISA へ再投資。金額は試算の結果（年率5/8/11%・20/25年・受け取り時の退職所得控除の有無の12通りで、最適との差がいちばん小さい額）。試算の前提（年収など）は公開の repo に書かない。会社の退職金を同じ頃に受け取る見込みなら各1.5万円。上限（各6.2万円）までは入れない（試算で最大の後悔が大きかった——受け取り時の税と、60歳まで引き出せないお金が増えるため）。【門の扱い】start（最初の引き落としの月・YYYY-MM）から、注文書は「今月の入金額（iDeCo を含む月の合計）」から members の合計を引いた残りを配り、iDeCo の分は bucket（NASDAQ100 の区分）を先に買ったものとして区分の比率に数える（index.html の ccfIdecoCfg・ccfCatBudget の pre）。iDeCo の保有は 🏦保有 に口座 iDeCo の投資信託として記録する（注文書の iDeCo の行の「✓ 保有へ」か 🏦保有の「＋ 買った」）。start は申込みの後に届く通知で最初の引き落としの月を確かめて直す（todo ideco_start_confirm）。掛金の見直しは年1回（todo ideco_review_yearly）。戻すには start を空にする（members を消せば行ごと消える）"
   },
   "ami_mix_superseded_2026_09_26_xlk": {
    "asof": "2026-09-26",
