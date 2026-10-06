@@ -53,11 +53,27 @@
   （実測 MSFT 0.789 vs 0.814）、混ぜると事故になる。鍵不要。
   日本株は `.T` を付ける（fetch_dashboard.py と同じ）。
 
+■ 投資信託だけは投資信託協会（2026-10-05 ユーザー明示指示「iFREENEXTを、成績にいれて」）
+  iFreeNEXT NASDAQ100 などの投資信託は Yahoo に無く、旧は「Yahooで価格が取れない」で外していた。
+  portfolio.json の target.ami_funds にある本（または種類「投資信託」の行）は、投資信託協会
+  投信総合検索ライブラリーの**基準価額の日次CSV**で評価する（fetch_tsumitate_funds の Lib でセッションを作る＝再実装しない）。
+  系列は株と同じ形 {日: (1口あたりの円, 分配金を再投資した1口あたりの円)}＝基準価額÷navPer。
+  ★**積立は買付ごと（ロット）に比べる**——毎月買う本を「最初の日に全額」とみなすと、後の月の円まで
+    指数を長く走らせることになる（同じ円・同じ日、が崩れる）。ロットがそろっていれば
+    （どれも日付・円・口数があり、口数の合計が保有と合う）、S&P500・QQQM・irr=85 のかご・推移を
+    **ロットごとの入口**から走らせて足す。そろわなければ従来どおり1本にまとめ、そう名指しする。
+  ★**円建ての資産でも、ドル建ての指数にはドル円が掛かる**（同日に是正）——旧は円建ての行で k/k0=1 を掛け、
+    指数を為替なしで比べていた（円建ての保有が無かったので表に出ていなかった）。指数側は常に
+    入口の日のドル円で買い、出口のドル円（その行の値段の日）で戻す。資産そのものの評価は円のまま。
+
 実行: python3 night/fetch_returns.py [--json]
 """
+import csv
 import datetime
+import io
 import json
 import os
+import re
 import sys
 import time
 import urllib.parse
@@ -119,6 +135,75 @@ def yahoo(sym, t0, t1):
         return None
 
 
+def load_funds():
+    """portfolio.json の target.ami_funds（投資信託）を {銘柄コード(大文字): 設定} で返す。読めなければ {}。"""
+    try:
+        f = ((json.load(open(os.path.join(BASE, "portfolio.json"), encoding="utf-8")).get("target") or {})
+             .get("ami_funds") or {})
+        return {str(k).upper(): v for k, v in f.items() if isinstance(v, dict)}
+    except Exception:
+        return {}
+
+
+def fund_series(fd):
+    """投資信託の基準価額の日次を {YYYY-MM-DD: (1口あたりの円, 分配金を再投資した1口あたりの円)} で返す。
+    取れなければ None（測れない。推測の値は置かない＝ルール7）。
+    出所: 投資信託協会 投信総合検索ライブラリーの基準価額CSV（年月日・基準価額(円)・純資産総額・分配金・決算期）。
+    分配金は決算日の基準価額（分配落ち後）に足して再投資する: TR(t) = TR(t-1) × (基準価額(t)+分配金(t)) ÷ 基準価額(t-1)。
+    ⚠ 見出しが想定と違う（形式が変わった）・分配金の欄が読めない ときは読まない（誤値より空欄）。"""
+    isin, assoc = fd.get("isin"), fd.get("associFundCd")
+    if not (isin and assoc):
+        return None
+    per = float(fd.get("navPer") or 10000)
+    try:
+        from fetch_tsumitate_funds import Lib, BASE as TLB
+        lib = Lib()
+        url = (TLB + "/FdsWeb/FDST030000/csv-file-download?"
+               + urllib.parse.urlencode({"isinCd": isin, "associFundCd": assoc}))
+        b = lib.op.open(url, timeout=60).read()
+    except Exception:
+        return None
+    try:
+        s = b.decode("utf-8")
+    except UnicodeDecodeError:
+        try:
+            s = b.decode("cp932")
+        except UnicodeDecodeError:
+            return None
+    rows = list(csv.reader(io.StringIO(s)))
+    hdr = rows[0] if rows else []
+    if len(hdr) < 4 or "年月日" not in hdr[0] or "基準価額" not in hdr[1] or "分配金" not in hdr[3]:
+        return None
+    pts = []
+    for r in rows[1:]:
+        if len(r) < 2:
+            continue
+        m = re.match(r"\s*(\d{4})年(\d{1,2})月(\d{1,2})日", r[0])
+        if not m:
+            continue
+        try:
+            nav = float(r[1].replace(",", ""))
+        except ValueError:
+            continue
+        dist = 0.0
+        if len(r) > 3 and r[3].strip():
+            try:
+                dist = float(r[3].replace(",", ""))
+            except ValueError:
+                return None
+        if nav > 0:
+            pts.append((f"{int(m.group(1)):04d}-{int(m.group(2)):02d}-{int(m.group(3)):02d}", nav, dist))
+    pts.sort()
+    if len(pts) < 2:
+        return None
+    out, tr, prev = {}, None, None
+    for d, nav, dist in pts:
+        tr = nav if tr is None else tr * (nav + dist) / prev
+        prev = nav
+        out[d] = (nav / per, tr / per)
+    return out
+
+
 def on_or_before(series, day):
     """その日、無ければ直前の営業日。無ければ None。"""
     ks = [k for k in series if k <= day]
@@ -176,33 +261,45 @@ def build_series(rows, sers, bench, fx, compared, compared_tr, benchmark):
     if len(spine) < 2:
         return None
 
+    # ★買付（ロット）ごとの入口を前もって引いておく（2026-10-05・投資信託の積立）。ロットの無い行は
+    #   従来どおり1本（行の bd・株数・取得額）＝結果は旧と同じ。日ごとに引き直さない（20年の積立で 600日×240回になる）
+    prep = []
+    for r in use:
+        ser = sers[r["t"]]
+        legs = r.get("_legs") or [{"bd": r["bd"], "sh": r["sh"], "jpy": r["cost_jpy"]}]
+        L = []
+        for lg in legs:
+            b0 = on_or_before(bench, lg["bd"]); f0 = on_or_before(fx, lg["bd"])
+            if not (b0 and f0 and f0[0]):
+                continue
+            L.append((lg["bd"], lg["sh"], lg["jpy"], on_or_before(ser, lg["bd"]), b0, f0[0]))
+        if L:
+            prep.append((ser, r["ccy"] == "JPY", L))
+
     days, inv_a, val_a, tr_a, bmk_a = [], [], [], [], []
     for d in spine:
         inv = val = tr = bmk = 0.0
         b = on_or_before(bench, d); f = on_or_before(fx, d)
         if not (b and f):
             continue
-        for r in use:
-            if r["bd"] > d:
-                continue                      # まだ入金していない＝この日は分母に入らない
-            c = on_or_before(sers[r["t"]], d)
-            b0 = on_or_before(bench, r["bd"])
-            if not (c and b0):
-                continue
-            jp = r["ccy"] == "JPY"
-            k = 1.0 if jp else f[0]
-            k0 = 1.0 if jp else float(r.get("fx0") or 0)
-            if not k0:
-                continue
-            fxr = k / k0
-            inv += r["cost_jpy"]
-            v = r["sh"] * c[0] * k
-            val += v
-            # 配当の寄与だけを価格に掛ける（終点の式と同じ・v9.9.156）
-            c0 = on_or_before(sers[r["t"]], r["bd"])
-            df = ((c[1] / c0[1]) / (c[0] / c0[0])) if (c0 and c0[0] and c0[1] and c[0]) else 1.0
-            tr += v * df
-            bmk += r["cost_jpy"] * (b[1] / b0[1]) * fxr
+        for ser, jp, L in prep:
+            c = None
+            for lbd, lsh, ljpy, c0, b0, f0 in L:
+                if lbd > d:
+                    continue                  # まだ入金していない＝この日は分母に入らない
+                if c is None:
+                    c = on_or_before(ser, d)
+                    if not c:
+                        break
+                k = 1.0 if jp else f[0]       # 資産そのものの評価（円建てならドル円は掛けない）
+                inv += ljpy
+                v = lsh * c[0] * k
+                val += v
+                # 配当の寄与だけを価格に掛ける（終点の式と同じ・v9.9.156）
+                df = ((c[1] / c0[1]) / (c[0] / c0[0])) if (c0 and c0[0] and c0[1] and c[0]) else 1.0
+                tr += v * df
+                # 指数はドル建て＝入口の日のドル円で買い、この日のドル円で戻す（資産の通貨に依らない・2026-10-05 是正）
+                bmk += ljpy * (b[1] / b0[1]) * (f[0] / f0)
         if inv <= 0:
             continue
         days.append(d); inv_a.append(round(inv))
@@ -513,6 +610,7 @@ def main():
         blind.append(f"{BENCH}（S&P500トータルリターン指数）が取れない")
     if not bench2:
         blind.append(f"{BENCH2}（QQQM・配当込み）が取れない")
+    FUNDS = load_funds()      # 投資信託（基準価額は投資信託協会から・2026-10-05）
 
     rows, notes = [], []
     sers = {}                 # 推移を組むために銘柄ごとの系列を持ち回す
@@ -538,13 +636,18 @@ def main():
 
     for p in positions:
         t = p["t"]
-        jp = (p.get("ccy") == "JPY") or t[:1].isdigit()
+        fd = FUNDS.get(str(t).upper())
+        is_fund = bool(fd) or p.get("kind") == "投資信託"
+        jp = is_fund or (p.get("ccy") == "JPY") or t[:1].isdigit()
         sym = f"{t}.T" if jp else t
         sh = float(p.get("sh") or 0)
         bd = p.get("bd")
-        ser = yahoo(sym, t0, t1)
+        # ★投資信託は Yahoo に無い——投資信託協会の基準価額の履歴（1口あたりの円）で評価する（2026-10-05）
+        ser = (fund_series(fd) if fd else None) if is_fund else yahoo(sym, t0, t1)
         r = {"t": t, "nm": p.get("nm") or t, "ccy": "JPY" if jp else "USD",
              "sh": sh, "bd": bd, "sleeve": p.get("sleeve")}
+        if is_fund:
+            r["fund"] = True
         sers[t] = ser
         if sh <= 0:
             # 金額だけの記録＝株数が判らない。評価額は台帳の v をそのまま使う
@@ -552,14 +655,39 @@ def main():
             r["val_only_jpy"] = float(p.get("v") or 0)
             rows.append(r); continue
         if not ser:
-            r["skip"] = "Yahooで価格が取れない"
-            rows.append(r); notes.append(f"{t}: 価格が取れない"); continue
+            r["skip"] = (("基準価額の履歴が取れない（投資信託協会）" if fd else
+                          "投資信託の ISIN が portfolio.json の ami_funds に無い＝基準価額の履歴を引けない")
+                         if is_fund else "Yahooで価格が取れない")
+            rows.append(r); notes.append(f"{t}: 価格が取れない（{r['skip']}）"); continue
+
+        # ★積立（投資信託）は買付ごと（ロット）に比べる（2026-10-05）。どのロットにも日付・円・口数があり、
+        #   口数の合計が保有と合うときだけ。合わなければ1本にまとめて比べ、そう名指しする（黙って混ぜない）
+        legs = None
+        if is_fund:
+            L = p.get("bdLots") or []
+            okL = bool(L) and all(re.match(r"^\d{4}-\d{2}-\d{2}$", str(l.get("bd") or ""))
+                                  and float(l.get("jpy") or 0) > 0 and float(l.get("sh") or 0) > 0 for l in L)
+            if okL and abs(sum(float(l["sh"]) for l in L) - sh) < 0.5:
+                legs = sorted(({"bd": l["bd"], "sh": float(l["sh"]), "jpy": float(l["jpy"])} for l in L),
+                              key=lambda x: x["bd"])
+                bd = legs[0]["bd"]
+                r["bd"], r["bd_last"], r["legs_n"] = bd, legs[-1]["bd"], len(legs)
+            elif L:
+                notes.append(f"{t}: 積立の記録（ロット）に日付・円・口数の無いものがあるか、口数の合計が保有と合わない"
+                             f"——買付ごとには比べられないので、{bd or '（日付なし）'}にまとめて買ったものとして比べる")
 
         lastd, (cl_now, aj_now) = last(ser)
         r["asof"] = lastd
         # ── 取得額（① bjpy ② bpx ③ bd の終値）────────────────────────
         bpx = float(p.get("bpx") or 0)
         bjpy = float(p.get("bjpy") or 0)          # 取得額（円）＝実際に出した円
+        if legs:
+            # 買付ごとに比べるので、取得額もロットの円の合計で持つ（指数の側と同じ円にそろえる）
+            lj = sum(lg["jpy"] for lg in legs)
+            if bjpy > 0 and abs(bjpy - lj) > 1:
+                notes.append(f"{t}: 取得額(円) ¥{bjpy:,.0f} とロットの円の合計 ¥{lj:,.0f} が合わない"
+                             "——買付ごとの比較にそろえてロットの合計を使う")
+            bjpy = lj
         at_bd = on_or_before(ser, bd) if bd else None
         if bpx > 0:
             r["cost_px"], r["src"] = bpx, "actual"
@@ -595,7 +723,8 @@ def main():
         #     鳴らせば「発見」ではなく構造の言い直しになり、鳴りすぎる警報は鳴らないのと同じ。
         _costed_lots = [l for l in (p.get("bdLots") or []) if (l.get("usd") or l.get("jpy"))]
         r["bd_equiv"] = bool(len(_costed_lots) >= 2 and p.get("bdEst"))
-        if r["src"] == "actual" and at_bd and at_bd[0] and not r["bd_equiv"]:
+        # ⚠ 買付ごとに比べる行（積立）も当てない——平均の取得単価が最初の日の基準価額と一致する道理は無い
+        if r["src"] == "actual" and at_bd and at_bd[0] and not r["bd_equiv"] and not legs:
             gap = r["cost_px"] / at_bd[0] - 1
             r["bd_gap"] = gap
             if abs(gap) > 0.03:
@@ -621,7 +750,17 @@ def main():
         #   実測(MSFT): 価格 +26.38%（実コスト ¥62,495/株）vs 旧・配当込 +21.20%（想定日 ¥65,305/株）
         #   ＝5.18pt の差は**配当ではなく入口の値段の違い**。配当の寄与は実は +0.26pt しかない。
         #   決定打は **RBC（無配当なのに配当込 −0.72% < 価格 −0.33%）**＝定義上ありえない値が出ていた。
-        if at_bd and at_bd[0] and at_bd[1] and cl_now:
+        if legs:
+            # 積立: 配当（分配金）の寄与はロットごとの入口から。行の値はその加重（口数×今の値段で重みづけ）
+            vtr = 0.0
+            for lg in legs:
+                a0 = on_or_before(ser, lg["bd"])
+                if not (a0 and a0[0] and a0[1] and cl_now):
+                    vtr = None
+                    break
+                vtr += lg["sh"] * cl_now * ((aj_now / a0[1]) / (cl_now / a0[0]))
+            div_f = (vtr / (sh * cl_now)) if (vtr and sh and cl_now) else None
+        elif at_bd and at_bd[0] and at_bd[1] and cl_now:
             div_f = (aj_now / at_bd[1]) / (cl_now / at_bd[0])
         else:
             div_f = None                                   # 起点の日が無い＝配当込みは出せない
@@ -709,6 +848,8 @@ def main():
         r["bd_est"] = bool(p.get("bdEst"))
         r["bd_win"] = p.get("bdWin")
         r["_k"], r["_k0"] = k, k0
+        if legs:
+            r["_legs"] = legs
 
     # ── ★ 同じ `bd` を持つ行への伝播 ────────────────────────────────────
     #   実測で4社とも `bd=2026-08-05` が同じだった＝**取引ごとの買付日ではなく、
@@ -738,67 +879,91 @@ def main():
         if r.get("skip"):
             continue
         k, k0 = r.pop("_k", None), r.pop("_k0", None)
+        # ★入口は買付（ロット）ごと（2026-10-05・積立）。ロットの無い行は1本＝行の bd と取得額（旧と同じ）
+        legs = r.get("_legs") or ([{"bd": r["bd"], "jpy": r["cost_jpy"]}] if r.get("bd") else [])
+        # ★指数（ドル建て）は入口の日のドル円で円から買い、出口のドル円（この行の値段の日＝fx1）で戻す。
+        #   **資産が円建てでも同じ**（2026-10-05 是正: 旧は円建ての行で k/k0=1 を掛け、指数を為替なしで比べていた）。
+        #   ドル建ての行では fx1/fx(入口) は旧の k/k0 そのもの＝結果は変わらない
+        fx1 = r.get("fx1")
+        for lg in legs:
+            f0 = on_or_before(fx, lg["bd"]) if fx else None
+            lg["_fxr"] = (fx1 / f0[0]) if (fx1 and f0 and f0[0]) else None
         if r.get("bd_suspect") and not r.get("bd_est"):
             r["cmp_out"] = "買付日が判らない（bd が台帳の記入日）＝同じ日で比べられない"
-        elif not (bench and r.get("bd") and k0):
+        elif not (bench and legs and all(lg["_fxr"] for lg in legs)):
             r["cmp_out"] = "買付日か指数か為替が取れない＝同じ日で比べられない"
+        elif not all(on_or_before(bench, lg["bd"]) for lg in legs):
+            r["cmp_out"] = "指数にその日が無い"
         else:
-            b0 = on_or_before(bench, r["bd"])
-            if not b0:
-                r["cmp_out"] = "指数にその日が無い"
-            else:
-                b1 = last(bench)[1][1]
-                # 指数はUSD建て。円で買う＝入金時のドル円で換算し、出口のドル円で戻す
-                bench_cost += r["cost_jpy"]
-                bench_val += r["cost_jpy"] * (b1 / b0[1]) * (k / k0)
-                cmp_cost += r["cost_jpy"]
-                cmp_val += r["val_jpy"]
-                # ★指数は配当込み(^SP500TR)なので、**同じ基準**の保有側も持つ。
-                #   価格ベースの保有を配当込みの指数と引き算すると、配当のぶんだけ
-                #   保有が構造的に低く出る（「基準の違う二つを割る」型）
-                cmp_val_tr += (r.get("val_tr_jpy") or r["val_jpy"])
-                spv0 = r["cost_jpy"] * (b1 / b0[1]) * (k / k0)
-                q0 = on_or_before(bench2, r["bd"]) if bench2 else None
-                qv = r["cost_jpy"] * (last(bench2)[1][1] / q0[1]) * (k / k0) if q0 else None
-                if qv is None: q_miss.append(r["t"])
-                else: q_val += qv; r["qqqm_val_jpy"] = round(qv)
-                im, inn = basket_mult(r["bd"]) if bsers else (None, 0)
-                iv = r["cost_jpy"] * im * (k / k0) if im else None
-                if iv is None: i_miss.append(r["t"])
-                else: i_val += iv; r["irr85_val_jpy"] = round(iv); r["irr85_n"] = inn
-                if r.get("sleeve") == "castle" and qv is not None:
-                    cs_cost += r["cost_jpy"]; cs_val_tr += (r.get("val_tr_jpy") or r["val_jpy"])
-                    cs_spy += spv0; cs_q += qv
-                    if iv is not None: cs_i += iv
-                # ★想定日なら、窓の両端でも同じ計算をして**答えがどれだけ動くか**を出す。
-                #   1点だけ出すと「測った数字」に見えてしまう——動く幅こそがこの行の情報。
-                w = r.get("bd_win")
-                if w:
-                    ends = []
-                    # ⚠ **両端だけを見てはいけない**——差は日付に単調でないので、両端が min/max とは
-                    #   限らない（実測 IRMD: 両端 -24.5〜-11.2 に対し全候補では -29.8〜-8.3）。
-                    #   候補日の正本は estimate_bd が書く `bdWin.days`。無ければ両端で代用する。
-                    for d in (w.get("days") or [w.get("first"), w.get("last")]):
-                        bx = on_or_before(bench, d) if d else None
-                        fxx = on_or_before(fx, d) if (fx and d) else None
+            b1 = last(bench)[1][1]
+            spv0 = sum(lg["jpy"] * (b1 / on_or_before(bench, lg["bd"])[1]) * lg["_fxr"] for lg in legs)
+            bench_cost += r["cost_jpy"]
+            bench_val += spv0
+            cmp_cost += r["cost_jpy"]
+            cmp_val += r["val_jpy"]
+            # ★指数は配当込み(^SP500TR)なので、**同じ基準**の保有側も持つ。
+            #   価格ベースの保有を配当込みの指数と引き算すると、配当のぶんだけ
+            #   保有が構造的に低く出る（「基準の違う二つを割る」型）
+            cmp_val_tr += (r.get("val_tr_jpy") or r["val_jpy"])
+            qv = None
+            if bench2:
+                q1, qv = last(bench2)[1][1], 0.0
+                for lg in legs:
+                    q0 = on_or_before(bench2, lg["bd"])
+                    if not q0:
+                        qv = None
+                        break
+                    qv += lg["jpy"] * (q1 / q0[1]) * lg["_fxr"]
+            if qv is None: q_miss.append(r["t"])
+            else: q_val += qv; r["qqqm_val_jpy"] = round(qv)
+            iv, inn_min = None, None
+            if bsers:
+                iv = 0.0
+                for lg in legs:
+                    im, inn = basket_mult(lg["bd"])
+                    if not im:
+                        iv = None
+                        break
+                    iv += lg["jpy"] * im * lg["_fxr"]
+                    inn_min = inn if inn_min is None else min(inn_min, inn)
+            if iv is None: i_miss.append(r["t"])
+            else: i_val += iv; r["irr85_val_jpy"] = round(iv); r["irr85_n"] = inn_min
+            if r.get("sleeve") == "castle" and qv is not None:
+                cs_cost += r["cost_jpy"]; cs_val_tr += (r.get("val_tr_jpy") or r["val_jpy"])
+                cs_spy += spv0; cs_q += qv
+                if iv is not None: cs_i += iv
+            # ★想定日なら、窓の両端でも同じ計算をして**答えがどれだけ動くか**を出す。
+            #   1点だけ出すと「測った数字」に見えてしまう——動く幅こそがこの行の情報。
+            #   （想定日は1本の行の話。買付ごとに比べる行には窓が無い）
+            w = r.get("bd_win")
+            if w and len(legs) == 1:
+                ends = []
+                # ⚠ **両端だけを見てはいけない**——差は日付に単調でないので、両端が min/max とは
+                #   限らない（実測 IRMD: 両端 -24.5〜-11.2 に対し全候補では -29.8〜-8.3）。
+                #   候補日の正本は estimate_bd が書く `bdWin.days`。無ければ両端で代用する。
+                for d in (w.get("days") or [w.get("first"), w.get("last")]):
+                    bx = on_or_before(bench, d) if d else None
+                    fxx = on_or_before(fx, d) if (fx and d) else None
+                    if bx and fxx and fxx[0]:
+                        spv = r["cost_jpy"] * (b1 / bx[1]) * (fx1 / fxx[0])
+                        ends.append(r["ret_px_jpy"] - (spv / r["cost_jpy"] - 1))
+                if len(ends) >= 2:
+                    r["cmp_range"] = [min(ends), max(ends)]
+                    # 合計側の幅も**全候補の中の最良/最悪**で積む（両端ではなく）
+                    sp_all = []
+                    for d in (w.get("days") or [w["first"], w["last"]]):
+                        bx = on_or_before(bench, d); fxx = on_or_before(fx, d) if fx else None
                         if bx and fxx and fxx[0]:
-                            spv = r["cost_jpy"] * (b1 / bx[1]) * (k / fxx[0])
-                            ends.append(r["ret_px_jpy"] - (spv / r["cost_jpy"] - 1))
-                    if len(ends) >= 2:
-                        r["cmp_range"] = [min(ends), max(ends)]
-                        # 合計側の幅も**全候補の中の最良/最悪**で積む（両端ではなく）
-                        sp_all = []
-                        for d in (w.get("days") or [w["first"], w["last"]]):
-                            bx = on_or_before(bench, d); fxx = on_or_before(fx, d) if fx else None
-                            if bx and fxx and fxx[0]:
-                                sp_all.append(r["cost_jpy"] * (b1 / bx[1]) * (k / fxx[0]))
-                        bench_ends[0] += min(sp_all); bench_ends[1] += max(sp_all)
-                    else:
-                        bench_ends[0] += r["cost_jpy"] * (b1 / b0[1]) * (k / k0)
-                        bench_ends[1] += r["cost_jpy"] * (b1 / b0[1]) * (k / k0)
+                            sp_all.append(r["cost_jpy"] * (b1 / bx[1]) * (fx1 / fxx[0]))
+                    bench_ends[0] += min(sp_all); bench_ends[1] += max(sp_all)
                 else:
-                    bench_ends[0] += r["cost_jpy"] * (b1 / b0[1]) * (k / k0)
-                    bench_ends[1] += r["cost_jpy"] * (b1 / b0[1]) * (k / k0)
+                    bench_ends[0] += spv0
+                    bench_ends[1] += spv0
+            else:
+                bench_ends[0] += spv0
+                bench_ends[1] += spv0
+        for lg in legs:
+            lg.pop("_fxr", None)
 
     def pack(cost, val, cost_tr=None, val_tr=None):
         if not cost or cost <= 0:
@@ -819,7 +984,8 @@ def main():
         "generated": datetime.date.today().isoformat(),
         "tool": "night/fetch_returns.py",
         "base_ccy": "JPY",
-        "source": "Yahoo Finance（close / adjclose）・^SP500TR・QQQM(adjclose)・irr=85のかご(adjclose・等分)・JPY=X。鍵不要",
+        "source": ("Yahoo Finance（close / adjclose）・^SP500TR・QQQM(adjclose)・irr=85のかご(adjclose・等分)・JPY=X。"
+                   "投資信託は投資信託協会 投信総合検索ライブラリーの基準価額（分配金は再投資）。鍵不要"),
         "note": ("表示専用。Ω・四関門・売却規律・配分のどれにも触れない。"
                  "**すべて円建てに揃えてある**——ドル建てのリターンと円建ての資産を並べると"
                  "「基準の違う二つを割る」型になるため。為替の寄与は別に出している。"),
@@ -887,6 +1053,7 @@ def main():
                              out.get("compared_tr"), out.get("benchmark"))
     for r in rows:
         r.pop("_adj0", None)
+        r.pop("_legs", None)
 
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     json.dump(out, open(OUT, "w", encoding="utf-8"), ensure_ascii=False, indent=1)

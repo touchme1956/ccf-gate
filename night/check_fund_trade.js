@@ -202,6 +202,11 @@ const srv = http.createServer((q, r) => {
   const r9 = await row(FKEY);
   ok(!got9.err && !!r9 && r9.kind === '投資信託' && r9.sleeve === 'net' && r9.ccy === 'JPY' && r9.bjpy === 30000 && r9.sh === Math.floor(30000 / (+DQ.px)),
      `⑨ 「＋円」の行: ${got9.err || (r9 ? r9.kind + '・' + r9.sleeve + '・' + r9.ccy + '・' + r9.sh + '口・¥' + r9.bjpy : 'なし')}`);
+  // ★約定日（今日）も入る（2026-10-05）——日付の無い買付は📈成績が S&P500 と同じ日で比べられず外していた
+  const today9 = await pg.evaluate(() => ccfTradeToday());
+  const lot9 = r9 && (r9.bdLots || [])[0];
+  ok(!!r9 && r9.bd === today9 && !!lot9 && lot9.bd === today9 && lot9.jpy === 30000,
+     `⑨ 「＋円」の記録に約定日（今日 ${today9}）: 行 ${r9 && r9.bd}・ロット ${lot9 && lot9.bd}`);
   // 旧の「＋円」で作った行（種類 ETF）に 🏦保有 から足すと種類が直る
   await seed(`return ps.concat([{t:'${FKEY}',nm:'${FUND.name}',sleeve:'net',kind:'ETF',ccy:'JPY',sh:5000,bpx:${UPX},npx:${UPX},bjpy:28754,v:0}]);`);
   await open('buy'); await pick(FKEY);

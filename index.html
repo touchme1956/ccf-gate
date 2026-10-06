@@ -923,7 +923,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
   </table>
   <div class="fm small" style="margin-top:14px;text-align:left;"><details class="why" data-fold="2"><summary><span class="lbl">目標とのずれ</span></summary><div class="why-body">
    目標とのずれは門が毎回 測り直して 🏦保有・🛒買付順位に出す（ここに写真は置かない）。リバランスは売却でなく<b>新規資金の配分</b>で行う規約なので、目標を超えている側には新規資金を回さず、売りは発生しない（DCAの原則＝売却・課税なし・不足側に厚く）。<br>
-   <b>★区分の比率が最優先（2026-10-05 ユーザー明示指示「買付順位のETF投資信託個別株の比率を最重要として」）</b>——今月の入金は、まず<b>個別株／ETF（XLK・SMH）／投資信託（iFreeNEXT NASDAQ100・同じ指数の QQQM の保有を含む）</b>の3区分に、目標（<code>portfolio.json</code> の個別の比率と <code>ami_weights</code>）からの不足の比で割る。目標を超えている区分は今月¥0。区分の中は銘柄ごとの不足の順に1株ずつ買い、端数は投資信託へ（金額で買えるので現金で残さない）。旧の割り方（銘柄ごとの不足から＝区分が目標を超えていても保有ゼロの社に配った）は <code>target.sleeve_split_mode</code> を <code>name</code> へ戻せば1語で戻る。
+   <b>★区分の比率が最優先（2026-10-05 ユーザー明示指示「買付順位のETF投資信託個別株の比率を最重要として」）</b>——今月の入金は、まず<b>NASDAQ100（iFreeNEXT・同じ指数の QQQM の保有を含む）／XLK／SMH／個別株</b>の4区分（2026-10-06 ユーザー明示指示「NASDAQ100 40% / XLK20% / SMH20% / 個別株20%」・ETF側の目標>0 の本はそれぞれ1区分）に、目標（<code>portfolio.json</code> の個別の比率と <code>ami_weights</code>）からの不足の比で割る。目標を超えている区分は今月¥0（XLK が目標を超えていても、目標を下回る SMH は SMH の不足に応じた取り分を持ち、1株の半分に届いた月に買う——旧 v9.9.199 は XLK と SMH を「ETF」の1区分にまとめていたので、XLK の超過が SMH の不足を打ち消していた）。区分の中は銘柄ごとの不足の順に1株ずつ買い、端数は投資信託へ（金額で買えるので現金で残さない）。旧の割り方（銘柄ごとの不足から＝区分が目標を超えていても保有ゼロの社に配った）は <code>target.sleeve_split_mode</code> を <code>name</code> へ戻せば1語で戻る。
   </div></details></div>
  </div></details></div>
 </div>
@@ -1161,7 +1161,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.199</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.201</span></h1>
     <div style="margin:6px 0 2px"><button id="hintBtn" onclick="ccfToggleHints()" style="padding:5px 11px;background:none;border:1px solid var(--line);border-radius:7px;color:var(--dim);font-size:11.5px;cursor:pointer">欄の注記を出す</button></div>
   <div class="sub"><details class="why plain" data-fold="6"><summary>ℹ この画面について</summary><div class="why-body"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——絶対MOAT指数をΩの直接項に加え(実効≒22%)、<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%。⚠率そのものは退場社の抜けた母集団で測った下限の側で、2013年の質実証プールでは4.2〜19.2%の幅がある〔2026-09-23 に退場日を是正した後の値・是正前は2.0〜25.7%〕）。</div></details></div>
   </div>
@@ -3509,7 +3509,8 @@ function ccfSleeveTarget(){
   //   'gap'   ＝不足している側に厚く（超過側は0）＝v9.9.167 の規約。置き換えたが消していない。
   //   正本は portfolio.json の target.sleeve_split_mode。読めなければ 'target' へ倒す。
   //   'name'  ＝**銘柄ごとの不足**の合計で割る（2026-09-25 ユーザー指示「比率の足りていない銘柄も優先できるように。個別株も含めて」）
-  //   'cat'   ＝**区分（個別株／ETF／投資信託）の比率を最優先**（2026-10-05 ユーザー明示指示「買付順位のETF投資信託個別株の比率を最重要として」）
+  //   'cat'   ＝**区分の比率を最優先**（2026-10-05 ユーザー明示指示「買付順位のETF投資信託個別株の比率を最重要として」）。
+  //             区分は v9.9.201 から 個別株と ETF側の目標>0 の各本（2026-10-06「NASDAQ100 40% / XLK20% / SMH20% / 個別株20%」）
   const mode=(t&&(t.mode==='gap'||t.mode==='name'||t.mode==='cat'))?t.mode:'target';
   return {c,n,mode,src:(t&&t.src)||'既定 50/50（portfolio.json の target が読めない）'};
 }
@@ -3519,19 +3520,42 @@ function ccfSetTotalAmt(el){
   try{ if(v>0)localStorage.setItem('pf:monthly_total',String(v)); else localStorage.removeItem('pf:monthly_total'); }catch(e){}
   if(typeof renderPlan==='function')renderPlan();
 }
-/* ── 区分（個別株／ETF／投資信託）の取り分（2026-10-05 ユーザー明示指示「買付順位のETF投資信託個別株の比率を最重要として」）──
+/* ── 区分の取り分（2026-10-05 ユーザー明示指示「買付順位のETF投資信託個別株の比率を最重要として」）──
    ★実害: 割り方 'name'（銘柄ごとの不足）は、区分全体が目標を超えていても**保有ゼロの社には自分の不足がある**ので配った。
      実測（2026-10-05・入金17万）: 個別は 38.2%＝目標20%を18pt超えているのに、注文の9割（¥157,143）が個別の3社へ行き、
      投資信託（目標40%に対し15.8%）は ¥12,800 だった＝**区分の比率が目標から離れる向きに買っていた**。
    ★組み方（新しい定数は入れていない——使うのは目標%・今の%・総資産・今月の入金だけ）:
      区分 k の不足 = max(0, 目標% ×（総資産＋入金）− 今の保有（円）)。不足の合計が入金以上なら、入金を不足の比で割る
      （目標を超えている区分は¥0＝売らずに新しいお金で戻す規約）。全区分がほぼ目標なら、不足を埋めた残りを目標比で割る。
-   ★区分の定義: 個別株＝城（目標 shiro_castle_pct）／投資信託＝target.ami_funds の本（**同じ指数の本の保有も数える**＝QQQM は
-     iFreeNEXT の目標に数える ami_same_index と同じ）／ETF＝ETF側のそれ以外（XLK・SMH と、目標0%で持ち続けている本）。
+   ★区分の定義（v9.9.201・2026-10-06 ユーザー明示指示「NASDAQ100 40% / XLK20% / SMH20% / 個別株20%」）:
+     **個別株**（鍵 c・目標 shiro_castle_pct）と、**ETF側の目標>0 の本それぞれ**（鍵 n:{本}・目標 ami_weights）。
+     投資信託の本は**同じ指数の本の保有も数える**（QQQM は iFreeNEXT＝NASDAQ100 の区分に数える＝ami_same_index と同じ）。
+     旧（v9.9.199）は XLK と SMH を「ETF 40%」の1区分にまとめていた——XLK が目標を超えていると、目標を下回る SMH まで
+     区分ごと¥0 になった（実測 2026-10-06: XLK 約30%・SMH 約16% → ETF の区分 46% が目標40%超過で SMH も5か月目まで¥0）。
+     目標0%で持ち続けている本（GRID・ITA・NASA など）はどの区分にも入らない（新しいお金は回らない・総資産には数える）。
+   区分の鍵は総資産（tot）以外の、数の目標（t）を持つ要素。表示の名前（nm）・金額で買えるか（fund）も同じ要素に持たせる。
    円は整数に丸め、合計を入金にぴったり合わせる（端数は不足の大きい区分へ）。 */
+function ccfCatKeys(K){
+  return K?Object.keys(K).filter(k=>k!=='tot'&&K[k]&&typeof K[k]==='object'&&!Array.isArray(K[k])&&Number.isFinite(+K[k].t)):[];
+}
+// 注文書の行（ETF側）の区分の鍵＝その本の鍵（同じ指数の本は目標の本の区分）
+function ccfCatKeyOf(r){ return 'n:'+String((r&&(r.sameAs||r.t))||'').toUpperCase(); }
+// 区分の名前。plain=true は文の中で使う形（記号なし）。full=true は区分の比率の表の形（投資信託は本の名前と同じ指数の本まで）
+function ccfCatLabel(K,g,o){
+  const x=(K&&K[g])||{}, plain=!!(o&&o.plain), full=!!(o&&o.full);
+  if(g==='c')return plain?'個別株':'🏰 個別株';
+  const base=x.nm||({e:'ETF',f:'投資信託'}[g])||String(g).replace(/^n:/,'');
+  if(x.fund||g==='f'){
+    if(plain||!full)return (plain?'':'📈 ')+base;
+    const al=(x.alias&&x.alias.length)?'同じ指数の '+x.alias.join('・')+' を含む':'';
+    const sub=[x.fnm&&x.fnm!==base?x.fnm:'',al].filter(Boolean).join('・');
+    return '📈 '+base+(sub?'（'+sub+'）':'');
+  }
+  return (plain?'':'◈ ')+base;
+}
 function ccfCatBudget(K,T){
   T=+T||0; const TOT=+(K&&K.tot)||0, base=TOT+T, o={};
-  const ks=['c','e','f'].filter(k=>K&&K[k]);
+  const ks=ccfCatKeys(K);
   let sn=0, st=0;
   ks.forEach(k=>{ const t=Math.max(0,+K[k].t||0), now=Math.max(0,+K[k].now||0);
     const need=Math.max(0,t*base/100-now*TOT/100); o[k]={t,now,need,b:0}; sn+=need; st+=t; });
@@ -3560,7 +3584,8 @@ function ccfSleeveSplit(){
     const castle=byTarget();
     return {total:T,castle,net:T-castle,cPct:c,nPct:n,src,mode:'fixed',gc,gn,now,tCastle:castle,gCastle:gapCastle};
   }
-  // ★'cat'（2026-10-05）: 区分（個別株／ETF／投資信託）の不足で割る＝**区分の比率が最優先**。区分の中の配り方は注文書（ccfCatSharePlan）。
+  // ★'cat'（2026-10-05）: 区分の不足で割る＝**区分の比率が最優先**。区分は個別株と ETF側の目標>0 の各本（v9.9.201・NASDAQ100／XLK／SMH）。
+  //   区分の中の配り方は注文書（ccfCatSharePlan）。個別の円＝個別株の区分の取り分・ETFの円＝残り（ETF側の各区分の合計）。
   //   材料は renderPlan が置く window.__ccfCat（総資産・区分ごとの目標%と今の%）。無ければ 'gap' へ倒して名指しする。
   //   採らなかったほう（銘柄ごとの不足から）の金額も併記できるよう nCastle に持たせる（v9.9.52）。
   if(rule==='cat'){
@@ -3757,10 +3782,13 @@ function ccfBought(btn){
     try{ const db=document.getElementById('dashBox');
          if(typeof ccfDash==='function'&&db&&db.innerHTML.trim())ccfDash(); }catch(_){}
   };
-  /* ★投資信託は種類も渡す（2026-10-05）——渡さないと新しい行が「ETF」と記録され、🏦保有で口数が「株」と出る */
+  /* ★投資信託は種類も渡す（2026-10-05）——渡さないと新しい行が「ETF」と記録され、🏦保有で口数が「株」と出る。
+     ★約定日も渡す（同日・ユーザー「iFREENEXTを、成績にいれて」）——旧はここから記録した買付に**日付が無く**、
+       📈成績が「同じ円を同じ日に S&P500 へ」を作れずに比較とグラフから外していた。ここは買った直後に押す欄なので今日の日付を入れる
+       （別の日に買った分は 🏦保有の「＋ 買った」で約定日を選んで記録する） */
   frame.contentWindow.postMessage({type:'ccfPfBuy',id:id,t:inp.dataset.t,nm:inp.dataset.nm,
     sh:sh,px:parseFloat(inp.dataset.px)||0,ccy:inp.dataset.ccy,sleeve:inp.dataset.sleeve,...(fJpy>0?{jpy:fJpy}:{}),
-    ...(isFund?{kind:'投資信託'}:{})},'*');
+    ...(isFund?{kind:'投資信託'}:{}),date:ccfTradeToday()},'*');
   setTimeout(()=>{ if(!done&&window.__ccfBuyWait[id]){ delete window.__ccfBuyWait[id];
     out.style.color='#d69a3c'; out.textContent='🏦保有から返事がありません（Ⅶタブを一度開いてから）'; } },3000);
 }
@@ -4044,22 +4072,25 @@ function ccfWholeSharePlan(items, T, TOT){
   return res;
 }
 /* ── 区分の比率を最優先にした1株単位の注文（割り方 'cat'・2026-10-05 ユーザー明示指示「買付順位のETF投資信託個別株の比率を最重要として」）──
-   ① 入金を区分（個別株 c／ETF e／投資信託 f）の不足で割る（ccfCatBudget＝ccfSleeveSplit と同じ関数）。
+   ① 入金を区分の不足で割る（ccfCatBudget＝ccfSleeveSplit と同じ関数）。区分は個別株（c）と ETF側の目標>0 の各本（n:{本}）——v9.9.201。
    ② 区分の中は ccfWholeSharePlan と同じ優先（不足÷目標の大きい順・同じなら目標の大きい順・それも同じなら安い順・1株の半分の規則）で、
       **その区分の取り分の中で**1株ずつ買う。区分の取り分が¥0（目標を超えている）なら、その区分の銘柄は自分の不足があっても今月なし。
-   ③ 丸株の過不足は投資信託（金額で買える）が吸う: 区分の残りが1株の半分以上なら、足りない分を投資信託の取り分から借りて1株買う
+   ③ 丸株の過不足は金額で買える区分（投資信託・fund）が吸う: 区分の残りが1株の半分以上なら、足りない分を投資信託の取り分から借りて1株買う
       （四捨五入と同じ＝平均すると区分の比率どおり）。使い残しは投資信託へ（現金で残さない・ccfWholeSharePlan の④と同じ）。
    ④ 区分を回す順は「不足÷目標」の大きい順（いちばん足りない区分が先に借りられる）。
-   **新しい定数は入れていない**。戻り値は ccfWholeSharePlan と同じ形＋ catfull（区分が目標を超えていて買わない銘柄）と cat（区分ごとの取り分・使った円・買った後の%）。 */
+   **新しい定数は入れていない**。戻り値は ccfWholeSharePlan と同じ形＋ catfull（区分が目標を超えていて買わない銘柄）と cat（区分ごとの取り分・使った円・買った後の%）。
+   short には、その本を見た時点の区分の残り（rem）と投資信託から借りられた円（flex）を持たせる（買えなかった理由を正確に言うため）。
+   nocat は区分が読めない本（注文書の行と __ccfCat の区分が食い違ったとき・黙って捨てずに名指しする）。 */
 function ccfCatSharePlan(items, T, TOT, catIn){
   T=+T||0; TOT=+TOT||0;
-  const base=TOT+T, res={buy:{}, need:{}, wait:[], short:[], big:[], nopx:[], frac:{}, rest:0, catfull:[], cat:{}};
-  const B=ccfCatBudget(Object.assign({}, catIn||{}, {tot:TOT}), T);
-  const G=['c','e','f'].filter(g=>B[g]);
-  const whole={c:[],e:[],f:[]}, frac={c:[],e:[],f:[]}, spent={c:0,e:0,f:0};
+  const base=TOT+T, res={buy:{}, need:{}, wait:[], short:[], big:[], nopx:[], frac:{}, rest:0, catfull:[], cat:{}, nocat:[]};
+  const K=Object.assign({}, catIn||{}, {tot:TOT}), B=ccfCatBudget(K, T);
+  const G=ccfCatKeys(K).filter(g=>B[g]), FX=G.filter(g=>K[g].fund);   // FX＝金額で買える区分（丸株の過不足と使い残しを吸う）
+  const whole={}, frac={}, spent={}; G.forEach(g=>{ whole[g]=[]; frac[g]=[]; spent[g]=0; });
   (items||[]).forEach(it=>{
-    const g=(it.g==='c'||it.g==='e'||it.g==='f')?it.g:'e';
+    const g=B[it.g]?it.g:null;
     const tw=+it.tw||0, need=(tw*base-(+it.pos||0)*TOT)/100; res.need[it.k]=need;
+    if(!g){ if(tw>0&&(it.frac||need>0))res.nocat.push({k:it.k,need}); return; }
     if(it.frac){ if(tw>0)frac[g].push({it,need}); return; }
     if(!(tw>0)||!(need>0))return;
     if(!(it.jpy>0)){ res.nopx.push({k:it.k,need}); return; }
@@ -4072,30 +4103,37 @@ function ccfCatSharePlan(items, T, TOT, catIn){
     const wOf=f=>pos.length?f.need:1, sum=tgt.reduce((a,f)=>a+wOf(f),0), pool=Math.floor(amt/100)*100; let acc=0;
     tgt.forEach(f=>{ const y=Math.floor(pool*wOf(f)/sum/100)*100; res.frac[f.it.k]=(res.frac[f.it.k]||0)+y; acc+=y; });
     res.frac[tgt[0].it.k]+=pool-acc; return pool; };
-  let flex=B.f?B.f.b:0;                      // 投資信託の取り分＝丸株の過不足を吸う
+  let flex=FX.reduce((a,g)=>a+B[g].b,0);    // 投資信託の取り分＝丸株の過不足を吸う
   const rel=g=>(B[g]&&B[g].t>0)?B[g].need/(B[g].t*Math.max(1,base)/100):0;
-  G.filter(g=>g!=='f').sort((a,b)=>rel(b)-rel(a)).forEach(g=>{
+  G.filter(g=>!K[g].fund).sort((a,b)=>rel(b)-rel(a)).forEach(g=>{
     let rem=B[g].b; const W=whole[g];
     W.sort((a,b)=>(b.rel-a.rel)||((+b.it.tw)-(+a.it.tw))||(a.it.jpy-b.it.jpy));
     const can=w=>rem>=w.it.jpy/2&&w.it.jpy<=rem+flex;
     const pay=p=>{ if(p<=rem)rem-=p; else { flex-=(p-rem); rem=0; } spent[g]+=p; };
-    W.forEach(w=>{ if(can(w)){ w.sh=1; w.left-=w.it.jpy; pay(w.it.jpy); } });
+    W.forEach(w=>{ if(can(w)){ w.sh=1; w.left-=w.it.jpy; pay(w.it.jpy); } else w.at={rem,flex:Math.max(0,flex)}; });
     for(let i=0;i<1000;i++){ let pick=null, best=Infinity;
       W.forEach(w=>{ if(w.sh>0&&w.left>=w.it.jpy/2&&can(w)){ const q=w.it.jpy/w.left; if(q<best){best=q;pick=w;} } });
       if(!pick)break; pick.sh++; pick.left-=pick.it.jpy; pay(pick.it.jpy); }
     W.forEach(w=>{ if(w.sh>0)res.buy[w.it.k]={sh:w.sh,cost:w.sh*w.it.jpy};
       else if(!(B[g].b>0))res.catfull.push({k:w.it.k,need:w.need,price:w.it.jpy,g});
-      else res.short.push({k:w.it.k,need:w.need,price:w.it.jpy}); });
+      else res.short.push({k:w.it.k,need:w.need,price:w.it.jpy,g,b:B[g].b,rem:(w.at?w.at.rem:0),flex:(w.at?w.at.flex:0)}); });
     const fp=fracFill(g,rem); rem-=fp; spent[g]+=fp;   // 区分の中に金額で買える本があればそこへ（今は無い）
     flex+=rem;                                         // 使い残しは投資信託へ
   });
-  // 区分の中の目標0%の本・投資信託の区分に1株で買う本があれば（今は無い）同じ規則で
-  if(whole.f.length){ let rem=Math.max(0,flex); const W=whole.f;
+  // 投資信託の区分に1株で買う本があれば（今は無い）同じ規則で
+  FX.forEach(g=>{ const W=whole[g]; if(!W.length)return; let rem=Math.max(0,flex);
     W.sort((a,b)=>(b.rel-a.rel)||((+b.it.tw)-(+a.it.tw))||(a.it.jpy-b.it.jpy));
-    W.forEach(w=>{ if(w.it.jpy<=rem){ w.sh=1; rem-=w.it.jpy; spent.f+=w.it.jpy; res.buy[w.it.k]={sh:1,cost:w.it.jpy}; } else res.short.push({k:w.it.k,need:w.need,price:w.it.jpy}); });
-    flex=rem; }
-  if(frac.f.length){ const fp=fracFill('f',Math.max(0,flex)); spent.f+=fp; flex-=fp; }
-  res.rest=T-spent.c-spent.e-spent.f;
+    W.forEach(w=>{ if(w.it.jpy<=rem){ w.sh=1; rem-=w.it.jpy; spent[g]+=w.it.jpy; res.buy[w.it.k]={sh:1,cost:w.it.jpy}; }
+      else res.short.push({k:w.it.k,need:w.need,price:w.it.jpy,g,b:B[g].b,rem,flex:0}); });
+    flex=rem; });
+  // 使い残しを金額で買う本へ。投資信託の区分が1つならそのまま全部。複数なら取り分の比（全部0なら不足の比→目標の比）で割る
+  const FF=FX.filter(g=>frac[g].length);
+  if(FF.length){ const pool=Math.max(0,flex);
+    const wf=[g=>B[g].b, g=>B[g].need, g=>B[g].t].find(f=>FF.reduce((a,g)=>a+f(g),0)>0)||(()=>1);
+    const sw=FF.reduce((a,g)=>a+wf(g),0); let used=0;
+    FF.forEach((g,i)=>{ const amt=(i===FF.length-1)?pool-used:Math.floor(pool*wf(g)/sw); used+=amt;
+      const fp=fracFill(g,amt); spent[g]+=fp; flex-=fp; }); }
+  res.rest=T-G.reduce((a,g)=>a+spent[g],0);
   G.forEach(g=>{ const b=B[g]; res.cat[g]={t:b.t, now:b.now, need:b.need, b:b.b, spent:spent[g],
     after:(base>0)?((b.now*TOT/100+spent[g])/base*100):b.now}; });
   return res;
@@ -4123,7 +4161,7 @@ function ccfWholeShareBody(pass, tw, pxInfo, NO, T, catIn){
     const pi=pxInfo?pxInfo(r):null, k='C'+i;
     items.push({k, g:'c', tw:tw(r), pos:+r.pos||0, jpy:(pi&&pi.jpy>0)?pi.jpy:0}); ref[k]={c:1, r, pi, nm:r.nm}; });
   ((NO&&NO.rows)||[]).forEach((r,i)=>{ const k='N'+i, cx=/-USD$/.test(r.t);
-    items.push({k, g:(r.fund?'f':'e'), tw:+r.tw||0, pos:+r.pos||0, jpy:+r.jpy||0, frac:!!(r.fund||cx)}); ref[k]={c:0, r, nm:r.nm||r.t, cx}; });
+    items.push({k, g:ccfCatKeyOf(r), tw:+r.tw||0, pos:+r.pos||0, jpy:+r.jpy||0, frac:!!(r.fund||cx)}); ref[k]={c:0, r, nm:r.nm||r.t, cx}; });
   // ★割り方 'cat'（2026-10-05）なら区分の比率を最優先にした計画、それ以外は従来の銘柄ごとの計画
   const P=catIn?ccfCatSharePlan(items, T, NO.tot, catIn):ccfWholeSharePlan(items, T, NO.tot);
   const row=(name,right,sub,col)=>`<div class="planrow" style="padding:5px 7px;border-radius:7px;border-bottom:1px dashed rgba(201,166,74,.18)">`
@@ -4134,9 +4172,14 @@ function ccfWholeShareBody(pass, tw, pxInfo, NO, T, catIn){
   P.short.forEach(w=>why[w.k]=`今月は入金が先の銘柄で尽きた（不足 ${ccfYen(w.need)}・来月に回る）`);
   P.big.forEach(w=>why[w.k]=`1株 ${ccfYen(w.price)} が今月の入金額より高い（入金の多い月に買う）`);
   P.nopx.forEach(w=>why[w.k]=`価格未取得（不足 ${ccfYen(w.need)}）`);
-  const CATN={c:'個別株', e:'ETF', f:'投資信託'};
-  if(catIn){ P.short.forEach(w=>why[w.k]=`今月の区分の取り分は先の銘柄で使い切った（不足 ${ccfYen(w.need)}・来月に回る）`);
-    (P.catfull||[]).forEach(w=>why[w.k]=`${CATN[w.g]||''}の区分が目標を超えているので今月なし（区分の比率が先・この本の不足 ${ccfYen(w.need)}）`); }
+  if(catIn){ const L=g=>ccfCatLabel(catIn,g,{plain:true});
+    // 区分の取り分で買えなかった本: その本を見た時点の区分の残り（rem）と投資信託から借りられた円（flex）で理由を書く
+    P.short.forEach(w=>{ const left=(+w.b||0)>(+w.rem||0)?'の残り':'';
+      why[w.k]=((+w.rem||0)<w.price/2)
+        ?`今月の${L(w.g)}の取り分${left} ${ccfYen(w.rem||0)} が1株 ${ccfYen(w.price)} の半分に届かない（取り分は投資信託へ・この本の不足 ${ccfYen(w.need)} は来月以降に回る）`
+        :`今月の${L(w.g)}の取り分${left} ${ccfYen(w.rem||0)} と投資信託から借りられる ${ccfYen(w.flex||0)} を足しても1株 ${ccfYen(w.price)} に届かない（この本の不足 ${ccfYen(w.need)} は来月以降に回る）`; });
+    (P.catfull||[]).forEach(w=>why[w.k]=`${L(w.g)}の区分が目標を超えているので今月なし（区分の比率が先・この本の不足 ${ccfYen(w.need)}）`);
+    (P.nocat||[]).forEach(w=>why[w.k]=`⚠区分が読めない（注文書の行と区分の比率の材料が食い違っている・この本の不足 ${ccfYen(w.need)}）`); }
   let cs=0, ns=0, fs=0, ob='', nbh='', nfh='', idle=[]; const ordNet={};
   items.forEach(it=>{ const f=ref[it.k], b=P.buy[it.k];
     if(f.c){
@@ -4173,20 +4216,22 @@ function ccfWholeShareBody(pass, tw, pxInfo, NO, T, catIn){
   const zero=((NO&&NO.rows)||[]).filter(r=>!((+r.tw||0)>0)).map(r=>r.t);
   // ★割り方 'cat' の月は、区分の比率（目標・今・買った後・今月の円）を注文書の先頭に出す＝いちばん先に守るものを先に見せる
   const catBox=(catIn&&P.cat)?(()=>{
-    const NR=(NO&&NO.rows)||[], fr=NR.filter(r=>r.fund), al=[].concat(...fr.map(r=>r.alias||[]));
-    const nmE=NR.filter(r=>!r.fund&&!r.sameAs&&(+r.tw||0)>0).map(r=>r.t).join('・');
-    const nmF=fr.map(r=>(r.fund&&r.fund.short)||r.nm||r.t).join('・');
-    const L={c:'🏰 個別株', e:`◈ ETF${nmE?'（'+nmE+'）':''}`, f:`📈 投資信託${nmF?'（'+nmF+(al.length?'・同じ指数の '+al.join('・')+' を含む':'')+'）':''}`};
-    const pct=v=>(+v||0).toFixed(1)+'%';
-    const rowC=g=>{ const x=P.cat[g]; if(!x)return '';
+    // 並びは区分の比率の材料（renderPlan の __ccfCat）の順＝ETF側（ami_names の順）→ 個別株（ユーザーが挙げた順）
+    const pct=v=>(+v||0).toFixed(1)+'%', ks=ccfCatKeys(catIn).filter(g=>P.cat[g]);
+    const rowC=g=>{ const x=P.cat[g];
       return `<div class="catrow" data-cat="${g}" style="display:flex;justify-content:space-between;align-items:baseline;gap:4px 10px;flex-wrap:wrap;padding:3px 0;border-bottom:1px dashed rgba(111,168,201,.25)">`
-        +`<span style="font-size:12.5px;min-width:0;overflow-wrap:anywhere">${L[g]}</span>`
+        +`<span style="font-size:12.5px;min-width:0;overflow-wrap:anywhere">${ccfCatLabel(catIn,g,{full:true})}</span>`
         +`<span style="font-size:12px"><span style="color:var(--dim);white-space:nowrap">目標${pct(x.t)}・今${pct(x.now)}→買った後${pct(x.after)}</span>　`
         +`<b style="white-space:nowrap;color:${x.spent>0?'var(--jade)':'var(--dim)'}">今月 ${ccfYen(Math.round(x.spent))}</b></span></div>`; };
+    // 目標0%で持ち続けている本（どの区分にも入らない・総資産には数える）——比率の合計が100%になるよう、持っているときだけ1行出す
+    const z=catIn._zero, zl=(z&&(+z.now||0)>=0.05)
+      ?`<div class="catrow" data-cat="zero" style="display:flex;justify-content:space-between;align-items:baseline;gap:4px 10px;flex-wrap:wrap;padding:3px 0;border-bottom:1px dashed rgba(111,168,201,.25)">`
+        +`<span style="font-size:12px;min-width:0;overflow-wrap:anywhere;color:var(--dim)">その他（目標0%で持ち続けている本：${(z.nm||[]).join('・')}）</span>`
+        +`<span style="font-size:12px;color:var(--dim);white-space:nowrap">今${pct(z.now)}・売らない・新規なし</span></div>`:'';
     return `<div style="margin:2px 0 8px;padding:6px 9px;border:1px solid rgba(111,168,201,.45);border-radius:7px;background:rgba(111,168,201,.06)">`
       +`<div style="font-size:12px;font-weight:700;color:#6fa8c9;margin-bottom:2px">区分の比率（いちばん先に守る）</div>`
-      +['c','e','f'].map(rowC).join('')
-      +`<div style="font-size:11px;color:var(--dim);margin-top:3px">目標を超えている区分は今月¥0（売らずに新しいお金で戻す）。区分の中は銘柄ごとの不足の順に1株ずつ・端数は投資信託へ。</div></div>`; })():'';
+      +ks.map(rowC).join('')+zl
+      +`<div style="font-size:11px;color:var(--dim);margin-top:3px">目標を超えている区分は今月¥0（売らずに新しいお金で戻す）。区分の中は銘柄ごとの不足の順に1株ずつ・1株に届かない端数は投資信託へ。</div></div>`; })():'';
   window.__ccfOrderNet=ordNet;
   const html=`<div style="margin-top:10px;padding:9px 12px;border:1px solid rgba(201,166,74,.5);border-radius:8px;background:rgba(201,166,74,.06)">
     <div style="font-size:12.5px;color:var(--gold-bright);margin-bottom:4px"><b>📋 今月の注文書</b></div>
@@ -4475,10 +4520,13 @@ function ccfMonthPlanBox(pass,gap,passGap,tw,CITY,pxInfo,netOrder){
     // ★v9.9.196: 1株単位で組んだ月は、実際に配った円（注文書の合計）を出す。比で割った円（SP）は採らなかったほうとして併記（v9.9.52）
     const cY=WS?WS.castle:SP.castle, nY=WS?WS.net:SP.net;
     const alt=(WS&&SP.mode==='cat')?altTxt:WS?`比だけで割るなら 個別 ${ccfYen(SP.castle)} ／ ETF ${ccfYen(SP.net)}`:altTxt;
-    // 区分の比率が最優先の月は3つに分けて出す（個別株／ETF／投資信託）
-    if(WS&&SP.mode==='cat') return `<div style="font-size:12.5px;color:var(--muted);margin:0 0 4px">
-    <b style="color:${cY>0?'var(--ink)':'var(--dim)'}">個別株 ${ccfYen(cY)}</b> ／ <b style="color:${WS.etf>0?'var(--ink)':'var(--dim)'}">ETF ${ccfYen(WS.etf)}</b> ／ <b style="color:${WS.fund>0?'var(--ink)':'var(--dim)'}">投資信託 ${ccfYen(WS.fund)}</b>
-    <span style="color:var(--dim)">（${modeTxt}・1株単位${alt?'・'+alt:''}）</span></div>`;
+    // 区分の比率が最優先の月は区分ごとに出す（v9.9.201: NASDAQ100／XLK／SMH／個別株＝区分の比率の表と同じ並び・同じ円）
+    if(WS&&SP.mode==='cat'){ const PC=(WS.plan&&WS.plan.cat)||{}, CI=SP.catIn||{};
+      const parts=ccfCatKeys(CI).filter(g=>PC[g]).map(g=>{ const y=Math.round(+PC[g].spent||0);
+        return `<b style="color:${y>0?'var(--ink)':'var(--dim)'};white-space:nowrap">${ccfCatLabel(CI,g,{plain:true})} ${ccfYen(y)}</b>`; });
+      return `<div style="font-size:12.5px;color:var(--muted);margin:0 0 4px">
+    ${parts.join(' ／ ')}
+    <span style="color:var(--dim)">（${modeTxt}・1株単位${alt?'・'+alt:''}）</span></div>`; }
     return `<div style="font-size:12.5px;color:var(--muted);margin:0 0 4px">
     <b style="color:${cY>0?'var(--ink)':'var(--dim)'}">個別 ${ccfYen(cY)}</b> ／ <b style="color:${nY>0?'var(--ink)':'var(--dim)'}">ETF ${ccfYen(nY)}</b>
     <span style="color:var(--dim)">（${modeTxt}${WS?'・1株単位':''}${alt?'・'+alt:''}）</span></div>`;})():''}`;
@@ -4990,9 +5038,12 @@ function ccfPerfHTML(R,S){
      ⇒ 対象と除外を**先頭に常に名指し**する（v9.9.52 の作法——黙って外さない）。全銘柄の損益は④と🏦保有。 */
   if(S&&S.tickers&&R.positions){
     const inc=S.tickers, allT=(R.positions||[]).map(r=>r.t), exc=allT.filter(t=>inc.indexOf(t)<0);
+    /* ★外した理由は銘柄ごとに出す（2026-10-05）——旧は一律「買付日が記録されていない」と書き、
+       値段が取れない行（例: 旧の投資信託）まで買付日の話にしていた */
+    const why=t=>{ const r=(R.positions||[]).find(x=>x.t===t)||{}; return String(r.skip||r.cmp_out||'買付日が記録されていない').replace(/\*\*/g,''); };
     if(exc.length) out+=`<div class="panel" style="margin:10px 0;border-left:4px solid var(--rb-warn,#9a5b00);font-size:12.5px;line-height:1.75">`
-      +`<b>①〜③のグラフと S&amp;P500 との比較は ${inc.length}銘柄（${inc.join('・')}）だけ</b>で計算しています。`
-      +`<br><b>${exc.join('・')}</b> は<b>買付日が記録されていない</b>ので、同じ日の S&amp;P500 と比べられず外しています。`
+      +`<b>①〜③のグラフと S&amp;P500 との比較は ${inc.length}銘柄（${inc.join('・')}）だけ</b>で計算しています。外しているもの:`
+      +exc.map(t=>`<br>・<b>${t}</b>：${why(t)}`).join('')
       +`<br>全${allT.length}銘柄の損益は下の ④ と 🏦保有 を見てください。買付日を入れれば①〜③にも入ります。</div>`;
   }
   if(S&&S.days&&S.days.length>1){
@@ -5129,11 +5180,14 @@ function ccfReturnsHTML(R){
       ? `<span title="取得の記録は ${r.cost_partial.known}株ぶんだけで、保有は ${r.cost_partial.sh}株。`
         + `残りの株の約定が未確認なので、取得額はその分だけ概算（単価を全株へ広げている）`
         + `" style="font-size:9.5px;color:#d69a3c;margin-left:4px">取得 ${r.cost_partial.known}/${r.cost_partial.sh}株</span>` : '';
-    rows+=`<div class="led"><span class="ln">${ccfIcon(r.t)}${r.t}${est}${jpc}${est2}${bds}${cp}</span>`
+    /* ★積立（投資信託・2026-10-05）: 買付ごとの入口から指数を走らせて足している＝「入口」は最初の買付の日 */
+    const lg=(r.legs_n>1)
+      ? `<span title="積立: 買付 ${r.legs_n}回（${r.bd}〜${r.bd_last}）。S&amp;P500・QQQM・irr=85 のかごとは、買付ごとに同じ円・同じ日で比べて足している" style="font-size:9.5px;color:var(--jade,#3f8f6b);margin-left:4px">積立${r.legs_n}回</span>` : '';
+    rows+=`<div class="led"><span class="ln">${ccfIcon(r.t)}${r.t}${est}${jpc}${est2}${bds}${cp}${lg}</span>`
       +`<span style="font-size:11px;min-width:74px;text-align:center;color:var(--dim)"`
-      +` title="この日に買ったものとして計算している。指数もこの日から走らせる`
+      +` title="${r.legs_n>1?'最初の買付の日。指数は買付ごとの日から走らせている':'この日に買ったものとして計算している。指数もこの日から走らせる'}`
       +(r.fx0?`。入口のドル円 ${r.fx0.toFixed(2)} → 出口 ${(r.fx1||0).toFixed(2)}`:'')
-      +`">${r.bd||'—'}</span>`
+      +`">${r.bd||'—'}${r.legs_n>1?'〜':''}</span>`
       +`<span style="font-size:12px;min-width:92px;text-align:right;color:var(--ink-soft)">${yen(r.cost_jpy)}</span>`
       +`<span style="font-size:12px;min-width:92px;text-align:right;color:var(--ink)">${yen(r.val_jpy)}</span>`
       +`<span style="font-size:12px;min-width:96px;text-align:right;color:${col(r.pl_jpy)}">${r.pl_jpy>0?'+':''}${yen(r.pl_jpy)}</span>`
@@ -7525,13 +7579,23 @@ async function renderPlan(){
   // ★割り方 'name'（銘柄ごとの不足）の材料: 個別=passGap（投下可・例外の各行の 目標−保有 の正の分の合計）／ETF=同じ式の合計
   window.__ccfNameGap={c:passGap, n:(__NET.rows||[]).reduce((a,r)=>a+Math.max(0,(+r.tw||0)-(+r.pos||0)),0)};
   // ★割り方 'cat'（2026-10-05・区分の比率が最優先）の材料: 総資産と、区分ごとの目標%・今の%。
-  //   投資信託＝target.ami_funds の本（行の pos は同じ指数の本＝QQQM の保有を含む）／ETF＝ETF側の残り（目標0%で持ち続けている本も含む）。
+  //   v9.9.201（2026-10-06 ユーザー明示指示「NASDAQ100 40% / XLK20% / SMH20% / 個別株20%」）: 区分は
+  //   **ETF側の目標>0 の各本**（鍵 n:{本}・ami_names の順）と **個別株**（鍵 c）。投資信託の本の pos は同じ指数の本（QQQM）の保有を含む。
+  //   旧は ETF（XLK・SMH）を1区分にまとめていたので、XLK の超過が SMH の不足を打ち消していた。
   //   個別株の目標は shiro_castle_pct（門外例外の重みも含む城全体）・今は城の全保有（MSFT・ASML など席の外の社も含む）。
-  (()=>{ const R=__NET.rows||[], F=R.filter(r=>r.fund), LV=__NET.live, ST=window.__ccfSleeveTarget;
-    const ft=F.reduce((a,r)=>a+(+r.tw||0),0), fn=F.reduce((a,r)=>a+(+r.pos||0),0);
-    const et=R.filter(r=>!r.fund&&!r.sameAs).reduce((a,r)=>a+(+r.tw||0),0);
-    window.__ccfCat=(LV&&(+LV.total>0)&&ST&&(+ST.c>0))
-      ?{tot:+LV.total, c:{t:+ST.c, now:+LV.c||0}, e:{t:et, now:Math.max(0,(+LV.n||0)-fn)}, f:{t:ft, now:fn}}:null; })();
+  //   目標0%で持ち続けている本と目標から外れた本（drop）は区分に入れない（_zero に表示のためだけに持つ）。
+  (()=>{ const R=__NET.rows||[], LV=__NET.live, ST=window.__ccfSleeveTarget;
+    if(!(LV&&(+LV.total>0)&&ST&&(+ST.c>0))){ window.__ccfCat=null; return; }
+    const K={tot:+LV.total};
+    R.forEach(r=>{ if(r.sameAs||!((+r.tw||0)>0))return;
+      const fd=r.fund||null;
+      K[ccfCatKeyOf(r)]={t:+r.tw, now:+r.pos||0, nm:fd?(fd.index||fd.short||r.nm||r.t):r.t, fnm:fd?(fd.short||fd.name||''):'',
+        fund:!!fd, alias:r.alias||[]}; });
+    K.c={t:+ST.c, now:+LV.c||0, nm:'個別株'};
+    const zr=R.filter(r=>!r.sameAs&&!((+r.tw||0)>0)&&(+r.pos||0)>0).map(r=>({t:r.t,now:+r.pos||0}))
+      .concat((__NET.drop||[]).filter(d=>(+d.pos||0)>0).map(d=>({t:d.t,now:+d.pos||0})));
+    K._zero={now:zr.reduce((a,x)=>a+x.now,0), nm:zr.map(x=>x.t)};
+    window.__ccfCat=K; })();
   const __NETA=ccfNetAlloc(__NET,ccfNetBudget());
   // ★v9.9.196: 口座の設定（portfolio.json の target.nisa）と総資産の円（1株単位の注文に要る）
   window.__ccfNisa=((__pf&&__pf.target)||{}).nisa||null;
