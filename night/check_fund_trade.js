@@ -21,6 +21,7 @@
  *   ⑩ 🏦保有の一覧が「口・基準価額」と「投資信託・門の裁きではない」を出す／盤が基準価額（/万口）を出す
  *   ⑪ 携帯の幅（320/360/390px）で記入欄がはみ出さない
  *   ⑫ pageerror が出ない
+ *   ⑬ iDeCo の本（ami_funds の account:'iDeCo'）を選ぶと口座の既定が iDeCo・ロットに口座 iDeCo が残る（v9.9.202）
  *   ★基準価額・1万口・投資信託の名前は**正本から読む**（書き写さない）。
  *
  * playwright が要るので CI には入れていない。使い方: NODE_PATH=$(npm root -g) node night/check_fund_trade.js
@@ -214,6 +215,23 @@ const srv = http.createServer((q, r) => {
   await fill({ trFJ: 10000 }); await go('buy');
   const r9b = await row(FKEY);
   ok(r9b.kind === '投資信託' && r9b.sh === 5000 + Math.floor(10000 / UPX) && r9b.bjpy === 38754, `⑨ 足すと種類が「投資信託」に直る（${r9b.kind}・${r9b.sh}口・¥${r9b.bjpy}）`);
+
+  // ── ⑬ iDeCo の本（v9.9.202）: 口座の既定が iDeCo・ロットに口座 iDeCo が残る
+  const IK = Object.keys(PJ.target.ami_funds || {}).find(k => (PJ.target.ami_funds[k] || {}).account === 'iDeCo');
+  if (!IK) ok(true, '⑬ iDeCo の本が ami_funds に無い（検査を飛ばす）');
+  else {
+    await seed(); await open('buy'); await pick(IK);
+    const f13 = await pg.evaluate(() => ({ acct: document.getElementById('trA').value, opts: [...document.getElementById('trA').options].map(o => o.value) }));
+    ok(f13.acct === 'iDeCo' && f13.opts.includes('iDeCo'), `⑬ ${IK} を選ぶと口座の既定が iDeCo（${f13.opts.join('/')}）`);
+    const nav13 = await pg.evaluate(() => +document.getElementById('trFN').value || 0);
+    await fill(Object.assign({ trFJ: 20000 }, nav13 > 0 ? {} : { trFN: 41234 }));
+    await go('buy');
+    const r13 = await row(IK), l13 = r13 && (r13.bdLots || [])[0];
+    ok(!!r13 && r13.kind === '投資信託' && r13.sleeve === 'net' && !!l13 && l13.acct === 'iDeCo' && l13.jpy === 20000,
+       `⑬ 記録: ${r13 ? r13.kind + '・' + r13.sleeve + '・' + r13.sh + '口' : 'なし'}・ロット ${l13 ? l13.acct + ' ¥' + l13.jpy : 'なし'}（基準価額 ${nav13 > 0 ? '盤 ' + nav13 : '手入力 41234'}）`);
+    await open('buy'); await pick(FKEY);
+    ok(await pg.evaluate(() => document.getElementById('trA').value) === 'つみたて', `⑬ ${FKEY} は従来どおりつみたて投資枠`);
+  }
 
   // ── ⑪ 携帯の幅
   for (const w of [320, 360, 390]) {
