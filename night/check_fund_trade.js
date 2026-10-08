@@ -22,6 +22,7 @@
  *   ⑪ 携帯の幅（320/360/390px）で記入欄がはみ出さない
  *   ⑫ pageerror が出ない
  *   ⑬ iDeCo の本（ami_funds の account:'iDeCo'）を選ぶと口座の既定が iDeCo・ロットに口座 iDeCo が残る（v9.9.202）
+ *   ⑭ こどもNISA（2026-10-08「比率に数えて」）: 口座に「こどもNISA」・名義に target.kodomo_nisa の名義が出る・記録したロットに両方が残る
  *   ★基準価額・1万口・投資信託の名前は**正本から読む**（書き写さない）。
  *
  * playwright が要るので CI には入れていない。使い方: NODE_PATH=$(npm root -g) node night/check_fund_trade.js
@@ -231,6 +232,21 @@ const srv = http.createServer((q, r) => {
        `⑬ 記録: ${r13 ? r13.kind + '・' + r13.sleeve + '・' + r13.sh + '口' : 'なし'}・ロット ${l13 ? l13.acct + ' ¥' + l13.jpy : 'なし'}（基準価額 ${nav13 > 0 ? '盤 ' + nav13 : '手入力 41234'}）`);
     await open('buy'); await pick(FKEY);
     ok(await pg.evaluate(() => document.getElementById('trA').value) === 'つみたて', `⑬ ${FKEY} は従来どおりつみたて投資枠`);
+  }
+
+  // ── ⑭ こどもNISA（2026-10-08 ユーザー明示指示「比率に数えて」）: 記録しそびれた月を 🏦保有 から手で入れられる
+  const KO = PJ.target.kodomo_nisa || null, KW = KO && KO.bucket ? ((KO.members || []).find(m => +m.jpy > 0) || {}).who : '';
+  if (!KW) ok(true, '⑭ target.kodomo_nisa に bucket か名義が無い（検査を飛ばす）');
+  else {
+    await seed(); await open('buy'); await pick(FKEY); await pg.waitForTimeout(400);
+    const f14 = await pg.evaluate(() => ({ accts: [...document.getElementById('trA').options].map(o => o.value), whos: [...document.getElementById('trW').options].map(o => o.value) }));
+    ok(f14.accts.includes('こどもNISA') && f14.whos.includes(KW), `⑭ 口座に「こどもNISA」（${f14.accts.join('/')}）・名義に「${KW}」（${f14.whos.join('/')}）`);
+    await pg.evaluate(w => { const a = document.getElementById('trA'); a.value = 'こどもNISA'; a.dispatchEvent(new Event('change'));
+      document.getElementById('trW').value = w; }, KW);
+    await fill({ trFJ: 30000 }); await go('buy');
+    const r14 = await row(FKEY), l14 = r14 && (r14.bdLots || []).slice(-1)[0];
+    ok(!!l14 && l14.acct === 'こどもNISA' && l14.who === KW && l14.jpy === 30000 && r14.kind === '投資信託',
+       `⑭ 記録: ロット ${l14 ? l14.acct + '・' + l14.who + '・¥' + l14.jpy + '・' + l14.sh + '口' : 'なし'}`);
   }
 
   // ── ⑪ 携帯の幅
