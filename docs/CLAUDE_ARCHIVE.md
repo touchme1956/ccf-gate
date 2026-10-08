@@ -18087,7 +18087,7 @@ dom・irr・moatW は私の独立読みと一致。『』の引用は CLS 71・A
 ## iDeCo を2人とも月1.5万円にした（2026-10-08・ユーザー明示指示「2人とも1.5万円にして」）——各2万円から。年率15%まで含めた16通りで、NISA だけより損した場合が0回の額
 
 ### 何を変えたか
-- `portfolio.json` の `target.ideco.members` を まほ・ゆうすけ とも 20000→**15000**（合計 月¥30,000）。start（仮の 2027-01）・fund・bucket は不変。注文書は start の月から「入金額 − ¥30,000」を配る（`ccfIdecoCfg` が members の合計を読む＝コードは変えていない）。
+- `portfolio.json` の `target.ideco.members` を A・B とも 20000→**15000**（合計 月¥30,000）。start（仮の 2027-01）・fund・bucket は不変。注文書は start の月から「入金額 − ¥30,000」を配る（`ccfIdecoCfg` が members の合計を読む＝コードは変えていない）。
 - 文: 📖解説の iDeCo の文・todo（`ideco_prestart_checks` の題と注記・`ideco_start_confirm` の合計額）・`out/shadow_seats.json`（注文書の iDeCo の行の文）。
 
 ### 経緯（同日の会話）
