@@ -17,7 +17,9 @@
  *   ⑪ 割り方 'cat'（区分の比率が最優先・2026-10-05）／⑬ 区分は ETF側の各本と個別株（v9.9.201・NASDAQ100/XLK/SMH/個別株）
  *   ⑫ 実データ（state.json＋全パック）で 注文書・◈ ETF の節・上の1行・区分の比率の表が同じことを言う
  *   ⑭ iDeCo（v9.9.202）: 自動引き落としの分は注文書で配らず、'cat' では NASDAQ100 の区分を先に買ったものとして数える
- *   ⑮ こどもNISA（v9.9.203）: 子どもの口座の自動の積立も注文書で配らない・区分の比率には数えない・NISA の月の計画より少なければ知らせる
+ *   ⑮ こどもNISA（v9.9.203）: 子どもの口座の自動の積立も注文書で配らない・NISA の月の計画より少なければ知らせる。
+ *      2026-10-08「比率に数えて」から iDeCo と同じく bucket（NASDAQ100）の区分に数える（ccfCatBudget の pre は配列も受け、区分ごとに足す）・
+ *      注文書の行の「✓ 保有へ」で口座 こどもNISA のロットを🏦保有へ足す・bucket が空なら比率の外（旧の扱い）
  *
  * playwright が要るので CI には入れていない。使い方: node night/check_sleeve_split.js
  */
@@ -431,11 +433,27 @@ const srv = http.createServer((q, r) => {
   }
 
   // ⑮ こどもNISA（v9.9.203・2026-10-08 ユーザー明示指示「来年1月から ideco月3万 子供NISA月3万 NISA月14万で積立 これでやって」）:
-  //    子どもの口座の自動の積立は注文書で配らない（入金額 − iDeCo − こどもNISA）・区分の比率には数えない（pre は iDeCo だけ）。
+  //    子どもの口座の自動の積立は注文書で配らない（入金額 − iDeCo − こどもNISA）。
+  //    同日「比率に数えて」: bucket があれば iDeCo と同じく区分の比率に数える（pre は区分ごとに iDeCo と合計）。bucket が空なら比率の外。
   //    NISA の月の計画（target.nisa.monthly_jpy）より注文書で配る額が少ない月は知らせる。期待値は正本の設定から作る（数字を写さない）
   const q15 = await pg.evaluate(() => {
     const t0 = { ami_funds: {}, ideco: { members: [{ who: 'A', jpy: 15000 }, { who: 'B', jpy: 15000 }], fund: 'X', bucket: 'IFREE-NDX', start: '2000-01' },
-      kodomo_nisa: { members: [{ who: '子ども', jpy: 30000 }, { who: 'Z', jpy: 0 }], fund: '', start: '2000-01' } };
+      kodomo_nisa: { members: [{ who: '子ども', jpy: 30000 }, { who: 'Z', jpy: 0 }], fund: '', bucket: 'ifree-ndx', start: '2000-01' } };
+    // 自動の積立が2つ（ccfCatBudget の pre は配列も受ける）: 同じ区分なら合計と同じ・別の区分でも合計は入金・区分の取り分を超えたら その区分は自動の積立だけ
+    const TOT = 2490000, T = 140000, A = 30000, B2 = 30000;
+    const K = { tot: TOT, 'n:IFREE-NDX': { t: 50, now: 15.6, fund: true }, 'n:XLK': { t: 15, now: 30.4 }, 'n:SMH': { t: 20, now: 5.0 }, c: { t: 15, now: 38.0 } };
+    const one = ccfCatBudget(Object.assign({}, K, { pre: { g: 'n:IFREE-NDX', jpy: A + B2 } }), T);
+    const two = ccfCatBudget(Object.assign({}, K, { pre: [{ g: 'n:IFREE-NDX', jpy: A, parts: [{ lbl: 'iDeCo', jpy: A }] }, { g: 'n:IFREE-NDX', jpy: B2, parts: [{ lbl: 'こどもNISA', jpy: B2 }] }] }), T);
+    const twoP = ccfCatSharePlan([{ k: 'IFREE', g: 'n:IFREE-NDX', tw: 50, pos: 15.6, frac: true }], T, TOT,
+      Object.assign({}, K, { pre: { g: 'n:IFREE-NDX', jpy: A + B2, parts: [{ lbl: 'iDeCo', jpy: A }, { lbl: 'こどもNISA', jpy: B2 }] } }));
+    const diff = ccfCatBudget(Object.assign({}, K, { pre: [{ g: 'n:IFREE-NDX', jpy: A }, { g: 'n:SMH', jpy: B2 }] }), T);
+    const allNP = ccfCatBudget(K, T + A + B2);                       // 自動の積立なしで「入金＋自動の積立」の全体を割ったとき
+    const KB = { tot: 2000000, 'n:IFREE-NDX': { t: 50, now: 55, fund: true }, 'n:XLK': { t: 15, now: 15 }, 'n:SMH': { t: 20, now: 10 }, c: { t: 15, now: 20 } };
+    const over = ccfCatBudget(Object.assign({}, KB, { pre: [{ g: 'n:IFREE-NDX', jpy: A }, { g: 'n:SMH', jpy: B2 }] }), T);
+    const miss = ccfCatBudget(Object.assign({}, K, { pre: [{ g: 'n:IFREE-NDX', jpy: A }, { g: 'n:NOPE', jpy: B2 }] }), T);
+    const solo = ccfCatBudget(Object.assign({}, K, { pre: { g: 'n:IFREE-NDX', jpy: A } }), T);
+    const budget = { one, two, twoP: twoP.cat['n:IFREE-NDX'], diff, allNP, over, miss, solo, T, A, B2,
+      partsOld: ccfPreParts({ pre: A }), partsNone: ccfPreParts({ pre: 0 }) };
     const kPast = ccfKodomoCfg(t0), kFut = ccfKodomoCfg(Object.assign({}, t0, { kodomo_nisa: Object.assign({}, t0.kodomo_nisa, { start: '2999-12' }) })),
           kBad = ccfKodomoCfg(Object.assign({}, t0, { kodomo_nisa: Object.assign({}, t0.kodomo_nisa, { start: '2027/01' }) })), kNone = ccfKodomoCfg({});
     const keepI = window.__ccfIdeco, keepK = window.__ccfKodomo, keepN = window.__ccfNisa;
@@ -447,7 +465,7 @@ const srv = http.createServer((q, r) => {
     window.__ccfNisa = { monthly_jpy: 140000, monthly_from: '2999-12' }; const npOff = ccfNisaPlan();
     window.__ccfNisa = { holders: ['A'] }; const npNone = ccfNisaPlan();
     window.__ccfIdeco = keepI; window.__ccfKodomo = keepK; window.__ccfNisa = keepN;
-    return { kPast, kFut, kBad, kNone, both, kfut, npOn, npOff, npNone };
+    return { kPast, kFut, kBad, kNone, both, kfut, npOn, npOff, npNone, budget };
   });
   ok(q15.kPast && q15.kPast.active && q15.kPast.jpy === 30000 && q15.kPast.members.length === 1 && q15.kFut && !q15.kFut.active && q15.kBad && !q15.kBad.active && q15.kNone === null,
      '⑮ こどもNISA の設定: 開始月を過ぎたら有効（0円の名義は外す・合計 ¥' + (q15.kPast && q15.kPast.jpy) + '）・開始月の前／形の違う開始月は無効・設定が無ければ null');
@@ -455,6 +473,23 @@ const srv = http.createServer((q, r) => {
      '   注文書が配る額: 20万 − iDeCo 3万 − こどもNISA 3万 ＝ ¥' + q15.both.oa.toLocaleString() + '・こどもNISA が開始月の前なら ¥' + q15.kfut.oa.toLocaleString());
   ok(q15.npOn && q15.npOn.active && q15.npOn.jpy === 140000 && q15.npOff && !q15.npOff.active && q15.npNone === null,
      '   NISA の月の計画: monthly_from を過ぎたら有効・前は無効・monthly_jpy が無ければ null');
+  {
+    const B = q15.budget, ks = ['n:IFREE-NDX', 'n:XLK', 'n:SMH', 'c'], sum = o => ks.reduce((a, k) => a + o[k].b, 0);
+    ok(q15.kPast.bucket === 'IFREE-NDX', '   設定: bucket を読む（大文字にそろえる・' + q15.kPast.bucket + '）');
+    ok(ks.every(k => B.one[k].b === B.two[k].b && B.one[k].need === B.two[k].need) && B.two['n:IFREE-NDX'].pre === B.A + B.B2
+       && B.two['n:IFREE-NDX'].preParts.map(p => p.lbl).join('+') === 'iDeCo+こどもNISA' && B.one['n:IFREE-NDX'].preParts.map(p => p.lbl).join('+') === 'iDeCo',
+       '   pre が2つ（同じ NASDAQ100）: 取り分は合計1つ（¥' + (B.A + B.B2).toLocaleString() + '）と同じ（NASDAQ100 ¥' + B.two['n:IFREE-NDX'].b.toLocaleString() + '）・内訳 '
+       + B.two['n:IFREE-NDX'].preParts.map(p => p.lbl + ' ¥' + p.jpy).join('＋') + '・内訳の無い形は iDeCo とみなす');
+    ok(B.twoP.pre === B.A + B.B2 && B.twoP.preParts.length === 2, '   注文書の計画（ccfCatSharePlan）も内訳を持つ（区分の比率の表が「＋iDeCo ＋こどもNISA」と出す材料）');
+    const PREd = { 'n:IFREE-NDX': B.A, 'n:SMH': B.B2 };
+    ok(sum(B.diff) === B.T && ks.every(k => B.diff[k].b === B.allNP[k].b - (PREd[k] || 0)) && B.diff['n:SMH'].pre === B.B2,
+       '   pre が別の区分（NASDAQ100 と SMH）: 「入金＋自動の積立」の全体を割り、それぞれの区分から引く（合計 ¥' + sum(B.diff).toLocaleString() + '＝入金・SMH ¥' + B.diff['n:SMH'].b.toLocaleString() + '）');
+    ok(B.over['n:IFREE-NDX'].b === 0 && sum(B.over) === B.T && B.over['n:SMH'].b > 0 && B.over['n:IFREE-NDX'].pre === B.A && B.over['n:SMH'].pre === B.B2 && ks.every(k => B.over[k].b >= 0),
+       '   NASDAQ100 が目標超過: NASDAQ100 は自動の積立だけ・入金 ¥' + B.T.toLocaleString() + ' は残りの区分へ（SMH は自分の自動の積立を引いて ¥' + B.over['n:SMH'].b.toLocaleString() + '）');
+    ok(ks.every(k => B.miss[k].b === B.solo[k].b) && B.miss['n:IFREE-NDX'].pre === B.A,
+       '   区分に無い pre（n:NOPE）は数えない（取り分は NASDAQ100 の分だけを数えたときと同じ）');
+    ok(B.partsOld.length === 1 && B.partsOld[0].lbl === 'iDeCo' && B.partsNone.length === 0, '   表示の内訳: 古い形（pre の額だけ）は iDeCo・0円なら出さない');
+  }
   // 実データ（state.json＋全パック・割り方 'cat'）: 開始月を過ぎた設定にして、注文書と区分の比率と入金額の案内を読む
   const KO = base.target && base.target.kodomo_nisa, NPN = base.target && base.target.nisa;
   if (!KO || !(base.target.ideco)) ok(true, '   ⑮ 実データ: portfolio.json に target.kodomo_nisa か target.ideco が無い（飛ばす）');
@@ -467,8 +502,13 @@ const srv = http.createServer((q, r) => {
         const box = [...document.querySelectorAll('#pg5 div')].find(d => /📋 今月の注文書/.test(d.innerText) && /合計 約/.test(d.innerText) && d.innerText.length < 8000);
         const t = box ? box.innerText : '', m = t.match(/合計 約¥([\d,]+)/), rr = t.match(/残り¥([\d,]+)/);
         const note = [...document.querySelectorAll('#pg5 .auto-note')].map(e => e.innerText).join(' ／ ');
+        const C = window.__ccfCat || null, pl = C ? ccfPreList(C.pre) : [];
+        const line = [...document.querySelectorAll('#pg5 div')].filter(d => /区分の比率が最優先・1株単位/.test(d.innerText) && d.innerText.length < 600).map(d => d.innerText).pop() || '';
         return { kd: /🧒 こどもNISA（子どもの口座の自動の積立・注文書では買わない）/.test(t), id: /🏦 iDeCo（自動引き落とし・注文書では買わない）/.test(t),
-          tot: m ? +m[1].replace(/,/g, '') : null, rest: rr ? +rr[1].replace(/,/g, '') : 0, pre: (window.__ccfCat && window.__ccfCat.pre) ? +window.__ccfCat.pre.jpy : 0,
+          tot: m ? +m[1].replace(/,/g, '') : null, rest: rr ? +rr[1].replace(/,/g, '') : 0, pre: pl.reduce((a, x) => a + (+x.jpy), 0), preN: pl.length,
+          kdTxt: ((document.querySelector('#pg5 .kodomo-row') || {}).innerText || ''), ndxRow: ((document.querySelector('#pg5 .catrow[data-cat="n:IFREE-NDX"]') || {}).innerText || ''),
+          line, foot: (t.match(/＋ こどもNISA[^\n]*/) || [''])[0],
+          ndxNow: (C && C['n:IFREE-NDX']) ? +C['n:IFREE-NDX'].now : null, tot0: C ? +C.tot : null,
           note, warn: !!document.querySelector('#pg5 .plan-warn'), next: (document.querySelector('#pg5 .plan-next') || {}).innerText || '' };
       });
     };
@@ -485,14 +525,50 @@ const srv = http.createServer((q, r) => {
     await loadReal(act);
     const T1 = NPJ ? NPJ + IA + KA : 200000, r1 = await readBox(T1);
     const want1 = T1 - IA - KA;
-    ok(r1.kd && r1.id && r1.pre === IA && r1.tot != null && r1.tot + r1.rest <= want1 && r1.tot + r1.rest >= want1 - 300
+    // ★2026-10-08「比率に数えて」: 正本に bucket があれば iDeCo とこどもNISA の両方を区分に数える（同じ NASDAQ100 なら pre は1つに合計）
+    const KIN = KO.bucket ? KA : 0, yen = v => '¥' + (+v).toLocaleString('ja-JP');
+    ok(r1.kd && r1.id && r1.pre === IA + KIN && r1.tot != null && r1.tot + r1.rest <= want1 && r1.tot + r1.rest >= want1 - 300
        && r1.note.includes('注文書で配るのは ¥' + want1.toLocaleString()) && !r1.warn,
        '⑮ 実データ・有効: 入金 ¥' + T1.toLocaleString() + ' → 注文書の合計 ¥' + (r1.tot || 0).toLocaleString() + (r1.rest ? '＋残り ¥' + r1.rest.toLocaleString() : '')
-       + '（入金 − iDeCo ¥' + IA.toLocaleString() + ' − こどもNISA ¥' + KA.toLocaleString() + '）・iDeCo とこどもNISA の行あり・区分の pre は iDeCo だけ ¥' + r1.pre.toLocaleString() + '・計画の警告なし');
+       + '（入金 − iDeCo ¥' + IA.toLocaleString() + ' − こどもNISA ¥' + KA.toLocaleString() + '）・iDeCo とこどもNISA の行あり・区分に数えた分 ¥' + r1.pre.toLocaleString()
+       + '（' + (KIN ? 'iDeCo＋こどもNISA' : 'iDeCo だけ') + '）・計画の警告なし');
+    if (KIN) {
+      ok(r1.preN === 1 && /NASDAQ100 の区分に数える/.test(r1.kdTxt) && /✓ 保有へ/.test(r1.kdTxt)
+         && r1.ndxRow.includes('＋iDeCo ' + yen(IA)) && r1.ndxRow.includes('＋こどもNISA ' + yen(KA))
+         && r1.line.includes('＋iDeCo ' + yen(IA)) && r1.line.includes('＋こどもNISA ' + yen(KA)) && !/比率の外/.test(r1.line) && /NASDAQ100/.test(r1.foot),
+         '   こどもNISA の行「…NASDAQ100 の区分に数える・✓ 保有へ」・区分の比率の表と上の1行が「＋iDeCo ' + yen(IA) + '＋こどもNISA ' + yen(KA) + '」（' + r1.ndxRow.replace(/\s+/g, ' ').slice(0, 90) + '）');
+      // 「✓ 保有へ」: 口座 こどもNISA のロットを🏦保有へ（名義は members の who）。記録した後は NASDAQ100 の区分の「今」が増え、行が「記録済み」になる
+      const cl = await pg.evaluate(async () => {
+        const btn = [...document.querySelectorAll('#pg5 .kodomo-row button')].find(b => /保有へ/.test(b.textContent));
+        if (!btn) return { err: 'ボタンが無い' };
+        const K0 = window.__ccfKodomo, upx = K0 ? +K0.upx : 0, fund = K0 ? K0.fund : '';
+        btn.click(); await new Promise(r => setTimeout(r, 4500));
+        const P = JSON.parse(localStorage.getItem('pf:portfolio') || '{}'), row = (P.positions || []).find(x => String(x.t || '').toUpperCase() === fund);
+        const ym = ccfTradeToday().slice(0, 7), lots = ((row && row.bdLots) || []).filter(l => l.acct === 'こどもNISA' && String(l.bd || '').slice(0, 7) === ym);
+        const C = window.__ccfCat || null;
+        return { upx, fund, lots, kdTxt: ((document.querySelector('#pg5 .kodomo-row') || {}).innerText || ''),
+          ndxNow: (C && C['n:IFREE-NDX']) ? +C['n:IFREE-NDX'].now : null, tot: C ? +C.tot : null };
+      });
+      const lot = (cl.lots || [])[0], sh = cl.upx > 0 ? Math.floor(KA / cl.upx) : 0;
+      const dHeld = (cl.ndxNow != null && r1.ndxNow != null) ? cl.ndxNow * cl.tot / 100 - r1.ndxNow * r1.tot0 / 100 : NaN, vLot = sh * cl.upx;
+      ok(!cl.err && cl.lots.length === (KO.members || []).filter(x => +x.jpy > 0).length && !!lot && lot.who === (KO.members[0] || {}).who && lot.jpy === KA && lot.sh === sh
+         && /記録済み/.test(cl.kdTxt) && Math.abs(dHeld - vLot) < 2,
+         '   「✓ 保有へ」: ' + (cl.err || ('口座 こどもNISA のロット ' + (lot ? lot.who + '・' + yen(lot.jpy) + '・' + lot.sh + '口' : 'なし') + '・NASDAQ100 の区分の保有 +' + yen(Math.round(dHeld))
+         + '（ロットの評価 ' + yen(Math.round(vLot)) + '）・行が「記録済み」')));
+    }
     if (NPJ) {
       const T2 = NPJ + IA + KA - 30000, r2 = await readBox(T2);
       ok(r2.warn && r2.note.includes('計画どおりなら入金額は ¥' + (NPJ + IA + KA).toLocaleString()),
          '   入金 ¥' + T2.toLocaleString() + '（計画より3万少ない）→ 「計画どおりなら入金額は ¥' + (NPJ + IA + KA).toLocaleString() + '」と知らせる');
+    }
+    // bucket を空にすると比率の外（旧 v9.9.203 の扱い）: pre は iDeCo だけ・行は「家族の区分の比率には数えない」・上の1行は「（自動・比率の外）」
+    if (KO.bucket) {
+      const outC = JSON.parse(JSON.stringify(act)); delete outC.target.kodomo_nisa.bucket;
+      await loadReal(outC);
+      const r4 = await readBox(T1);
+      ok(r4.pre === IA && /家族の区分の比率には数えない/.test(r4.kdTxt) && !/保有へ/.test(r4.kdTxt) && /こどもNISA ¥[\d,]+（自動・比率の外）/.test(r4.line)
+         && !r4.ndxRow.includes('こどもNISA') && r4.tot + r4.rest <= want1 && r4.tot + r4.rest >= want1 - 300,
+         '   bucket を消すと比率の外: 区分に数えるのは iDeCo ¥' + r4.pre.toLocaleString() + ' だけ・行「家族の区分の比率には数えない」・注文書の合計は同じ（¥' + (r4.tot || 0).toLocaleString() + '）');
     }
     // 開始月の前（正本の start のまま）: 行は出さず、案内に「いつから・その月からの入金額」を出す
     const pre = withMode('cat'); pre.target.ideco.start = '2999-12'; pre.target.kodomo_nisa.start = '2999-12'; if (pre.target.nisa) pre.target.nisa.monthly_from = '2999-12';
