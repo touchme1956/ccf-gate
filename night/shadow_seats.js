@@ -16,6 +16,8 @@
  * 使い方: NODE_PATH=$(npm root -g) node night/shadow_seats.js [--seats 4,7,10] [--monthly 170000] [--out FILE]
  *   --seats   比べる席の数（既定: いまの CCF_SEATS と 10）
  *   --monthly 毎月の入金額（既定: state.json の pf:monthly_total → pf:monthly の順に読む。無ければ止まる）
+ *             iDeCo・こどもNISA（v9.9.203）を含めた月の合計。今日が開始月の後なら、門と同じく自動の積立を引いた残りを毎月配る
+ *             （⚠ 12か月の途中で開始月をまたぐ切り替えは模していない——今日の状態で12か月を回す）
  *   --out     結果の書き先（既定: out/shadow_seats.json）
  */
 const { chromium } = require('playwright');
@@ -116,9 +118,11 @@ const srv = http.createServer((q, r) => {
       const catNow = () => Object.assign({}, CI, { tot: TOT }, Object.fromEntries(CK.map(k => [k, Object.assign({}, CI[k], { now: 100 * HC[k] / TOT })])));
       // ★iDeCo（v9.9.202）: catIn.pre＝毎月の自動引き落とし。注文書が配るのは 入金額−iDeCo、iDeCo の分は毎月その区分の保有に足す
       const PRE = (CI && CI.pre && +CI.pre.jpy > 0) ? +CI.pre.jpy : 0, PREG = PRE ? CI.pre.g : null;
+      // ★こどもNISA（v9.9.203）: 子どもの口座の自動の積立も注文書では配らない。区分の比率の外なので、どの区分の保有にも足さない
+      const KID = (typeof window.ccfKodomoAmt === 'function') ? (+window.ccfKodomoAmt() || 0) : 0;
       for (let m = 1; m <= 12; m++) {
         items.forEach(it => it.pos = 100 * H[it.k] / TOT);
-        const T = M - PRE + carry;
+        const T = M - PRE - KID + carry;
         const P = CI ? window.__wcpOrig(items, T, TOT, catNow()) : window.__wspOrig(items, T, TOT);
         let spent = 0, cs = 0, ns = 0; const got = [], cy = {};
         if (HC) items.forEach(it => { const g = it.g, bb = P.buy[it.k], fy = P.frac[it.k]; if (HC[g] == null) return;
@@ -130,7 +134,7 @@ const srv = http.createServer((q, r) => {
         carry = T - spent; TOT += spent + PRE;
         if (PRE && HC && HC[PREG] != null) { HC[PREG] += PRE; cy[PREG] = (cy[PREG] || 0) + PRE; }
         const castle = HC ? HC.c : items.filter(it => it.k[0] === 'C').reduce((a, it) => a + H[it.k], 0);
-        months.push(Object.assign({ m, castle_yen: Math.round(cs), etf_yen: Math.round(ns), ideco_yen: PRE, castle_pct: +(100 * castle / TOT).toFixed(1), castle_bought: got.filter(x => !/^ETF/.test(x)).join(' ') },
+        months.push(Object.assign({ m, castle_yen: Math.round(cs), etf_yen: Math.round(ns), ideco_yen: PRE, kodomo_yen: KID, castle_pct: +(100 * castle / TOT).toFixed(1), castle_bought: got.filter(x => !/^ETF/.test(x)).join(' ') },
           HC ? { cat_pct: Object.fromEntries(CK.map(k => [k, +(100 * HC[k] / TOT).toFixed(1)])),
                  cat_yen: Object.fromEntries(CK.map(k => [k, Math.round(cy[k] || 0)])),
                  etf_bought: got.filter(x => /^ETF/.test(x)).join(' ') } : {}));
@@ -160,6 +164,7 @@ const srv = http.createServer((q, r) => {
     if (run.cat_in && run.months[0].cat_pct) {
       const ci = run.cat_in, ks = run.cat_keys, nm = run.cat_names || {}, mm = [1, 3, 6, 12].map(k => run.months[k - 1]).filter(Boolean);
       if (ci.pre && +ci.pre.jpy > 0) console.log(`  iDeCo（自動引き落とし）: 毎月 ¥${(+ci.pre.jpy).toLocaleString()} を ${nm[ci.pre.g] || ci.pre.g} の区分に数える（注文書は 入金額−iDeCo を配る・下の「新しいお金」には iDeCo を含む）`);
+      if (+run.months[0].kodomo_yen > 0) console.log(`  こどもNISA（子どもの口座の自動の積立）: 毎月 ¥${(+run.months[0].kodomo_yen).toLocaleString()} は注文書で配らない・区分の比率の外（下の数字に入っていない）`);
       console.log(`  区分の比率（割り方 ${run.split_mode}）: 目標 ${ks.map(k => nm[k] + ' ' + ci[k].t + '%').join(' / ')}　いま ${ks.map(k => ci[k].now.toFixed(1)).join(' / ')}`);
       console.log('    ' + mm.map(x => `${x.m}か月後 ${ks.map(k => x.cat_pct[k]).join(' / ')}`).join('　'));
       console.log('    初めて新しいお金が入る月: ' + ks.map(k => { const f = run.months.find(x => (x.cat_yen[k] || 0) > 0);
