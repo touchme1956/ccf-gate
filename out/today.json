@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-08",
+ "generated": "2026-10-09",
  "note": "「今日、何をすればいいか」だけを集めた表示専用の在庫。**判定には一切使わない**——Ω・四関門・売却規律・配分のどれにも触れない。期限の判定は ops_status.build() をそのまま呼ぶ（二重実装を作らない）。**blind（読めなかった入力）を必ず出す**のがこの道具の本体で、盲目のときに「異常なし」へ倒れる fail-open を画面の側で塞ぐためにある。",
  "buy": [
   "CW",
@@ -14,9 +14,9 @@
  "next": [],
  "counts": {
   "now": 1,
-  "today": 3,
-  "month": 38,
-  "waiting": 34,
+  "today": 2,
+  "month": 39,
+  "waiting": 36,
   "blind": 0,
   "src": 18
  },
@@ -46,14 +46,6 @@
    "why": "臨時報告書＝重要事象（役員異動・訂正等）の可能性——原本を読む(EDINETでdocID検索)",
    "how": "⚙自動化タブの「審査」で門2再審査の依頼文を作る",
    "src": "8-K監視"
-  },
-  {
-   "k": "earn:CTAS",
-   "level": "today",
-   "title": "決算: CTAS（2026-10-08）",
-   "why": "本日",
-   "how": "発表後に python3 kessan_check.py（判定は警報のみ・株価は使わない）",
-   "src": "決算カレンダー"
   }
  ],
  "month": [
@@ -170,26 +162,34 @@
    "src": "日本語要約"
   },
   {
-   "k": "fresh:irr85hist:本体が60日動いていない",
+   "k": "fresh:irr85hist:本体が61日動いていない",
    "level": "month",
    "title": "中身/入力が前進していない: irr=85の実績台帳",
-   "why": "本体が60日動いていない（期限40日）",
+   "why": "本体が61日動いていない（期限40日）",
    "how": "python3 night/check_freshness.py",
    "src": "鮮度"
   },
   {
-   "k": "fresh:stalebs:本体が15日動いていない",
+   "k": "fresh:stalebs:本体が16日動いていない",
    "level": "month",
    "title": "中身/入力が前進していない: 期末後の重大事象の検査",
+   "why": "本体が16日動いていない（期限4日）",
+   "how": "python3 night/check_freshness.py",
+   "src": "鮮度"
+  },
+  {
+   "k": "fresh:packstale:本体が15日動いていない",
+   "level": "month",
+   "title": "中身/入力が前進していない: パックの会計年度の遅れ",
    "why": "本体が15日動いていない（期限4日）",
    "how": "python3 night/check_freshness.py",
    "src": "鮮度"
   },
   {
-   "k": "fresh:packstale:本体が14日動いていない",
+   "k": "fresh:unmeasurable",
    "level": "month",
-   "title": "中身/入力が前進していない: パックの会計年度の遅れ",
-   "why": "本体が14日動いていない（期限4日）",
+   "title": "鮮度を測れない錨が 1件",
+   "why": "「測っていない」であって「測って問題なし」ではない",
    "how": "python3 night/check_freshness.py",
    "src": "鮮度"
   },
@@ -765,7 +765,7 @@
   {
    "k": "todo:ideco_prestart_checks",
    "kind": "宿題",
-   "title": "iDeCo を始める前の確認2つ: 会社の企業年金・退職金の有無（各¥20,000か¥15,000か）と生活防衛資金（iDeCo は60歳まで引き出せない）",
+   "title": "iDeCo を始める前の確認2つ: 会社の企業年金・退職金の有無と生活防衛資金（iDeCo は60歳まで引き出せない）",
    "due": null,
    "owner": "人",
    "tickers": []
@@ -773,7 +773,7 @@
   {
    "k": "todo:ideco_start_confirm",
    "kind": "宿題",
-   "title": "iDeCo の最初の引き落とし月が決まったら portfolio.json の target.ideco.start を書き換える（今は仮の 2027-01）",
+   "title": "iDeCo の最初の引き落とし月が決まったら portfolio.json の target.ideco.start を合わせる（ユーザーの計画は 2027-01）",
    "due": null,
    "owner": "人",
    "tickers": []
@@ -799,6 +799,22 @@
    "kind": "予約議題",
    "title": "【休眠・引き金つき】60歳が近づいたら iDeCo の受け取り方を決める（一時金・年金・併用と、会社の退職金との順番と間隔）",
    "due": null,
+   "owner": "人",
+   "tickers": []
+  },
+  {
+   "k": "todo:kodomo_nisa_open",
+   "kind": "宿題",
+   "title": "こどもNISA の口座を開き、2027年1月からの月3万円の積立（iFreeNEXT NASDAQ100）を設定する（子どもの口座の未成年者のつみたて投資枠）",
+   "due": "2026-12-15",
+   "owner": "人",
+   "tickers": []
+  },
+  {
+   "k": "todo:monthly_plan_2027_01",
+   "kind": "宿題",
+   "title": "2027年1月から 🛒『今月の入金額』を20万円にする（NISA 14万＋iDeCo 3万＋こどもNISA 3万）",
+   "due": "2027-01-01",
    "owner": "人",
    "tickers": []
   }
