@@ -59,7 +59,8 @@ def path_stats(Rp, T):
     return geo, vol, mdd
 
 
-def main():
+def build(max_k=MAX_K):
+    """全組み合わせ（1〜max_k 本）の実績の部分と、4つの世界を出す関数 worlds() を返す（etf_p15.py も使う）"""
     res = R.main(write=False)
     rows, chains = res['rows'], res['chains']
     k1, k2 = R.months(*R.A1), R.months(*R.A2)
@@ -105,7 +106,7 @@ def main():
 
     # ── 全組み合わせ ──
     blocks = []
-    for k in range(1, MAX_K + 1):
+    for k in range(1, max_k + 1):
         comps = compositions(10, k)
         subs = np.array(list(itertools.combinations(range(n), k)), dtype=np.int64)
         blocks.append((k, comps, subs))
@@ -179,6 +180,18 @@ def main():
         for wn in ('A1', 'A2', 'B', 'C'):
             assert abs(wm[wn][0] - rows[c][wn]) < 1e-9, (c, wn, wm[wn][0], rows[c][wn])
         assert abs(vol1[i1] - rows[c]['vol_A1']) < 1e-9 and abs(mdd1[i1] - rows[c]['maxdd_A1']) < 1e-9, c
+    return dict(rows=rows, chains=chains, G1=G1, G2=G2, T1=T1, T2=T2, n=n, adj=adj, tax=tax, gbc=gbc,
+                chips_share=chips_share, chips_adj=chips_adj, S1=S1, S2=S2, s1=s1, s2=s2, N=N, Wint=Wint, nk=nk, W=W,
+                grid_bs=grid_bs, vol1=vol1, mdd1=mdd1, base_of=base_of, worlds=worlds,
+                wnow=wnow, now_bs=now_bs, wvoo=wvoo, voo_bs=voo_bs)
+
+
+def main():
+    ctx = build()
+    rows, n, G1, N, W, Wint, nk, vol1, s1 = (ctx[k] for k in ('rows', 'n', 'G1', 'N', 'W', 'Wint', 'nk', 'vol1', 's1'))
+    grid_bs, base_of, worlds = ctx['grid_bs'], ctx['base_of'], ctx['worlds']
+    wnow, now_bs, wvoo, voo_bs = ctx['wnow'], ctx['now_bs'], ctx['wvoo'], ctx['voo_bs']
+    chips_share, chips_adj = ctx['chips_share'], ctx['chips_adj']
 
     def wdict(i):
         return {CANDS[j]: int(Wint[i, j]) * 10 for j in np.argsort(-Wint[i].astype(int), kind='stable') if Wint[i, j]}
