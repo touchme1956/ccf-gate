@@ -20,6 +20,8 @@
  *   ⑮ こどもNISA（v9.9.203）: 子どもの口座の自動の積立も注文書で配らない・NISA の月の計画より少なければ知らせる。
  *      2026-10-08「比率に数えて」から iDeCo と同じく bucket（NASDAQ100）の区分に数える（ccfCatBudget の pre は配列も受け、区分ごとに足す）・
  *      注文書の行の「✓ 保有へ」で口座 こどもNISA のロットを🏦保有へ足す・bucket が空なら比率の外（旧の扱い）
+ *   ⑯ その他 ETF・投資信託（v9.9.206）: target.ami_other の buy の本（XLK）の区分に、目標0%の本と目標に無い本の保有も数える・
+ *      区分の名前は「その他 ETF・投資信託」・設定を消せば v9.9.203 の姿（XLK だけの区分＋区分の外の「その他」の1行）
  *
  * playwright が要るので CI には入れていない。使い方: node night/check_sleeve_split.js
  */
@@ -349,15 +351,34 @@ const srv = http.createServer((q, r) => {
       const rows = [...document.querySelectorAll('#pg5 .catrow')].filter(e => e.dataset.cat !== 'zero')
         .map(e => ({ g: e.dataset.cat, yen: +((e.innerText.match(/今月 ¥([\d,]+)/) || [0, '0'])[1].replace(/,/g, '')) }));
       const tot = [...document.querySelectorAll('#pg5 div')].map(d => d.innerText).find(x => /^合計 約¥/.test(x.trim()) && x.length < 200) || '';
-      return { OB, sec, line: lines.length ? lines[lines.length - 1] : '', rows, tot };
+      const CI = window.__ccfCat || {}, labs = {};
+      ccfCatKeys(CI).forEach(g => { labs[g] = ccfCatLabel(CI, g, { plain: true }); });
+      // 注文書の「金額で買う」の行（投資信託・暗号資産）の文——v9.9.207 で暗号資産の行が増えた
+      const fr = [...document.querySelectorAll('#pg5 div.planrow')].map(e => e.innerText).filter(x => /金額で買う/.test(x));
+      return { OB, sec, line: lines.length ? lines[lines.length - 1] : '', rows, tot, labs, fr };
     });
     if (m === 'cat') {
       const ord = r12.rows.map(x => x.g).join(','), ys = r12.rows.map(x => x.yen);
-      const lineY = [...r12.line.matchAll(/(NASDAQ100|XLK|SMH|個別株) ¥([\d,]+)/g)].map(x => +x[2].replace(/,/g, ''));
+      // v9.9.206〜207: 区分の並びと名前は正本から（v9.9.206 でXLKの区分の名前が「その他 ETF・投資信託」、v9.9.207 で暗号資産の2区分が増えた）
+      const TG = base.target, AL = new Set(Object.values(TG.ami_same_index || {}).flat().map(x => String(x).toUpperCase()));
+      const want = (TG.ami_names || []).map(x => String(x).toUpperCase()).filter(k => !AL.has(k) && (+(TG.ami_weights || {})[k] || 0) > 0).map(k => 'n:' + k).concat(['c']);
+      const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), names = r12.rows.map(x => r12.labs[x.g] || x.g);
+      const lineY = names.map(nm => { const mm = r12.line.match(new RegExp('(?:^|／ )' + esc(nm) + ' ¥([\\d,]+)')); return mm ? +mm[1].replace(/,/g, '') : null; });
       const rest = +((r12.tot.match(/残り¥([\d,]+)/) || [0, '0'])[1].replace(/,/g, ''));
-      ok(ord === 'n:IFREE-NDX,n:XLK,n:SMH,c' && /^NASDAQ100 ¥[\d,]+ ／ XLK ¥[\d,]+ ／ SMH ¥[\d,]+ ／ 個別株 ¥[\d,]+/.test(r12.line.trim())
+      ok(ord === want.join(',') && new RegExp('^' + names.map(nm => esc(nm) + ' ¥[\\d,]+').join(' ／ ')).test(r12.line.trim())
          && JSON.stringify(lineY) === JSON.stringify(ys) && ys.reduce((a, v) => a + v, 0) + rest >= 169900 && ys.reduce((a, v) => a + v, 0) <= 170000,
-         "⑫ 割り方 'cat'（実データ）: 区分は NASDAQ100 → XLK → SMH → 個別株 の4つ・上の1行と区分の比率の表が同じ円（" + ys.join(' / ') + (rest ? '・残り' + rest : '') + '）');
+         "⑫ 割り方 'cat'（実データ）: 区分は " + names.join(' → ') + ' の' + names.length + 'つ（正本の並び）・上の1行と区分の比率の表が同じ円（' + ys.join(' / ') + (rest ? '・残り' + rest : '') + '）');
+    }
+    // ★暗号資産（v9.9.207）: 金額で買う行は「取引所で金額で買う（NISAの外）」——「残りの円は全部ここへ」は投資信託の行だけ
+    {
+      const LB = base.target.ami_labels || {}, OB0 = r12.OB || {};
+      const cxs = Object.keys(OB0).filter(t => /-USD$/.test(t) && (+OB0[t] || 0) > 0);
+      const cxBad = cxs.filter(t => { const tx = r12.fr.find(x => x.includes(LB[t] || t)); return !tx || !/取引所で金額で買う/.test(tx) || /残りの円は全部ここへ/.test(tx); });
+      const fundRest = r12.fr.filter(x => /残りの円は全部ここへ/.test(x));
+      const fundY = Object.keys(OB0).filter(t => (base.target.ami_funds || {})[t] && (+OB0[t] || 0) > 0);
+      ok(!cxBad.length && fundRest.length >= (fundY.length ? 1 : 0) && fundRest.every(x => !cxs.some(t => x.includes(LB[t] || t))),
+         `⑫ 割り方 '${m}'（実データ）: 暗号資産の行（${cxs.map(t => (LB[t] || t) + ' ¥' + OB0[t]).join('・') || 'なし'}）は「取引所で金額で買う」・「残りの円は全部ここへ」は投資信託の行だけ（${fundRest.length}行）`
+         + (cxBad.length ? ' ／ 食い違い ' + cxBad.join('・') : ''));
     }
     const bad = r12.OB ? r12.sec.filter(x => x.buy !== ((+r12.OB[x.t] || 0) > 0)) : [{ t: '注文書の円が無い' }];
     ok(r12.sec.length >= 3 && !bad.length,
@@ -576,6 +597,70 @@ const srv = http.createServer((q, r) => {
     const r3 = await readBox(170000);
     ok(!r3.kd && !r3.id && r3.pre === 0 && /こどもNISA（[^）]*）は 2999-12 から/.test(r3.note) && (!NPJ || r3.next.includes('2999-12 からの入金額 ¥' + (NPJ + IA + KA).toLocaleString())),
        '   開始月の前: 行なし・入金額を全部配る・案内「' + (r3.next || r3.note).slice(0, 80) + '」');
+  }
+
+  // ⑯ その他 ETF・投資信託（v9.9.206・2026-10-09 ユーザー明示指示「QQQ50% SMH20% 個別株15% その他ETF投資信託15%に変更して」）:
+  //   target.ami_other の buy の本の区分に、目標0%で持っている本と目標に無い本（drop）の保有を数える。同じ指数の本（QQQM）は数えない
+  {
+    await pg.goto('http://localhost:' + PORT + '/index.html'); await pg.waitForTimeout(600);
+    const q16 = await pg.evaluate(() => {
+      localStorage.clear();   // 台帳（pf:portfolio）を空にして、下の合成の保有（portfolio.json の形）だけを読ませる
+      const mk = (other) => ({ asof: '2026-10-09', positions: [
+          { ticker: 'IFREE-NDX', value_jpy: 300000, sleeve: '網' }, { ticker: 'QQQM', value_jpy: 100000, sleeve: '網' },
+          { ticker: 'XLK', value_jpy: 150000, sleeve: '網' }, { ticker: 'SMH', value_jpy: 150000, sleeve: '網' },
+          { ticker: 'GRID', value_jpy: 50000, sleeve: '網' }, { ticker: 'GLDM', value_jpy: 50000, sleeve: '網' },
+          { ticker: 'MSFT', value_jpy: 200000, sleeve: '城' }],
+        target: { ami_net_pct: 85, ami_names: ['IFREE-NDX', 'QQQM', 'XLK', 'SMH', 'GRID'],
+          ami_weights: { 'IFREE-NDX': 50, QQQM: 0, XLK: 15, SMH: 20, GRID: 0 }, ami_same_index: { 'IFREE-NDX': ['QQQM'] },
+          ...(other ? { ami_other: other } : {}) } });
+      const on = ccfNetRows(null, mk({ buy: 'XLK', label: 'その他 ETF・投資信託' })), off = ccfNetRows(null, mk(null)), bad = ccfNetRows(null, mk({ buy: 'GRID' }));
+      const x = (r, t) => r.rows.find(y => y.t === t);
+      const lab = ccfCatLabel({ 'n:XLK': { t: 15, nm: 'その他 ETF・投資信託', other: { buy: 'XLK', members: ['GRID', 'GLDM'] } } }, 'n:XLK', { full: true });
+      const labP = ccfCatLabel({ 'n:XLK': { t: 15, nm: 'その他 ETF・投資信託', other: { buy: 'XLK', members: [] } } }, 'n:XLK', { plain: true });
+      return { onX: x(on, 'XLK'), offX: x(off, 'XLK'), onI: x(on, 'IFREE-NDX'), onG: x(on, 'GRID'), onDrop: on.drop, offDrop: off.drop, other: on.other,
+        badO: bad.other, badX: x(bad, 'XLK'), badG: x(bad, 'GRID'), lab, labP };
+    });
+    const r1 = v => Math.round(v * 10) / 10;
+    ok(r1(q16.onX.pos) === 25 && q16.onX.oth.join(',') === 'GRID,GLDM' && r1(q16.onX.othPos) === 10 && q16.onX.otherBuy && r1(q16.offX.pos) === 15
+       && q16.onG.otherOf === 'XLK' && q16.onDrop.length === 1 && q16.onDrop[0].t === 'GLDM' && q16.onDrop[0].otherOf === 'XLK' && !q16.offDrop[0].otherOf
+       && r1(q16.onI.pos) === 40 && r1(q16.other.pos) === 25 && q16.other.label === 'その他 ETF・投資信託',
+       '⑯ その他 ETF・投資信託: XLK の保有% 15 → ' + r1(q16.onX.pos) + '（目標0%の GRID 5 と目標に無い GLDM 5 を数える）・NASDAQ100 は同じ指数の QQQM だけ（' + r1(q16.onI.pos) + '%）・設定が無ければ 15 のまま');
+    ok(q16.badO && /買う本（GRID）が ETF の目標/.test(q16.badO.err || '') && r1(q16.badX.pos) === 15 && !q16.badG.otherOf,
+       '   買う本が目標>0 の本でなければ数えず名指し（' + ((q16.badO && q16.badO.err) || '').slice(0, 40) + '…）');
+    ok(q16.lab === '◈ その他 ETF・投資信託（今は XLK で買う・GRID・GLDM を含む）' && q16.labP === 'その他 ETF・投資信託',
+       '   区分の名前: 表「' + q16.lab + '」・文の中「' + q16.labP + '」');
+    // 実データ（state.json＋全パック・割り方 'cat'）に GRID を3株足して: 区分の比率の表・上の1行・材料（__ccfCat）が その他 として数える
+    const ST2 = JSON.parse(JSON.stringify(ST)), P2 = JSON.parse(ST2.data['pf:portfolio'] || '{"positions":[]}');
+    P2.positions.push({ t: 'GRID', nm: 'GRID', sleeve: 'net', kind: 'ETF', sh: 3, ccy: 'USD', npx: 179.79, bpx: 179.79, bjpy: 80000 });
+    ST2.data['pf:portfolio'] = JSON.stringify(P2);
+    const load16 = async (over) => {
+      OVER = over;
+      await pg.goto('http://localhost:' + PORT + '/index.html'); await pg.waitForTimeout(600);
+      await pg.evaluate(stt => { localStorage.clear(); for (const k in stt.data) localStorage.setItem(k, stt.data[k]);
+        localStorage.setItem('ccf:stateSavedAt', stt.savedAt); }, ST2);
+      await pg.reload(); await pg.waitForTimeout(1500);
+      await pg.evaluate(() => ccfImportAllPacks()); await pg.waitForTimeout(1800);
+      await pg.evaluate(() => { localStorage.setItem('pf:monthly_total', '170000'); showPage(5); }); await pg.waitForTimeout(3200);
+      return pg.evaluate(() => {
+        const C = window.__ccfCat || {};
+        const rowTxt = ((document.querySelector('#pg5 .catrow[data-cat="n:XLK"]') || {}).innerText || '');
+        const zero = ((document.querySelector('#pg5 .catrow[data-cat="zero"]') || {}).innerText || '');
+        const line = [...document.querySelectorAll('#pg5 div')].filter(d => /区分の比率が最優先・1株単位/.test(d.innerText) && d.innerText.length < 600).map(d => d.innerText).pop() || '';
+        return { x: C['n:XLK'] || null, z: C._zero || null, tot: +C.tot || 0, rowTxt, zero, line, keys: ccfCatKeys(C) };
+      });
+    };
+    const ao = withMode('cat');
+    const w16 = await load16(ao);
+    const noAo = withMode('cat'); delete noAo.target.ami_other;
+    const w16off = await load16(noAo);
+    const gridPct = w16off.z && w16off.z.nm.includes('GRID') ? w16off.z.now : NaN;
+    ok(!!ao.target.ami_other && w16.x && w16.x.nm === ao.target.ami_other.label && w16.x.other && w16.x.other.members.includes('GRID')
+       && Math.abs(w16.x.now - (w16off.x.now + gridPct)) < 0.05 && w16.z && w16.z.now === 0 && !w16.zero
+       && /その他 ETF・投資信託（今は XLK で買う・GRID を含む）/.test(w16.rowTxt) && /^NASDAQ100 ¥[\d,]+ ／ その他 ETF・投資信託 ¥[\d,]+ ／ SMH ¥[\d,]+/.test(w16.line.trim()) && / ／ 個別株 ¥[\d,]+/.test(w16.line),
+       '⑯ 実データ＋GRID 3株: その他の区分の今 ' + (w16.x ? w16.x.now.toFixed(1) : '?') + '%＝XLK ' + (w16off.x ? w16off.x.now.toFixed(1) : '?') + '%＋GRID ' + (+gridPct).toFixed(1)
+       + '%・区分の外の「その他」の行なし・表「' + w16.rowTxt.split('\n')[0].slice(0, 40) + '」・上の1行「' + w16.line.trim().slice(0, 60) + '」');
+    ok(w16off.x && w16off.x.nm === 'XLK' && !w16off.x.other && /その他（目標0%で持ち続けている本：GRID）/.test(w16off.zero),
+       '   ami_other を消すと v9.9.203 の姿: XLK は自分だけの区分・GRID は区分の外の「その他（目標0%…）」の1行');
   }
 
   ok(errs.length === 0, 'pageerror 0件' + (errs.length ? '（' + errs[0].slice(0, 120) + '）' : ''));

@@ -81,7 +81,10 @@ def tickers():
         #     ⚠**黙って落としているのではない**——門のⅥは目標から外れた本を
         #     `◇ 目標から外れたが、まだ持っている本` として保有%つきで名指しで出す（v9.9.52）し、
         #     価格が要る欄（株数）はそもそもその行に無い。
-        TK = re.compile(r"^[A-Z0-9][A-Z0-9.\-]{0,5}$")
+        #   ★2026-10-10（暗号資産を足したとき）: 暗号資産の Yahoo の形（BTC-USD・ETH-USD＝7文字）も通す。
+        #     旧の6文字までの検問は BTC-USD を毎回はじいていた——2026-09-25 に BTC を入れたときも
+        #     価格は一度も採れていなかった（out/dashboard.json に BTC-USD が無かった）。
+        TK = re.compile(r"^(?:[A-Z0-9][A-Z0-9.\-]{0,5}|[A-Z0-9]{2,10}-USD)$")
         pf = json.load(open("portfolio.json", encoding="utf-8"))
         cand = [str(t).strip().upper() for t in ((pf.get("target") or {}).get("ami_names") or [])]
         cand += [str(pos.get("ticker", "")).strip().upper() for pos in (pf.get("positions") or [])]
