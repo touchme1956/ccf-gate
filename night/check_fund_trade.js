@@ -23,8 +23,9 @@
  *   ⑫ pageerror が出ない
  *   ⑬ iDeCo の本（ami_funds の account:'iDeCo'）を選ぶと口座の既定が iDeCo・ロットに口座 iDeCo が残る（v9.9.202）
  *   ⑭ こどもNISA（2026-10-08「比率に数えて」）: 口座に「こどもNISA」・名義に target.kodomo_nisa の名義が出る・記録したロットに両方が残る
- *   ⑮ 暗号資産（v9.9.205）: 持っていない BTC-USD 等が一覧に出る・数量と払った円だけで記録すると 単価＝円÷数量÷ドル円・
- *      ETF側（net）・種類「暗号資産」・口座「取引所」・単価も円も無ければ記録しない・小数の数量が誤差なく足し引きされる
+ *   ⑮ 暗号資産（v9.9.205）: 数量と払った円だけで記録すると 単価＝円÷数量÷ドル円・ETF側（net）・種類「暗号資産」・口座「取引所」・
+ *      単価も円も無ければ記録しない・小数の数量が誤差なく足し引きされる。目標にあれば持っていなくても一覧に出る／
+ *      目標に無ければ（2026-10-10〜・ETF が日本で出るまで入れない）一覧に出ず「＋ 新しい銘柄」から入れる
  *   ★基準価額・1万口・投資信託の名前は**正本から読む**（書き写さない）。
  *
  * playwright が要るので CI には入れていない。使い方: NODE_PATH=$(npm root -g) node night/check_fund_trade.js
@@ -253,14 +254,21 @@ const srv = http.createServer((q, r) => {
 
   // ── ⑮ 暗号資産（v9.9.205・2026-10-10「ビットコインイーサリアムをポートフォリオに加えたい」）:
   //    取引所では円で買うので 数量（株の欄）＋払った円 で記録 → 単価（ドル）＝円÷数量÷ドル円・ETF側（net）・種類「暗号資産」・口座「取引所」
-  const CXK = (PJ.target.ami_names || []).map(x => String(x).toUpperCase()).find(k => /-USD$/.test(k) && (+((PJ.target.ami_weights || {})[k]) || 0) > 0);
-  if (!CXK) ok(true, '⑮ ETF側の目標に暗号資産が無い（検査を飛ばす）');
-  else {
+  //    ★2026-10-10（同日）ユーザー決定「暗号資産はETFが日本で出るまではポートフォリオに入れない」で目標から外した——
+  //      目標に無いときは「＋ 新しい銘柄」から BTC-USD を入れる経路で同じことを確かめる（記録の仕組みは残してあるので、検査も飛ばさない）
+  const CXT = (PJ.target.ami_names || []).map(x => String(x).toUpperCase()).find(k => /-USD$/.test(k) && (+((PJ.target.ami_weights || {})[k]) || 0) > 0);
+  const CXK = CXT || 'BTC-USD';
+  {
     const SYM = CXK.replace(/-USD$/, '');
     await seed(); await open('buy');
     const o15 = await pg.evaluate(k => { const o = [...document.getElementById('trT').options].find(x => x.value === k); return o ? o.textContent : ''; }, CXK);
-    ok(/暗号資産・取引所/.test(o15), `⑮ 持っていない ${CXK} が一覧に出る（${o15 || 'なし'}）`);
-    await pick(CXK);
+    if (CXT) {
+      ok(/暗号資産・取引所/.test(o15), `⑮ 持っていない ${CXK} が一覧に出る（${o15 || 'なし'}）`);
+      await pick(CXK);
+    } else {
+      ok(!o15, `⑮ 目標に無い ${CXK} は一覧に出ない（${o15 || 'なし'}）——「＋ 新しい銘柄」から入れる`);
+      await pick('__new'); await fill({ trNew: CXK });
+    }
     const f15 = await pg.evaluate(() => ({ title: document.getElementById('trTitle').textContent, acct: document.getElementById('trA').value,
       hint: document.getElementById('trHint').textContent, fx: +ccfTradePf().fx || 0 }));
     const v15s = await vis('tr-stk'), v15f = await vis('tr-fnd');
