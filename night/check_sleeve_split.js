@@ -20,8 +20,9 @@
  *   ⑮ こどもNISA（v9.9.203）: 子どもの口座の自動の積立も注文書で配らない・NISA の月の計画より少なければ知らせる。
  *      2026-10-08「比率に数えて」から iDeCo と同じく bucket（NASDAQ100）の区分に数える（ccfCatBudget の pre は配列も受け、区分ごとに足す）・
  *      注文書の行の「✓ 保有へ」で口座 こどもNISA のロットを🏦保有へ足す・bucket が空なら比率の外（旧の扱い）
- *   ⑯ その他 ETF・投資信託（v9.9.206）: target.ami_other の buy の本（XLK）の区分に、目標0%の本と目標に無い本の保有も数える・
- *      区分の名前は「その他 ETF・投資信託」・設定を消せば v9.9.203 の姿（XLK だけの区分＋区分の外の「その他」の1行）
+ *   ⑯ その他 ETF・投資信託（v9.9.206）: target.ami_other の buy の本（2026-10-10 から ITA・それまで XLK）の区分に、目標0%の本と目標に無い本の保有も数える・
+ *      区分の名前は「その他 ETF・投資信託」・設定を消せば v9.9.203 の姿（buy の本だけの区分＋区分の外の「その他」の1行）。
+ *      実データの部分は buy の本を正本（portfolio.json）から読む——買う本を替えても検査を書き換えずに済む
  *
  * playwright が要るので CI には入れていない。使い方: node night/check_sleeve_split.js
  */
@@ -633,6 +634,7 @@ const srv = http.createServer((q, r) => {
     const ST2 = JSON.parse(JSON.stringify(ST)), P2 = JSON.parse(ST2.data['pf:portfolio'] || '{"positions":[]}');
     P2.positions.push({ t: 'GRID', nm: 'GRID', sleeve: 'net', kind: 'ETF', sh: 3, ccy: 'USD', npx: 179.79, bpx: 179.79, bjpy: 80000 });
     ST2.data['pf:portfolio'] = JSON.stringify(P2);
+    const BUY = (base.target.ami_other || {}).buy || 'XLK';   // 実データの「その他」の買う本（2026-10-10 から ITA）
     const load16 = async (over) => {
       OVER = over;
       await pg.goto('http://localhost:' + PORT + '/index.html'); await pg.waitForTimeout(600);
@@ -641,26 +643,29 @@ const srv = http.createServer((q, r) => {
       await pg.reload(); await pg.waitForTimeout(1500);
       await pg.evaluate(() => ccfImportAllPacks()); await pg.waitForTimeout(1800);
       await pg.evaluate(() => { localStorage.setItem('pf:monthly_total', '170000'); showPage(5); }); await pg.waitForTimeout(3200);
-      return pg.evaluate(() => {
+      return pg.evaluate((BUY) => {
         const C = window.__ccfCat || {};
-        const rowTxt = ((document.querySelector('#pg5 .catrow[data-cat="n:XLK"]') || {}).innerText || '');
+        const rowTxt = ((document.querySelector('#pg5 .catrow[data-cat="n:' + BUY + '"]') || {}).innerText || '');
         const zero = ((document.querySelector('#pg5 .catrow[data-cat="zero"]') || {}).innerText || '');
         const line = [...document.querySelectorAll('#pg5 div')].filter(d => /区分の比率が最優先・1株単位/.test(d.innerText) && d.innerText.length < 600).map(d => d.innerText).pop() || '';
-        return { x: C['n:XLK'] || null, z: C._zero || null, tot: +C.tot || 0, rowTxt, zero, line, keys: ccfCatKeys(C) };
-      });
+        return { x: C['n:' + BUY] || null, z: C._zero || null, tot: +C.tot || 0, rowTxt, zero, line, keys: ccfCatKeys(C) };
+      }, BUY);
     };
     const ao = withMode('cat');
     const w16 = await load16(ao);
     const noAo = withMode('cat'); delete noAo.target.ami_other;
     const w16off = await load16(noAo);
-    const gridPct = w16off.z && w16off.z.nm.includes('GRID') ? w16off.z.now : NaN;
+    // 設定を消した姿の「区分の外のその他」（目標0%で持っている本の合計）＝設定ありのその他の区分へ足し込まれる分
+    const zeroPct = w16off.z && w16off.z.nm.includes('GRID') ? w16off.z.now : NaN;
     ok(!!ao.target.ami_other && w16.x && w16.x.nm === ao.target.ami_other.label && w16.x.other && w16.x.other.members.includes('GRID')
-       && Math.abs(w16.x.now - (w16off.x.now + gridPct)) < 0.05 && w16.z && w16.z.now === 0 && !w16.zero
-       && /その他 ETF・投資信託（今は XLK で買う・GRID を含む）/.test(w16.rowTxt) && /^NASDAQ100 ¥[\d,]+ ／ その他 ETF・投資信託 ¥[\d,]+ ／ SMH ¥[\d,]+/.test(w16.line.trim()) && / ／ 個別株 ¥[\d,]+/.test(w16.line),
-       '⑯ 実データ＋GRID 3株: その他の区分の今 ' + (w16.x ? w16.x.now.toFixed(1) : '?') + '%＝XLK ' + (w16off.x ? w16off.x.now.toFixed(1) : '?') + '%＋GRID ' + (+gridPct).toFixed(1)
-       + '%・区分の外の「その他」の行なし・表「' + w16.rowTxt.split('\n')[0].slice(0, 40) + '」・上の1行「' + w16.line.trim().slice(0, 60) + '」');
-    ok(w16off.x && w16off.x.nm === 'XLK' && !w16off.x.other && /その他（目標0%で持ち続けている本：GRID）/.test(w16off.zero),
-       '   ami_other を消すと v9.9.203 の姿: XLK は自分だけの区分・GRID は区分の外の「その他（目標0%…）」の1行');
+       && Math.abs(w16.x.now - (w16off.x.now + zeroPct)) < 0.05 && w16.z && w16.z.now === 0 && !w16.zero
+       && new RegExp('その他 ETF・投資信託（今は ' + BUY + ' で買う・[^）]*GRID を含む）').test(w16.rowTxt)
+       // 区分の並びは ami_names の順（2026-10-10 に買う本が ITA になり、その他は SMH の後ろへ）——並びではなく4区分がそろっていることを見る
+       && /^NASDAQ100 ¥[\d,]+ ／ /.test(w16.line.trim()) && / ／ その他 ETF・投資信託 ¥[\d,]+/.test(w16.line) && / ／ SMH ¥[\d,]+/.test(w16.line) && / ／ 個別株 ¥[\d,]+/.test(w16.line),
+       '⑯ 実データ＋GRID 3株（買う本 ' + BUY + '）: その他の区分の今 ' + (w16.x ? w16.x.now.toFixed(1) : '?') + '%＝' + BUY + ' ' + (w16off.x ? w16off.x.now.toFixed(1) : '?') + '%＋目標0%の本（' + (w16off.z ? w16off.z.nm.join('・') : '?') + '）' + (+zeroPct).toFixed(1)
+       + '%・区分の外の「その他」の行なし・表「' + w16.rowTxt.split('\n')[0].slice(0, 50) + '」・上の1行「' + w16.line.trim().slice(0, 60) + '」');
+    ok(w16off.x && w16off.x.nm === BUY && !w16off.x.other && /その他（目標0%で持ち続けている本：[^）]*GRID/.test(w16off.zero),
+       '   ami_other を消すと v9.9.203 の姿: ' + BUY + ' は自分だけの区分・GRID は区分の外の「その他（目標0%…）」の1行');
   }
 
   ok(errs.length === 0, 'pageerror 0件' + (errs.length ? '（' + errs[0].slice(0, 120) + '）' : ''));
