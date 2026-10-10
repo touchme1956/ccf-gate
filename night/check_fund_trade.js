@@ -23,6 +23,8 @@
  *   ⑫ pageerror が出ない
  *   ⑬ iDeCo の本（ami_funds の account:'iDeCo'）を選ぶと口座の既定が iDeCo・ロットに口座 iDeCo が残る（v9.9.202）
  *   ⑭ こどもNISA（2026-10-08「比率に数えて」）: 口座に「こどもNISA」・名義に target.kodomo_nisa の名義が出る・記録したロットに両方が残る
+ *   ⑮ 暗号資産（v9.9.205）: 持っていない BTC-USD 等が一覧に出る・数量と払った円だけで記録すると 単価＝円÷数量÷ドル円・
+ *      ETF側（net）・種類「暗号資産」・口座「取引所」・単価も円も無ければ記録しない・小数の数量が誤差なく足し引きされる
  *   ★基準価額・1万口・投資信託の名前は**正本から読む**（書き写さない）。
  *
  * playwright が要るので CI には入れていない。使い方: NODE_PATH=$(npm root -g) node night/check_fund_trade.js
@@ -247,6 +249,58 @@ const srv = http.createServer((q, r) => {
     const r14 = await row(FKEY), l14 = r14 && (r14.bdLots || []).slice(-1)[0];
     ok(!!l14 && l14.acct === 'こどもNISA' && l14.who === KW && l14.jpy === 30000 && r14.kind === '投資信託',
        `⑭ 記録: ロット ${l14 ? l14.acct + '・' + l14.who + '・¥' + l14.jpy + '・' + l14.sh + '口' : 'なし'}`);
+  }
+
+  // ── ⑮ 暗号資産（v9.9.205・2026-10-10「ビットコインイーサリアムをポートフォリオに加えたい」）:
+  //    取引所では円で買うので 数量（株の欄）＋払った円 で記録 → 単価（ドル）＝円÷数量÷ドル円・ETF側（net）・種類「暗号資産」・口座「取引所」
+  const CXK = (PJ.target.ami_names || []).map(x => String(x).toUpperCase()).find(k => /-USD$/.test(k) && (+((PJ.target.ami_weights || {})[k]) || 0) > 0);
+  if (!CXK) ok(true, '⑮ ETF側の目標に暗号資産が無い（検査を飛ばす）');
+  else {
+    const SYM = CXK.replace(/-USD$/, '');
+    await seed(); await open('buy');
+    const o15 = await pg.evaluate(k => { const o = [...document.getElementById('trT').options].find(x => x.value === k); return o ? o.textContent : ''; }, CXK);
+    ok(/暗号資産・取引所/.test(o15), `⑮ 持っていない ${CXK} が一覧に出る（${o15 || 'なし'}）`);
+    await pick(CXK);
+    const f15 = await pg.evaluate(() => ({ title: document.getElementById('trTitle').textContent, acct: document.getElementById('trA').value,
+      hint: document.getElementById('trHint').textContent, fx: +ccfTradePf().fx || 0 }));
+    const v15s = await vis('tr-stk'), v15f = await vis('tr-fnd');
+    ok(f15.title === '＋ 買った暗号資産を記録' && f15.acct === '取引所' && v15s.every(Boolean) && v15f.every(x => !x),
+       `⑮ 見出し「${f15.title}」・口座「${f15.acct}」・数量と円の欄（株の欄）が出る`);
+    ok(/取得額/.test(f15.hint) && /NISA の外/.test(f15.hint), `⑮ 案内: ${f15.hint.slice(0, 70)}…`);
+    // 単価も円も無い → 記録しない（単価の無い行は評価できず、保有の評価が古い写しへ倒れる）
+    const noPx = () => pg.evaluate(() => { const e = document.getElementById('trP'); e.value = ''; e.dataset.auto = '0'; });
+    await noPx(); await fill({ trS: 0.002 }); await go('buy');
+    ok(/単価（ドル）か取得額（円）を入れてください/.test(await msg()) && !(await row(CXK)), '⑮ 単価も取得額も無ければ記録しない（理由を言う）');
+    // 数量と円だけ → 単価＝円÷数量÷ドル円
+    const Q1 = 0.002, J1 = 26000, PX1 = Math.round(J1 / Q1 / f15.fx * 100) / 100;
+    await noPx(); await fill({ trS: Q1, trJ: J1 }); await go('buy');
+    const m15 = await msg(), r15 = await row(CXK), l15 = r15 && (r15.bdLots || [])[0];
+    ok(/^✓/.test(m15) && /取得額÷数量÷ドル円/.test(m15) && m15.includes('+' + Q1 + ' ' + SYM), `⑮ 記録の返事: ${m15.slice(0, 90)}`);
+    ok(!!r15 && r15.sleeve === 'net' && r15.kind === '暗号資産' && r15.ccy === 'USD' && r15.sh === Q1
+       && Math.abs(r15.bpx - PX1) < 0.011 && Math.abs(r15.npx - PX1) < 0.011 && r15.bjpy === J1,
+       `⑮ 行: 袖 ${r15 && r15.sleeve}・${r15 && r15.kind}・${r15 && r15.ccy}・${r15 && r15.sh} ${SYM}・単価 $${r15 && r15.bpx}（期待 $${PX1}）・取得 ¥${r15 && r15.bjpy}`);
+    ok(!!l15 && l15.acct === '取引所' && l15.jpy === J1 && l15.sh === Q1 && Math.abs(l15.usd - PX1) < 0.011, `⑮ ロット: ${JSON.stringify(l15)}`);
+    const lv15 = await pg.evaluate(t => { const m = ccfLedgerMap(); return m && m.byT ? m.byT[t] : (m && m[t]) || null; }, CXK);
+    ok(!!lv15 && Math.abs(lv15.v - Q1 * PX1 * f15.fx) < 2 && lv15.sleeve === '網',
+       `⑮ 門の台帳の評価 ¥${lv15 ? Math.round(lv15.v) : '?'}（数量×単価×ドル円＝¥${Math.round(Q1 * PX1 * f15.fx)}）・袖 ${lv15 && lv15.sleeve}`);
+    // 買い増し（単価を入れる・円は空欄＝見積もり）→ 数量は小数のまま足し上がる
+    await open('buy'); await pick(CXK);
+    const Q2 = 0.001, PX2 = 90000, J2 = Math.round(Q2 * PX2 * f15.fx);
+    await fill({ trS: Q2, trP: PX2 }); await go('buy');
+    const r15b = await row(CXK);
+    ok(!!r15b && r15b.sh === 0.003 && r15b.bjpy === J1 + J2 && (r15b.bdLots || []).length === 2,
+       `⑮ 買い増し: ${r15b && r15b.sh} ${SYM}（${Q1}+${Q2}）・取得 ¥${r15b && r15b.bjpy}（${J1}+${J2}）・ロット ${r15b && (r15b.bdLots || []).length}`);
+    // 一部売却 → 残りは小数の誤差を持たない（0.003−0.0007＝0.0023）・取得額は按分
+    await open('sell'); await pick(CXK);
+    await fill({ trS: 0.0007 }); await go('sell');
+    const r15c = await row(CXK), bj15 = Math.round((J1 + J2) * 0.0023 / 0.003);
+    ok(!!r15c && r15c.sh === 0.0023 && r15c.bjpy === bj15 && /−0\.0007 BTC|−0\.0007 ETH/.test(await msg()),
+       `⑮ 一部売却: 残り ${r15c && r15c.sh} ${SYM}（期待 0.0023）・取得 ¥${r15c && r15c.bjpy}（按分 ¥${bj15}）・返事「${(await msg()).slice(0, 40)}」`);
+    // 🏦保有の一覧は数量を記号で出す（株ではない）
+    const pf15 = await pg.evaluate(async () => { const f = document.getElementById('pfFrame');
+      localStorage.setItem('pf:showMoney', '1'); f.contentWindow.render(); await new Promise(r => setTimeout(r, 200));
+      const t = f.contentDocument.getElementById('holdList').innerText; localStorage.setItem('pf:showMoney', '0'); f.contentWindow.render(); return t; });
+    ok(pf15.includes('0.0023 ' + SYM + '@'), `⑮ 🏦保有の一覧が数量を ${SYM} で出す（${(pf15.match(new RegExp(CXK + '[^\\n]*')) || [''])[0].slice(0, 80)}）`);
   }
 
   // ── ⑪ 携帯の幅

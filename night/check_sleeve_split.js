@@ -351,17 +351,34 @@ const srv = http.createServer((q, r) => {
       const rows = [...document.querySelectorAll('#pg5 .catrow')].filter(e => e.dataset.cat !== 'zero')
         .map(e => ({ g: e.dataset.cat, yen: +((e.innerText.match(/今月 ¥([\d,]+)/) || [0, '0'])[1].replace(/,/g, '')) }));
       const tot = [...document.querySelectorAll('#pg5 div')].map(d => d.innerText).find(x => /^合計 約¥/.test(x.trim()) && x.length < 200) || '';
-      return { OB, sec, line: lines.length ? lines[lines.length - 1] : '', rows, tot };
+      const CI = window.__ccfCat || {}, labs = {};
+      ccfCatKeys(CI).forEach(g => { labs[g] = ccfCatLabel(CI, g, { plain: true }); });
+      // 注文書の「金額で買う」の行（投資信託・暗号資産）の文——v9.9.205 で暗号資産の行が増えた
+      const fr = [...document.querySelectorAll('#pg5 div.planrow')].map(e => e.innerText).filter(x => /金額で買う/.test(x));
+      return { OB, sec, line: lines.length ? lines[lines.length - 1] : '', rows, tot, labs, fr };
     });
     if (m === 'cat') {
       const ord = r12.rows.map(x => x.g).join(','), ys = r12.rows.map(x => x.yen);
-      // v9.9.204（2026-10-09「その他ETF投資信託15%」）: XLK の区分（鍵 n:XLK のまま）の名前は target.ami_other.label（無ければ XLK）
-      const OL = (base.target.ami_other && base.target.ami_other.label) || 'XLK', esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const lineY = [...r12.line.matchAll(new RegExp('(NASDAQ100|' + esc(OL) + '|SMH|個別株) ¥([\\d,]+)', 'g'))].map(x => +x[2].replace(/,/g, ''));
+      // v9.9.204〜205: 区分の並びと名前は正本から（v9.9.204 でXLKの区分の名前が「その他 ETF・投資信託」、v9.9.205 で暗号資産の2区分が増えた）
+      const TG = base.target, AL = new Set(Object.values(TG.ami_same_index || {}).flat().map(x => String(x).toUpperCase()));
+      const want = (TG.ami_names || []).map(x => String(x).toUpperCase()).filter(k => !AL.has(k) && (+(TG.ami_weights || {})[k] || 0) > 0).map(k => 'n:' + k).concat(['c']);
+      const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), names = r12.rows.map(x => r12.labs[x.g] || x.g);
+      const lineY = names.map(nm => { const mm = r12.line.match(new RegExp('(?:^|／ )' + esc(nm) + ' ¥([\\d,]+)')); return mm ? +mm[1].replace(/,/g, '') : null; });
       const rest = +((r12.tot.match(/残り¥([\d,]+)/) || [0, '0'])[1].replace(/,/g, ''));
-      ok(ord === 'n:IFREE-NDX,n:XLK,n:SMH,c' && new RegExp('^NASDAQ100 ¥[\\d,]+ ／ ' + esc(OL) + ' ¥[\\d,]+ ／ SMH ¥[\\d,]+ ／ 個別株 ¥[\\d,]+').test(r12.line.trim())
+      ok(ord === want.join(',') && new RegExp('^' + names.map(nm => esc(nm) + ' ¥[\\d,]+').join(' ／ ')).test(r12.line.trim())
          && JSON.stringify(lineY) === JSON.stringify(ys) && ys.reduce((a, v) => a + v, 0) + rest >= 169900 && ys.reduce((a, v) => a + v, 0) <= 170000,
-         "⑫ 割り方 'cat'（実データ）: 区分は NASDAQ100 → " + OL + ' → SMH → 個別株 の4つ・上の1行と区分の比率の表が同じ円（' + ys.join(' / ') + (rest ? '・残り' + rest : '') + '）');
+         "⑫ 割り方 'cat'（実データ）: 区分は " + names.join(' → ') + ' の' + names.length + 'つ（正本の並び）・上の1行と区分の比率の表が同じ円（' + ys.join(' / ') + (rest ? '・残り' + rest : '') + '）');
+    }
+    // ★暗号資産（v9.9.205）: 金額で買う行は「取引所で金額で買う（NISAの外）」——「残りの円は全部ここへ」は投資信託の行だけ
+    {
+      const LB = base.target.ami_labels || {}, OB0 = r12.OB || {};
+      const cxs = Object.keys(OB0).filter(t => /-USD$/.test(t) && (+OB0[t] || 0) > 0);
+      const cxBad = cxs.filter(t => { const tx = r12.fr.find(x => x.includes(LB[t] || t)); return !tx || !/取引所で金額で買う/.test(tx) || /残りの円は全部ここへ/.test(tx); });
+      const fundRest = r12.fr.filter(x => /残りの円は全部ここへ/.test(x));
+      const fundY = Object.keys(OB0).filter(t => (base.target.ami_funds || {})[t] && (+OB0[t] || 0) > 0);
+      ok(!cxBad.length && fundRest.length >= (fundY.length ? 1 : 0) && fundRest.every(x => !cxs.some(t => x.includes(LB[t] || t))),
+         `⑫ 割り方 '${m}'（実データ）: 暗号資産の行（${cxs.map(t => (LB[t] || t) + ' ¥' + OB0[t]).join('・') || 'なし'}）は「取引所で金額で買う」・「残りの円は全部ここへ」は投資信託の行だけ（${fundRest.length}行）`
+         + (cxBad.length ? ' ／ 食い違い ' + cxBad.join('・') : ''));
     }
     const bad = r12.OB ? r12.sec.filter(x => x.buy !== ((+r12.OB[x.t] || 0) > 0)) : [{ t: '注文書の円が無い' }];
     ok(r12.sec.length >= 3 && !bad.length,
@@ -629,7 +646,7 @@ const srv = http.createServer((q, r) => {
         const rowTxt = ((document.querySelector('#pg5 .catrow[data-cat="n:XLK"]') || {}).innerText || '');
         const zero = ((document.querySelector('#pg5 .catrow[data-cat="zero"]') || {}).innerText || '');
         const line = [...document.querySelectorAll('#pg5 div')].filter(d => /区分の比率が最優先・1株単位/.test(d.innerText) && d.innerText.length < 600).map(d => d.innerText).pop() || '';
-        return { x: C['n:XLK'] || null, z: C._zero || null, tot: +C.tot || 0, rowTxt, zero, line };
+        return { x: C['n:XLK'] || null, z: C._zero || null, tot: +C.tot || 0, rowTxt, zero, line, keys: ccfCatKeys(C) };
       });
     };
     const ao = withMode('cat');
@@ -639,7 +656,7 @@ const srv = http.createServer((q, r) => {
     const gridPct = w16off.z && w16off.z.nm.includes('GRID') ? w16off.z.now : NaN;
     ok(!!ao.target.ami_other && w16.x && w16.x.nm === ao.target.ami_other.label && w16.x.other && w16.x.other.members.includes('GRID')
        && Math.abs(w16.x.now - (w16off.x.now + gridPct)) < 0.05 && w16.z && w16.z.now === 0 && !w16.zero
-       && /その他 ETF・投資信託（今は XLK で買う・GRID を含む）/.test(w16.rowTxt) && /^NASDAQ100 ¥[\d,]+ ／ その他 ETF・投資信託 ¥[\d,]+ ／ SMH ¥[\d,]+ ／ 個別株 ¥[\d,]+/.test(w16.line.trim()),
+       && /その他 ETF・投資信託（今は XLK で買う・GRID を含む）/.test(w16.rowTxt) && /^NASDAQ100 ¥[\d,]+ ／ その他 ETF・投資信託 ¥[\d,]+ ／ SMH ¥[\d,]+/.test(w16.line.trim()) && / ／ 個別株 ¥[\d,]+/.test(w16.line),
        '⑯ 実データ＋GRID 3株: その他の区分の今 ' + (w16.x ? w16.x.now.toFixed(1) : '?') + '%＝XLK ' + (w16off.x ? w16off.x.now.toFixed(1) : '?') + '%＋GRID ' + (+gridPct).toFixed(1)
        + '%・区分の外の「その他」の行なし・表「' + w16.rowTxt.split('\n')[0].slice(0, 40) + '」・上の1行「' + w16.line.trim().slice(0, 60) + '」');
     ok(w16off.x && w16off.x.nm === 'XLK' && !w16off.x.other && /その他（目標0%で持ち続けている本：GRID）/.test(w16off.zero),
