@@ -73,6 +73,7 @@ DATA = {
 SAME_WINDOW = {'EPI', 'VIG', 'VYM', 'RSP'}   # 2000年より後に始まる＝A1 は同じ窓の SPY との差で
 TOPIX_ER = 0.0006                            # 東証の TOPIX 連動ETF の経費率と置く（事前登録）
 MOAT_ER = 0.0046                             # MOAT の経費率（out/etf_profiles.json）＝French の代理の期間に引く
+MIN_SHARE = 0.0025                           # 業種の長い歴史を測る月の下限（米国株の時価総額に占める比重）＝結果を見た後の是正
 # JPM 2026 LTCMA（USD・複利・%）
 JPM = {'ACWI': 7.0, 'USL': 6.7, 'USS': 6.9, 'EAFE': 7.5, 'JP': 8.8, 'EM': 7.8, 'ASIAxJ': 7.9,
        'VALUE': 7.7, 'QUALITY': 6.6, 'DIV': 7.5, 'GOLD': 5.5}
@@ -240,13 +241,30 @@ def main():
     ff = M.ff_factors()
     mkt = ff['mkt']
     ind = M.french_series('49_Industry_Portfolios', want='Average Value Weighted Returns')
-    X_ind = {}
+    # ★結果を見た後の是正（データの質・事前登録の外）: 業種の長い歴史は、その業種が米国株の時価総額の
+    # MIN_SHARE 以上ある月だけで測る。事前登録の『使える全期間』のままだと Softw は 1965-07〜1982 に
+    # 1社しかなく（1960年代 −20%/年・1970〜80年代 −15%/年）、業種の基礎率ではなく1社の値動きになっていた
+    # （Softw の上乗せ −4.68%/年）。事前登録どおりの値は X_ind_raw に残し、感度 S0 で順位を並べる。
+    tabs49 = M.french_tables('49_Industry_Portfolios')
+    nf = next(v for k, v in tabs49.items() if k.startswith('Number of Firms') and v['freq'] == 'monthly')
+    sz = next(v for k, v in tabs49.items() if k.startswith('Average Firm Size') and v['freq'] == 'monthly')
+    share = {}
+    for d, row in nf['data'].items():
+        srow = sz['data'].get(d)
+        if not srow:
+            continue
+        caps = [(n or 0) * (z or 0) if (n and z and n > 0 and z > 0) else 0 for n, z in zip(row, srow)]
+        tot = sum(caps)
+        if tot:
+            share[d] = {c: caps[i] / tot for i, c in enumerate(nf['cols'])}
+    X_ind, X_ind_raw = {}, {}
     for nm, s in ind.items():
         ks = sorted(k for k in s if k in mkt)
-        ks = [k for k in ks if k >= ks[0]]
-        if len(ks) < 240:
-            continue
-        X_ind[nm] = dict(x=geo(s, ks) - geo(mkt, ks), start=ks[0], end=ks[-1])
+        if len(ks) >= 240:
+            X_ind_raw[nm] = dict(x=geo(s, ks) - geo(mkt, ks), start=ks[0], end=ks[-1])
+        kf = [k for k in ks if share.get(k, {}).get(nm, 0) >= MIN_SHARE]
+        if len(kf) >= 240:
+            X_ind[nm] = dict(x=geo(s, kf) - geo(mkt, kf), start=kf[0], end=kf[-1], months=len(kf))
     f49 = ff49_map()
     hold_t = {}
     for c in C:
@@ -271,11 +289,12 @@ def main():
         mw = sum(w for k, w in mapped if k)
         e = sum(w for k, w in mapped if k in ('Softw', 'Chips')) / mw if mw else None
         xi = sum(w * X_ind[k]['x'] for k, w in mapped if k in X_ind) / mw if mw else None
+        xi_raw = sum(w * X_ind_raw[k]['x'] for k, w in mapped if k in X_ind_raw) / mw if mw else None
         top_ind = {}
         for k, w in mapped:
             if k:
                 top_ind[k] = top_ind.get(k, 0) + w / mw
-        expo[c] = dict(e=e, X_ind=xi, coverage=round(mw / tot, 3) if tot else None, n=len(h),
+        expo[c] = dict(e=e, X_ind=xi, X_ind_raw=xi_raw, coverage=round(mw / tot, 3) if tot else None, n=len(h),
                        top_industries={k: round(v, 3) for k, v in sorted(top_ind.items(), key=lambda kv: -kv[1])[:6]})
     if 'VOO' not in expo or expo['VOO'].get('e') is None:
         expo['VOO'] = dict(e=E_MKT, X_ind=0.0, coverage=None, n=None, top_industries={}, note='米国市場の比重（industry_peak）を使う')
@@ -327,14 +346,15 @@ def main():
     }
     sector = {'QQQM', 'XLK', 'SMH', 'XLV', 'XLP', 'XLU', 'XLE', 'ITA'}
 
-    def world_b(c, shrink=SHRINK):
+    def world_b(c, shrink=SHRINK, raw=False):
         if c == 'GLDM':
             return R_GOLD, 0.0, 0.0, '金: 実質1.3%＋インフレ2.5%'
         x, src = 0.0, '地域・市場全体＝上乗せなし'
         if c in style:
             x, src = style[c][1], f'{style[c][0]}（{style[c][2]}〜{style[c][3]}）'
         elif c in sector:
-            x, src = (expo.get(c) or {}).get('X_ind') or 0.0, '49業種の長い歴史の上乗せを保有で重み付け'
+            x = (expo.get(c) or {}).get('X_ind_raw' if raw else 'X_ind') or 0.0
+            src = '49業種の長い歴史の上乗せを保有で重み付け' + ('（事前登録どおり・社数の少ない時期を含む）' if raw else f'（業種が時価総額の{100 * MIN_SHARE:g}%以上の月だけ）')
         rec = 0.0
         if C[c]['us']:
             e = (expo.get(c) or {}).get('e')
@@ -393,6 +413,10 @@ def main():
         row['_c_gmo'] = gmo_c(c, b) - er_v - tax
         row['_c_vg'] = vg_c(c, b) - er_v - tax
         row['_c_h30'] = jpm_c(c, b, 30) - er_v - tax
+        braw = world_b(c, raw=True)[0]
+        row['_b_raw'] = braw - er_v - tax
+        row['_c_raw'] = jpm_c(c, braw) - er_v - tax
+        row['B_X_raw'] = world_b(c, raw=True)[1]
         row['_notax'] = tax
 
     W = ['A1', 'A2', 'B', 'C']
@@ -421,6 +445,7 @@ def main():
         srt = sorted(worlds_vals, key=lambda c: (-S.mean(worlds_vals[c]), -min(worlds_vals[c])))
         return srt[:10]
     sens = {}
+    sens['S0_事前登録どおり（業種の時価総額の下限なし）'] = top10({c: [rows[c]['A1'], rows[c]['A2'], rows[c]['_b_raw'], rows[c]['_c_raw']] for c in rows})
     sens['S1_順位の平均'] = sorted(rows, key=lambda c: (S.mean(wr[w][c] for w in W), -rows[c]['worst']))[:10]
     sens['S2_A2を外す'] = top10({c: [rows[c][w] for w in ('A1', 'B', 'C')] for c in rows})
     sens['S3_縮み0.3'] = top10({c: [rows[c]['A1'], rows[c]['A2'], rows[c]['_b03'], rows[c]['_c03']] for c in rows})
@@ -442,11 +467,11 @@ def main():
             '平均(%/年)': pct(r['score']), '最悪の世界(%/年)': pct(r['worst']), '最悪の世界': r['worst_world'], '最良の世界': r['best_world'],
             'A1(%/年)': pct(r['A1']), 'A2(%/年)': pct(r['A2']), 'B(%/年)': pct(r['B']), 'C(%/年)': pct(r['C']),
             '各世界の順位': r['world_rank'], '上位10に入った世界の数': r['top10_in_worlds'],
-            '感度8本のうち上位10に残った数': stability[c],
+            '感度9本のうち上位10に残った数': stability[c],
             '経費率(%)': pct(r['er_vehicle'], 3), '配当利回り(%)': pct(r['dy_vehicle']), '外国税の目減り(%/年)': pct(r['tax_drag'], 3),
             'A1_ぶれ(%/年)': pct(r['vol_A1'], 1), 'A1_最大下落(%)': pct(r['maxdd_A1'], 1),
             'A2_ぶれ(%/年)': pct(r['vol_A2'], 1), 'A2_最大下落(%)': pct(r['maxdd_A2'], 1),
-            'B_上乗せX(%/年・縮める前)': pct(r['B_X']), 'B_記録の業種REC(%/年)': pct(r['B_rec'], 3), 'B_上乗せの出どころ': r['B_src'],
+            'B_上乗せX(%/年・縮める前)': pct(r['B_X']), 'B_上乗せX_事前登録どおり(%/年)': pct(r.get('B_X_raw')), 'B_記録の業種REC(%/年)': pct(r['B_rec'], 3), 'B_上乗せの出どころ': r['B_src'],
             '記録の二業種の比率e': None if r['record_share_e'] is None else round(r['record_share_e'], 3),
             '中身の読めた割合': r['holdings_coverage'], '業種の上位': r['top_industries'],
             'データ': f"{r['data']}" + (f"＋〜{r['proxy_until']}は{r['proxy']}" if r['proxy'] else ''),
@@ -464,7 +489,10 @@ def main():
         'table': table,
         'sensitivity_top10': sens,
         'splice_checks': checks,
-        'B_industry_long_run_excess(%/年・縮める前)': {k: dict(x=pct(v['x']), start=v['start'], end=v['end']) for k, v in sorted(X_ind.items(), key=lambda kv: -kv[1]['x'])},
+        'B_industry_long_run_excess(%/年・縮める前)': {k: dict(x=pct(v['x']), start=v['start'], end=v['end'], months=v['months'],
+                                                         x_事前登録どおり=pct(X_ind_raw[k]['x']) if k in X_ind_raw else None)
+                                                    for k, v in sorted(X_ind.items(), key=lambda kv: -kv[1]['x'])},
+        'B_industry_min_share': f'業種の長い歴史は、その業種が米国株の時価総額の{100 * MIN_SHARE:g}%以上ある月だけで測った（結果を見た後の是正・事前登録の外。S0 が事前登録どおり）',
         'B_style_long_run_excess(%/年・縮める前)': {c: dict(portfolio=v[0], x=pct(v[1]), start=v[2], end=v[3]) for c, v in style.items()},
         'SPY_A1(%/年)': pct(spy_a1),
         'inputs': {'R株': pct(R_EQ), 'R金': pct(R_GOLD), '縮み': SHRINK, 'REC': '0.204%−0.52%×e', 'e_米国市場': E_MKT,
@@ -484,7 +512,7 @@ def main():
     for t in table:
         wrk = t['各世界の順位']
         print(f"{t['rank']:2d} {t['t']:6} {t['ja'][:14]:16} {t['平均(%/年)']:6.2f} {t['最悪の世界(%/年)']:6.2f} {t['A1(%/年)']:6.2f} {t['A2(%/年)']:6.2f} {t['B(%/年)']:6.2f} {t['C(%/年)']:6.2f}  "
-              f"{wrk['A1']:2d}/{wrk['A2']:2d}/{wrk['B']:2d}/{wrk['C']:2d}   {t['上位10に入った世界の数']}   {t['感度8本のうち上位10に残った数']}")
+              f"{wrk['A1']:2d}/{wrk['A2']:2d}/{wrk['B']:2d}/{wrk['C']:2d}   {t['上位10に入った世界の数']}   {t['感度9本のうち上位10に残った数']}")
     print('感度の上位10:')
     for k, v in sens.items():
         print(f'  {k}: {" ".join(v)}')
