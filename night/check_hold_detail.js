@@ -319,9 +319,12 @@ const RET = JSON.parse(fs.readFileSync(path.join(ROOT, 'out', 'returns.json'), '
       ok(r.api.length === 0, `ccfState に 鍵の道（pushRepo / setToken / hasToken）は無い（${r.api.join(',') || 'なし'}）`);
       ok(r.tok === null, '過去に端末へ置かれた鍵（ccf:ghToken）は、読み込み時に消える');
       ok(!/ghp_FIXTURE|鍵を設定して反映する|鍵を入れ直す|ccfState\.setToken|ccfState\.pushRepo/.test(r.src), 'ページの中に「鍵を設定して反映する」の入口（setToken / pushRepo の呼び出し）は無い');
-      const t = await p.evaluate(() => { const d = document.createElement('div'); d.id = 'trAfter'; document.body.appendChild(d); ccfTradeAfter('買い QQQM 1株'); return d.innerText; });
-      ok(/この端末の保有に反映しました/.test(t) && /📈成績/.test(t) && !/鍵/.test(t), `記録のあとの案内に「鍵」は無い・何が自動で何が待つかを言う（${t.replace(/\s+/g, ' ').slice(0, 70)}…）`);
-      ok(/書き出す/.test(t), '待つのは成績だけ・入れる道は「📤 書き出す」');
+      await p.evaluate(() => { const d = document.createElement('div'); d.id = 'trAfter'; document.body.appendChild(d); ccfTradeAfter('買い QQQM 1株'); });
+      await p.waitForTimeout(1500);
+      const t = await p.evaluate(() => document.getElementById('trAfter').innerText);
+      ok(/この端末の保有に反映しました/.test(t) && /📈成績/.test(t) && !/鍵を設定|鍵を入れ直|🔑|トークン/.test(t) && /鍵は要りません/.test(t),
+         `記録のあとの案内は「鍵を置く道」を勧めない（鍵は要りません）・何が自動で何が待つかを言う（${t.replace(/\s+/g, ' ').slice(0, 70)}…）`);
+      ok(/Submit new issue/.test(t) && /GitHub を開いて反映する|書き出す/.test(t), '待つのは成績だけ・入れる道は「GitHub を開いて反映する」（Issue 経由・v9.9.210）か「📤 書き出す」');
       await ctx.close();
     }
 
@@ -342,7 +345,7 @@ const RET = JSON.parse(fs.readFileSync(path.join(ROOT, 'out', 'returns.json'), '
       ok(h && /この成績は repo の保有で計算されていて、この端末の保有と違います/.test(h), '違いがあれば先頭に「この端末の保有と違います」');
       ok(h && h.includes(`XLK：${xr}株 → ${xr + 2}株（+2株）`) && /NEWC：この端末にだけある/.test(h) && /ASML：この端末では保有から外れている（売却済み）/.test(h), `銘柄名で3種類の違いを言う（${h && h.slice(40, 190)}…）`);
       ok(h && h.includes('成績の計算日 ' + RET.generated), `成績の計算日を出す（${RET.generated}）`);
-      ok(h && /書き出す/.test(h), '未書き出しの決定があるとき（この記録は dirty）は「📤 書き出す → Claude に貼って反映して」');
+      ok(h && /Submit new issue/.test(h) && /鍵は要りません/.test(h), '未書き出しの決定があるとき（この記録は dirty）は「GitHub で Submit new issue を1回押す」（鍵は要りません）と案内する');
       await o.p.evaluate(() => { localStorage.removeItem('ccf:stateDirty'); ccfPerf(); }); await o.p.waitForTimeout(1500);
       h = await o.p.evaluate(() => { const e = document.getElementById('perfSync'); return e ? e.innerText.replace(/\s+/g, ' ') : null; });
       ok(h && /この端末の記録は repo と同じです/.test(h) && !/書き出す/.test(h), '未書き出しが無いなら「成績の計算が追いついていないだけ（3〜5分）」と案内する');

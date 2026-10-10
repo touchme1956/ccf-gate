@@ -618,7 +618,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 <link rel="stylesheet" href="skin.css?v=20261010-5">
 <!-- v9.9.131: 人の決定(state.json)の読み書き。**両ページが同じ実装を読む**（写すと必ず割れる・v9.9.65）。
      本体より前に読むのは localStorage.setItem の包み(dirty検出)を先に効かせるため -->
-<script src="state.js?v=20261010-1"></script><script src="icon.js"></script></head><body><div id="pgBg" aria-hidden="true"></div>
+<script src="state.js?v=20261010-2"></script><script src="icon.js"></script></head><body><div id="pgBg" aria-hidden="true"></div>
 <!-- v9.9.177 息づく地（表示だけ・判定に不使用）。三つの淡い光が別々の周期で漂う＝追加ダウンロード0バイトで「裏で動く背景」を作る -->
 <!-- v9.9.171（2026-08-23 ユーザー指示「使わないタブをなくして統合」）:
      12タブ → **6つの群**へ。⚠ pgN の div と tabN の id は**一つも変えていない**——
@@ -1161,7 +1161,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.209</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.210</span></h1>
     <div style="margin:6px 0 2px"><button id="hintBtn" onclick="ccfToggleHints()" style="padding:5px 11px;background:none;border:1px solid var(--line);border-radius:7px;color:var(--dim);font-size:11.5px;cursor:pointer">欄の注記を出す</button></div>
   <div class="sub"><details class="why plain" data-fold="6"><summary>ℹ この画面について</summary><div class="why-body"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——絶対MOAT指数をΩの直接項に加え(実効≒22%)、<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%。⚠率そのものは退場社の抜けた母集団で測った下限の側で、2013年の質実証プールでは4.2〜19.2%の幅がある〔2026-09-23 に退場日を是正した後の値・是正前は2.0〜25.7%〕）。</div></details></div>
   </div>
@@ -3875,7 +3875,7 @@ async function ccfAutoRecord(btn,kind){
     msgs.push((r.ok?'✓ ':'⚠ ')+m.who+' '+(r.msg||'')); if(!r.ok){ allOk=false; break; }
   }
   if(btn)btn.disabled=false;
-  say(msgs.join('　')+'（口数は 円÷基準価額 の見積もり——証券会社の画面の口数と違えば🏦保有の✎編集で直す）　→ state.json の書き出しを忘れずに', allOk);
+  say(msgs.join('　')+'（口数は 円÷基準価額 の見積もり——証券会社の画面の口数と違えば🏦保有の✎編集で直す）　→ repo へは赤い帯の「🚀 GitHub を開いて反映する」で', allOk);
   try{ if(typeof renderPlan==='function')await renderPlan(); }catch(_){}
   try{ const db=document.getElementById('dashBox');
        if(typeof ccfDash==='function'&&db&&db.innerHTML.trim())ccfDash(); }catch(_){}
@@ -3929,7 +3929,7 @@ function ccfBought(btn){
     const noPx=!(parseFloat(inp.dataset.px)>0);
     const isNet=(inp.dataset.sleeve==='net');
     ccfToast('✓ '+(r.msg||'')+(noPx?'　⚠ 単価は未記録（盤に現在価格が無い）——🏦保有で入れてください':'')
-      +'　→ 🏦保有に反映。state.json の書き出しを忘れずに',true);
+      +'　→ 🏦保有に反映。repo へは赤い帯の「🚀 GitHub を開いて反映する」で',true);
     /* ★買ったのに「採点待ち」のままだった（2026-08-11 ユーザー「別枠のRBCのホールドが青くならない」）。
        Ⅶの色丸は `pf:verdicts` を読むが、**その表を作るのは 📚台帳の renderHoldings で、
        対象は `g7hold:set`（門の保有印）が付いた社だけ**。株数を書いても保有印は付かないので、
@@ -3971,7 +3971,7 @@ function ccfBought(btn){
    ここに一枚の記入欄を置く。**書き込みの実装は Ⅶ(portfolio.html) の pfAddShares / pfSellShares だけ**
    （二重に持たない・v9.9.65）——ここは postMessage で頼むだけ。
    記録した後は repo へ入れないと成績（out/returns.json）も他の端末も変わらないので、
-   **書き出しボタンをその場に出す**（ブラウザは repo へ書けない＝最後の一歩は人の手）。
+   **「GitHub を開いて反映する」ボタンをその場に出す**（ブラウザは repo へ鍵なしでは書けない＝最後の一歩は人の手・v9.9.210 で Issue 経由に）。
    ⚠**判定には一切効かない**——売却理由は人が選んで記録するだけで、S1/S2/S3 の規律は不変。 */
 function ccfTradeToday(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function ccfTradePf(){ try{ return JSON.parse(localStorage.getItem('pf:portfolio')||'{}')||{}; }catch(_){ return {}; } }
@@ -4124,13 +4124,17 @@ function ccfTradeSync(first){
    **鍵（GitHub の token）を置く道は撤去した。** 門は静的ページなので、ブラウザから repo へ書くには鍵が要る（state.js の頭注）。
    その代わり ① この端末の画面は、保有が書き換わった時点で**自動で全部つくり直される**（state.js の合図 ccf:holdings → ccfHoldingsChanged）。
    ② 自動にならないのは 📈成績 だけ——成績は repo の state.json を材料に CI が計算するので、repo に入るまで古い保有のまま
-   （📈成績の先頭に、この端末の保有との違いを名指しで出す＝ccfPerfSyncHTML）。 */
+   （📈成績の先頭に、この端末の保有との違いを名指しで出す＝ccfPerfSyncHTML）。
+   ★v9.9.210（2026-10-10 ユーザー明示指示「案1でやってマージして」）: ②の「repo に入れる」一歩を、鍵なしで **GitHub の画面で1回押すだけ**にした——
+   ここに「🚀 GitHub を開いて反映する」（state.js の issueWidget・Issue 経由）を出す。押さなくても壊れない（📤 書き出す → Claude の道も残してある）。 */
 function ccfTradeAfter(what){
   const el=document.getElementById('trAfter'); if(!el)return;
   el.innerHTML=`<div style="margin-top:12px;padding:10px 12px;border:1px solid #15803d;border-radius:8px;font-size:12.5px;line-height:1.7">`
     +`✓ <b>この端末の保有に反映しました</b>——🏦保有・総資産・前日比・買付順位・銘柄の詳細は、今の数字に自動でつくり直してあります。`
-    +`<div style="font-size:12px;color:var(--dim);margin-top:4px">📈成績だけは repo の保有（state.json）で計算されるので、repo に入るまでは入りません。`
-    +`入れるときは <button onclick="ccfState.export(this,true)" style="padding:3px 9px;border-radius:6px;border:1px solid var(--line);background:transparent;cursor:pointer">📤 書き出す</button> → Claude に貼って「反映して」。</div></div>`;
+    +`<div style="font-size:12px;color:var(--dim);margin:4px 0 8px">📈成績だけは repo の保有（state.json）で計算されるので、repo に入れるまでは入りません。`
+    +`入れるには、下のボタンから GitHub で「Submit new issue」を1回押します（鍵は要りません）。</div>`
+    +`<div id="trIssue" class="ccfIssueBox"></div></div>`;
+  try{ const h=document.getElementById('trIssue'); if(h&&window.ccfState&&ccfState.issueWidget)ccfState.issueWidget(h); }catch(e){}
 }
 function ccfTradeGo(kind,btn){
   const msg=document.getElementById('trMsg'), bad=t=>{ msg.style.color='#b91c1c'; msg.textContent='⚠ '+t; };
@@ -5389,7 +5393,8 @@ function ccfPerfSyncHTML(R){
     +diffs.map(d=>`<br>・${d}`).join('')
     +`<div style="font-size:12px;color:var(--dim,#94a0b4);margin-top:4px">`
     +(dirty
-      ?`この端末で記録した分は、repo の state.json に入るまで成績に入りません。入れるには <button onclick="ccfState.export(this,true)" style="padding:3px 9px;border-radius:6px;border:1px solid var(--line);background:transparent;cursor:pointer">📤 書き出す</button> → Claude に貼って「反映して」。`
+      ?`この端末で記録した分は、repo の state.json に入るまで成績に入りません。下のボタンから GitHub で「Submit new issue」を1回押すと入ります（鍵は要りません）。`
+        +`<div id="perfSyncAct" class="ccfIssueBox" style="margin-top:8px"></div>`
       :`この端末の記録は repo と同じです。成績の計算が追いついていないだけで、repo に入ってから3〜5分ほど（毎営業日の夜にも）で入ります。`)
     +`</div></div>`;
 }
@@ -5401,6 +5406,7 @@ async function ccfPerf(){
   const [R,S]=await Promise.all([j('out/returns.json'), j('out/returns_series.json')]);
   box.innerHTML=`<div style="text-align:right;margin:0 0 4px">${ccfMoneyBtn()}</div>`+ccfPerfSyncHTML(R)+ccfPerfHTML(R,S);
   box.dataset.busy='0';
+  try{ const h=document.getElementById('perfSyncAct'); if(h&&window.ccfState&&ccfState.issueWidget)ccfState.issueWidget(h); }catch(e){}   // v9.9.210: 差があって手元が未反映なら「GitHub を開いて反映する」
   try{ if(typeof ccfPaint==='function') ccfPaint(document.getElementById('pg12')); }catch(e){}
   try{ if(typeof ccfIconRepaint==='function') ccfIconRepaint(); }catch(e){}
 }
@@ -6051,6 +6057,7 @@ function ccfHoldingsChanged(){
   },120);
 }
 window.addEventListener('ccf:holdings',ccfHoldingsChanged);
+window.addEventListener('ccf:synced',ccfHoldingsChanged);   // v9.9.210: Issue 経由で repo に追いついたとき（赤い帯・📈成績の差の表示・買付順位を今の姿に）
 
 async function ccfDash(btn){
   const box=$('dashBox'); if(!box)return;
@@ -6338,7 +6345,7 @@ async function ccfToday(btn){
   const bnow=[];
   if(dirty===true)bnow.push({title:'手元の決定がまだ repo に書き出されていません',
     why:'株数・売却記録・目標ウェイト・点灯日は out/ に正本が無く、消えると戻りません',
-    how:'画面上の帯の①〜④（書き出す → 貼る → コミット → 入れた）'});
+    how:'画面上の赤い帯の「🚀 GitHub を開いて反映する」（GitHub で1回押すだけ・鍵は要りません）。または①〜④（書き出す → 貼る → コミット → 入れた）'});
   if(miss===null)bnow.push({title:'台帳の鮮度が判りません',
     why:'out/packs_index.json が読めない＝**取り込み漏れが無いとは言えない**', how:''});
   else if(miss&&miss.length)bnow.push({title:'台帳に入っていないパックが '+miss.length+'社',

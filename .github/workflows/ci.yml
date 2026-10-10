@@ -207,6 +207,15 @@ jobs:
       - name: 人の決定の検査 validate_state
         run: python3 night/validate_state.py
 
+      # ── 2-a'. Issue から state.json を更新する道（v9.9.210・night/apply_state_issue.py）──────
+      #   「門が作ったリンクを人が GitHub で1回押す → Actions が検査して state.json を更新する」道のサーバー側。
+      #   ネット不要（本物の apply_state_issue.py を一時ディレクトリで走らせる）。受け付ける条件・止める条件・
+      #   自由記述の検問（rule 9: 名前を公開リポジトリに載せない）・CAS・符号の3種を確かめる。
+      #   JS 側（state.js の unseenText）と同じ表を共有ベクトルで突き合わせる検査は playwright が要るので CI には入れていない
+      #   （NODE_PATH=$(npm root -g) node night/check_state_issue.js）。
+      - name: Issue から state.json check_state_issue
+        run: python3 night/check_state_issue.py
+
       # ── 2-b. 納品検査のFAIL表を作り直す（v9.9.95）────────────────────────────
       #   **score_all より先**でなければならない——第四の関門がこのJSONを読むので、
       #   古い表のまま採点すると「関門は通っているのに根拠が無い」社が投下可に出る。

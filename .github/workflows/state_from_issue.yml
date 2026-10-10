@@ -1,0 +1,108 @@
+# Issue から state.json を更新する（v9.9.210・2026-10-10 ユーザー明示指示「案1でやってマージして」）
+#
+# ■ なぜ要るか
+#   門は GitHub Pages の静的ページで、**ブラウザから repo へは鍵なしでは書けない**（state.js の頭注）。
+#   「鍵を端末に置く」道は v9.9.209 で撤去した（ユーザー「鍵がどうとかはいらない」）。代わりの道:
+#     ① 門が「新規 Issue」のリンクを作る（本文に、端末の決定と repo の差が入っている）
+#     ② 人が GitHub でリンクを開き、**「Submit new issue」を1回押す**（ログインしていれば鍵は要らない）
+#     ③ このワークフローが依頼を検査し、通れば state.json を更新して main へ push し、📈成績（returns.yml）を起こし、
+#        結果を Issue にコメントして閉じる
+#
+# ■ ⚠ これは main への自動 push の新設
+#   2026-09-23 に Routine の自動 push が GitHub アカウント停止の原因になった経緯があり、新設には明示指示が要る。
+#   ユーザーの明示指示（2026-10-10「案1でやってマージして」）を受けて入れた。**人が Issue を押したときだけ**動く（定期実行は無い）。
+#   止めるなら、このファイルを消すだけ（門は「📤 書き出す → Claude」の道に戻る。門のリンクは押しても何も起きない）。
+#
+# ■ 守っていること（本体は night/apply_state_issue.py）
+#   ・オーナー本人の Issue だけ（公開リポジトリなので誰でも Issue は立てられる）。題名が [ccf-state] で始まるものだけ。
+#   ・**Issue の題名・本文をシェルへ渡さない**（Python が event JSON を読む）。コミット件名に入れるのはキー名と番号だけ。
+#   ・自由記述の検問（名前を公開リポジトリに載せない）・CAS（repo が先に変わっていれば何もしない）・形と sha の検算・validate_state。
+#   ・push は git_push_safe（remote が進んでいれば rebase して再試行）。
+#
+# ■ 注意
+#   concurrency は「実行中1つ＋待ち1つ」までしか保持しない（GitHub の仕様）。短い間に3つ立てると真ん中が取り消される——
+#   取り消された Issue はコメントが付かないので、もう一度リンクを開けばよい（CAS があるので二重には入らない）。
+name: state from issue
+on:
+  issues:
+    types: [opened]
+permissions:
+  contents: write     # state.json のコミット
+  issues: write       # 結果のコメント・本文の削除・閉じる
+  actions: write      # returns.yml の起動（GITHUB_TOKEN の push は他のワークフローを起こさないので workflow_dispatch で起こす）
+concurrency:
+  group: state-from-issue
+  cancel-in-progress: false
+jobs:
+  apply:
+    if: ${{ github.event.issue.user.login == github.repository_owner && startsWith(github.event.issue.title, '[ccf-state]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash
+    env:
+      CCF_MSG_PATH: ${{ runner.temp }}/ccf_state_msg.md
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+
+      - name: 依頼を検査して state.json に入れる
+        id: apply
+        run: python3 night/apply_state_issue.py
+
+      - name: コミットして main へ push
+        id: push
+        if: steps.apply.outputs.status == 'applied'
+        env:
+          KEYS: ${{ steps.apply.outputs.keys }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          git config user.name  "ccf-gate bot"
+          git config user.email "noreply@github.com"
+          . night/git_add_safe.sh
+          ccf_git_add state.json
+          git diff --staged --quiet || git commit -m "state: Issue #${ISSUE_NUMBER} から保有を反映（${KEYS}）"
+          . night/git_push_safe.sh
+          ccf_git_push
+
+      # GITHUB_TOKEN の push は push イベントのワークフロー（returns.yml）を起こさない。workflow_dispatch だけは起こせる。
+      - name: 成績の作り直しを起こす（returns.yml）
+        id: ret
+        if: steps.apply.outputs.status == 'applied' && steps.push.outcome == 'success'
+        continue-on-error: true      # 起こせなくても state.json は入っている（成績は次の平日の夜にも作り直される）。結果は Issue のコメントに書く
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run returns.yml --ref main
+
+      - name: Issue に結果を書いて閉じる
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ github.event.issue.number }}
+          STATUS: ${{ steps.apply.outputs.status }}
+          REDACT: ${{ steps.apply.outputs.redact }}
+          PUSH: ${{ steps.push.outcome }}
+          RET: ${{ steps.ret.outcome }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          reason=completed
+          if [ -z "$STATUS" ]; then
+            printf '%s\n' "⚠ **処理が始まる前に止まりました**（検査の前の失敗）。何も書き換えていません。" "" "Actions のログ: $RUN_URL" "" "反映は、門の「📤 書き出す」を Claude に貼って「反映して」でもできます。" > "$CCF_MSG_PATH"
+            reason="not planned"
+          elif [ "$STATUS" = "applied" ] && [ "$PUSH" != "success" ]; then
+            printf '%s\n' "⚠ **検査は通りましたが、main へ push できませんでした**。state.json はまだ変わっていません。" "" "Actions のログ: $RUN_URL" "" "もう一度リンクを開いて押すか、門の「📤 書き出す」を Claude に貼って「反映して」と頼んでください。" > "$CCF_MSG_PATH"
+            reason="not planned"
+          elif [ "$STATUS" = "rejected" ] || [ "$STATUS" = "error" ]; then
+            reason="not planned"
+          fi
+          if [ "$STATUS" = "applied" ] && [ "$PUSH" = "success" ] && [ "$RET" = "failure" ]; then
+            printf '\n%s\n' "⚠ 📈成績の作り直しを起こせませんでした（state.json は入っています。成績は次の平日の夜に作り直されます）。" >> "$CCF_MSG_PATH"
+          fi
+          if [ "$REDACT" = "true" ]; then
+            gh issue edit "$ISSUE" --body "（依頼の本文は、検査で止まったため削除しました）" || echo "::warning::本文を消せなかった"
+          fi
+          [ "$STATUS" = "skip" ] && exit 0
+          gh issue comment "$ISSUE" --body-file "$CCF_MSG_PATH" || echo "::warning::コメントできなかった"
+          gh issue close "$ISSUE" --reason "$reason" || echo "::warning::閉じられなかった"

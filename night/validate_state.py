@@ -34,14 +34,31 @@ import sys
 from datetime import datetime, timezone
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-P = os.path.join(ROOT, "state.json")
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import state_keys                       # noqa: E402  キーの一覧は state.js から読む（下の注）
+
+# 検査する state.json。既定は repo 直下。`--path FILE` か環境変数 CCF_STATE_PATH で別のファイルを検査できる
+# （v9.9.210・Issue から state.json を更新する night/apply_state_issue.py が、書く前の候補をここで検査する）
+def _path():
+    if "--path" in sys.argv:
+        i = sys.argv.index("--path")
+        if i + 1 < len(sys.argv):
+            return sys.argv[i + 1]
+    return os.environ.get("CCF_STATE_PATH") or os.path.join(ROOT, "state.json")
+
+
+P = _path()
 AS_JSON = "--json" in sys.argv
 
-# state.js と同じ集合（**片方だけ増やすと静かに割れる**ので、増やすときは両方）
-EXACT = ["pf:portfolio", "pf:weights", "pf:sold", "pf:monthly", "g7ignite:map"]
-PREFIX = ["g7log:"]
+# ★v9.9.210: キーの集合は **state.js から読む**（旧: 手で写した5個）。
+#   写しは state.js が pf:net / pf:monthly_total / pf:monthly_net を足したときに写し忘れられ、
+#   それらを含む state.json を入れると「想定外のキー」で CI が落ちる状態だった（state.js 8個 / ここ 5個）。
+EXACT = state_keys.exact_keys()
+PREFIX = state_keys.prefixes()
+PLAIN = set(state_keys.PLAIN_NUMBER_KEYS)       # 値が JSON でなく数字の文字列で入るキー
 LABEL = {"pf:portfolio": "株数（Ⅶ資産）", "pf:weights": "目標ウェイト",
          "pf:sold": "売却記録", "pf:monthly": "今月の個別枠",
+         "pf:net": "ETFの買付記録", "pf:monthly_total": "今月の入金総額", "pf:monthly_net": "今月のETF枠",
          "g7ignite:map": "点灯日（48h冷却）", "g7log:": "検証履歴"}
 
 
@@ -93,8 +110,8 @@ def main():
 
     # (3) 値が読めるか
     for k, v in data.items():
-        if k == "pf:monthly":
-            continue                    # 数値の文字列
+        if k in PLAIN:
+            continue                    # 数値の文字列（今月の入金額など）
         if not isinstance(v, str):
             fails.append(f"{k!r} の値が文字列でない（localStorage の生値をそのまま入れる）")
             continue
@@ -113,6 +130,8 @@ def main():
                              "——門を開くとⅦ資産が既定値に落として**書き戻す**（株数が消える）")
         if k == "pf:sold" and not isinstance(o, list):
             warns.append("'pf:sold' が配列でない（売却記録は配列で持つ）")
+        if k in ("pf:net", "pf:weights", "g7ignite:map") and not isinstance(o, dict):
+            warns.append(f"{k!r} が辞書でない（門は辞書として読む）")
 
     # (4) 何が入っていて何が欠けているか
     have, miss = [], []
