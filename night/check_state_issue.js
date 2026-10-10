@@ -22,7 +22,7 @@
 const { spawnSync } = require('child_process');
 const http = require('http'), fs = require('fs'), path = require('path'), os = require('os'), zlib = require('zlib'), crypto = require('crypto');
 const ROOT = path.dirname(__dirname), PORT = 8986;
-const CHROME = process.env.CHROME_PATH || (fs.existsSync('/opt/pw-browsers/chromium') ? '/opt/pw-browsers/chromium' : '/opt/pw-browsers/chromium-1194/chrome-linux/chrome');
+const CHROME = process.env.CHROME_PATH || ['/opt/pw-browsers/chromium', '/opt/pw-browsers/chromium-1194/chrome-linux/chrome'].find(p => fs.existsSync(p));   // 無ければ playwright の既定（CI）
 let chromium; try { ({ chromium } = require('playwright')); } catch (e) { console.error('playwright が無い。NODE_PATH=$(npm root -g) を付けるか `npm i playwright`'); process.exit(2); }
 
 let pass = 0, fail = 0;
@@ -71,7 +71,7 @@ function runApply(urlStr, repoState, o = {}) {
 
 (async () => {
   await new Promise(s => srv.listen(PORT, s));
-  const browser = await chromium.launch({ executablePath: CHROME });
+  const browser = await chromium.launch(CHROME ? { executablePath: CHROME } : {});
   const errs = [], apiReqs = [], ghReqs = [];
   let REPO = clone(ST);
 

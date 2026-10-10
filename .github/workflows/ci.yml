@@ -172,6 +172,9 @@ jobs:
       #   actionlint は式のコンテキスト・キー名・needs の参照・shell の誤りを push の前に落とす。
       #   ⚠ frozen・wfadd と同じ扱い（設定の検査＝下流は止めず、最後に必ず赤くする）。
       #   ⚠ actionlint を**入れられなかった**ときは落とさず警告で言う（検査を飛ばしたことは見える・ネットの揺れで CI を赤くしない）。
+      #   ⚠ **shellcheck・pyflakes の連携は切る**（`-shellcheck= -pyflakes=`）。runner には shellcheck が入っているので、
+      #     既定のままだと既存の全 workflow の `ccf_git_push`（引数なしの関数呼び出し）等へ info/warning が出て毎回落ちる
+      #     （初回の CI で実際に落ちた: 手元には shellcheck が無いので0件に見えた）。ここで見るのは**式・キー・参照の誤り**だけ。
       - name: ワークフローの文法 actionlint
         id: wflint
         continue-on-error: true
@@ -180,7 +183,7 @@ jobs:
             echo "::warning::actionlint を入れられなかった——ワークフローの文法の検査を飛ばした"
             exit 0
           fi
-          actionlint
+          actionlint -shellcheck= -pyflakes=
 
       # ── 1-c3. 前向きの検定の道具が事前登録のときのままか（2026-09-29新設）──────────
       #   前向きの検定（mw_forward・nx_forward）は、測る前に固定した規則を最長20年回して初めて意味を持つ。
@@ -609,6 +612,10 @@ jobs:
           #   （check_mobile_fit は「見えるか」は見るが「隣り合っているか」は見ない）。
           #   注入検査ずみ: 章の帯を static へ戻すと「二段が離れている 738px」で落ちる。
           node night/check_navstack.js 2>&1 | tail -25
+          # v9.9.210: **門が作る「新規 Issue」のリンクを本物の apply_state_issue.py に通して往復**させる（88項目・約70秒）。
+          #   サーバー側だけの検査（check_state_issue.py・上で毎回）では、門（state.js）が作る依頼の形・自由記述の検問の JS 側・
+          #   「門が本当に作る記録は検問を通るか」は見えない。
+          node night/check_state_issue.js 2>&1 | tail -25
 
       # ── 8. ページの重さの予算（1.7MBまで肥大した実績があるので歯止め）──────────
       - name: ページサイズの予算
