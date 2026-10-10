@@ -865,7 +865,8 @@
       return '<a class="ccfIssueGo" target="_blank" rel="noopener noreferrer" onclick="ccfState.issueOpened(this)" onauxclick="ccfState.issueOpened(this)" style="' + BTN_GO + '">🚀 GitHub を開いて反映する</a>' +
         '<div style="font-size:11.8px;line-height:1.75;margin-top:7px">GitHub が開いたら、<b>「Submit new issue」を1回押すだけ</b>です（内容は変えないでください）。' +
         '数十秒で repo に入り、📈成績も数分で作り直されます。GitHub にログインしている端末なら、<b>鍵は要りません</b>。<br>' +
-        '送る内容: <b>' + esc(r.labels.join('・')) + '</b>' + (r.derived ? '（＋目標ウェイト・点灯日の写し）' : '') + '</div>' +
+        '送る内容: <b>' + esc(r.labels.join('・')) + '</b>' + (r.derived ? '（＋目標ウェイト・点灯日の写し）' : '') +
+        '<br><span style="opacity:.85">※GitHub のアプリで開いて本文が空だったときは、Safari など<b>ブラウザ</b>で開き直してください。</span></div>' +
         '<div style="margin-top:7px"><button onclick="ccfState.checkSync(this)" style="' + BTN_SUB + '">↻ 反映できたか確認</button> ' +
         '<span class="ccfIssueMsg" style="font-size:11.8px;opacity:.9"></span></div>';
     }

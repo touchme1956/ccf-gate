@@ -42,7 +42,8 @@ jobs:
       run:
         shell: bash
     env:
-      CCF_MSG_PATH: ${{ runner.temp }}/ccf_state_msg.md
+      # ⚠ job の env では `runner` コンテキストが使えない（使うと workflow ファイルが不正になり、push のたびに「失敗」の run が立つ）。固定の場所にする
+      CCF_MSG_PATH: /tmp/ccf_state_msg.md
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

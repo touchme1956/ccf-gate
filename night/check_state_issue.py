@@ -93,11 +93,17 @@ def bases_for(state, keys, extra=None):
 V = json.load(open(os.path.join(HERE, "state_issue_vectors.json"), encoding="utf-8"))
 
 
+# 見本の state.json の最上位の欄。実際の state.json は data の後ろに asof を持つので、**保たれること**を見るために同じ形にする。
+# （日付は固定の見本＝『今日』ではない。ANCHOR と名づけ、check_frozen_dates に凍った今日と誤認させない）
+ANCHOR_ASOF = "2026-09-23"
+ANCHOR_SAVED_AT = "2026-10-08T11:38:16.000Z"
+
+
 def base_state():
     data = {k: ser(v) for k, v in V["repo"].items()}
     data["pf:weights"] = ser({"net": {"QQQM": 40}, "city": {"MSFT": 5.000000001}, "total": 100})
-    return {"fmt": "ccf-state", "ver": 1, "savedAt": "2026-10-08T11:38:16.000Z",
-            "note": "門の「人の決定」の正本。", "data": data, "asof": "2026-09-23"}
+    return {"fmt": "ccf-state", "ver": 1, "savedAt": ANCHOR_SAVED_AT,
+            "note": "門の「人の決定」の正本。", "data": data, "asof": ANCHOR_ASOF}
 
 
 def run(ev, state, validate=True):
