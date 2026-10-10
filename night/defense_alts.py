@@ -24,8 +24,10 @@ from industry_long import lines, block   # noqa: E402
 
 OUT = os.path.join(BASE, 'out', 'defense_alts.json')
 PREREG = os.path.join(BASE, 'out', 'defense_alts_prereg.json')
-END = 202609            # 最後の丸1か月（ETF）
-ASOF = datetime.date(2026, 9, 30)
+END = 202609            # 最後の丸1か月（ETF）＝事前登録 eb3f176 の測定の基準時点（記録として固定）
+# 基準時点＝END の月末。記録の年数（判定の条件(2)）はここまでで数える——2026-10-10 の判定を再現できるよう固定する
+# （回し直すときは END とこの日付を一緒に新しい月末へ。再検定は todo defense_alts_retest_2033）
+CUTOFF = datetime.date(2026, 9, 30)
 SLOT = {'QQQ': 50, 'SMH': 20, 'X': 15}   # その他15% の形（個別株15%は物差しの外・85で割る）
 
 # ───────── 候補の事実（出所と日付は out/defense_alts_prereg.json と回答の Sources） ─────────
@@ -158,7 +160,7 @@ def have(ms, *series):
 
 def years_since(d):
     y, mo, da = map(int, d.split('-'))
-    return round((ASOF - datetime.date(y, mo, da)).days / 365.25, 1)
+    return round((CUTOFF - datetime.date(y, mo, da)).days / 365.25, 1)
 
 
 def comp(h, key):
