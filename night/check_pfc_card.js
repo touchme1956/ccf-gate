@@ -266,7 +266,7 @@ const jr = (r, o) => r.fulfill({ status: 200, contentType: 'application/json', b
       ok(Math.abs(r.rows['ディスコ'][1] - 1.0) < 1e-6, `円建ての行はドル円の影響を受けない（ディスコ +${r.rows['ディスコ'][1].toFixed(3)}%）`);
       const usdJ = expectDay(POS, PX, FX, FXP).fxJ;
       ok(Math.abs(r.fxJ - usdJ) < 1, '円建ての行を足しても「うち為替」は変わらない');
-      ok(/株価＋為替・うち為替 \+¥/.test(r.hero), `見出し: 前日比（株価＋為替・うち為替 +¥…）`);
+      ok(/前日比（株価＋為替）/.test(r.hero) && /前日比のうち為替 \+¥/.test(r.hero), '見出し: 前日比（株価＋為替）と、チップ「前日比のうち為替 +¥…」');
       ok(/ドル円 ¥150\.00 \(\+1\.35%\)/.test(r.sub) && /自動更新/.test(r.sub), `カードのドル円の行（${r.sub.split('|')[1].trim()}）`);
       ok(/株価と為替（ドル円）の動き/.test(r.note), 'カードの注記が為替込みになる');
       ok(/前日比 \+1\.35%/.test(r.asof), '上の「市場データ…$1=¥…」の行にも為替の前日比');

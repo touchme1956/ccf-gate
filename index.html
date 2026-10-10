@@ -5904,11 +5904,12 @@ async function ccfDash(btn){
   const head=`<div class="rb-hero">
     <div class="k">総資産${ccfMoneyBtn()}</div>
     <div class="v">${totJ?yen(totJ):'—'}</div>
-    ${dayP!=null?`<div class="d ${rbc(dayJ)}">${dayJ>0?'+':dayJ<0?'−':''}${yen(Math.abs(dayJ))}（${sign(dayP)}%）<span class="t">前日比（${fxPrev>0?`株価＋為替・うち為替 ${dayFxJ>0?'+':dayFxJ<0?'−':''}${yen(Math.abs(dayFxJ))}`:'株価のみ・前日のドル円が使えないので為替は含まない'}）</span></div>`:''}
+    ${dayP!=null?`<div class="d ${rbc(dayJ)}">${dayJ>0?'+':dayJ<0?'−':''}${yen(Math.abs(dayJ))}（${sign(dayP)}%）<span class="t">前日比（${fxPrev>0?'株価＋為替':'株価のみ・前日のドル円が使えないので為替は含まない'}）</span></div>`:''}
     ${plAll!=null?`<div class="d ${rbc(plAll)}">${plAll>0?'+':plAll<0?'−':''}${yen(Math.abs(plAll))}（${sign((totCostVal/totCost-1)*100)}%）<span class="t">含み損益</span></div>`:''}
     <div class="chips">
       <span class="chip">保有 <b>${pos.length}</b>件</span>
       ${FX?`<span class="chip">$1 = <b>¥${FX}</b>${fxChgP!=null?` (${sign(fxChgP)}%)`:''}</span>`:''}
+      ${(fxPrev>0&&dayP!=null)?`<span class="chip" title="前日比のうち、ドル円の動きによる分（株数×今の株価×(今のドル円−前日のドル円)）">前日比のうち為替 <b>${dayFxJ>0?'+':dayFxJ<0?'−':''}${yen(Math.abs(dayFxJ))}</b></span>`:''}
       ${noCost.length?`<span class="chip warn" title="取得額(bjpy)も買付単価(bpx)も無い行。評価額は総資産に入るが、含み損益からは外してある——測れていないものを利益に数えないため">含み損益の対象外 ${noCost.join(' / ')}</span>`:''}
     </div></div>`;
   // v9.9.204: ポートフォリオのカード（円グラフ・年初来比・評価損益・銘柄ごとの内訳）。数字は上の集計をそのまま渡す。表示だけ
