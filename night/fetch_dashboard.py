@@ -231,19 +231,123 @@ def jp_quotes(codes):
     return yahoo_quotes(codes, suffix=".T")
 
 
-def fetch_fx():
+FX_BAND = (100.0, 250.0)       # 円/ドルの常識帯。外れた値は単位・取り違えの誤りとして捨てる（ルール7）
+FX_ER = "open.er-api.com（鍵不要）"
+FX_YH = "Yahoo JPY=X（鍵不要）"
+
+
+def _fx_file():
+    """前回コミットされた為替（out/dashboard.json の fx）。読めなければ {}。"""
+    try:
+        return (json.load(open("out/dashboard.json", encoding="utf-8")).get("fx") or {})
+    except Exception:
+        return {}
+
+
+def _fx_ok(v):
+    try:
+        return FX_BAND[0] < float(v) < FX_BAND[1]
+    except Exception:
+        return False
+
+
+def fx_pair_24h(rows):
+    """[(unix秒, 終値)] ＝ Yahoo JPY=X の1時間足から (最新, 24時間前, 最新の日付) を取る。**純関数**（検査はネット無しで回す）。
+
+    なぜ「24時間前」か（2026-10-10 の実測）: Yahoo の日足は**慣習が混在**している——過去の足は ロンドン0時（23:00UTC）で
+      区切られ、最新の足だけが NY の区切り。日足の「最後から2番目の終値」を前日にすると、
+      **米国株の引け（20:00UTC）より3時間も後のドル円**になる（実測 10-08: 引け後 157.86 → 日足の終値 158.063）。
+      米国株の前日終値と**同じ時刻のドル円**を前日とするのが、円換算した前日比の基準として揃う
+      ＝最新の足の24時間前（以前で最も近い足）。月曜は日曜の昼＝市場が閉じているので、金曜の終値になる。
+    足が欠けて24時間前に近い足が無いとき（平日で6時間超）は prev=None（遠い日の値を前日にしない・ルール7）。
+    週末（土曜・日曜22時UTC前）は市場が閉じているので 72時間まで許す。
+    """
+    rows = [(int(t), float(c)) for t, c in rows if c is not None]
+    if len(rows) < 30:
+        return None
+    t1, px = rows[-1]
+    tt = t1 - 24 * 3600
+    older = [(t, c) for t, c in rows if t <= tt]
+    prev = None
+    if older:
+        gap = tt - older[-1][0]
+        d = datetime.fromtimestamp(tt, tz=timezone.utc)
+        closed = d.weekday() == 5 or (d.weekday() == 6 and d.hour < 22)   # 土曜・日曜22時UTC前＝為替市場は閉じている
+        if gap <= (72 * 3600 if closed else 6 * 3600):
+            prev = older[-1][1]
+    return {"px": px, "prev": prev, "day": datetime.fromtimestamp(t1, tz=timezone.utc).strftime("%Y-%m-%d")}
+
+
+def yahoo_fx_hourly():
+    """Yahoo JPY=X の1時間足（7日）を引いて fx_pair_24h に渡す。引けなければ None（呼び出し側が open.er-api へ落ちる）。"""
+    op, _crumb = _yahoo_ctx()
+    for host in ("query1.finance.yahoo.com", "query2.finance.yahoo.com"):
+        try:
+            with op.open(f"https://{host}/v8/finance/chart/JPY=X?interval=1h&range=7d", timeout=20) as r:
+                j = json.loads(r.read().decode("utf-8", "ignore"))
+            res = j["chart"]["result"][0]
+            pair = fx_pair_24h(zip(res["timestamp"], res["indicators"]["quote"][0]["close"]))
+            if pair:
+                return pair
+            print(f"  ※ドル円(Yahoo {host[:6]}) → 1時間足が足りない（30本未満）")
+        except Exception as e:
+            print(f"  ※ドル円(Yahoo {host[:6]}) → {type(e).__name__} {str(e)[:60]}")
+    return None
+
+
+def fetch_fx(_yahoo=None, _er=None, _prev=None):
     """ドル円を引く（**鍵は要らない**）。取れなければ None——ゼロで埋めない（絶対のルール7）。
 
+    ★2026-10-10（ユーザー指示「為替も自動更新できるようにして」）: **前営業日のドル円（prev）も一緒に残す**。
+      旧は「今のドル円」しか持たず、🏦保有の前日比は「株価だけ（為替は含まない）」だった。
+      総資産は今のドル円で円換算しているので、**前日比も為替の動きを含めないと「昨日の総資産との差」にならない**。
+      門は fx.prev があるときだけ前日比に為替を含める（無ければ従来どおり株価だけ＝黙って0と読まない）。
+      ① Yahoo JPY=X の1時間足 … 最新の値と、**24時間前の値**（米国株の前日終値と同じ時刻の基準・fx_pair_24h）。
+         日足の「最後から2番目」は使わない（Yahoo の日足は区切りの慣習が混在し、米国株の引けより3時間後の値になる）。
+         ⚠ chartPreviousClose も使えない（レンジ直前の終値で、range=5d なら5営業日前＝前日比にならない・2026-08-02 に踏んだ罠）。
+      ② open.er-api.com … ①が引けない日の代わり。1日1回の参考値で前日の値を持たないので、
+         **前回コミットの同じ出所の値（別の日のもの）**から prev を作る。出所が違うものは混ぜない
+         （基準の違う二つを割る型＝prev を付けず、門は株価だけの前日比へ落ちる）。
     為替: Finnhub の /forex/rates は**無料枠では引けない**（2026-07-30の実測で quote が返らず
-      USDJPY=None になった）。鍵不要で使える open.er-api.com へ切り替えてある。
+      USDJPY=None になった）。鍵不要の経路だけを使う。
+
+    戻り値: {"USDJPY","src","asof"(＝取得時刻・株価の asof とは別),"prev"?, "chgPct"?, "day"?}
     """
-    fx = _get("https://open.er-api.com/v6/latest/USD")
-    if fx and isinstance(fx.get("rates"), dict) and fx["rates"].get("JPY"):
-        return {"USDJPY": round(float(fx["rates"]["JPY"]), 3),
-                "src": "open.er-api.com（鍵不要）",
-                # ★fx は自分の時刻を持つ。out['asof'] は**株価**の時刻なので、
-                #   鍵が無くて為替だけ更新した日に asof を読むと為替の鮮度を誤る
-                "asof": datetime.now(timezone.utc).isoformat(timespec="seconds")}
+    now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    # ① Yahoo JPY=X（1時間足）
+    try:
+        q = (_yahoo or yahoo_fx_hourly)()
+    except Exception as e:
+        q = None
+        print(f"  ※ドル円(Yahoo)を引けない（{type(e).__name__} {str(e)[:60]}）")
+    if q and _fx_ok(q.get("px")):
+        px = float(q["px"])
+        out = {"USDJPY": round(px, 3), "src": FX_YH, "asof": now}
+        if q.get("day"):
+            out["day"] = q["day"]
+        pv = q.get("prev")
+        # 前日の値は常識帯と「前日比5%以内」の検問を通ったものだけ（日足の欠けで遠い日の値を拾うと前日比が化ける）
+        if _fx_ok(pv) and abs(px / float(pv) - 1) < 0.05:
+            out["prev"] = round(float(pv), 3)
+            out["chgPct"] = round((px / float(pv) - 1) * 100, 3)
+        return out
+    # ② open.er-api.com（1日1回の参考値）
+    fx = (_er or (lambda: _get("https://open.er-api.com/v6/latest/USD")))()
+    if fx and isinstance(fx.get("rates"), dict) and _fx_ok(fx["rates"].get("JPY")):
+        px = float(fx["rates"]["JPY"])
+        # ★fx は自分の時刻を持つ。out['asof'] は**株価**の時刻なので、
+        #   鍵が無くて為替だけ更新した日に asof を読むと為替の鮮度を誤る
+        out = {"USDJPY": round(px, 3), "src": FX_ER, "asof": now}
+        pf = (_prev or _fx_file)() or {}
+        if pf.get("src") == FX_ER and not pf.get("stale") and _fx_ok(pf.get("USDJPY")):
+            if str(pf.get("asof") or "")[:10] < now[:10]:
+                pv = float(pf["USDJPY"])                       # 前回は別の日＝それが前日の値
+            else:
+                pv = float(pf["prev"]) if _fx_ok(pf.get("prev")) else 0.0   # 同じ日の再実行＝前回の prev を引き継ぐ
+            if _fx_ok(pv) and abs(px / pv - 1) < 0.05:
+                out["prev"] = round(pv, 3)
+                out["chgPct"] = round((px / pv - 1) * 100, 3)
+        return out
     return None
 
 
@@ -354,7 +458,7 @@ def main():
                           ensure_ascii=False, indent=1)
                 print(f"  ※ドル円だけ更新した USDJPY={fxo['USDJPY']}（株価の asof は {cur.get('asof')} のまま）")
         if not fxo:
-            print("  ※ドル円は引けなかった（open.er-api.com）")
+            print("  ※ドル円は引けなかった（Yahoo JPY=X・open.er-api.com のどちらも）")
         print("FINNHUB_KEY が無い → ニュースは取れない"
               + ("（株価は Yahoo で引いた）" if yq else "（株価も引けなかった＝既存ファイルは無傷）"))
         print("  設定: GitHub → Settings → Secrets and variables → Actions → FINNHUB_KEY")
