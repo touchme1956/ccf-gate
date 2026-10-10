@@ -458,6 +458,8 @@ const srv = http.createServer((q, r) => {
   //    子どもの口座の自動の積立は注文書で配らない（入金額 − iDeCo − こどもNISA）。
   //    同日「比率に数えて」: bucket があれば iDeCo と同じく区分の比率に数える（pre は区分ごとに iDeCo と合計）。bucket が空なら比率の外。
   //    NISA の月の計画（target.nisa.monthly_jpy）より注文書で配る額が少ない月は知らせる。期待値は正本の設定から作る（数字を写さない）
+  //    ★v9.9.211（2026-10-10「やって」＝iDeCo は住宅ローン控除が終わるまで待つ）: 計画は入金額で持つ（monthly_total_jpy）——NISA の額は
+  //    入金額の計画 − その月に始まっている自動の積立。自動の積立の開始月がずれても計画を直さなくてよい（開始月のずれの項を足した）
   const q15 = await pg.evaluate(() => {
     const t0 = { ami_funds: {}, ideco: { members: [{ who: 'A', jpy: 15000 }, { who: 'B', jpy: 15000 }], fund: 'X', bucket: 'IFREE-NDX', start: '2000-01' },
       kodomo_nisa: { members: [{ who: '子ども', jpy: 30000 }, { who: 'Z', jpy: 0 }], fund: '', bucket: 'ifree-ndx', start: '2000-01' } };
@@ -486,8 +488,16 @@ const srv = http.createServer((q, r) => {
     window.__ccfNisa = { monthly_jpy: 140000, monthly_from: '2000-01' }; const npOn = ccfNisaPlan();
     window.__ccfNisa = { monthly_jpy: 140000, monthly_from: '2999-12' }; const npOff = ccfNisaPlan();
     window.__ccfNisa = { holders: ['A'] }; const npNone = ccfNisaPlan();
+    // ★v9.9.211: 入金額の計画（monthly_total_jpy＝自動の積立を含む）。NISA の額はその月に始まっている自動の積立を引いた残り
+    window.__ccfIdeco = ccfIdecoCfg(t0); window.__ccfKodomo = kPast;
+    window.__ccfNisa = { monthly_total_jpy: 200000, monthly_jpy: 999, monthly_from: '2000-01' }; const ntOn = ccfNisaPlan();
+    window.__ccfIdeco = ccfIdecoCfg(Object.assign({}, t0, { ideco: Object.assign({}, t0.ideco, { start: '2999-12' }) })); const ntK = ccfNisaPlan();
+    window.__ccfNisa = { monthly_total_jpy: 200000, monthly_from: '2999-12' }; const ntOff = ccfNisaPlan();
+    const itsS = [{ X: { start: '2029-01', jpy: 30000 }, lbl: 'iDeCo' }, { X: { start: '2027-01', jpy: 30000 }, lbl: 'こどもNISA' }];
+    const atT = ['2026-12', '2027-01', '2029-01'].map(m => ccfNisaPlanAt({ mode: 'total', total: 200000 }, itsS, m));
+    const atN = ccfNisaPlanAt({ mode: 'nisa', jpy: 140000 }, itsS, '2029-01');
     window.__ccfIdeco = keepI; window.__ccfKodomo = keepK; window.__ccfNisa = keepN;
-    return { kPast, kFut, kBad, kNone, both, kfut, npOn, npOff, npNone, budget };
+    return { kPast, kFut, kBad, kNone, both, kfut, npOn, npOff, npNone, budget, ntOn, ntK, ntOff, atT, atN };
   });
   ok(q15.kPast && q15.kPast.active && q15.kPast.jpy === 30000 && q15.kPast.members.length === 1 && q15.kFut && !q15.kFut.active && q15.kBad && !q15.kBad.active && q15.kNone === null,
      '⑮ こどもNISA の設定: 開始月を過ぎたら有効（0円の名義は外す・合計 ¥' + (q15.kPast && q15.kPast.jpy) + '）・開始月の前／形の違う開始月は無効・設定が無ければ null');
@@ -495,6 +505,13 @@ const srv = http.createServer((q, r) => {
      '   注文書が配る額: 20万 − iDeCo 3万 − こどもNISA 3万 ＝ ¥' + q15.both.oa.toLocaleString() + '・こどもNISA が開始月の前なら ¥' + q15.kfut.oa.toLocaleString());
   ok(q15.npOn && q15.npOn.active && q15.npOn.jpy === 140000 && q15.npOff && !q15.npOff.active && q15.npNone === null,
      '   NISA の月の計画: monthly_from を過ぎたら有効・前は無効・monthly_jpy が無ければ null');
+  ok(q15.ntOn && q15.ntOn.mode === 'total' && q15.ntOn.total === 200000 && q15.ntOn.jpy === 140000 && q15.ntOn.active
+     && q15.ntK && q15.ntK.jpy === 170000 && q15.ntOff && q15.ntOff.mode === 'total' && !q15.ntOff.active,
+     '   入金額の計画（v9.9.211・monthly_total_jpy）: NISA の額＝入金額の計画 − その月に始まっている自動の積立（両方 ¥' + (q15.ntOn && q15.ntOn.jpy || 0).toLocaleString()
+     + '・こどもNISA だけ ¥' + (q15.ntK && q15.ntK.jpy || 0).toLocaleString() + '）・monthly_jpy より先に読む・monthly_from の前は無効');
+  ok(q15.atT.map(p => p.dep + ':' + p.nisa + ':' + p.au.length).join(',') === '200000:200000:0,200000:170000:1,200000:140000:2'
+     && q15.atN.dep === 200000 && q15.atN.nisa === 140000 && q15.atN.au.length === 2,
+     '   月ごとの内訳（ccfNisaPlanAt）: 2026-12 NISA ¥200,000・2027-01 ¥170,000＋こどもNISA・2029-01 ¥140,000＋iDeCo＋こどもNISA（入金はどれも ¥200,000）／旧の形は NISA の額に自動の積立を足す');
   {
     const B = q15.budget, ks = ['n:IFREE-NDX', 'n:XLK', 'n:SMH', 'c'], sum = o => ks.reduce((a, k) => a + o[k].b, 0);
     ok(q15.kPast.bucket === 'IFREE-NDX', '   設定: bucket を読む（大文字にそろえる・' + q15.kPast.bucket + '）');
@@ -517,7 +534,9 @@ const srv = http.createServer((q, r) => {
   if (!KO || !(base.target.ideco)) ok(true, '   ⑮ 実データ: portfolio.json に target.kodomo_nisa か target.ideco が無い（飛ばす）');
   else {
     const IA = (base.target.ideco.members || []).reduce((a, x) => a + (+x.jpy || 0), 0), KA = (KO.members || []).reduce((a, x) => a + (+x.jpy || 0), 0);
-    const NPJ = NPN && +NPN.monthly_jpy > 0 ? +NPN.monthly_jpy : 0;
+    // 入金額の計画: v9.9.211 からは monthly_total_jpy（自動の積立を含む）。旧の形は monthly_jpy（NISA の額）＋自動の積立
+    const NPT = NPN && +NPN.monthly_total_jpy > 0 ? +NPN.monthly_total_jpy : 0, NPJ = NPN && +NPN.monthly_jpy > 0 ? +NPN.monthly_jpy : 0;
+    const PLAN = NPT || (NPJ ? NPJ + IA + KA : 0);   // iDeCo とこどもNISA が両方始まった月の入金額の計画
     const readBox = async (amt) => {
       await pg.evaluate(a => { localStorage.setItem('pf:monthly_total', String(a)); showPage(5); }, amt); await pg.waitForTimeout(3200);
       return pg.evaluate(() => {
@@ -545,7 +564,7 @@ const srv = http.createServer((q, r) => {
     const act = (() => { const o = withMode('cat'); o.target.ideco.start = '2000-01'; o.target.kodomo_nisa.start = '2000-01';
       if (o.target.nisa) o.target.nisa.monthly_from = '2000-01'; return o; })();
     await loadReal(act);
-    const T1 = NPJ ? NPJ + IA + KA : 200000, r1 = await readBox(T1);
+    const T1 = PLAN || 200000, r1 = await readBox(T1);
     const want1 = T1 - IA - KA;
     // ★2026-10-08「比率に数えて」: 正本に bucket があれば iDeCo とこどもNISA の両方を区分に数える（同じ NASDAQ100 なら pre は1つに合計）
     const KIN = KO.bucket ? KA : 0, yen = v => '¥' + (+v).toLocaleString('ja-JP');
@@ -578,10 +597,24 @@ const srv = http.createServer((q, r) => {
          '   「✓ 保有へ」: ' + (cl.err || ('口座 こどもNISA のロット ' + (lot ? lot.who + '・' + yen(lot.jpy) + '・' + lot.sh + '口' : 'なし') + '・NASDAQ100 の区分の保有 +' + yen(Math.round(dHeld))
          + '（ロットの評価 ' + yen(Math.round(vLot)) + '）・行が「記録済み」')));
     }
-    if (NPJ) {
-      const T2 = NPJ + IA + KA - 30000, r2 = await readBox(T2);
-      ok(r2.warn && r2.note.includes('計画どおりなら入金額は ¥' + (NPJ + IA + KA).toLocaleString()),
-         '   入金 ¥' + T2.toLocaleString() + '（計画より3万少ない）→ 「計画どおりなら入金額は ¥' + (NPJ + IA + KA).toLocaleString() + '」と知らせる');
+    if (PLAN) {
+      const T2 = PLAN - 30000, r2 = await readBox(T2);
+      ok(r2.warn && r2.note.includes('計画どおりなら入金額は ¥' + PLAN.toLocaleString()),
+         '   入金 ¥' + T2.toLocaleString() + '（計画より3万少ない）→ 「計画どおりなら入金額は ¥' + PLAN.toLocaleString() + '」と知らせる');
+    }
+    // ★v9.9.211: 自動の積立の開始月がずれる（こどもNISA は始まり、iDeCo はまだ）——注文書は 入金 − こどもNISA を配り、iDeCo の案内は
+    //   「始まるまではその分も注文書で配る」と、iDeCo が始まる月からの入金額の内訳を出す。入金額の計画どおりなら警告なし・少なければ知らせる
+    if (NPT) {
+      const stg = withMode('cat'); stg.target.ideco.start = '2999-12'; stg.target.kodomo_nisa.start = '2000-01'; stg.target.nisa.monthly_from = '2000-01';
+      await loadReal(stg);
+      const r5 = await readBox(NPT), w5 = NPT - KA, nx5 = '2999-12 からの入金額 ' + yen(NPT) + '＝NISA ' + yen(NPT - IA - KA) + '（注文書）＋iDeCo ' + yen(IA) + '＋こどもNISA ' + yen(KA);
+      ok(r5.kd && !r5.id && r5.tot != null && r5.tot + r5.rest <= w5 && r5.tot + r5.rest >= w5 - 300 && !r5.warn
+         && r5.note.includes('は 2999-12 から（始まるまではその分も注文書で配る）') && !r5.note.includes('入金額を全部注文書で配る') && r5.next.includes(nx5),
+         '⑮ 開始月がずれる（こどもNISA は有効・iDeCo は 2999-12 から）: 入金 ' + yen(NPT) + ' → 注文書の合計 ' + yen(r5.tot || 0) + (r5.rest ? '＋残り ' + yen(r5.rest) : '')
+         + '（入金 − こどもNISA）・警告なし・案内「' + (r5.next || '').slice(0, 70) + '…」');
+      const r6 = await readBox(NPT - 30000);
+      ok(r6.warn && r6.note.includes('計画（NISA 月' + yen(NPT - KA) + '）より少ない') && r6.note.includes('計画どおりなら入金額は ' + yen(NPT)),
+         '   入金 ' + yen(NPT - 30000) + ' → 「計画（NISA 月' + yen(NPT - KA) + '）より少ない——計画どおりなら入金額は ' + yen(NPT) + '」');
     }
     // bucket を空にすると比率の外（旧 v9.9.203 の扱い）: pre は iDeCo だけ・行は「家族の区分の比率には数えない」・上の1行は「（自動・比率の外）」
     if (KO.bucket) {
@@ -596,7 +629,7 @@ const srv = http.createServer((q, r) => {
     const pre = withMode('cat'); pre.target.ideco.start = '2999-12'; pre.target.kodomo_nisa.start = '2999-12'; if (pre.target.nisa) pre.target.nisa.monthly_from = '2999-12';
     await loadReal(pre);
     const r3 = await readBox(170000);
-    ok(!r3.kd && !r3.id && r3.pre === 0 && /こどもNISA（[^）]*）は 2999-12 から/.test(r3.note) && (!NPJ || r3.next.includes('2999-12 からの入金額 ¥' + (NPJ + IA + KA).toLocaleString())),
+    ok(!r3.kd && !r3.id && r3.pre === 0 && /こどもNISA（[^）]*）は 2999-12 から/.test(r3.note) && (!PLAN || r3.next.includes('2999-12 からの入金額 ¥' + PLAN.toLocaleString())),
        '   開始月の前: 行なし・入金額を全部配る・案内「' + (r3.next || r3.note).slice(0, 80) + '」');
   }
 
