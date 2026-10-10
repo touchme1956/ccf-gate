@@ -165,6 +165,26 @@ jobs:
         continue-on-error: true
         run: python3 night/check_workflow_add.py
 
+      # ── 1-c2'. ワークフローの文法 actionlint（v9.9.210・2026-10-10 新設）──────────────────
+      #   **不正な workflow ファイルは、この CI の check を通ったまま main に入れてしまう**——GitHub は不正なファイルを
+      #   「0秒で失敗した run」として別に立てるだけ（実害: state_from_issue.yml の job の env に使えない `runner`
+      #   コンテキストを書き、push のたびに失敗の run が立った。気づいたのは CI の結果を見に行ったときだけ）。
+      #   actionlint は式のコンテキスト・キー名・needs の参照・shell の誤りを push の前に落とす。
+      #   ⚠ frozen・wfadd と同じ扱い（設定の検査＝下流は止めず、最後に必ず赤くする）。
+      #   ⚠ actionlint を**入れられなかった**ときは落とさず警告で言う（検査を飛ばしたことは見える・ネットの揺れで CI を赤くしない）。
+      #   ⚠ **shellcheck・pyflakes の連携は切る**（`-shellcheck= -pyflakes=`）。runner には shellcheck が入っているので、
+      #     既定のままだと既存の全 workflow の `ccf_git_push`（引数なしの関数呼び出し）等へ info/warning が出て毎回落ちる
+      #     （初回の CI で実際に落ちた: 手元には shellcheck が無いので0件に見えた）。ここで見るのは**式・キー・参照の誤り**だけ。
+      - name: ワークフローの文法 actionlint
+        id: wflint
+        continue-on-error: true
+        run: |
+          if ! pip install -q actionlint-py; then
+            echo "::warning::actionlint を入れられなかった——ワークフローの文法の検査を飛ばした"
+            exit 0
+          fi
+          actionlint -shellcheck= -pyflakes=
+
       # ── 1-c3. 前向きの検定の道具が事前登録のときのままか（2026-09-29新設）──────────
       #   前向きの検定（mw_forward・nx_forward）は、測る前に固定した規則を最長20年回して初めて意味を持つ。
       #   規則の実体は道具の中にあるので、**道具や依存が1文字変われば規則が黙って変わる**（nx の事前登録の指紋は
@@ -206,6 +226,15 @@ jobs:
       #   Ⅶ資産が既定値へ落として**書き戻す**（repoの株数が消える）ので落とす。
       - name: 人の決定の検査 validate_state
         run: python3 night/validate_state.py
+
+      # ── 2-a'. Issue から state.json を更新する道（v9.9.210・night/apply_state_issue.py）──────
+      #   「門が作ったリンクを人が GitHub で1回押す → Actions が検査して state.json を更新する」道のサーバー側。
+      #   ネット不要（本物の apply_state_issue.py を一時ディレクトリで走らせる）。受け付ける条件・止める条件・
+      #   自由記述の検問（rule 9: 名前を公開リポジトリに載せない）・CAS・符号の3種を確かめる。
+      #   JS 側（state.js の unseenText）と同じ表を共有ベクトルで突き合わせる検査は playwright が要るので CI には入れていない
+      #   （NODE_PATH=$(npm root -g) node night/check_state_issue.js）。
+      - name: Issue から state.json check_state_issue
+        run: python3 night/check_state_issue.py
 
       # ── 2-b. 納品検査のFAIL表を作り直す（v9.9.95）────────────────────────────
       #   **score_all より先**でなければならない——第四の関門がこのJSONを読むので、
@@ -583,6 +612,10 @@ jobs:
           #   （check_mobile_fit は「見えるか」は見るが「隣り合っているか」は見ない）。
           #   注入検査ずみ: 章の帯を static へ戻すと「二段が離れている 738px」で落ちる。
           node night/check_navstack.js 2>&1 | tail -25
+          # v9.9.210: **門が作る「新規 Issue」のリンクを本物の apply_state_issue.py に通して往復**させる（88項目・約70秒）。
+          #   サーバー側だけの検査（check_state_issue.py・上で毎回）では、門（state.js）が作る依頼の形・自由記述の検問の JS 側・
+          #   「門が本当に作る記録は検問を通るか」は見えない。
+          node night/check_state_issue.js 2>&1 | tail -25
 
       # ── 8. ページの重さの予算（1.7MBまで肥大した実績があるので歯止め）──────────
       - name: ページサイズの予算
@@ -663,6 +696,10 @@ jobs:
             echo "::error::git add の巻き添え／main への素の push がある（上の check_workflow_add を見よ）"
             bad=1
           fi
+          if [ "${{ steps.wflint.outcome }}" = "failure" ]; then
+            echo "::error::ワークフローの文法が不正（上の actionlint を見よ）——不正な workflow は CI を通っても main で『失敗の run』を立てる"
+            bad=1
+          fi
           if [ "${{ steps.fwdfrozen.outcome }}" = "failure" ]; then
             echo "::error::前向きの検定の道具が事前登録のときと違う（上の check_forward_frozen を見よ）——ops.yml はこのままでは前向きの更新を回さない"
             bad=1
@@ -671,5 +708,5 @@ jobs:
             echo "::error::夜間審査の指示書が正本の刻みとずれている（上の audit_docs --templates-only を見よ）"
             bad=1
           fi
-          [ "$bad" = "0" ] && echo "✓ 凍った日付なし・巻き添えなし・前向きの検定の道具は凍結のまま・指示書は正本どおり"
+          [ "$bad" = "0" ] && echo "✓ 凍った日付なし・巻き添えなし・ワークフローの文法は正しい・前向きの検定の道具は凍結のまま・指示書は正本どおり"
           exit $bad

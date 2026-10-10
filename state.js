@@ -29,6 +29,11 @@
        門 → repo … **人が書き出してコミットする**（gate_exceptions.json と同じ形）
      つまり「自動で守られる」のではなく「**書き出し忘れが見える**」ようになる。
      見えるようにするのが本体——回転盤(ops_status)が state.json の鮮度を測る。
+     ★v9.9.210（2026-10-10 ユーザー明示指示「案1でやってマージして」）: 門→repo の道が**二つ**になった——
+       (a) 📤 書き出す → Claude に貼って「反映して」（従来。Claude が目で確かめて commit する）
+       (b) 「🚀 GitHub を開いて反映する」（**鍵なし**。門が新規 Issue のリンクを作り、人が GitHub で1回押すと、
+           Actions〔.github/workflows/state_from_issue.yml〕が検査して state.json を更新する）。下の「Issue 経由」の節。
+       どちらでも**ブラウザに鍵は置かない**。
 
    ■ 絶対に踏まない事故（この台帳が繰り返し記録している型）
      **新しいほうが古いほうを黙って上書きしてはいけない。**
@@ -95,14 +100,56 @@
     localStorage.setItem = function (k, v) {
       var r = _set(k, v);
       if (decides(k) && !quietDepth) { try { _set(DIRTY, '1'); } catch (e) {} }
+      scheduleHold(k);
       return r;
     };
     localStorage.removeItem = function (k) {
       var r = _rm(k);
       if (decides(k) && !quietDepth) { try { _set(DIRTY, '1'); } catch (e) {} }
+      scheduleHold(k);
       return r;
     };
   } catch (e) {}
+
+  /* ── 保有が変わったら、保有に依る画面を全部つくり直す合図（v9.9.209・2026-10-10 ユーザー「保有に追加したら自動で他にも反映されるようにして。
+        他の数値もきちんと自動反映されるような仕組みにして」）──
+     旧は、記録した画面が「🏦保有を描き直す・買付順位を描き直す」を**自分で呼んで**いた。呼び出し地点を探して足すと必ず取りこぼす
+     （dirty を立てる呼び出しを探さず書き込みを包んだのと同じ理由）ので、**書き込みの包みから一本の合図 `ccf:holdings`** を出し、
+     受け取る側（index.html の ccfHoldingsChanged）が保有に依る画面をまとめて作り直す。
+     ・対象は 保有(pf:portfolio)・売却記録(pf:sold)・ETFの買付(pf:net) の3つ。**目標ウェイト・入金額・点灯日は含めない**（保有ではない）。
+     ・**機械の書き戻しでは鳴らない**: 盤の現在株価とドル円を pf:portfolio へ書き戻す applyDash（v9.9.87）や、取り込み直しで中身が同じなら、
+       signature（stripMachine 後の文字列）が変わらないので合図は出ない。人が株数・取得額を動かしたときだけ鳴る。
+     ・🏦保有の iframe（portfolio.html）が書いた分は、このページの包みを通らない＝**別の文書の書き込み**なので、ブラウザの storage イベントで拾う。
+     ・連続した書き込み（買付で pf:portfolio と pf:sold を続けて書く等）は 60ms にまとめて1回。 */
+  var HOLD_KEYS = ['pf:portfolio', 'pf:sold', 'pf:net'];
+  var holdSig = {}, holdTimer = null;
+  function sigOf(k, v) {
+    if (v == null) return '';
+    if (k === 'pf:portfolio') { try { return stripMachine(v); } catch (e) {} }   // npx / npxAuto / fx は保有の変更ではない
+    return String(v);
+  }
+  function holdSnap() {
+    HOLD_KEYS.forEach(function (k) { try { holdSig[k] = sigOf(k, localStorage.getItem(k)); } catch (e) { holdSig[k] = ''; } });
+  }
+  function holdNotify() {
+    holdTimer = null;
+    var ch = [];
+    HOLD_KEYS.forEach(function (k) {
+      var sg; try { sg = sigOf(k, localStorage.getItem(k)); } catch (e) { return; }
+      if (sg !== holdSig[k]) { holdSig[k] = sg; ch.push(k); }
+    });
+    if (!ch.length) return;
+    try { window.dispatchEvent(new CustomEvent('ccf:holdings', { detail: { keys: ch } })); } catch (e) {}
+  }
+  function scheduleHold(k) {
+    if (k != null && HOLD_KEYS.indexOf(k) < 0) return;
+    if (!holdTimer) holdTimer = setTimeout(holdNotify, 60);
+  }
+  holdSnap();
+  try { window.addEventListener('storage', function (e) { scheduleHold(e.key); }); } catch (e) {}   // 別の文書（🏦保有の iframe・別のタブ）が書いた分
+  /* ★2026-10-10: 過去に「この端末に鍵を置く」で入れた GitHub の鍵（ccf:ghToken）を消す。鍵を置く道そのものを撤去したので、残っていても使われないが、
+     端末に認証情報を置いたままにしない。（GitHub 側の鍵は、作った人が Settings → Developer settings で無効にする） */
+  try { localStorage.removeItem('ccf:ghToken'); } catch (e) {}
 
   /* collect(core) — core=true なら **検証履歴(g7log:)を外す**。
      ⚠ これは実害から来た分割（2026-08-10）。**貼り付けで渡すと必ず切れる**——
@@ -268,6 +315,7 @@
                  mine: localSavedAt(), dirty: isDirty(), healed: healed,
                  pend: pendingKeys(s.data || {}),        // 何が未書き出しか（null=測れなかった）
                  n: Object.keys(s.data || {}).length };
+        if (!isDirty()) sentClear();   // 手元に未反映が無ければ、反映待ちの控え（Issue の送信記録）は要らない——Issue の反映が済んだ印でもある
         return last;
       });
   }
@@ -278,7 +326,7 @@
     var savedAt = new Date().toISOString();
     var payload = JSON.stringify({ fmt: 'ccf-state', ver: 1, savedAt: savedAt,
       note: '門の「人の決定」の正本。repo直下に置き、門が起動時に読む。' +
-            'ブラウザからrepoへは書けないので、書き出してコミットするのが唯一の道（state.jsの頭注）。',
+            'ブラウザからrepoへ鍵なしでは書けないので、書き出してコミットするか、門の「GitHub を開いて反映する」（Issue 経由）で入れる（state.jsの頭注）。',
       data: c.data }, null, 1);
     var o = btn ? btn.textContent : '';
     try {
@@ -313,6 +361,7 @@
     try {
       if (savedAt) localStorage.setItem(SAVED_AT, savedAt);
       localStorage.removeItem(DIRTY);
+      sentClear();
     } catch (e) {}
   }
 
@@ -452,20 +501,29 @@
       ';border-radius:10px;padding:9px 14px;margin:10px 0;font-size:12.6px;line-height:1.7">' +
       '<summary style="cursor:pointer;color:' + col + ';font-weight:600;list-style:none">' +
       '⚠ ' + what + '　<span style="font-weight:400;font-size:11.5px;opacity:.85">' +
-      '——押すと直し方（4手）</span></summary>' +
+      '——押すと直し方</span></summary>' +
       '<div style="color:' + DIM + ';font-size:12px;margin:8px 0 4px">' +
-      '門は静的ページなので<b>ブラウザから repo へは書けません</b>（トークンを置かない設計）。' +
-      'だから最後の一歩だけ人の手が要ります——<b>4手で終わります</b>。' +
+      '門は静的ページなので<b>ブラウザから repo へ直接は書けません</b>（鍵を置かない設計）。' +
+      'だから最後の一歩だけ人の手が要ります——<b>GitHub の画面で1回押すだけ</b>の道（下の緑の枠）と、Claude に頼む道（4手）があります。' +
       '<br>※<b>点灯日と目標ウェイトは機械が書く記録</b>なのでここでは数えません（鮮度は⚙自動化の回転盤が測る）。' +
       '</div>' +
+      /* ★v9.9.210: いちばん簡単な道（Issue 経由）。開いたときに用意する＝閉じたままの帯のたびに repo を読みに行かない */
+      '<div style="margin:8px 0 10px;padding:9px 11px;border:1px solid ' + GREEN + ';border-left:5px solid ' + GREEN + ';border-radius:8px">' +
+      '<b style="color:' + GREEN + '">いちばん簡単な道</b><span style="opacity:.85">（この端末の値のほうが正しいとき・鍵は要りません）</span>' +
+      '<div class="ccfIssueBox" id="stateIssueBox" style="margin-top:7px"></div></div>' +
       /* 逆向き（repo が正しいとき）の道。4手より先に置く——こちらのほうが多い（別セッションが保有を直す運用） */
       '<div style="margin:8px 0 10px;padding:9px 11px;border:1px solid ' + DIM + ';border-radius:8px">' +
       '<b>repo の保有のほうが正しいとき</b>（Claude が証券会社の画面から保有を直した後など）は、こちら：<br>' +
       '<button onclick="ccfState.adoptRepo(this)" style="margin-top:6px;padding:7px 13px;border-radius:8px;border:1px solid ' + col +
       ';background:#fff;color:' + col + ';font-weight:700;cursor:pointer">⭳ repo の保有で上書きする</button>' +
       '<div style="font-size:11.5px;opacity:.85;margin-top:4px">株数と売却記録だけを置き換えます（今月の入金額などは残す）。</div></div>' +
-      '<div style="font-size:12px;margin:4px 0">この端末の値のほうが正しいときは、下の4手で repo へ入れる：</div>' +
+      '<div style="font-size:12px;margin:4px 0">この端末の値のほうが正しいときは、Claude に頼む4手でも入れられる：</div>' +
       stepHTML(col) + '</details>';
+    var det = el.querySelector('details');
+    if (det) det.addEventListener('toggle', function () {
+      var box = det.querySelector('.ccfIssueBox');
+      if (det.open && box && !box.__ccfTok) issueWidget(box);     // 最初に開いたときに用意する（開き直すたびに作り直さない）
+    });
   }
 
   /* ★2026-09-23 新設（ユーザー「総資産がまちがってる」→「やって」）: **repo の保有で手元を上書きする逆向きの道**。
@@ -501,86 +559,19 @@
           });
         });
         // repo に追いついた＝以後は repo の更新を自動で受け取れるようにする
-        try { if (st.savedAt) localStorage.setItem(SAVED_AT, st.savedAt); localStorage.removeItem(DIRTY); } catch (e) {}
+        try { if (st.savedAt) localStorage.setItem(SAVED_AT, st.savedAt); localStorage.removeItem(DIRTY); sentClear(); } catch (e) {}
         if (btn) btn.textContent = '✓ ' + n + '件を置き換えました——再読み込みします';
         setTimeout(function () { try { location.reload(); } catch (e) {} }, 900);
       });
   }
 
-  /* ★2026-09-23 新設（ユーザー「買ったら成績に自動で反映してよ」→選択「鍵をこの端末に置く」）:
-     **門から repo の state.json を直接保存する道**。鍵（GitHub の fine-grained token・このrepoの Contents 読み書きだけ）は
-     **この端末の localStorage `ccf:ghToken` にだけ**置く——ページにも repo にも state.json にも載らない
-     （watched() の対象外なので collect() にも入らない）。保存が main に入ると returns.yml が成績を作り直す。
-     ⚠ 安全側の約束:
-       (1) **repo のほうが新しいなら保存しない**（別セッションが保有を直した後の古い端末が、正しい repo を潰さない）。
-           その場合は「⭳ repo の保有で上書き」してから記録し直してもらう。
-       (2) repo にあって手元に無いキーは**残す**（手元の決定キーだけを上書きする）。
-       (3) 他の書き手（CI）と競合したら（409）1回だけ読み直してやり直す。 */
-  var TOKEN = 'ccf:ghToken', REPO_API = 'https://api.github.com/repos/touchme1956/ccf-gate/contents/state.json';
-  function hasToken() { try { return !!localStorage.getItem(TOKEN); } catch (e) { return false; } }
-  function setToken() {
-    var cur = hasToken();
-    var t = null;
-    try {
-      t = window.prompt((cur ? '鍵は設定済みです。新しい鍵を貼るか、空にして OK で鍵を消します。\n\n' : '') +
-        'GitHub の鍵（fine-grained personal access token）を貼ってください。\n' +
-        '作り方: github.com/settings/personal-access-tokens/new →\n' +
-        '  Repository access: Only select repositories → ccf-gate\n' +
-        '  Permissions → Repository → Contents: Read and write\n' +
-        '鍵はこの端末のブラウザにだけ保存されます。', '');
-    } catch (e) { return false; }
-    if (t === null) return cur;
-    t = String(t).trim();
-    try { if (t) localStorage.setItem(TOKEN, t); else localStorage.removeItem(TOKEN); } catch (e) {}
-    return !!t;
-  }
-  function b64utf8(str) {
-    var bytes = new TextEncoder().encode(str), bin = '';
-    for (var i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
-    return btoa(bin);
-  }
-  function unb64utf8(b) { var bin = atob(String(b).replace(/\s/g, '')), u = new Uint8Array(bin.length);
-    for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return new TextDecoder().decode(u); }
-  function pushRepo(what) {
-    var tok = null; try { tok = localStorage.getItem(TOKEN); } catch (e) {}
-    if (!tok) return Promise.resolve({ ok: false, code: 'notoken', msg: '鍵が未設定' });
-    var H = { 'Authorization': 'Bearer ' + tok, 'Accept': 'application/vnd.github+json' };
-    function attempt(n) {
-      return fetch(REPO_API + '?ref=main&_=' + Date.now(), { headers: H, cache: 'no-store' })
-        .then(function (r) {
-          if (r.status === 401 || r.status === 403) throw { code: 'auth', msg: '鍵が無効か権限が足りません（Contents: Read and write が要る）' };
-          if (!r.ok) throw { code: 'http', msg: 'repo の state.json が読めない（' + r.status + '）' };
-          return r.json();
-        })
-        .then(function (f) {
-          var cur = JSON.parse(unb64utf8(f.content));
-          var mine = localSavedAt();
-          if (cur && cur.savedAt && (!mine || cur.savedAt > mine))
-            throw { code: 'behind', msg: 'repo の保有のほうが新しい（' + cur.savedAt.slice(0, 10) + '）——上書きしないため保存を止めました。赤い帯の「⭳ repo の保有で上書きする」で合わせてから、もう一度記録してください' };
-          var data = {}, k;
-          var old = (cur && cur.data) || {};
-          for (k in old) data[k] = old[k];
-          var loc = collect(true).data;
-          for (k in loc) data[k] = loc[k];
-          var savedAt = new Date().toISOString();
-          var body = JSON.stringify({ fmt: 'ccf-state', ver: 1, savedAt: savedAt,
-            note: (cur && cur.note) || '門の「人の決定」の正本。repo直下に置き、門が起動時に読む。',
-            data: data }, null, 1) + '\n';
-          return fetch(REPO_API, { method: 'PUT', headers: H, body: JSON.stringify({
-            message: 'state: 門から保存' + (what ? '（' + what + '）' : ''),
-            content: b64utf8(body), sha: f.sha, branch: 'main' }) })
-            .then(function (r) {
-              if (r.status === 409 && n < 1) return attempt(n + 1);
-              if (!r.ok) throw { code: 'http', msg: '保存できない（' + r.status + '）' };
-              markCommitted(savedAt); last = { verdict: 'same', savedAt: savedAt, mine: savedAt };
-              return { ok: true, savedAt: savedAt };
-            });
-        });
-    }
-    return attempt(0).catch(function (e) {
-      return { ok: false, code: (e && e.code) || 'net', msg: (e && e.msg) || ('通信できない: ' + e) };
-    });
-  }
+  /* ★2026-10-10 撤去（ユーザー「なんか鍵がどうとかはいらない」）: 2026-09-23 に入れた「門から repo の state.json を直接保存する道」
+     （GitHub の鍵〔fine-grained token〕を端末の localStorage に置いて、GitHub API で state.json を書く）を**道ごと外した**。
+     鍵を置く道は、端末を触れる人・ページに入った悪意あるコードが repo へ書けてしまう代償があった。
+     ⇒ 門→repo は、この冒頭の設計どおり**人の手を一歩だけ挟む**道にした——📤 書き出す → Claude に「反映して」か、
+       v9.9.210 の「🚀 GitHub を開いて反映する」（下の「Issue 経由」の節・鍵なし）。
+       ブラウザの画面（🏦保有・総資産・前日比・買付順位・銘柄の詳細）は、保有が書き換わった時点で上の合図で**自動で**つくり直される。
+       自動にならないのは、repo の state.json から CI が計算する 📈成績 だけ（repo に入るまで古い保有のまま＝📈成績の先頭に差を名指しで出す）。 */
 
   /* ④ 「入れた」。**押すのは人**＝嘘をつけば盤(ops_status)が古いままになるだけで、データは消えない。 */
   function done(btn) {
@@ -612,8 +603,358 @@
     });
   }
 
-  window.ccfState = { load: load, export: exportFile, banner: banner, quiet: quiet, done: done, copyBox: copyBox, adoptRepo: adoptRepo, pushRepo: pushRepo, setToken: setToken, hasToken: hasToken,
+  /* ============================================================================
+     ★v9.9.210（2026-10-10 ユーザー明示指示「案1でやってマージして」）: **Issue 経由で repo の state.json を更新する道**
+     ----------------------------------------------------------------------------
+     冒頭に書いたとおり、門（静的ページ）からは鍵なしで repo へ書けない。鍵を端末に置く道は v9.9.209 で撤去した。
+     そこで「**人が GitHub で1回押す**」だけで入る道を足した（鍵は要らない・GitHub にログインしていれば足りる）:
+       ① 門が、端末の決定と repo の差から **「新規 Issue」のリンク**を作る（本文に依頼が入っている）= prepareIssue / issueWidget
+       ② 人がリンクを開いて「Submit new issue」を1回押す
+       ③ `.github/workflows/state_from_issue.yml`（night/apply_state_issue.py）が検査して state.json を更新・push し、
+          📈成績（returns.yml）を起こし、結果を Issue にコメントして閉じる
+       ④ 戻ってきたら、門が repo を読み直して追いつく（watchSync・load の取り込み）
+     ⚠ これは main への自動 push の新設（2026-09-23 に Routine の自動 push がアカウント停止の原因になった経緯により、
+       ユーザーの明示指示が要った）。止めるなら state_from_issue.yml を消す（門のリンクは押しても何も起きなくなる）。
+
+     ■ 守り（ここが本体）
+       (1) **公開される前に自由記述を止める**（rule 9「個人の名前を repo に書かない」）。Issue は作られた瞬間に公開される。
+           端末の localStorage には名前を消す前の古い文が残っていることがある。→ 自由記述の欄（note / memo / src / who）は、
+           **repo に既にある文（＝既に公開）**か**門が機械で作る定型文**だけ通し、それ以外が1つでもあればリンクを作らない（unseenText）。
+           名前の一覧は持たない（持てば対応表になる）。**「既に公開されているか」だけで決める**。
+           サーバー側（apply_state_issue.py）にも同じ検問があり、二つの実装は共有ベクトル night/state_issue_vectors.json で突き合わせる。
+       (2) **CAS**: repo が、この端末の最後の同期より後に（別の端末や Claude に）更新されていれば、**送らない**。
+           自分の前の送信の上に重ねるのは安全（SENT に値のハッシュを控える）。依頼には「どの repo の値の上に作ったか」(bases) を入れ、
+           サーバーも今の repo の値と違えば何もしない。**新しいほうを古いほうが黙って潰す経路を作らない**（冒頭の掟）。
+       (3) 送るのは**人の決定のうち repo と違うものだけ**（機械の書き戻し fx/npx/npxAuto だけの差は数えない＝sameDecision）。
+           機械しか書かないキー（目標ウェイト・点灯日）は、人の決定を送るときに限り同乗させる（repo の写しを新鮮に保つ。URL が長すぎれば外す）。
+       (4) 本文は deflate+base64url（CompressionStream が無ければ素のまま）。sha256 で完全性を守る。URL は 7000 字まで（GitHub は約8KB）。
+     ■ 限界（正直に）
+       ・GitHub にログインしていない端末では、ログイン画面を挟む。Issue を押さなければ何も起きない（門は dirty のまま＝赤い帯が残る）。
+       ・古い自由記述が端末にあると検問が止める。その場合は従来どおり 📤 書き出す → Claude に貼る（目で確かめて入れる道は残してある）。
+       ・Pages の反映に1〜3分かかるので、戻ってすぐは「まだ」と出ることがある（見張りが自動で確認を続ける）。 */
+  var ISSUE_FMT = 'ccf-state-issue';
+  var ISSUE_TITLE = '[ccf-state]';
+  var MAX_URL = 7000;                    // GitHub の「新規 Issue」リンクは約8KBまで。余裕を見て7000字
+  var SENT = 'ccf:stateSent';            // {キー:[自分が送った値のハッシュ…]}——repo の値がこれなら、自分の前の送信の上に重ねてよい
+  var SENT_AT = 'ccf:stateSentAt';       // 最後にリンクを作った時刻（ms）。反映待ちの見張りの目印
+  var SENT_WINDOW = 30 * 60 * 1000;      // この間は「反映待ち」として見張る
+  var WATCH_EVERY = 20 * 1000, WATCH_MAX = 8 * 60 * 1000;
+  var HUMAN = EXACT.filter(function (k) { return !DERIVED_KEY[k]; });
+  var DERIVED_LIST = EXACT.filter(function (k) { return !!DERIVED_KEY[k]; });
+
+  function own(o, k) { return Object.prototype.hasOwnProperty.call(o, k); }
+  function labelOf(k) { return LABEL[k] || k; }
+
+  /* ── 自由記述の検問（サーバーの night/apply_state_issue.py の find_unseen_text と同じ規則・同じ表）──
+     STRICT の欄は「repo に既にある文」か「門が作る定型文」だけ通す。nm（会社名・ファンド名）は公開情報なので自由。
+     それ以外の文字列は、ASCII か、既知の区分名か、repo に既にある文なら通す。今月の入金額は数字だけ。 */
+  var STRICT_FIELDS = { note: 1, memo: 1, src: 1, who: 1 };
+  var FREE_FIELDS = { nm: 1 };
+  var PLAIN_NUMBER = { 'pf:monthly_total': 1, 'pf:monthly': 1, 'pf:monthly_net': 1 };
+  var ENUM_OK = ['個別', 'ETF', '投資信託', '暗号資産', '成長', 'つみたて', '特定', 'iDeCo', 'こどもNISA', '取引所', '子ども'];
+  var G_ACCT = '(?:成長|つみたて|特定|iDeCo|こどもNISA|取引所)', G_WHO = '(?:[A-Z]|子ども)';
+  var SRC_TPL = new RegExp('^門の🏦保有で記録(?:（約定日 \\d{4}-\\d{2}-\\d{2}）)?(?:（' + G_WHO + '(?:・' + G_ACCT + ')?）|（' + G_ACCT + '）)?$');
+  var SELL_NOTE_TPL = /^\d{4}-\d{2}-\d{2} [0-9][0-9.,]*(?:株|口| [A-Z]{2,6})売却（門で記録）$/;
+  var MEMO_AUTO_TPL = /^受取額は見積もり（(?:口数×基準価額|株数×単価×ドル円)）$/;
+  var WHO_TPL = new RegExp('^' + G_WHO + '$');
+  var SEG_SEP = '　';                // 全角空白（note / memo は定型文をこれでつなぐ）
+
+  function guardLeaves(key, value) {     // (道筋, 欄の名前, 文) を深さ優先・挿入順で集める。文字列の葉だけ
+    var o; try { o = JSON.parse(value); } catch (e) { o = value; }
+    var out = [];
+    (function walk(x, path, field) {
+      if (typeof x === 'string') out.push([path, field, x]);
+      else if (Array.isArray(x)) { for (var i = 0; i < x.length; i++) walk(x[i], path + '[' + i + ']', field); }
+      else if (x && typeof x === 'object') { for (var k in x) if (own(x, k)) walk(x[k], path + '.' + k, k); }
+    })(o, '', '');
+    return out.map(function (r) { return [key + ':' + r[0].replace(/^\.+/, ''), r[1], r[2]]; });
+  }
+  function publicSets(repoData) {        // repo の state.json に既にある文（＝既に公開）
+    var full = new Set(), segs = new Set();
+    for (var k in repoData) {
+      if (!own(repoData, k) || typeof repoData[k] !== 'string') continue;
+      guardLeaves(k, repoData[k]).forEach(function (lf) {
+        full.add(lf[2]);
+        if (lf[1] === 'note' || lf[1] === 'memo') lf[2].split(SEG_SEP).forEach(function (seg) { seg = seg.trim(); if (seg) segs.add(seg); });
+      });
+    }
+    return { full: full, segs: segs };
+  }
+  function scanUnseen(data, repoData) {  // [{path, text}]——repo に無い自由記述の場所
+    var ps = publicSets(repoData || {}), bad = [];
+    Object.keys(data || {}).forEach(function (k) {
+      guardLeaves(k, data[k]).forEach(function (lf) {
+        var path = lf[0], field = lf[1], s = lf[2];
+        if (own(STRICT_FIELDS, field)) {
+          if (ps.full.has(s)) return;
+          if (field === 'who' && WHO_TPL.test(s)) return;
+          if (field === 'src' && SRC_TPL.test(s)) return;
+          if (field === 'note' || field === 'memo') {
+            var parts = s.split(SEG_SEP).map(function (x) { return x.trim(); }).filter(function (x) { return x; });
+            var pat = field === 'note' ? SELL_NOTE_TPL : MEMO_AUTO_TPL;
+            if (parts.every(function (x) { return ps.segs.has(x) || pat.test(x); })) return;
+          }
+          bad.push({ path: path, text: s });
+        } else if (own(FREE_FIELDS, field)) { return; }
+        else if (own(PLAIN_NUMBER, k)) { if (!/^[0-9.,]*$/.test(s)) bad.push({ path: path, text: s }); }
+        else if (/^[\x00-\x7f]*$/.test(s) || ENUM_OK.indexOf(s) >= 0 || ps.full.has(s)) { return; }
+        else bad.push({ path: path, text: s });
+      });
+    });
+    return bad;
+  }
+  function unseenText(data, repoData) { return scanUnseen(data, repoData).map(function (b) { return b.path; }); }
+  function guardConsts() {               // 検問の表（Python 側と同じか、night/check_state_issue.js が突き合わせる）
+    return { strict: Object.keys(STRICT_FIELDS).sort(), free: Object.keys(FREE_FIELDS).sort(), enum: ENUM_OK.slice().sort(),
+             plain: Object.keys(PLAIN_NUMBER).sort(), sep: SEG_SEP };
+  }
+
+  /* ── 符号化（SubtleCrypto の sha256・CompressionStream の deflate）── */
+  function utf8(s) { return new TextEncoder().encode(s); }
+  function sha256hex(s) {
+    try {
+      if (!(window.crypto && crypto.subtle && crypto.subtle.digest && window.TextEncoder)) return Promise.reject(new Error('nocrypto'));
+      return crypto.subtle.digest('SHA-256', utf8(s)).then(function (b) {
+        var a = new Uint8Array(b), h = '';
+        for (var i = 0; i < a.length; i++) h += (a[i] < 16 ? '0' : '') + a[i].toString(16);
+        return h;
+      });
+    } catch (e) { return Promise.reject(new Error('nocrypto')); }
+  }
+  function streamBytes(u8, fmt) {
+    try {
+      var cs = new CompressionStream(fmt), w = cs.writable.getWriter();
+      w.write(u8).catch(function () {}); w.close().catch(function () {});      // 待たない（読み手が居ないと詰まる）
+      return new Response(cs.readable).arrayBuffer().then(function (b) { return new Uint8Array(b); });
+    } catch (e) { return Promise.reject(e); }
+  }
+  function encodeBlock(u8) {             // 符号の頭: z=raw deflate / d=zlib / p=素のまま（サーバーの decode_block と対）
+    var plain = function () { return { enc: 'p', bytes: u8 }; };
+    if (typeof CompressionStream !== 'function') return Promise.resolve(plain());
+    return streamBytes(u8, 'deflate-raw').then(function (b) { return { enc: 'z', bytes: b }; }, function () {
+      return streamBytes(u8, 'deflate').then(function (b) { return { enc: 'd', bytes: b }; }, plain);
+    });
+  }
+  function b64url(u8) {
+    var s = '';
+    for (var i = 0; i < u8.length; i += 8192) s += String.fromCharCode.apply(null, u8.subarray(i, i + 8192));
+    return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+
+  /* 「新規 Issue」の宛先。公開URL（<owner>.github.io/<repo>/）から導く。導けないとき（手元の確認など）は既定。 */
+  function issueNewUrl() {
+    var m = (location.hostname || '').match(/^([^.]+)\.github\.io$/i), seg = ((location.pathname || '').split('/')[1] || '');
+    if (m && /^[A-Za-z0-9_-]+$/.test(seg)) return 'https://github.com/' + m[1] + '/' + seg + '/issues/new';
+    return 'https://github.com/touchme1956/ccf-gate/issues/new';
+  }
+  function stamp() {
+    var d = new Date(), p = function (n) { return (n < 10 ? '0' : '') + n; };
+    return p(d.getMonth() + 1) + '/' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+  }
+
+  function readSent() { try { var o = JSON.parse(localStorage.getItem(SENT) || '{}'); return (o && typeof o === 'object' && !Array.isArray(o)) ? o : {}; } catch (e) { return {}; } }
+  function sentAt() { try { return +localStorage.getItem(SENT_AT) || 0; } catch (e) { return 0; } }
+  function rememberSent(hashes) {        // hashes: {キー: リンクに入れた値の sha256}
+    var o = readSent();
+    Object.keys(hashes).forEach(function (k) {
+      var prev = Array.isArray(o[k]) ? o[k].filter(function (x) { return x !== hashes[k]; }) : [];
+      o[k] = [hashes[k]].concat(prev).slice(0, 3);
+    });
+    try { localStorage.setItem(SENT, JSON.stringify(o)); localStorage.setItem(SENT_AT, String(Date.now())); } catch (e) {}
+  }
+  function sentClear() { try { localStorage.removeItem(SENT); localStorage.removeItem(SENT_AT); } catch (e) {} }
+
+  /* prepareIssue() — 端末の決定と repo の差から、Issue のリンクを作る。
+     戻り値（Promise）: {ok:true, url, keys, labels, len, derived}
+                      {ok:false, why:'none'}                      送るものが無い（repo と同じ）
+                      {ok:false, why:'fetch'}                     repo の state.json が読めない
+                      {ok:false, why:'behind', labels}            repo が先に更新されている（送ると新しいほうを消す）
+                      {ok:false, why:'text', paths, sample}       repo に無い自由記述がある（公開しない）
+                      {ok:false, why:'size', len}                 リンクに入りきらない
+                      {ok:false, why:'nocrypto'|'error'}          検算・符号化ができない */
+  function prepareIssue() {
+    var mineOf = function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } };
+    return fetch('state.json?_=' + Date.now(), { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : null; }, function () { return null; })
+      .then(function (s) {
+        if (!s || s.fmt !== 'ccf-state' || !s.data || typeof s.data !== 'object') return { ok: false, why: 'fetch' };
+        var repo = s.data, repoSaved = s.savedAt || null, k;
+        for (k in repo) if (own(repo, k) && typeof repo[k] !== 'string') return { ok: false, why: 'fetch' };   // 読めない形は触らない
+        var differs = function (key) {
+          var mine = mineOf(key); if (mine == null) return false;            // 端末に無いキーは送らない（Issue では消さない）
+          var theirs = own(repo, key) ? repo[key] : null;
+          return theirs == null || !sameDecision(key, mine, theirs);
+        };
+        var human = HUMAN.filter(differs), derived = DERIVED_LIST.filter(differs);
+        if (!human.length) return { ok: false, why: 'none' };                // 機械しか書かないキーだけの差は、人の決定ではない
+        var devSaved = localSavedAt(), sent = readSent();
+        return Promise.all(human.concat(derived).map(function (key) {
+          var theirs = own(repo, key) ? repo[key] : null;
+          return Promise.all([theirs == null ? '-' : sha256hex(theirs), sha256hex(mineOf(key))]).then(function (h) {
+            return { k: key, theirs: theirs, base: h[0], mine: h[1] };
+          });
+        })).then(function (rows) {
+          var by = {}; rows.forEach(function (r) { by[r.k] = r; });
+          /* 上書きしてよいか: repo に無いキー／この端末が最後に同期した repo のまま／repo の値が「自分が前に送った値」 */
+          var safe = function (r) {
+            return r.theirs == null || (!!repoSaved && !!devSaved && repoSaved === devSaved) ||
+                   (Array.isArray(sent[r.k]) && sent[r.k].indexOf(r.base) >= 0);
+          };
+          var behind = human.filter(function (key) { return !safe(by[key]); });
+          if (behind.length) return { ok: false, why: 'behind', labels: behind.map(labelOf) };
+          /* 検問: 人の決定に repo に無い自由記述があれば、リンクを作らない。同乗させる機械のキー（目標ウェイト・点灯日）に未知の文があるときは、
+             それだけ外す（同乗は任意＝その写しのために人の決定まで止めない）。 */
+          var cand = {}; human.forEach(function (key) { cand[key] = mineOf(key); });
+          var bad = scanUnseen(cand, repo);
+          if (bad.length) return { ok: false, why: 'text', paths: bad.map(function (b) { return b.path; }), sample: bad[0].text };
+          var useDerived = derived.filter(function (key) {
+            if (!safe(by[key])) return false;
+            var one = {}; one[key] = mineOf(key);
+            if (scanUnseen(one, repo).length) return false;
+            cand[key] = one[key];
+            return true;
+          });
+          var labels = human.map(labelOf);
+          var make = function (keys) {
+            var dm = {}, bs = {};
+            /* 前提（bases）: 今読んだ repo の値に加え、**自分が前に送った値**も並べる。Pages の反映が遅れて古い state.json を読んだ日に、
+               前の送信がもう入っていても、サーバーの CAS が「repo が先に変わった」と誤って止めないように（自分の送信の上に重ねるのは安全）。 */
+            keys.forEach(function (key) {
+              dm[key] = cand[key];
+              var mine = Array.isArray(sent[key]) ? sent[key] : [];
+              bs[key] = [by[key].base].concat(mine.filter(function (h) { return h !== by[key].base; })).slice(0, 4);
+            });
+            var dataJson = JSON.stringify(dm);
+            return sha256hex(dataJson).then(function (sha) {
+              var payload = { fmt: ISSUE_FMT, ver: 1, at: new Date().toISOString(), bases: bs, dataJson: dataJson, sha: sha };
+              return encodeBlock(utf8(JSON.stringify(payload))).then(function (e) {
+                var title = ISSUE_TITLE + ' ' + labels.slice(0, 3).join('・') + (labels.length > 3 ? ' ほか' : '') + ' ' + stamp();
+                var body = '門の「人の決定」を repo の state.json に入れる依頼です。\n' +
+                           'このまま「Submit new issue」を押してください（数十秒で自動で入り、この Issue は閉じます）。\n\n' +
+                           '```ccf-state\n' + e.enc + '.' + b64url(e.bytes) + '\n```\n';
+                return { url: issueNewUrl() + '?title=' + encodeURIComponent(title) + '&body=' + encodeURIComponent(body), keys: keys };
+              });
+            });
+          };
+          return make(human.concat(useDerived)).then(function (b) {
+            return (b.url.length > MAX_URL && useDerived.length) ? make(human) : b;     // 長すぎれば同乗の分を外す
+          }).then(function (b) {
+            if (b.url.length > MAX_URL) return { ok: false, why: 'size', len: b.url.length };
+            var h = {}; b.keys.forEach(function (key) { h[key] = by[key].mine; });
+            rememberSent(h);
+            return { ok: true, url: b.url, keys: b.keys, labels: labels, len: b.url.length, derived: b.keys.length > human.length };
+          });
+        });
+      })
+      .catch(function (e) {
+        var m = String((e && e.message) || e);
+        return { ok: false, why: m === 'nocrypto' ? 'nocrypto' : 'error', msg: m };
+      });
+  }
+
+  /* ── 画面の部品: 「🚀 GitHub を開いて反映する」。banner（赤い帯）・記録の直後・📈成績の差の表示 の3か所が同じものを出す（単一実装）── */
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  var BTN_GO = 'display:inline-block;padding:9px 16px;border:1px solid ' + GREEN + ';background:' + GREEN +
+               ';color:#fff;border-radius:9px;font-size:13px;font-weight:700;text-decoration:none;cursor:pointer;font-family:inherit;text-shadow:none';
+  var BTN_SUB = 'padding:5px 11px;border:1px solid ' + DIM + ';background:transparent;color:inherit;border-radius:7px;font-size:12px;cursor:pointer;font-family:inherit';
+  function exportBtn() { return '<button onclick="ccfState.export(this,true)" style="' + BTN_SUB + '">📤 書き出す</button>'; }
+  var FALLBACK = '「📤 書き出す」を Claude に貼って「反映して」と頼む道は、これまでどおり使えます。';
+  function issueHTML(r) {
+    var wrap = function (inner, col) { return '<div style="font-size:12.3px;line-height:1.75;color:inherit' + (col ? ';border-left:3px solid ' + col + ';padding-left:9px' : '') + '">' + inner + '</div>'; };
+    if (r.ok) {
+      return '<a class="ccfIssueGo" target="_blank" rel="noopener noreferrer" onclick="ccfState.issueOpened(this)" onauxclick="ccfState.issueOpened(this)" style="' + BTN_GO + '">🚀 GitHub を開いて反映する</a>' +
+        '<div style="font-size:11.8px;line-height:1.75;margin-top:7px">GitHub が開いたら、<b>「Submit new issue」を1回押すだけ</b>です（内容は変えないでください）。' +
+        '数十秒で repo に入り、📈成績も数分で作り直されます。GitHub にログインしている端末なら、<b>鍵は要りません</b>。<br>' +
+        '送る内容: <b>' + esc(r.labels.join('・')) + '</b>' + (r.derived ? '（＋目標ウェイト・点灯日の写し）' : '') +
+        '<br><span style="opacity:.85">※GitHub のアプリで開いて本文が空だったときは、Safari など<b>ブラウザ</b>で開き直してください。</span></div>' +
+        '<div style="margin-top:7px"><button onclick="ccfState.checkSync(this)" style="' + BTN_SUB + '">↻ 反映できたか確認</button> ' +
+        '<span class="ccfIssueMsg" style="font-size:11.8px;opacity:.9"></span></div>';
+    }
+    switch (r.why) {
+      case 'none': return wrap('✓ <b>送るものはありません</b>——この端末の決定は repo と同じです。');
+      case 'fetch': return wrap('⚠ repo の state.json が読めませんでした（通信を確かめてください）。 <button onclick="ccfState.issueWidget(this.closest(\'.ccfIssueBox\'))" style="' + BTN_SUB + '">もう一度</button>', RED);
+      case 'behind': return wrap('⚠ repo が、この端末より<b>先に更新されています</b>（別の端末や Claude が入れた）。このまま送ると新しいほうを消してしまうので<b>止めました</b>。' +
+          '<br>対象: <b>' + esc((r.labels || []).join('・')) + '</b><br>この端末の値のほうが正しいときは、' + exportBtn() + ' → Claude に貼って「repo の更新も見て反映して」と頼んでください。', RED);
+      case 'text': return wrap('⚠ <b>名前などの自由記述が入っているかもしれない記録</b>があるので、公開の Issue には<b>載せません</b>（この repo は公開で、名前を載せない決まりです）。' +
+          '<br>場所（この端末の中だけの表示）: <code style="font-size:11px">' + esc((r.paths || []).slice(0, 3).join(' / ')) + ((r.paths || []).length > 3 ? ' ほか' + ((r.paths || []).length - 3) + 'か所' : '') + '</code>' +
+          (r.sample ? '<br>例: 「' + esc(String(r.sample).slice(0, 24)) + (String(r.sample).length > 24 ? '…' : '') + '」' : '') +
+          '<br>' + exportBtn() + ' → Claude に貼ってください（Claude が目で確かめて入れます）。', RED);
+      case 'size': return wrap('⚠ 記録が大きく、リンクに入りきりません（' + (r.len || '') + '字・上限 ' + MAX_URL + '字）。' + exportBtn() + ' → Claude に貼って「反映して」にしてください。', RED);
+      case 'nocrypto': return wrap('⚠ このブラウザでは、依頼の検算（暗号の機能）が使えません。https の門（公開URL）で開くと使えます。今回は ' + exportBtn() + ' を使ってください。', RED);
+      default: return wrap('⚠ 用意できませんでした' + (r.msg ? '（' + esc(String(r.msg).slice(0, 60)) + '）' : '') + '。' + FALLBACK + ' ' + exportBtn(), RED);
+    }
+  }
+  var widgetSeq = 0;
+  function renderIssue(host, r) {
+    host.innerHTML = issueHTML(r);
+    if (r.ok) { var a = host.querySelector('a.ccfIssueGo'); if (a) a.href = r.url; }
+  }
+  function issueWidget(host) {
+    if (!host) return;
+    try { host.classList.add('ccfIssueBox'); } catch (e) {}
+    var tok = ++widgetSeq; host.__ccfTok = tok;
+    host.innerHTML = '<div style="font-size:12px;color:' + DIM + '">⏳ 反映の用意をしています…</div>';
+    prepareIssue().then(function (r) { if (host.__ccfTok === tok) renderIssue(host, r); });
+  }
+  function syncedHTML() {
+    return '<div style="font-size:12.3px;line-height:1.75;border-left:3px solid ' + GREEN + ';padding-left:9px">✓ <b>repo に入りました</b>——この端末と repo の決定が同じになりました。' +
+           '📈成績は、repo に入ってから数分で作り直されます。</div>';
+  }
+
+  /* ── 反映待ちの見張り: リンクを開いたあと戻ってきたら、repo を読み直して追いつく ── */
+  var watchTimer = null, watchT0 = 0;
+  function watchActive() { var t = sentAt(); return isDirty() && t > 0 && (Date.now() - t) < SENT_WINDOW; }
+  function stopWatch() { if (watchTimer) { clearInterval(watchTimer); watchTimer = null; } }
+  function fireSynced() {
+    try { window.dispatchEvent(new CustomEvent('ccf:synced')); } catch (e) {}
+    try { var hs = document.querySelectorAll('.ccfIssueBox'); for (var i = 0; i < hs.length; i++) { hs[i].__ccfTok = ++widgetSeq; hs[i].innerHTML = syncedHTML(); } } catch (e) {}
+  }
+  function syncCheck() {                 // repo を読み直し、手元の決定が repo に追いついたか（追いついていれば true）
+    var sig = function () { return last ? [last.verdict, (last.pend || []).join('|'), last.dirty ? 1 : 0].join(':') : ''; };
+    var before = sig();
+    return load().then(function () {
+      var ok = !isDirty();
+      if (sig() !== before || ok) { try { banner('stateBar'); } catch (e) {} }    // 変わらないのに作り直すと、開いている「直し方」が閉じてしまう
+      if (ok) { stopWatch(); fireSynced(); }
+      return ok;
+    }, function () { return false; });
+  }
+  function watchTick() { if (!watchActive()) { stopWatch(); return; } syncCheck(); }
+  function startWatch() {
+    stopWatch();
+    if (!watchActive()) return;
+    watchT0 = Date.now();
+    watchTimer = setInterval(function () { if (Date.now() - watchT0 > WATCH_MAX) { stopWatch(); return; } watchTick(); }, WATCH_EVERY);
+  }
+  function issueOpened(a) {              // リンクを押した（新しいタブで GitHub が開く）
+    startWatch();
+    try { var host = a && a.closest ? a.closest('.ccfIssueBox') : null, m = host && host.querySelector('.ccfIssueMsg');
+          if (m) m.textContent = '開きました。「Submit new issue」を押したら、この画面に戻ってください——入ったか自動で確認します。'; } catch (e) {}
+  }
+  function checkSync(btn) {              // 「↻ 反映できたか確認」
+    var host = btn && btn.closest ? btn.closest('.ccfIssueBox') : null, msg = host ? host.querySelector('.ccfIssueMsg') : null, o = btn ? btn.textContent : '';
+    if (btn) btn.textContent = '確認中…';
+    syncCheck().then(function (ok) {
+      if (btn) btn.textContent = o;
+      if (!ok && msg) msg.textContent = 'まだ入っていません。GitHub で「Submit new issue」を押しましたか？ 押したあと、入るまで数分かかります（自動で確認を続けます）。';
+      if (!ok) startWatch();
+    });
+  }
+  try {
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible' && watchActive()) { watchTick(); startWatch(); }
+    });
+    // 別の文書（🏦保有の iframe・別のタブ）が同期を終えたら、こちらも読み直して知らせる（SENT_AT が消えるのが合図）
+    window.addEventListener('storage', function (e) {
+      if (e.key === SENT_AT && e.newValue == null) load().then(function () { fireSynced(); });
+    });
+    if (watchActive()) startWatch();   // 再読み込みしても、反映待ちなら見張りを続ける
+  } catch (e) {}
+
+  window.ccfState = { load: load, export: exportFile, banner: banner, quiet: quiet, done: done, copyBox: copyBox, adoptRepo: adoptRepo,
                       markCommitted: markCommitted, decide: decide, collect: collect,
                       isDirty: isDirty, keys: { exact: EXACT, prefix: PREFIX },
+                      prepareIssue: prepareIssue, issueWidget: issueWidget, issueOpened: issueOpened, checkSync: checkSync, syncCheck: syncCheck,
+                      unseenText: unseenText, guardConsts: guardConsts, sameDecision: sameDecision,
                       get last() { return last; } };
 })();

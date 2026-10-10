@@ -2,7 +2,8 @@
 /**
  * night/check_pfc_card.js — 🏦保有の「ポートフォリオ」カード（v9.9.204）を実ブラウザで検査する
  *
- * 何のカードか: 総資産の見出しの直下に出る、円グラフ・年初来比・評価損益・銘柄ごとの内訳（index.html の ccfPfcHTML）。
+ * 何のカードか: 🏦保有の先頭（金額を隠すボタンの行の下）に出る、円グラフ・年初来比・評価損益・銘柄ごとの内訳（index.html の ccfPfcHTML）。
+ *   v9.9.208 で「総資産」の大きな見出し（.rb-hero）は外した。見出しが持っていた 金額を隠す切替・含み損益の対象外の銘柄名 の行き先も L で見る。
  *   **表示だけ**——Ω・四関門・売却規律・配分に触れない。数字は ccfDash の集計をそのまま渡している。
  *
  * ★データは**この検査の中で固定**する（保有5銘柄・価格・年初来比の系列を route で差し替える）。
@@ -20,6 +21,8 @@
  *   H 保有が空ならカードを出さない  I 1銘柄だけなら全周の1つの円
  *   J 為替込みの前日比（v9.9.205・fx.prev があるとき）: 合計・うち為替・各行を**独立に計算した値**と突き合わせる／円建ての行は為替の影響を受けない
  *   K fx.prev が無い・取得失敗の据え置き（stale）の日は株価だけ（画面にそう書く）
+ *   L 総資産の見出しを外した（v9.9.208）: 見出しが出ない・金額を隠すボタンは右寄せの1行で残る（押すと隠れる／出る）・
+ *     取得額が無い銘柄の名前はカードの注記へ・保有が空ならボタンも出さない
  *
  * 使い方: NODE_PATH=$(npm root -g) node night/check_pfc_card.js [--width 360]
  *   前提: playwright と Chromium。終了コード 1 = 1件でも ✗。
@@ -114,8 +117,8 @@ const jr = (r, o) => r.fulfill({ status: 200, contentType: 'application/json', b
       ok(a && a.ytdP === '--%', '年初来比の％は「--%」（今年に買い始めた＝年初の評価額0）');
       ok(a && /^[−]?\d+\.\d\d%$/.test(a.plP), `評価損益の％（${a && a.plP}）`);
       ok(a && a.sw <= a.cw, `横にはみ出さない（${a && a.sw}/${a && a.cw}）`);
-      const h0 = await p.evaluate(() => document.querySelector('.rb-hero').innerText);
-      ok(/株価のみ/.test(h0), 'fx.prev が無い日の見出しは「株価のみ」（為替を黙って0と読まない）');
+      const n0 = await p.evaluate(() => document.querySelector('.pfc-note').innerText);
+      ok(/株価だけ/.test(n0) && /為替は含まない/.test(n0), 'fx.prev が無い日のカードの注記は「株価だけ・為替は含まない」（為替を黙って0と読まない）');
       await ctx.close();
     }
 
@@ -215,6 +218,7 @@ const jr = (r, o) => r.fulfill({ status: 200, contentType: 'application/json', b
     {
       const { p, ctx } = await open(); await showDash(p, { asof: '2026-10-10', fx: FX, positions: [] }, true);
       ok(!(await p.evaluate(() => !!document.getElementById('pfcCard'))), '保有が空ならカードは出さない');
+      ok(!(await p.evaluate(() => !!document.querySelector('#dashBox .ccf-money-btn'))), '保有が空なら金額を隠すボタンも出さない（隠す金額が無い）');
       await ctx.close();
     }
 
@@ -254,8 +258,7 @@ const jr = (r, o) => r.fulfill({ status: 200, contentType: 'application/json', b
       await showDash(p, { ...base, positions: pos2 }, true);
       const e = expectDay(pos2, q2, FX, FXP);
       const r = await p.evaluate(() => { const c = document.getElementById('pfcCard'), D = window.__pfcData;
-        return { fxIn: D.fxIn, day: D.dayJ, dayP: D.dayP, fxJ: D.dayFxJ, hero: document.querySelector('.rb-hero').innerText.replace(/\s+/g, ' '),
-                 sub: [...c.querySelectorAll('.pfc-s')].map(x => x.textContent).join(' | '), note: c.querySelector('.pfc-note').innerText,
+        return { fxIn: D.fxIn, day: D.dayJ, dayP: D.dayP, fxJ: D.dayFxJ, sub: [...c.querySelectorAll('.pfc-s')].map(x => x.textContent).join(' | '), note: c.querySelector('.pfc-note').innerText,
                  rows: Object.fromEntries(D.rows.map(x => [x.label, [x.day, x.dayP]])), asof: document.getElementById('dashAsof').innerText }; });
       ok(r.fxIn === true, 'fx.prev があれば為替込み（fxIn）');
       ok(Math.abs(r.day - e.day) < 1, `合計の前日比 ＝ 独立計算（${Math.round(r.day)} / ${Math.round(e.day)}）`);
@@ -266,7 +269,7 @@ const jr = (r, o) => r.fulfill({ status: 200, contentType: 'application/json', b
       ok(Math.abs(r.rows['ディスコ'][1] - 1.0) < 1e-6, `円建ての行はドル円の影響を受けない（ディスコ +${r.rows['ディスコ'][1].toFixed(3)}%）`);
       const usdJ = expectDay(POS, PX, FX, FXP).fxJ;
       ok(Math.abs(r.fxJ - usdJ) < 1, '円建ての行を足しても「うち為替」は変わらない');
-      ok(/前日比（株価＋為替）/.test(r.hero) && /前日比のうち為替 \+¥/.test(r.hero), '見出し: 前日比（株価＋為替）と、チップ「前日比のうち為替 +¥…」');
+      ok(/うち為替は \+¥/.test(r.note), 'カードの注記: 「うち為替は +¥…」（総資産の見出しのチップはもう無いので、金額はここで出す）');
       ok(/ドル円 ¥150\.00 \(\+1\.35%\)/.test(r.sub) && /自動更新/.test(r.sub), `カードのドル円の行（${r.sub.split('|')[1].trim()}）`);
       ok(/株価と為替（ドル円）の動き/.test(r.note), 'カードの注記が為替込みになる');
       ok(/前日比 \+1\.35%/.test(r.asof), '上の「市場データ…$1=¥…」の行にも為替の前日比');
@@ -279,14 +282,43 @@ const jr = (r, o) => r.fulfill({ status: 200, contentType: 'application/json', b
       for (const [label, fxo] of [['fx.prev 無し', {}], ['stale', { prev: 148, stale: true }]]) {
         const { p, ctx } = await open({ fx: fxo }); await showDash(p, base, true);
         const r = await p.evaluate(() => { const D = window.__pfcData, c = document.getElementById('pfcCard');
-          return { fxIn: D.fxIn, day: D.dayJ, fxJ: D.dayFxJ, hero: document.querySelector('.rb-hero').innerText.replace(/\s+/g, ' '), note: c.querySelector('.pfc-note').innerText,
+          return { fxIn: D.fxIn, day: D.dayJ, fxJ: D.dayFxJ, note: c.querySelector('.pfc-note').innerText,
                    sub: [...c.querySelectorAll('.pfc-s')].map(x => x.textContent).join(' | '), asof: document.getElementById('dashAsof').innerText }; });
         ok(r.fxIn === false && r.fxJ === 0, `${label}: 為替を含めない（fxIn=false・うち為替0）`);
         ok(Math.abs(r.day - e0.day) < 1, `${label}: 前日比は株価だけの独立計算と一致（${Math.round(r.day)}）`);
-        ok(/株価のみ/.test(r.hero) && /為替は含まない/.test(r.note), `${label}: 画面に「為替は含まない」と書く`);
+        ok(/株価だけ/.test(r.note) && /為替は含まない/.test(r.note), `${label}: 画面に「為替は含まない」と書く`);
         if (fxo.stale) ok(/取得失敗＝前回値/.test(r.sub) && /取得失敗＝前回値/.test(r.asof), 'stale: ドル円の行と上の行に「取得失敗＝前回値」と出す（止まっているのを黙らない）');
         await ctx.close();
       }
+    }
+
+    console.log('■ L. 総資産の見出しを外した（v9.9.208）と、見出しにあったものの行き先');
+    {
+      const pf = JSON.parse(JSON.stringify(base));
+      // 取得額（bjpy も bpx も）が無いが価格はある行 → 評価額は合計に入る・評価損益からは外す・名前は注記に出す
+      pf.positions.push({ t: 'NOCOST', nm: '取得額なし', sleeve: 'castle', kind: '個別', ccy: 'USD', sh: 2, bjpy: 0, bpx: 0, npx: 100, v: 0 });
+      const { p, ctx } = await open(); await showDash(p, pf, true);
+      const snap = () => p.evaluate(() => { const b = document.getElementById('dashBox'), c = document.getElementById('pfcCard'), btn = b.querySelector('.ccf-money-btn');
+        const cc = c.cloneNode(true); cc.querySelectorAll('.pfc-fx').forEach(e => e.remove());
+        return { hero: !!document.querySelector('.rb-hero'), nBtn: b.querySelectorAll('.ccf-money-btn').length, pill: btn ? btn.textContent.trim() : null,
+          pillFirst: !!btn && !!(btn.compareDocumentPosition(c) & Node.DOCUMENT_POSITION_FOLLOWING),
+          pillRight: btn ? getComputedStyle(btn.parentElement).textAlign : null, cardTxt: cc.innerText, note: c.querySelector('.pfc-note').innerText,
+          centre: c.querySelector('.pfc-c2').textContent, n: c.querySelectorAll('.pfc-ring circle').length, key: localStorage.getItem('pf:showMoney'),
+          sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }; });
+      let r = await snap();
+      ok(!r.hero, '「総資産」の大きな見出し（.rb-hero）は出ない');
+      ok(!/総資産/.test(r.cardTxt), 'カードの中にも「総資産」の文字は無い（真ん中は「合計」）');
+      ok(r.nBtn === 1 && r.pill === '🙈 金額を隠す' && r.pillFirst && r.pillRight === 'right', `金額を隠すボタンは右寄せの1行でカードの上に残る（${r.pill}）`);
+      ok(/評価損益は取得額が判る銘柄だけ（対象外: NOCOST）/.test(r.note), `取得額が無い銘柄の名前は注記に出る（見出しの「含み損益の対象外」の行き先）`);
+      ok(r.n === 6 && /^¥[0-9,]+$/.test(r.centre) && r.centre === '¥' + (2271000 + 2 * 100 * FX).toLocaleString('en-US'), `その行の評価額は合計に入る（${r.centre}・円グラフ${r.n}つ）`);
+      ok(r.sw <= r.cw, `横にはみ出さない（${r.sw}/${r.cw}）`);
+      await p.click('#dashBox .ccf-money-btn'); await p.waitForTimeout(1400);
+      r = await snap();
+      ok(r.key === '0' && r.pill === '👁 金額を表示' && !/¥[0-9]/.test(r.cardTxt), `ボタンを押すと金額が隠れ、ボタンは「${r.pill}」になる（カードに ¥数字 なし）`);
+      await p.click('#dashBox .ccf-money-btn'); await p.waitForTimeout(1400);
+      r = await snap();
+      ok(r.key === '1' && r.pill === '🙈 金額を隠す' && /¥[0-9]/.test(r.cardTxt), 'もう一度押すと金額が出る');
+      await ctx.close();
     }
   } finally {
     console.log(errs.length ? '\n' + errs.join('\n') : '\n（ページ内のJSエラーなし）');
