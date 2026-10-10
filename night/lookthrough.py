@@ -154,6 +154,9 @@ def explode(net_map, profiles):
     """網を中身へ分解。取れない分は '未取得' として残す（ゼロと読まない＝ルール7）。"""
     look, unknown = {}, {}
     for etf, yen in net_map.items():
+        if etf.endswith("-USD"):                   # 暗号資産（BTC-USD 等・2026-10-10）は中身の銘柄を持たない＝それ自体が1つの保有
+            look[etf] = look.get(etf, 0) + yen
+            continue
         prof = (profiles.get("etfs") or {}).get(etf)
         h = (prof or {}).get("h") or []
         cov = sum(w for _, w in h)
@@ -260,7 +263,7 @@ def whatif(b):
             if not k or not v.strip():
                 raise SystemExit(f"--net の書式は 'XLK=15,SMH=15' （%）。読めない: {part!r}")
             alloc[k] = total * float(v) / 100.0
-        miss = [k for k in alloc if k not in prof.get("etfs", {})]
+        miss = [k for k in alloc if k not in prof.get("etfs", {}) and not k.endswith("-USD")]   # 暗号資産はそれ自体が1つの保有（explode）
         if miss:
             # ⚠ 中身を持っていないETFを混ぜると**分解できない分が「無い」ことにされる**（ルール7）。
             print(f"   ⚠ 中身が未取得のETF: {', '.join(miss)}"
@@ -269,7 +272,7 @@ def whatif(b):
 
     tmix, tasof = target_mix()
     if tmix and not NET_SPEC:
-        miss = [k for k in tmix if k not in prof.get("etfs", {})]
+        miss = [k for k in tmix if k not in prof.get("etfs", {}) and not k.endswith("-USD")]   # 暗号資産はそれ自体が1つの保有（explode）
         if miss:
             print(f"   ⚠ 目標の網に中身が未取得のETF: {', '.join(miss)} — 『未取得』に丸ごと乗る")
         run(f"★目標の網（portfolio.json {tasof}・網 {sum(tmix.values()):.0f}%）",
