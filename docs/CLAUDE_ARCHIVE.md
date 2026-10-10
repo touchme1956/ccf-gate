@@ -18469,4 +18469,5 @@ dom・irr・moatW は私の独立読みと一致。『』の引用は CLS 71・A
 - `target.ideco.members` を A 5,000・**B 0**（合計 月¥5,000）。0円の名義は門の `ccfIdecoCfg` が外す＝注文書の iDeCo の行・区分の pre・「✓ 保有へ」は A の分だけ。行は消さずに0円で残した（2029年1月分からの見直しで B を始めるなら額を入れるだけ）。
 - 入金20万円＝NISA 16.5万円（注文書）＋iDeCo 5,000円（A）＋こどもNISA 3万円。`target.nisa` の rule（月16.5万円＝年198万円）と note、📖解説の文、todo（`ideco_start_confirm`＝B も申し込み中なら取り下げ・`monthly_plan_2027_01`・`ideco_raise_review_2028`＝見直しは2人とも・`ideco_prestart_checks`・`ideco_yearend_docs_yearly`）を合わせた。
 - 実ブラウザで実データを3つの日付で読み直した（今日・2027-03・2029-02 × 入金 20万／17万）: 今日の案内は「iDeCo（A ¥5,000・自動引き落とし）…2027-01 からの入金額 ¥200,000＝NISA ¥165,000（注文書）＋iDeCo ¥5,000＋こどもNISA ¥30,000」／2027-03 と 2029-02 は注文書 ¥165,000・17万なら「計画（NISA 月¥165,000）より少ない」。
+- 検査（A 5,000円・B 0円で回し直した）: `check_sleeve_split` 81項目・`check_fund_trade` 49項目・`check_gate_parity`（Ω 376/376・投下可8社一致）・`audit_docs`・`check_html`・`validate_state`・`audit_todo` 通過。`out/shadow_seats.json` は案内の文だけ変わった（12か月の区分の比率は同じ）。
 - この変更と同日の v9.9.211・各5,000円の変更をまとめて main へマージした（ユーザー明示指示「…マージして」）。
