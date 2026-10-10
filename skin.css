@@ -515,3 +515,76 @@ html[data-theme="soft"] .pfc,html[data-theme="dark"] .pfc,html:not([data-theme])
   .pfc-v{font-size:18px;} .pfc-dd,.pfc-w{font-size:12px;}
   .pfc-sc .v{font-size:18px;}
 }
+
+/* ── 18. 銘柄の詳細（v9.9.209・2026-10-10 ユーザー「保有の銘柄を押すとこのような画面が出て詳細が見れるようにして」＝家計アプリの「タグ」詳細の写真）──
+   🏦保有のカードの銘柄の行・💰銘柄の行を押すと全画面で開く。合計金額・損益・前日比・口座ごとの行・配当利回り。表示だけ。
+   色と数字の作法は §17（.pfc）と同じ（上＝青・下＝赤）。戻る＝←／Esc／端末の戻る。 */
+.pfd-tap{cursor:pointer; -webkit-tap-highlight-color:transparent;}
+.pfd-tap:hover{background:var(--rb-hover);}
+.pfd-tap:focus-visible{outline:2px solid var(--rb-info); outline-offset:-2px;}
+html.pfd-open,html.pfd-open body{overflow:hidden;}      /* 詳細を開いている間は後ろをスクロールさせない */
+.pfd{
+  --pfc-ink:#171516; --pfc-sub:#5A5859; --pfc-line:#E6E5E3; --pfc-bg:#ffffff; --pfd-band:#F2F2F2;
+  --pfc-up:#3070EE; --pfc-down:#D12E3F; --pfc-acc:#ED7002; --pfc-flat:#6a7079; --pfc-arrow:#ffffff;
+  display:none; position:fixed; left:0; right:0; top:0; bottom:0; z-index:9000; overflow-y:auto; -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain; background:var(--pfc-bg); color:var(--pfc-ink); font-family:var(--rb-font); text-shadow:none;
+}
+html[data-theme="soft"] .pfd,html[data-theme="dark"] .pfd,html:not([data-theme]) .pfd{
+  --pfc-ink:var(--rb-ink); --pfc-sub:var(--rb-mute); --pfc-line:var(--rb-line2); --pfc-bg:var(--rb-bg); --pfd-band:var(--rb-bg2);
+  --pfc-up:#6EA8FF; --pfc-down:#FF6A5E; --pfc-acc:#FF9A3C; --pfc-flat:var(--rb-mute); --pfc-arrow:#0b0d10;
+}
+.pfd.on{display:block;}
+.pfd button:not(.ccf-money-btn){font:inherit; color:inherit; background:none; border:0; padding:0; margin:0; cursor:pointer;
+  -webkit-tap-highlight-color:transparent;}
+.pfd .up{color:var(--pfc-up);} .pfd .dn{color:var(--pfc-down);} .pfd .fl{color:var(--pfc-flat);}
+.pfd .nb{white-space:nowrap;}
+.pfd-in{box-sizing:border-box; max-width:520px; min-height:100%; margin:0 auto; padding:0 20px 36px;
+  padding-left:max(20px,env(safe-area-inset-left)); padding-right:max(20px,env(safe-area-inset-right));
+  padding-bottom:max(36px,env(safe-area-inset-bottom));}
+/* 上の帯: ← 銘柄の詳細 　　　🙈金額を隠す */
+.pfd-top{position:sticky; top:0; z-index:2; display:flex; align-items:center; gap:6px; height:56px; margin:0 -20px; padding:0 14px 0 6px;
+  background:var(--pfc-bg);}
+.pfd .pfd-back{flex:none; width:44px; height:44px; display:flex; align-items:center; justify-content:center; border-radius:50%;}
+.pfd .pfd-back:hover{background:var(--rb-hover);}
+.pfd-back svg{width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;}
+.pfd-ttl{flex:1; min-width:0; font-size:17px; font-weight:500;}
+.pfd .ccf-money-btn{flex:none; margin-left:0;}
+/* 銘柄名（点は円グラフの色と同じ） */
+.pfd-hd{display:flex; align-items:center; gap:12px; margin-top:10px;}
+.pfd-dot{flex:none; width:16px; height:16px; border-radius:50%; background:var(--pfc-c);}
+.pfd-name{font-size:22px; font-weight:500; line-height:1.3; overflow-wrap:anywhere;}
+/* 合計金額・損益・前日比 */
+.pfd-tot{display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin-top:24px;}
+.pfd-tk{font-size:15px;}
+.pfd-tv{font:400 28px/1.2 var(--rb-num); letter-spacing:-.01em; white-space:nowrap;}
+.pfd-sub{margin-top:6px; text-align:right; font-size:15px; line-height:1.6;}
+.pfd-info{display:flex; flex-wrap:wrap; justify-content:space-between; gap:4px 16px; margin-top:12px; padding-top:12px;
+  border-top:1px solid var(--pfc-line); font-size:13px; color:var(--pfc-sub);}
+.pfd-warn{margin-top:10px; padding:9px 12px; border-radius:10px; background:var(--rb-warn-bg); color:var(--rb-warn); font-size:12.5px; line-height:1.6;}
+/* 区分の帯（株式(現物)／ETF／投資信託）と口座ごとの行 */
+.pfd-sec{margin:22px -20px 0; padding:9px 20px; background:var(--pfd-band); font-size:15px; font-weight:500; line-height:1.4;}
+.pfd-lot{display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:16px 0; border-bottom:1px solid var(--pfc-line);}
+.pfd-ll{flex:1 1 0; min-width:0;}
+.pfd-ln{font-size:17px; font-weight:500; line-height:1.35; overflow-wrap:anywhere;}
+.pfd-lc{margin-top:3px; font-size:12.5px; line-height:1.5; color:var(--pfc-sub); overflow-wrap:anywhere;}
+.pfd-lq{margin-top:2px; font-size:12.5px; color:var(--pfc-sub);}
+.pfd-memo{margin-top:6px; font-size:11.5px; line-height:1.55; color:var(--pfc-sub);}
+.pfd-memo summary{cursor:pointer;}
+.pfd-lr{flex:0 1 auto; min-width:0; max-width:62%; text-align:right; line-height:1.5;}
+.pfd-lv{font:400 22px/1.3 var(--rb-num); letter-spacing:-.01em; white-space:nowrap;}
+.pfd-d{font-size:13.5px;}
+.pfd-y{margin-top:2px; font-size:12.5px; color:var(--pfc-sub);}
+.pfd-note{padding:14px 0 10px; font-size:12px; line-height:1.7; color:var(--pfc-sub);}
+.pfd .pfd-edit{display:block; width:100%; margin-top:6px; padding:12px 14px; font-size:14px; font-weight:500; text-align:center;
+  color:var(--pfc-acc); background:var(--pfc-bg); border:1.5px solid var(--pfc-acc); border-radius:10px;}
+@media(max-width:359px){
+  .pfd-in{padding-left:max(14px,env(safe-area-inset-left)); padding-right:max(14px,env(safe-area-inset-right));}
+  .pfd-top{margin:0 -14px;} .pfd-sec{margin-left:-14px; margin-right:-14px; padding-left:14px; padding-right:14px;}
+  .pfd-tv{font-size:24px;} .pfd-lv{font-size:19px;} .pfd-name{font-size:19px;} .pfd-ln{font-size:15.5px;}
+  .pfd-lr{max-width:64%;}
+}
+/* 銘柄の詳細: 全画面のあいだは右下の「明るい／暗い」の切替を隠す（本文の注記に重なる）・口座の行の銘柄名は2行まで・メモは3行まで */
+html.pfd-open #themeToggle{display:none !important;}
+.pfd:focus{outline:none;}
+.pfd-ln{display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden;}
+.pfd-lc{display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:3; overflow:hidden;}

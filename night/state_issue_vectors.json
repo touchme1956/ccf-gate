@@ -1,0 +1,1217 @@
+{
+ "note": "night/apply_state_issue.py（Python）と state.js の ccfState.unseenText（JS）が**同じ答えを出す**ことを両方の検査で確かめる共有ベクトル。send は端末が送ろうとする値（オブジェクトは JSON 文字列にして渡す）、expect は『repo にまだ無い自由記述』の場所（欄の道筋）。名義は A/B（絶対のルール9）。",
+ "repo": {
+  "pf:portfolio": {
+   "asof": "2026-10-09",
+   "fx": 150,
+   "positions": [
+    {
+     "t": "MSFT",
+     "nm": "Microsoft",
+     "sleeve": "castle",
+     "kind": "個別",
+     "ccy": "USD",
+     "sh": 8,
+     "bjpy": 497469,
+     "npx": 0,
+     "v": 0,
+     "note": "メモは公開済み",
+     "bdLots": [
+      {
+       "sh": 3,
+       "jpy": 190000,
+       "bd": "2026-04-15",
+       "who": "A",
+       "acct": "成長",
+       "src": "楽天証券 A 証券口座(新NISA) 3株（公開済みの記録）"
+      }
+     ]
+    }
+   ]
+  },
+  "pf:sold": [
+   {
+    "t": "RMD",
+    "nm": "ResMed",
+    "date": "2026-09-23",
+    "reason": "s1",
+    "memo": "公開済みの売却メモ",
+    "sh": 3,
+    "who": "A",
+    "acct": "成長"
+   }
+  ],
+  "pf:monthly_total": "170000",
+  "g7ignite:map": {
+   "MSFT": "2026-07-13"
+  }
+ },
+ "cases": [
+  {
+   "name": "repo と同じ",
+   "send": {
+    "pf:portfolio": {
+     "asof": "2026-10-09",
+     "fx": 150,
+     "positions": [
+      {
+       "t": "MSFT",
+       "nm": "Microsoft",
+       "sleeve": "castle",
+       "kind": "個別",
+       "ccy": "USD",
+       "sh": 8,
+       "bjpy": 497469,
+       "npx": 0,
+       "v": 0,
+       "note": "メモは公開済み",
+       "bdLots": [
+        {
+         "sh": 3,
+         "jpy": 190000,
+         "bd": "2026-04-15",
+         "who": "A",
+         "acct": "成長",
+         "src": "楽天証券 A 証券口座(新NISA) 3株（公開済みの記録）"
+        }
+       ]
+      }
+     ]
+    }
+   },
+   "expect": []
+  },
+  {
+   "name": "門の定型の src（約定日・名義・口座）の新しいロット",
+   "send": {
+    "pf:portfolio": {
+     "asof": "2026-10-09",
+     "fx": 150,
+     "positions": [
+      {
+       "t": "MSFT",
+       "nm": "Microsoft",
+       "sleeve": "castle",
+       "kind": "個別",
+       "ccy": "USD",
+       "sh": 8,
+       "bjpy": 497469,
+       "npx": 0,
+       "v": 0,
+       "note": "メモは公開済み",
+       "bdLots": [
+        {
+         "sh": 3,
+         "jpy": 190000,
+         "bd": "2026-04-15",
+         "who": "A",
+         "acct": "成長",
+         "src": "楽天証券 A 証券口座(新NISA) 3株（公開済みの記録）"
+        },
+        {
+         "sh": 1,
+         "jpy": 80000,
+         "bd": "2026-10-10",
+         "who": "A",
+         "acct": "成長",
+         "src": "門の🏦保有で記録（約定日 2026-10-10）（A・成長）"
+        }
+       ]
+      }
+     ]
+    }
+   },
+   "expect": []
+  },
+  {
+   "name": "門の定型の src（約定日なし・口座だけ）",
+   "send": {
+    "pf:portfolio": {
+     "asof": "2026-10-09",
+     "fx": 150,
+     "positions": [
+      {
+       "t": "MSFT",
+       "nm": "Microsoft",
+       "sleeve": "castle",
+       "kind": "個別",
+       "ccy": "USD",
+       "sh": 8,
+       "bjpy": 497469,
+       "npx": 0,
+       "v": 0,
+       "note": "メモは公開済み",
+       "bdLots": [
+        {
+         "sh": 3,
+         "jpy": 190000,
+         "bd": "2026-04-15",
+         "who": "A",
+         "acct": "成長",
+         "src": "楽天証券 A 証券口座(新NISA) 3株（公開済みの記録）"
+        },
+        {
+         "sh": 1,
+         "jpy": 80000,
+         "bd": "2026-10-10",
+         "who": "A",
+         "acct": "成長",
+         "src": "門の🏦保有で記録（成長）"
+        }
+       ]
+      }
+     ]
+    }
+   },
+   "expect": []
+  },
+  {
+   "name": "門の定型の src（子どもの口座）",
+   "send": {
+    "pf:portfolio": {
+     "asof": "2026-10-09",
+     "fx": 150,
+     "positions": [
+      {
+       "t": "MSFT",
+       "nm": "Microsoft",
+       "sleeve": "castle",
+       "kind": "個別",
+       "ccy": "USD",
+       "sh": 8,
+       "bjpy": 497469,
+       "npx": 0,
+       "v": 0,
+       "note": "メモは公開済み",
+       "bdLots": [
+        {
+         "sh": 3,
+         "jpy": 190000,
+         "bd": "2026-04-15",
+         "who": "A",
+         "acct": "成長",
+         "src": "楽天証券 A 証券口座(新NISA) 3株（公開済みの記録）"
+        },
+        {
+         "sh": 1,
+         "jpy": 80000,
+         "bd": "2026-10-10",
+         "who": "子ども",
+         "acct": "こどもNISA",
+         "src": "門の🏦保有で記録（約定日 2026-10-10）（子ども・こどもNISA）"
+        }
+       ]
+      }
+     ]
+    }
+   },
+   "expect": []
+  },
+  {
+   "name": "repo にまだ無い自由な src（名前の入りうる古い文）",
+   "send": {
+    "pf:portfolio": {
+     "asof": "2026-10-09",
+     "fx": 150,
+     "positions": [
+      {
+       "t": "MSFT",
+       "nm": "Microsoft",
+       "sleeve": "castle",
+       "kind": "個別",
+       "ccy": "USD",
+       "sh": 8,
+       "bjpy": 497469,
+       "npx": 0,
+       "v": 0,
+       "note": "メモは公開済み",
+       "bdLots": [
+        {
+         "sh": 3,
+         "jpy": 190000,
+         "bd": "2026-04-15",
+         "who": "A",
+         "acct": "成長",
+         "src": "楽天証券 A 証券口座(新NISA) 3株（公開済みの記録）"
+        },
+        {
+         "sh": 1,
+         "jpy": 80000,
+         "bd": "2026-10-10",
+         "who": "A",
+         "acct": "成長",
+         "src": "楽天証券 テスト氏 証券口座(新NISA) 2株（古い記録）"
+        }
+       ]
+      }
+     ]
+    }
+   },
+   "expect": [
+    "pf:portfolio:positions[0].bdLots[1].src"
+   ]
+  },
+  {
+   "name": "repo に既にある src の再送は通す",
+   "send": {
+    "pf:portfolio": {
+     "asof": "2026-10-09",
+     "fx": 150,
+     "positions": [
+      {
+       "t": "MSFT",
+       "nm": "Microsoft",
+       "sleeve": "castle",
+       "kind": "個別",
+       "ccy": "USD",
+       "sh": 8,
+       "bjpy": 497469,
+       "npx": 0,
+       "v": 0,
+       "note": "メモは公開済み",
+       "bdLots": [
+        {
+         "sh": 3,
+         "jpy": 190000,
+         "bd": "2026-04-15",
+         "who": "A",
+         "acct": "成長",
+         "src": "楽天証券 A 証券口座(新NISA) 3株（公開済みの記録）"
+        },
+        {
+         "sh": 1,
+         "jpy": 80000,
+         "bd": "2026-10-10",
+         "who": "A",
+         "acct": "成長",
+         "src": "楽天証券 A 証券口座(新NISA) 3株（公開済みの記録）"
+        }
+       ]
+      }
+     ]
+    }
+   },
+   "expect": []
+  },
+  {
+   "name": "who が一文字の英字でない（名前）",
+   "send": {
+    "pf:portfolio": {
+     "asof": "2026-10-09",
+     "fx": 150,
+     "positions": [
+      {
+       "t": "MSFT",
+       "nm": "Microsoft",
+       "sleeve": "castle",
+       "kind": "個別",
+       "ccy": "USD",
+       "sh": 8,
+       "bjpy": 497469,
+       "npx": 0,
+       "v": 0,
+       "note": "メモは公開済み",
+       "bdLots": [
+        {
+         "sh": 3,
+         "jpy": 190000,
+         "bd": "2026-04-15",
+         "who": "A",
+         "acct": "成長",
+         "src": "楽天証券 A 証券口座(新NISA) 3株（公開済みの記録）"
+        },
+        {
+         "sh": 1,
+         "jpy": 80000,
+         "bd": "2026-10-10",
+         "who": "テスト氏",
+         "acct": "成長",
+         "src": "門の🏦保有で記録（約定日 2026-10-10）（A・成長）"
+        }
+       ]
+      }
+     ]
+    }
+   },
+   "expect": [
+    "pf:portfolio:positions[0].bdLots[1].who"
+   ]
+  },
+  {
+   "name": "who は B（repo に無くても英字1字は通す）",
+   "send": {
+    "pf:portfolio": {
+     "asof": "2026-10-09",
+     "fx": 150,
+     "positions": [
+      {
+       "t": "MSFT",
+       "nm": "Microsoft",
+       "sleeve": "castle",
+       "kind": "個別",
+       "ccy": "USD",
+       "sh": 8,
+       "bjpy": 497469,
+       "npx": 0,
+       "v": 0,
+       "note": "メモは公開済み",
+       "bdLots": [
+        {
+         "sh": 3,
+         "jpy": 190000,
+         "bd": "2026-04-15",
+         "who": "A",
+         "acct": "成長",
+         "src": "楽天証券 A 証券口座(新NISA) 3株（公開済みの記録）"
+        },
+        {
+         "sh": 1,
+         "jpy": 80000,
+         "bd": "2026-10-10",
+         "who": "B",
+         "acct": "成長",
+         "src": "門の🏦保有で記録（約定日 2026-10-10）（A・成長）"
+        }
+       ]
+      }
+     ]
+    }
+   },
+   "expect": []
+  },
+  {
+   "name": "who が2字の英字",
+   "send": {
+    "pf:portfolio": {
+     "asof": "2026-10-09",
+     "fx": 150,
+     "positions": [
+      {
+       "t": "MSFT",
+       "nm": "Microsoft",
+       "sleeve": "castle",
+       "kind": "個別",
+       "ccy": "USD",
+       "sh": 8,
+       "bjpy": 497469,
+       "npx": 0,
+       "v": 0,
+       "note": "メモは公開済み",
+       "bdLots": [
+        {
+         "sh": 3,
+         "jpy": 190000,
+         "bd": "2026-04-15",
+         "who": "A",
+         "acct": "成長",
+         "src": "楽天証券 A 証券口座(新NISA) 3株（公開済みの記録）"
+        },
+        {
+         "sh": 1,
+         "jpy": 80000,
+         "bd": "2026-10-10",
+         "who": "AB",
+         "acct": "成長",
+         "src": "門の🏦保有で記録（約定日 2026-10-10）（A・成長）"
+        }
+       ]
+      }
+     ]
+    }
+   },
+   "expect": [
+    "pf:portfolio:positions[0].bdLots[1].who"
+   ]
+  },
+  {
+   "name": "src の定型に未知の口座名",
+   "send": {
+    "pf:portfolio": {
+     "asof": "2026-10-09",
+     "fx": 150,
+     "positions": [
+      {
+       "t": "MSFT",
+       "nm": "Microsoft",
+       "sleeve": "castle",
+       "kind": "個別",
+       "ccy": "USD",
+       "sh": 8,
+       "bjpy": 497469,
+       "npx": 0,
+       "v": 0,
+       "note": "メモは公開済み",
+       "bdLots": [
+        {
+         "sh": 3,
+         "jpy": 190000,
+         "bd": "2026-04-15",
+         "who": "A",
+         "acct": "成長",
+         "src": "楽天証券 A 証券口座(新NISA) 3株（公開済みの記録）"
+        },
+        {
+         "sh": 1,
+         "jpy": 80000,
+         "bd": "2026-10-10",
+         "who": "A",
+         "acct": "成長",
+         "src": "門の🏦保有で記録（A・謎口座）"
+        }
+       ]
+      }
+     ]
+    }
+   },
+   "expect": [
+    "pf:portfolio:positions[0].bdLots[1].src"
+   ]
+  },
+  {
+   "name": "英語の自由な src",
+   "send": {
+    "pf:portfolio": {
+     "asof": "2026-10-09",
+     "fx": 150,
+     "positions": [
+      {
+       "t": "MSFT",
+       "nm": "Microsoft",
+       "sleeve": "castle",
+       "kind": "個別",
+       "ccy": "USD",
+       "sh": 8,
+       "bjpy": 497469,
+       "npx": 0,
+       "v": 0,
+       "note": "メモは公開済み",
+       "bdLots": [
+        {
+         "sh": 3,
+         "jpy": 190000,
+         "bd": "2026-04-15",
+         "who": "A",
+         "acct": "成長",
+         "src": "楽天証券 A 証券口座(新NISA) 3株（公開済みの記録）"
+        },
+        {
+         "sh": 1,
+         "jpy": 80000,
+         "bd": "2026-10-10",
+         "who": "A",
+         "acct": "成長",
+         "src": "Rakuten Taro Yamada"
+        }
+       ]
+      }
+     ]
+    }
+   },
+   "expect": [
+    "pf:portfolio:positions[0].bdLots[1].src"
+   ]
+  },
+  {
+   "name": "note に売却の定型を足す",
+   "send": {
+    "pf:portfolio": {
+     "asof": "2026-10-09",
+     "fx": 150,
+     "positions": [
+      {
+       "t": "MSFT",
+       "nm": "Microsoft",
+       "sleeve": "castle",
+       "kind": "個別",
+       "ccy": "USD",
+       "sh": 8,
+       "bjpy": 497469,
+       "npx": 0,
+       "v": 0,
+       "note": "メモは公開済み　2026-10-10 2株売却（門で記録）",
+       "bdLots": [
+        {
+         "sh": 3,
+         "jpy": 190000,
+         "bd": "2026-04-15",
+         "who": "A",
+         "acct": "成長",
+         "src": "楽天証券 A 証券口座(新NISA) 3株（公開済みの記録）"
+        }
+       ]
+      }
+     ]
+    }
+   },
+   "expect": []
+  },
+  {
+   "name": "note に暗号資産の売却の定型を足す",
+   "send": {
+    "pf:portfolio": {
+     "asof": "2026-10-09",
+     "fx": 150,
+     "positions": [
+      {
+       "t": "MSFT",
+       "nm": "Microsoft",
+       "sleeve": "castle",
+       "kind": "個別",
+       "ccy": "USD",
+       "sh": 8,
+       "bjpy": 497469,
+       "npx": 0,
+       "v": 0,
+       "note": "メモは公開済み　2026-10-10 0.5 BTC売却（門で記録）",
+       "bdLots": [
+        {
+         "sh": 3,
+         "jpy": 190000,
+         "bd": "2026-04-15",
+         "who": "A",
+         "acct": "成長",
+         "src": "楽天証券 A 証券口座(新NISA) 3株（公開済みの記録）"
+        }
+       ]
+      }
+     ]
+    }
+   },
+   "expect": []
+  },
+  {
+   "name": "note に自由な文を足す",
+   "send": {
+    "pf:portfolio": {
+     "asof": "2026-10-09",
+     "fx": 150,
+     "positions": [
+      {
+       "t": "MSFT",
+       "nm": "Microsoft",
+       "sleeve": "castle",
+       "kind": "個別",
+       "ccy": "USD",
+       "sh": 8,
+       "bjpy": 497469,
+       "npx": 0,
+       "v": 0,
+       "note": "メモは公開済み　損切りした",
+       "bdLots": [
+        {
+         "sh": 3,
+         "jpy": 190000,
+         "bd": "2026-04-15",
+         "who": "A",
+         "acct": "成長",
+         "src": "楽天証券 A 証券口座(新NISA) 3株（公開済みの記録）"
+        }
+       ]
+      }
+     ]
+    }
+   },
+   "expect": [
+    "pf:portfolio:positions[0].note"
+   ]
+  },
+  {
+   "name": "note を新しい文に替える",
+   "send": {
+    "pf:portfolio": {
+     "asof": "2026-10-09",
+     "fx": 150,
+     "positions": [
+      {
+       "t": "MSFT",
+       "nm": "Microsoft",
+       "sleeve": "castle",
+       "kind": "個別",
+       "ccy": "USD",
+       "sh": 8,
+       "bjpy": 497469,
+       "npx": 0,
+       "v": 0,
+       "note": "新しいメモ",
+       "bdLots": [
+        {
+         "sh": 3,
+         "jpy": 190000,
+         "bd": "2026-04-15",
+         "who": "A",
+         "acct": "成長",
+         "src": "楽天証券 A 証券口座(新NISA) 3株（公開済みの記録）"
+        }
+       ]
+      }
+     ]
+    }
+   },
+   "expect": [
+    "pf:portfolio:positions[0].note"
+   ]
+  },
+  {
+   "name": "売却記録に自由な memo",
+   "send": {
+    "pf:sold": [
+     {
+      "t": "RMD",
+      "nm": "ResMed",
+      "date": "2026-09-23",
+      "reason": "s1",
+      "memo": "公開済みの売却メモ",
+      "sh": 3,
+      "who": "A",
+      "acct": "成長"
+     },
+     {
+      "t": "X",
+      "date": "2026-10-10",
+      "reason": "other",
+      "memo": "S2で売った",
+      "sh": 1,
+      "who": "A",
+      "acct": "成長"
+     }
+    ]
+   },
+   "expect": [
+    "pf:sold:[1].memo"
+   ]
+  },
+  {
+   "name": "売却記録に自動の memo だけ",
+   "send": {
+    "pf:sold": [
+     {
+      "t": "RMD",
+      "nm": "ResMed",
+      "date": "2026-09-23",
+      "reason": "s1",
+      "memo": "公開済みの売却メモ",
+      "sh": 3,
+      "who": "A",
+      "acct": "成長"
+     },
+     {
+      "t": "X",
+      "date": "2026-10-10",
+      "reason": "other",
+      "memo": "　受取額は見積もり（株数×単価×ドル円）",
+      "sh": 1,
+      "who": "A",
+      "acct": "成長"
+     }
+    ]
+   },
+   "expect": []
+  },
+  {
+   "name": "売却記録の pos の中に未知の src",
+   "send": {
+    "pf:sold": [
+     {
+      "t": "RMD",
+      "nm": "ResMed",
+      "date": "2026-09-23",
+      "reason": "s1",
+      "memo": "公開済みの売却メモ",
+      "sh": 3,
+      "who": "A",
+      "acct": "成長"
+     },
+     {
+      "t": "X",
+      "date": "2026-10-10",
+      "reason": "s1",
+      "memo": "",
+      "sh": 1,
+      "pos": {
+       "t": "X",
+       "bdLots": [
+        {
+         "sh": 1,
+         "src": "未知の文"
+        }
+       ]
+      }
+     }
+    ]
+   },
+   "expect": [
+    "pf:sold:[1].pos.bdLots[0].src"
+   ]
+  },
+  {
+   "name": "新しい会社名（nm）は通す",
+   "send": {
+    "pf:portfolio": {
+     "asof": "2026-10-09",
+     "fx": 150,
+     "positions": [
+      {
+       "t": "MSFT",
+       "nm": "Microsoft",
+       "sleeve": "castle",
+       "kind": "個別",
+       "ccy": "USD",
+       "sh": 8,
+       "bjpy": 497469,
+       "npx": 0,
+       "v": 0,
+       "note": "メモは公開済み",
+       "bdLots": [
+        {
+         "sh": 3,
+         "jpy": 190000,
+         "bd": "2026-04-15",
+         "who": "A",
+         "acct": "成長",
+         "src": "楽天証券 A 証券口座(新NISA) 3株（公開済みの記録）"
+        }
+       ]
+      },
+      {
+       "t": "NEWC",
+       "nm": "新しい会社",
+       "sleeve": "castle",
+       "kind": "個別",
+       "ccy": "USD",
+       "sh": 1
+      }
+     ]
+    }
+   },
+   "expect": []
+  },
+  {
+   "name": "kind が未知の日本語",
+   "send": {
+    "pf:portfolio": {
+     "asof": "2026-10-09",
+     "fx": 150,
+     "positions": [
+      {
+       "t": "MSFT",
+       "nm": "Microsoft",
+       "sleeve": "castle",
+       "kind": "個別",
+       "ccy": "USD",
+       "sh": 8,
+       "bjpy": 497469,
+       "npx": 0,
+       "v": 0,
+       "note": "メモは公開済み",
+       "bdLots": [
+        {
+         "sh": 3,
+         "jpy": 190000,
+         "bd": "2026-04-15",
+         "who": "A",
+         "acct": "成長",
+         "src": "楽天証券 A 証券口座(新NISA) 3株（公開済みの記録）"
+        }
+       ]
+      },
+      {
+       "t": "NEWC",
+       "nm": "N",
+       "kind": "謎の種類",
+       "sh": 1
+      }
+     ]
+    }
+   },
+   "expect": [
+    "pf:portfolio:positions[1].kind"
+   ]
+  },
+  {
+   "name": "kind が既知の投資信託",
+   "send": {
+    "pf:portfolio": {
+     "asof": "2026-10-09",
+     "fx": 150,
+     "positions": [
+      {
+       "t": "MSFT",
+       "nm": "Microsoft",
+       "sleeve": "castle",
+       "kind": "個別",
+       "ccy": "USD",
+       "sh": 8,
+       "bjpy": 497469,
+       "npx": 0,
+       "v": 0,
+       "note": "メモは公開済み",
+       "bdLots": [
+        {
+         "sh": 3,
+         "jpy": 190000,
+         "bd": "2026-04-15",
+         "who": "A",
+         "acct": "成長",
+         "src": "楽天証券 A 証券口座(新NISA) 3株（公開済みの記録）"
+        }
+       ]
+      },
+      {
+       "t": "IFREE-NDX",
+       "nm": "iFreeNEXT NASDAQ100インデックス",
+       "kind": "投資信託",
+       "sh": 100
+      }
+     ]
+    }
+   },
+   "expect": []
+  },
+  {
+   "name": "今月の入金額は数字",
+   "send": {
+    "pf:monthly_total": "200000"
+   },
+   "expect": []
+  },
+  {
+   "name": "今月の入金額に文字",
+   "send": {
+    "pf:monthly_total": "17万"
+   },
+   "expect": [
+    "pf:monthly_total:"
+   ]
+  },
+  {
+   "name": "英語の値は一般の欄なら通す",
+   "send": {
+    "pf:portfolio": {
+     "asof": "2026-10-09",
+     "fx": 150,
+     "positions": [
+      {
+       "t": "MSFT",
+       "nm": "Microsoft",
+       "sleeve": "castle",
+       "kind": "個別",
+       "ccy": "USD",
+       "sh": 8,
+       "bjpy": 497469,
+       "npx": 0,
+       "v": 0,
+       "note": "メモは公開済み",
+       "bdLots": [
+        {
+         "sh": 3,
+         "jpy": 190000,
+         "bd": "2026-04-15",
+         "who": "A",
+         "acct": "成長",
+         "src": "楽天証券 A 証券口座(新NISA) 3株（公開済みの記録）"
+        }
+       ],
+       "tag": "Taro"
+      }
+     ]
+    }
+   },
+   "expect": []
+  },
+  {
+   "name": "同じ検問で2か所",
+   "send": {
+    "pf:portfolio": {
+     "asof": "2026-10-09",
+     "fx": 150,
+     "positions": [
+      {
+       "t": "MSFT",
+       "nm": "Microsoft",
+       "sleeve": "castle",
+       "kind": "個別",
+       "ccy": "USD",
+       "sh": 8,
+       "bjpy": 497469,
+       "npx": 0,
+       "v": 0,
+       "note": "メモは公開済み",
+       "bdLots": [
+        {
+         "sh": 3,
+         "jpy": 190000,
+         "bd": "2026-04-15",
+         "who": "A",
+         "acct": "成長",
+         "src": "楽天証券 A 証券口座(新NISA) 3株（公開済みの記録）"
+        },
+        {
+         "sh": 1,
+         "jpy": 80000,
+         "bd": "2026-10-10",
+         "who": "A",
+         "acct": "成長",
+         "src": "未知A"
+        },
+        {
+         "sh": 1,
+         "jpy": 80000,
+         "bd": "2026-10-10",
+         "who": "A",
+         "acct": "成長",
+         "src": "未知B"
+        }
+       ]
+      }
+     ]
+    }
+   },
+   "expect": [
+    "pf:portfolio:positions[0].bdLots[1].src",
+    "pf:portfolio:positions[0].bdLots[2].src"
+   ]
+  },
+  {
+   "name": "点灯日（ASCII の日付）",
+   "send": {
+    "g7ignite:map": {
+     "MSFT": "2026-10-10",
+     "NEW": "2026-10-11"
+    }
+   },
+   "expect": []
+  },
+  {
+   "name": "点灯日の値に日本語",
+   "send": {
+    "g7ignite:map": {
+     "MSFT": "2026-07-13",
+     "NEW": "未知の文"
+    }
+   },
+   "expect": [
+    "g7ignite:map:NEW"
+   ]
+  },
+  {
+   "name": "src の定型の末尾に改行（行末の改行を許さない）",
+   "send": {
+    "pf:portfolio": {
+     "asof": "2026-10-09",
+     "fx": 150,
+     "positions": [
+      {
+       "t": "MSFT",
+       "nm": "Microsoft",
+       "sleeve": "castle",
+       "kind": "個別",
+       "ccy": "USD",
+       "sh": 8,
+       "bjpy": 497469,
+       "npx": 0,
+       "v": 0,
+       "note": "メモは公開済み",
+       "bdLots": [
+        {
+         "sh": 3,
+         "jpy": 190000,
+         "bd": "2026-04-15",
+         "who": "A",
+         "acct": "成長",
+         "src": "楽天証券 A 証券口座(新NISA) 3株（公開済みの記録）"
+        },
+        {
+         "sh": 1,
+         "jpy": 80000,
+         "bd": "2026-10-10",
+         "who": "A",
+         "acct": "成長",
+         "src": "門の🏦保有で記録（約定日 2026-10-10）（A・成長）\n"
+        }
+       ]
+      }
+     ]
+    }
+   },
+   "expect": [
+    "pf:portfolio:positions[0].bdLots[1].src"
+   ]
+  },
+  {
+   "name": "src の定型の約定日が全角数字",
+   "send": {
+    "pf:portfolio": {
+     "asof": "2026-10-09",
+     "fx": 150,
+     "positions": [
+      {
+       "t": "MSFT",
+       "nm": "Microsoft",
+       "sleeve": "castle",
+       "kind": "個別",
+       "ccy": "USD",
+       "sh": 8,
+       "bjpy": 497469,
+       "npx": 0,
+       "v": 0,
+       "note": "メモは公開済み",
+       "bdLots": [
+        {
+         "sh": 3,
+         "jpy": 190000,
+         "bd": "2026-04-15",
+         "who": "A",
+         "acct": "成長",
+         "src": "楽天証券 A 証券口座(新NISA) 3株（公開済みの記録）"
+        },
+        {
+         "sh": 1,
+         "jpy": 80000,
+         "bd": "2026-10-10",
+         "who": "A",
+         "acct": "成長",
+         "src": "門の🏦保有で記録（約定日 ２０２６-１０-１０）（A・成長）"
+        }
+       ]
+      }
+     ]
+    }
+   },
+   "expect": [
+    "pf:portfolio:positions[0].bdLots[1].src"
+   ]
+  },
+  {
+   "name": "src の定型の約定日がアラビア数字",
+   "send": {
+    "pf:portfolio": {
+     "asof": "2026-10-09",
+     "fx": 150,
+     "positions": [
+      {
+       "t": "MSFT",
+       "nm": "Microsoft",
+       "sleeve": "castle",
+       "kind": "個別",
+       "ccy": "USD",
+       "sh": 8,
+       "bjpy": 497469,
+       "npx": 0,
+       "v": 0,
+       "note": "メモは公開済み",
+       "bdLots": [
+        {
+         "sh": 3,
+         "jpy": 190000,
+         "bd": "2026-04-15",
+         "who": "A",
+         "acct": "成長",
+         "src": "楽天証券 A 証券口座(新NISA) 3株（公開済みの記録）"
+        },
+        {
+         "sh": 1,
+         "jpy": 80000,
+         "bd": "2026-10-10",
+         "who": "A",
+         "acct": "成長",
+         "src": "門の🏦保有で記録（約定日 ٢٠٢٦-١٠-١٠）（A・成長）"
+        }
+       ]
+      }
+     ]
+    }
+   },
+   "expect": [
+    "pf:portfolio:positions[0].bdLots[1].src"
+   ]
+  },
+  {
+   "name": "note の売却定型の日付がアラビア数字",
+   "send": {
+    "pf:portfolio": {
+     "asof": "2026-10-09",
+     "fx": 150,
+     "positions": [
+      {
+       "t": "MSFT",
+       "nm": "Microsoft",
+       "sleeve": "castle",
+       "kind": "個別",
+       "ccy": "USD",
+       "sh": 8,
+       "bjpy": 497469,
+       "npx": 0,
+       "v": 0,
+       "note": "メモは公開済み　٢٠٢٦-10-10 2株売却（門で記録）",
+       "bdLots": [
+        {
+         "sh": 3,
+         "jpy": 190000,
+         "bd": "2026-04-15",
+         "who": "A",
+         "acct": "成長",
+         "src": "楽天証券 A 証券口座(新NISA) 3株（公開済みの記録）"
+        },
+        {
+         "sh": 1,
+         "jpy": 80000,
+         "bd": "2026-10-10",
+         "who": "A",
+         "acct": "成長",
+         "src": "門の🏦保有で記録（約定日 2026-10-10）（A・成長）"
+        }
+       ]
+      }
+     ]
+    }
+   },
+   "expect": [
+    "pf:portfolio:positions[0].note"
+   ]
+  },
+  {
+   "name": "who の末尾に改行",
+   "send": {
+    "pf:portfolio": {
+     "asof": "2026-10-09",
+     "fx": 150,
+     "positions": [
+      {
+       "t": "MSFT",
+       "nm": "Microsoft",
+       "sleeve": "castle",
+       "kind": "個別",
+       "ccy": "USD",
+       "sh": 8,
+       "bjpy": 497469,
+       "npx": 0,
+       "v": 0,
+       "note": "メモは公開済み",
+       "bdLots": [
+        {
+         "sh": 3,
+         "jpy": 190000,
+         "bd": "2026-04-15",
+         "who": "A",
+         "acct": "成長",
+         "src": "楽天証券 A 証券口座(新NISA) 3株（公開済みの記録）"
+        },
+        {
+         "sh": 1,
+         "jpy": 80000,
+         "bd": "2026-10-10",
+         "who": "A\n",
+         "acct": "成長",
+         "src": "門の🏦保有で記録（約定日 2026-10-10）（A・成長）"
+        }
+       ]
+      }
+     ]
+    }
+   },
+   "expect": [
+    "pf:portfolio:positions[0].bdLots[1].who"
+   ]
+  }
+ ]
+}
