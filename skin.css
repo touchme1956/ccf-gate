@@ -458,3 +458,89 @@ html[data-theme="light"] .pg .led{background:rgba(255,255,255,.80);}
   .gate-hero{margin-bottom:0;}
   .gate-hero img{height:calc(100vh - var(--navall,57px)) !important; height:calc(100svh - var(--navall,57px)) !important; object-position:88% 50%;}
 }
+
+/* ── 17. 保有の「ポートフォリオ」カード（v9.9.204・2026-10-10 ユーザー指示「このデザインと同じものを門のポートフォリオに加えたい」）──
+   家計アプリの画面（白いカード・円グラフ・年初来比と評価損益の2列・銘柄ごとの割合と前日比）と同じ作り。表示だけ。
+   色: 上＝青（--pfc-up）・下＝赤（--pfc-down）。門の緑へ替えるなら、この2語を var(--rb-up) / var(--rb-down) にするだけ。
+   札の色（円グラフ）は index.html の CCF_PFC_COLORS。 */
+.pfc{
+  --pfc-ink:#171516; --pfc-sub:#5A5859; --pfc-line:#E6E5E3; --pfc-bg:#ffffff;
+  --pfc-up:#3070EE; --pfc-down:#D12E3F; --pfc-acc:#ED7002; --pfc-flat:#6a7079; --pfc-arrow:#ffffff;
+  position:relative; box-sizing:border-box; max-width:480px; margin:16px auto 8px; padding:22px 24px 6px;
+  background:var(--pfc-bg); color:var(--pfc-ink); border:1px solid var(--pfc-line); border-radius:24px;
+  font-family:var(--rb-font); text-shadow:none;
+}
+html[data-theme="soft"] .pfc,html[data-theme="dark"] .pfc,html:not([data-theme]) .pfc{
+  --pfc-ink:var(--rb-ink); --pfc-sub:var(--rb-mute); --pfc-line:var(--rb-line2); --pfc-bg:var(--rb-card);
+  --pfc-up:#6EA8FF; --pfc-down:#FF6A5E; --pfc-acc:#FF9A3C; --pfc-flat:var(--rb-mute); --pfc-arrow:#0b0d10;
+}
+.pfc button{font:inherit; color:inherit; background:none; border:0; padding:0; margin:0; cursor:pointer;
+  -webkit-tap-highlight-color:transparent;}
+.pfc .up{color:var(--pfc-up);} .pfc .dn{color:var(--pfc-down);} .pfc .fl{color:var(--pfc-flat);}
+.pfc-h{display:flex; align-items:flex-start; justify-content:space-between; gap:12px;}
+.pfc-t{font-size:20px; font-weight:500; line-height:1.4; letter-spacing:.02em;}
+.pfc-s{font-size:13px; color:var(--pfc-sub); margin-top:2px;}
+.pfc-s.warn{color:var(--rb-warn);}
+.pfc .pfc-kebab{width:36px; height:36px; margin:-4px -8px 0 0; display:flex; align-items:center; justify-content:center; border-radius:50%;}
+.pfc-kebab svg{width:22px; height:22px; fill:#747474;}
+.pfc .pfc-kebab:hover{background:var(--rb-hover);}
+/* ⋮ のメニュー */
+.pfc-menu{display:none; position:absolute; top:58px; right:16px; z-index:5; min-width:196px; padding:6px 0;
+  background:var(--pfc-bg); border:1px solid var(--pfc-line); border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,.18);}
+.pfc-menu.on{display:block;}
+.pfc .pfc-menu button{display:block; width:100%; text-align:left; padding:11px 16px; font-size:14px; line-height:1.4;}
+.pfc .pfc-menu button:hover{background:var(--rb-hover);}
+.pfc .pfc-menu button.on{font-weight:700; color:var(--pfc-acc);}
+.pfc-menu button.on::after{content:" ✓";}
+.pfc-mh{margin-top:4px; padding:10px 16px 2px; border-top:1px solid var(--pfc-line); font-size:12px; color:var(--pfc-sub);}
+/* 円グラフ（外径240・内径160。12時から時計回り・評価額の大きい順） */
+.pfc-dn{position:relative; height:240px; margin:16px -24px 0;}
+.pfc-ring{display:block; width:240px; height:240px; margin:0 auto;}
+.pfc-lb{font-size:11px; font-weight:500; fill:#171516; stroke:rgba(255,255,255,.85); stroke-width:3px; paint-order:stroke; stroke-linejoin:round;}
+.pfc-c{position:absolute; left:50%; top:50%; width:150px; transform:translate(-50%,-50%); text-align:center; line-height:1.25;}
+.pfc-c1{font-size:14px; margin-bottom:2px;}
+.pfc-c2{font:400 20px/1.25 var(--rb-num); letter-spacing:-.01em; white-space:nowrap;}
+.pfc-c2.sm{font-size:17px;}
+.pfc-c3{margin-top:6px; font-size:13px;}
+.pfc-c4{display:flex; align-items:center; justify-content:center; font-size:13px; white-space:nowrap;}
+.pfc .pfc-share{position:absolute; right:5px; bottom:0; display:inline-flex; align-items:center; gap:4px; padding:3px 6px;
+  font-size:12.5px; line-height:1.4; color:var(--pfc-acc); background:var(--pfc-bg); border:1.5px solid var(--pfc-acc); border-radius:6px;}
+.pfc-share svg{width:14px; height:14px; fill:currentColor; stroke:currentColor; stroke-width:2; stroke-linecap:round;}
+/* 上下の丸いバッジ（↗ 青／↘ 赤） */
+.pfc-b{flex:none; width:1.05em; height:1.05em; margin-left:.25em; vertical-align:-.17em;}
+.pfc-b circle{fill:currentColor;}
+.pfc-b path{fill:none; stroke:var(--pfc-arrow); stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;}
+/* 年初来比・評価損益 */
+.pfc-st{display:grid; grid-template-columns:1fr 1fr; margin:22px -24px 0;}
+.pfc-sc{padding:2px 6px 6px; text-align:center;}
+.pfc-sc+.pfc-sc{border-left:1px solid var(--pfc-line);}
+.pfc-sc .k{font-size:14px; color:var(--pfc-ink);}
+.pfc-sc .v{display:flex; align-items:center; justify-content:center; margin-top:2px; font:400 20px/1.3 var(--rb-num); white-space:nowrap;}
+.pfc-sc .p{font-size:16px; line-height:1.4;}
+/* 銘柄ごとの内訳 */
+.pfc-ls{margin-top:20px;}
+.pfc-r{display:flex; align-items:center; gap:16px; min-height:80px; padding:8px 0;}
+.pfc-dot{flex:none; width:16px; height:16px; border-radius:50%; background:var(--pfc-c);}
+/* 名前は2行まで・溢れたら…。右の列は、名前に最低 約60px を残すため、狭い画面では前日比の行を折り返す（%とバッジは離さない） */
+.pfc-n{flex:1 1 60px; min-width:0; font-size:17px; line-height:1.3; overflow:hidden; display:-webkit-box; -webkit-box-orient:vertical;
+  -webkit-line-clamp:2; overflow-wrap:anywhere;}
+.pfc-n.sm{font-size:13px;}
+.pfc-rr{flex:0 1 auto; min-width:0; max-width:calc(100% - 108px); display:flex; flex-direction:column; align-items:flex-end; text-align:right; line-height:1.4;}
+.pfc-v{font:400 20px/1.3 var(--rb-num); white-space:nowrap;}
+.pfc-w{font-size:13px; color:var(--pfc-sub);}
+.pfc-dd{display:block; font-size:12.5px;}
+.pfc .nb{white-space:nowrap;}
+.pfc-note{padding:6px 0 18px; font-size:12px; line-height:1.7; color:var(--pfc-sub);}
+/* 「割合をコピーしました」などの一言（固定のナビの上に出す） */
+.pfc-toast{position:fixed; left:50%; bottom:124px; z-index:9999; max-width:86vw; padding:10px 16px; border-radius:999px;
+  background:#171516; color:#fff; font-size:13px; opacity:0; pointer-events:none; transform:translateX(-50%) translateY(8px);
+  transition:opacity .2s,transform .2s;}
+.pfc-toast.on{opacity:1; transform:translateX(-50%);}
+@media(max-width:359px){
+  .pfc{padding:18px 16px 4px;}
+  .pfc-dn,.pfc-st{margin-left:-16px; margin-right:-16px;}
+  .pfc-r{gap:10px;}
+  .pfc-rr{max-width:calc(100% - 96px);}
+  .pfc-v{font-size:18px;} .pfc-dd,.pfc-w{font-size:12px;}
+  .pfc-sc .v{font-size:18px;}
+}
