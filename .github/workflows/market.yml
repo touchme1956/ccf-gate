@@ -82,6 +82,13 @@ jobs:
       - name: トータルリターン（表示専用・円建て）
         continue-on-error: true
         run: timeout 300 python3 night/fetch_returns.py | tail -20
+      # ── 配当（直近12か月の1株あたり・v9.9.209・2026-10-10 ユーザー「保有の銘柄を押すと詳細が見れるように」）──
+      #   🏦保有の銘柄の詳細画面の「配当利回り」の材料。Yahoo の events=div を足すだけ（鍵不要・表示専用）。
+      #   取れなかった銘柄は前回の値を stale で残す（0で埋めない）。失敗しても他の段を止めない。
+      #   ⚠ 下の git add に out/holdings_div.json を入れ忘れると「毎営業日 作り直して捨てる」型になる。
+      - name: 配当（直近12か月・表示専用）
+        continue-on-error: true
+        run: timeout 300 python3 night/fetch_divs.py | tail -8
 
       - name: コミット
         run: |
@@ -100,7 +107,7 @@ jobs:
           #   ここは今日は全パス実在するが、`out/gate_history.jsonl` / `out/gate_state.json` は
           #   gate_history.py が初回に作るまで存在しない＝**新しい環境では全滅する**形だった。
           . night/git_add_safe.sh
-          ccf_git_add market_data.json out/dashboard.json out/returns.json out/returns_series.json 'out/*_gate_pack.json' out/score_all.json out/er_ledger.json out/validate_fail.json out/gate_history.jsonl out/gate_state.json
+          ccf_git_add market_data.json out/dashboard.json out/holdings_div.json out/returns.json out/returns_series.json 'out/*_gate_pack.json' out/score_all.json out/er_ledger.json out/validate_fail.json out/gate_history.jsonl out/gate_state.json
           git diff --staged --quiet || git commit -m "$MSG"
           # ⚠2026-08-18: 素の `git push` は remote が進んだだけで弾かれ、
           #   **作ったコミットがまるごと捨てられる**（market.yml が2営業日連続で70ファイル失った）。
