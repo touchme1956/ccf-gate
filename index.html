@@ -1161,7 +1161,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.205</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.207</span></h1>
     <div style="margin:6px 0 2px"><button id="hintBtn" onclick="ccfToggleHints()" style="padding:5px 11px;background:none;border:1px solid var(--line);border-radius:7px;color:var(--dim);font-size:11.5px;cursor:pointer">欄の注記を出す</button></div>
   <div class="sub"><details class="why plain" data-fold="6"><summary>ℹ この画面について</summary><div class="why-body"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——絶対MOAT指数をΩの直接項に加え(実効≒22%)、<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%。⚠率そのものは退場社の抜けた母集団で測った下限の側で、2013年の質実証プールでは4.2〜19.2%の幅がある〔2026-09-23 に退場日を是正した後の値・是正前は2.0〜25.7%〕）。</div></details></div>
   </div>
@@ -3479,7 +3479,7 @@ function ccfNetRows(np, pf){
   // ★v9.9.202: 同じ指数の本（QQQM・iDeCo の本）は目標の本の保有に数えたので、ここ（目標から外れた本）には出さない
   const drop = Object.keys(held).filter(k=>!tgt.map(x=>String(x).toUpperCase()).includes(k)&&!sameOf[k])
                      .map(k=>({t:k, pos:held[k]}));
-  // ★その他 ETF・投資信託（v9.9.204・2026-10-09 ユーザー明示指示「QQQ50% SMH20% 個別株15% その他ETF投資信託15%に変更して」）
+  // ★その他 ETF・投資信託（v9.9.206・2026-10-09 ユーザー明示指示「QQQ50% SMH20% 個別株15% その他ETF投資信託15%に変更して」）
   //   target.ami_other = {label, buy}。目標>0 の本（NASDAQ100・SMH など）とその同じ指数の本**以外**の ETF・投資信託——
   //   目標0%で持っている本と目標に無い本（drop）——の保有を、buy（その他の区分で新しいお金を入れる本）の保有%に足す
   //   ＝ami_same_index と同じ形で1つの区分として数える（区分の比率・1株単位の注文・旧の割り方のどれも同じ保有を見る）。
@@ -3611,7 +3611,7 @@ function ccfSetTotalAmt(el){
      旧（v9.9.199）は XLK と SMH を「ETF 40%」の1区分にまとめていた——XLK が目標を超えていると、目標を下回る SMH まで
      区分ごと¥0 になった（実測 2026-10-06: XLK 約30%・SMH 約16% → ETF の区分 46% が目標40%超過で SMH も5か月目まで¥0）。
      目標0%で持ち続けている本（GRID・ITA・NASA など）はどの区分にも入らない（新しいお金は回らない・総資産には数える）。
-     ★v9.9.204（2026-10-09 ユーザー明示指示「QQQ50% SMH20% 個別株15% その他ETF投資信託15%に変更して」）: target.ami_other があれば、
+     ★v9.9.206（2026-10-09 ユーザー明示指示「QQQ50% SMH20% 個別株15% その他ETF投資信託15%に変更して」）: target.ami_other があれば、
      その buy の本の区分を「その他 ETF・投資信託」とし、目標0%の本と目標に無い本の保有もそこへ数える（ccfNetRows が buy の本の保有%に足す）。
    区分の鍵は総資産（tot）以外の、数の目標（t）を持つ要素。表示の名前（nm）・金額で買えるか（fund）も同じ要素に持たせる。
    円は整数に丸め、合計を入金にぴったり合わせる（端数は不足の大きい区分へ）。 */
@@ -3625,7 +3625,7 @@ function ccfCatLabel(K,g,o){
   const x=(K&&K[g])||{}, plain=!!(o&&o.plain), full=!!(o&&o.full);
   if(g==='c')return plain?'個別株':'🏰 個別株';
   const base=x.nm||({e:'ETF',f:'投資信託'}[g])||String(g).replace(/^n:/,'');
-  // ★その他 ETF・投資信託（v9.9.204）: 表の形は「今は {buy} で買う・{数えている他の本} を含む」まで出す
+  // ★その他 ETF・投資信託（v9.9.206）: 表の形は「今は {buy} で買う・{数えている他の本} を含む」まで出す
   if(x.other){
     if(plain||!full)return (plain?'':'◈ ')+base;
     const mem=(x.other.members||[]).filter(t=>t!==x.other.buy);
@@ -3829,7 +3829,7 @@ function ccfBoughtBtn(t,nm,px,ccy,sleeve,fund){
   const q=ccfBoughtEsc;
   return `<span class="bctl" style="white-space:nowrap;margin-left:6px;display:inline-flex;align-items:center;gap:5px"`
    +` data-t="${q(t)}" data-nm="${q(nm)}" data-px="${px||0}" data-ccy="${q(ccy||'USD')}" data-sleeve="${(sleeve==='net')?'net':'castle'}" data-fund="${fund?'1':''}">`
-   // ★暗号資産（v9.9.205）: ボタンは「＋BTC」（株ではない）——数量を足す
+   // ★暗号資産（v9.9.207）: ボタンは「＋BTC」（株ではない）——数量を足す
    +`<button onclick="ccfBoughtOpen(this)" title="${fund?'買った金額(円)を🏦保有へ足す（口数は基準価額から換算）':/-USD$/i.test(String(t))?'買った数量を🏦保有へ足す（加算）':'買った株数を🏦保有へ足す（加算）'}。判定には使わない"`
    +` style="padding:4px 8px;font-size:11px;font-family:inherit;cursor:pointer;background:rgba(143,201,164,.10);`
    +`border:1px solid rgba(143,201,164,.35);border-radius:6px;color:#8fc9a4">${fund?'＋円':/-USD$/i.test(String(t))?'＋'+ccfUnitOf(t,false):'＋株'}</button></span>`;
@@ -4372,7 +4372,7 @@ function ccfWholeShareBody(pass, tw, pxInfo, NO, T, catIn){
     +`<div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span style="font-size:12.5px;min-width:0;overflow-wrap:anywhere;color:${col||'var(--ink)'}">${ccfIcon(name)}${name}</span>${right?`<span style="white-space:nowrap;flex-shrink:0;font-size:12.5px">${right}</span>`:''}</div>`
     +(sub?`<div style="font-size:11px;margin-top:1px;line-height:1.55">${sub}</div>`:'')+`</div>`;
   const tgtTxt=it=>`<span style="white-space:nowrap">目標${(+it.tw).toFixed(1)}% / 保有${(+it.pos).toFixed(1)}%</span>`;
-  // ★その他 ETF・投資信託（v9.9.204）: その他の区分で買う本の行は、目標と保有が区分全体のものだと添える（保有は数えている他の本を含む）
+  // ★その他 ETF・投資信託（v9.9.206）: その他の区分で買う本の行は、目標と保有が区分全体のものだと添える（保有は数えている他の本を含む）
   const othNm=r=>ccfBoughtEsc((r&&r.otherLabel)||'その他 ETF・投資信託');
   const othTxt=r=>(r&&r.otherBuy)?`　<span style="white-space:nowrap">（${othNm(r)}の区分で買う本${(r.oth&&r.oth.length)?`・うち ${r.oth.join('・')} ${(+r.othPos||0).toFixed(1)}%`:''}）</span>`:'';
   const why={}; P.wait.forEach(w=>why[w.k]=`不足 ${ccfYen(w.need)}（1株 ${ccfYen(w.price)} の半分に届いたら買う）`);
@@ -7871,7 +7871,7 @@ async function renderPlan(){
       const fd=r.fund||null;
       K[ccfCatKeyOf(r)]={t:+r.tw, now:+r.pos||0, nm:fd?(fd.index||fd.short||r.nm||r.t):(r.nm||r.t), fnm:fd?(fd.short||fd.name||''):'',
         fund:!!fd, alias:r.aliasNm||r.alias||[]};
-      // ★その他 ETF・投資信託（v9.9.204）: buy の本の区分＝その他の区分。保有（now）は ccfNetRows が足した他の本を含む
+      // ★その他 ETF・投資信託（v9.9.206）: buy の本の区分＝その他の区分。保有（now）は ccfNetRows が足した他の本を含む
       if(r.otherBuy)Object.assign(K[ccfCatKeyOf(r)],{nm:r.otherLabel||'その他 ETF・投資信託', other:{buy:r.t, members:r.oth||[]}}); });
     K.c={t:+ST.c, now:+LV.c||0, nm:'個別株'};
     const zr=R.filter(r=>!r.sameAs&&!r.otherOf&&!((+r.tw||0)>0)&&(+r.pos||0)>0).map(r=>({t:r.t,now:+r.pos||0}))

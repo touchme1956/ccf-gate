@@ -20,7 +20,7 @@
  *   ⑮ こどもNISA（v9.9.203）: 子どもの口座の自動の積立も注文書で配らない・NISA の月の計画より少なければ知らせる。
  *      2026-10-08「比率に数えて」から iDeCo と同じく bucket（NASDAQ100）の区分に数える（ccfCatBudget の pre は配列も受け、区分ごとに足す）・
  *      注文書の行の「✓ 保有へ」で口座 こどもNISA のロットを🏦保有へ足す・bucket が空なら比率の外（旧の扱い）
- *   ⑯ その他 ETF・投資信託（v9.9.204）: target.ami_other の buy の本（XLK）の区分に、目標0%の本と目標に無い本の保有も数える・
+ *   ⑯ その他 ETF・投資信託（v9.9.206）: target.ami_other の buy の本（XLK）の区分に、目標0%の本と目標に無い本の保有も数える・
  *      区分の名前は「その他 ETF・投資信託」・設定を消せば v9.9.203 の姿（XLK だけの区分＋区分の外の「その他」の1行）
  *
  * playwright が要るので CI には入れていない。使い方: node night/check_sleeve_split.js
@@ -353,13 +353,13 @@ const srv = http.createServer((q, r) => {
       const tot = [...document.querySelectorAll('#pg5 div')].map(d => d.innerText).find(x => /^合計 約¥/.test(x.trim()) && x.length < 200) || '';
       const CI = window.__ccfCat || {}, labs = {};
       ccfCatKeys(CI).forEach(g => { labs[g] = ccfCatLabel(CI, g, { plain: true }); });
-      // 注文書の「金額で買う」の行（投資信託・暗号資産）の文——v9.9.205 で暗号資産の行が増えた
+      // 注文書の「金額で買う」の行（投資信託・暗号資産）の文——v9.9.207 で暗号資産の行が増えた
       const fr = [...document.querySelectorAll('#pg5 div.planrow')].map(e => e.innerText).filter(x => /金額で買う/.test(x));
       return { OB, sec, line: lines.length ? lines[lines.length - 1] : '', rows, tot, labs, fr };
     });
     if (m === 'cat') {
       const ord = r12.rows.map(x => x.g).join(','), ys = r12.rows.map(x => x.yen);
-      // v9.9.204〜205: 区分の並びと名前は正本から（v9.9.204 でXLKの区分の名前が「その他 ETF・投資信託」、v9.9.205 で暗号資産の2区分が増えた）
+      // v9.9.206〜207: 区分の並びと名前は正本から（v9.9.206 でXLKの区分の名前が「その他 ETF・投資信託」、v9.9.207 で暗号資産の2区分が増えた）
       const TG = base.target, AL = new Set(Object.values(TG.ami_same_index || {}).flat().map(x => String(x).toUpperCase()));
       const want = (TG.ami_names || []).map(x => String(x).toUpperCase()).filter(k => !AL.has(k) && (+(TG.ami_weights || {})[k] || 0) > 0).map(k => 'n:' + k).concat(['c']);
       const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), names = r12.rows.map(x => r12.labs[x.g] || x.g);
@@ -369,7 +369,7 @@ const srv = http.createServer((q, r) => {
          && JSON.stringify(lineY) === JSON.stringify(ys) && ys.reduce((a, v) => a + v, 0) + rest >= 169900 && ys.reduce((a, v) => a + v, 0) <= 170000,
          "⑫ 割り方 'cat'（実データ）: 区分は " + names.join(' → ') + ' の' + names.length + 'つ（正本の並び）・上の1行と区分の比率の表が同じ円（' + ys.join(' / ') + (rest ? '・残り' + rest : '') + '）');
     }
-    // ★暗号資産（v9.9.205）: 金額で買う行は「取引所で金額で買う（NISAの外）」——「残りの円は全部ここへ」は投資信託の行だけ
+    // ★暗号資産（v9.9.207）: 金額で買う行は「取引所で金額で買う（NISAの外）」——「残りの円は全部ここへ」は投資信託の行だけ
     {
       const LB = base.target.ami_labels || {}, OB0 = r12.OB || {};
       const cxs = Object.keys(OB0).filter(t => /-USD$/.test(t) && (+OB0[t] || 0) > 0);
@@ -599,7 +599,7 @@ const srv = http.createServer((q, r) => {
        '   開始月の前: 行なし・入金額を全部配る・案内「' + (r3.next || r3.note).slice(0, 80) + '」');
   }
 
-  // ⑯ その他 ETF・投資信託（v9.9.204・2026-10-09 ユーザー明示指示「QQQ50% SMH20% 個別株15% その他ETF投資信託15%に変更して」）:
+  // ⑯ その他 ETF・投資信託（v9.9.206・2026-10-09 ユーザー明示指示「QQQ50% SMH20% 個別株15% その他ETF投資信託15%に変更して」）:
   //   target.ami_other の buy の本の区分に、目標0%で持っている本と目標に無い本（drop）の保有を数える。同じ指数の本（QQQM）は数えない
   {
     await pg.goto('http://localhost:' + PORT + '/index.html'); await pg.waitForTimeout(600);

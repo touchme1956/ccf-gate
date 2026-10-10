@@ -78,7 +78,7 @@ const yenOf = s => +String(s).replace(/[¥,\s]/g, '');
   // 注文書の ETF の部分だけを切り出す（見出しだけの行「◈ ETF」から、行頭が「合計」の行まで）
   //   ⚠ 「◈ ETFの門 ↗」（ページ上部のリンク）や割り方の行の「袖の合計で測るなら」に引っかからないよう、行単位で探す
   const etfBlock = t => { const m = t.match(/\n◈ ETF\n([\s\S]*?\n合計[^\n]*)/); return m ? m[1] : ''; };
-  // ★v9.9.205: 「金額で買う」の行は暗号資産（BTC・ETH）にもある——投資信託の行（基準価額を出す行）だけを読む
+  // ★v9.9.207: 「金額で買う」の行は暗号資産（BTC・ETH）にもある——投資信託の行（基準価額を出す行）だけを読む
   const fundYen = blk => { const m = blk.match(/¥([\d,]+) 金額で買う\n[^\n]*基準価額/); return m ? yenOf(m[1]) : null; };
   const ovRow = blk => { const m = blk.match(new RegExp(OVT + '[\\s\\S]{0,40}?(\\d+)株[\\s\\S]{0,40}?¥([\\d,]+)[\\s\\S]{0,80}?上限を超えた ¥([\\d,]+)')); return m ? { sh: +m[1], cost: yenOf(m[2]), over: yenOf(m[3]) } : null; };
 
