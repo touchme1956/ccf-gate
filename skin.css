@@ -305,17 +305,7 @@ html[data-theme] [style*="border:1px solid rgba(201,166,74"]:not(button),
 html[data-theme] [style*="border:1px dashed rgba(201,166,74"]:not(button),
 html[data-theme] [style*="border:1px solid var(--gold-line)"]:not(button){border-color:var(--rb-line) !important;}
 
-/* ── 9. 盤の見出し（Robinhood の残高）─────────────────────── */
-.rb-hero{padding:6px 2px 18px; margin:4px 0 14px; border-bottom:1px solid var(--rb-line);}
-.rb-hero .k{font-size:13px; color:var(--rb-mute); font-weight:600;}
-.rb-hero .v{font:800 clamp(34px,7vw,46px)/1.1 var(--rb-num); letter-spacing:-.03em; color:var(--rb-ink); margin:4px 0 6px;}
-.rb-hero .d{font-size:14.5px; font-weight:600;}
-.rb-hero .d .t{color:var(--rb-mute); font-weight:500; margin-left:6px; font-size:13px;}
-.rb-hero .chips{display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;}
-.rb-hero .chip{font-size:12.5px; color:var(--rb-ink2); background:var(--rb-bg2); border:1px solid var(--rb-line);
-  border-radius:999px; padding:4px 12px;}
-.rb-hero .chip b{color:var(--rb-ink);}
-.rb-hero .chip.warn{color:var(--rb-warn); background:var(--rb-warn-bg); border-color:transparent;}
+/* ── 9. 騰落の色と前日比のピル（Robinhood の作法）。※総資産の大きな見出し .rb-hero は v9.9.206 で撤去 ─────────── */
 .rb-up{color:var(--rb-up) !important;} .rb-down{color:var(--rb-down) !important;} .rb-flat{color:var(--rb-mute) !important;}
 /* 前日比の丸いピル（一覧の右端に置く作法） */
 .rb-pill{display:inline-block; min-width:74px; text-align:center; font-weight:700; font-size:12.5px;
@@ -373,31 +363,13 @@ body:has(#pg10.on) .gate-hero{display:block;}
 #planBox .led .ln{flex:0 0 auto !important; min-width:170px; max-width:100%;}
 #planBox .led .ln span,#planBox .led .ln div{white-space:nowrap;}
 
-/* ── 12. 金額を隠す切替（ユーザー指示「総資産などは隠せるようにして」）── 盤の「総資産」の横と 📈成績の先頭 */
+/* ── 12. 金額を隠す切替（ユーザー指示「総資産などは隠せるようにして」）── 📈成績と 🏦保有の先頭（右寄せの1行） */
 .ccf-money-btn{margin-left:10px; padding:3px 10px; font:600 12px/1.4 var(--rb-sans,Inter,"Noto Sans JP",sans-serif);
   color:var(--rb-ink2,#333); background:var(--rb-bg2,#f3f4f6); border:1px solid var(--rb-line,#e5e7eb); border-radius:999px;
   cursor:pointer; vertical-align:middle;}
 .ccf-money-btn[aria-pressed="true"]{color:var(--rb-ink,#111); border-color:var(--rb-ink2,#555);}
 
-/* ── 13. 総資産の札（ユーザー指示「これらを使って門が、おしゃれになるようにして」→「これだけ採用して」・2026-09-23）──
-   青空と金のリボンの絵（assets/gate-bg-sky.jpg・ユーザー提供・2026-09-23）を 📊盤の「総資産」の札の地に敷く。表示だけ・判定に不使用。 */
-/* 📊盤の「総資産」の札：青空の絵を地に敷き、白の数字にする */
-.rb-hero{position:relative; overflow:hidden; border:0 !important; border-radius:18px; padding:22px 20px 20px !important;
-  color:#eef1f7; background:#1d4f8f url('assets/gate-bg-sky.jpg') center 55%/cover no-repeat;
-  box-shadow:0 10px 30px rgba(6,18,43,.28);}
-.rb-hero::before{content:""; position:absolute; inset:0; pointer-events:none;
-  background:linear-gradient(180deg,rgba(8,32,72,.30),rgba(6,22,52,.62));}
-.rb-hero > *{position:relative; text-shadow:0 1px 6px rgba(4,16,40,.55);}
-.rb-hero .k{color:rgba(238,241,247,.72) !important; letter-spacing:.08em;}
-.rb-hero .v{color:#fff !important; text-shadow:0 2px 18px rgba(0,0,0,.35);}
-.rb-hero .d .t{color:rgba(238,241,247,.62) !important;}
-.rb-hero .rb-up{color:#5fe39a !important;} .rb-hero .rb-down{color:#ff8f7e !important;} .rb-hero .rb-flat{color:#cfd6e3 !important;}
-.rb-hero .chip{color:#e9edf5 !important; background:rgba(255,255,255,.08) !important; border-color:rgba(255,255,255,.16) !important;
-  backdrop-filter:blur(4px);}
-.rb-hero .chip b{color:#fff !important;}
-.rb-hero .chip.warn{color:#ffd28a !important; background:rgba(240,169,58,.14) !important; border-color:transparent !important;}
-.rb-hero .ccf-money-btn{color:#f4efe4; background:rgba(255,255,255,.10); border-color:rgba(226,194,122,.45);}
-.rb-hero .ccf-money-btn[aria-pressed="true"]{color:#e2c27a; border-color:#e2c27a;}
+/* ── 13. （欠番）総資産の札は v9.9.206 で撤去（2026-10-10 ユーザー「総資産要らないかも」）。青空の絵 assets/gate-bg-sky.jpg も削除。戻すなら git 履歴（v9.9.205 以前）から ── */
 
 /* ── 14. 文字を見やすく（2026-09-23 ユーザー指示「もっと文字を見やすくできない？」）──────
    実測（390px・全12ページ）: 12px未満の文字が 今日57% / 成績51% / 点検61%、コントラスト4.5:1未満が 13〜60%。
@@ -445,7 +417,6 @@ html[data-theme="light"] body:has(#pg8.on) #pgBg{background-image:url("assets/bg
 html[data-theme="light"] body:has(#pg10.on) #pgBg{background-image:url("assets/bg/bg10.jpg");}
 /* 背景の上の本文（カードの外の段落）にも白いにじみの縁取りを付け、絵の模様の上でも字が沈まないようにする */
 html[data-theme="light"] .pg{text-shadow:0 0 6px rgba(255,255,255,.95),0 0 2px rgba(255,255,255,.9);}
-html[data-theme="light"] .pg .rb-hero,html[data-theme="light"] .pg .rb-hero *{text-shadow:none;}
 html[data-theme="light"] .pg .led{background:rgba(255,255,255,.80);}
 
 /* ── 16. 看板を最初の画面いっぱいに（2026-09-23 ユーザー指示「最初の画面はこの画像が一面に出るように調整して」）──────
