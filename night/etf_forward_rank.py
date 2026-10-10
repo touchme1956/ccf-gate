@@ -194,7 +194,8 @@ def holdings_of(t, prof_old, prof_new):
     return []
 
 
-def main():
+def main(write=True):
+    """write=False なら書かずに rows・chains を返す（組み合わせの道具 etf_forward_combo.py が同じ計算を使う）"""
     log = []
     prof_old = (json.load(open(os.path.join(BASE, 'out', 'etf_profiles.json'))).get('etfs') or {})
     pnew_path = os.path.join(BASE, 'out', 'etf_forward_profiles.json')
@@ -506,6 +507,9 @@ def main():
             '判定・配分には使わない（材料）',
         ],
     }
+    res = dict(rows=rows, chains=chains, spy=spy, doc=doc)
+    if not write:
+        return res
     json.dump(doc, open(OUT, 'w'), ensure_ascii=False, indent=1)
     print(f'→ {OUT}')
     print(f"{'順':>2} {'候補':6} {'名前':16} {'平均':>6} {'最悪':>6} {'A1':>6} {'A2':>6} {'B':>6} {'C':>6}  各世界の順位   上位10の数 感度")
@@ -517,6 +521,7 @@ def main():
     for k, v in sens.items():
         print(f'  {k}: {" ".join(v)}')
     print('つなぎ目:', {k: (v['corr'], v['overlap_months']) for k, v in checks.items()})
+    return res
 
 
 if __name__ == '__main__':
