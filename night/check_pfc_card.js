@@ -18,6 +18,8 @@
  *   F 投資信託の行（前日比「—」）・評価額が出せない行（注記で名指し・円グラフに入れない）・系列に無い銘柄があれば年初来比は「—」
  *   G 年初来比（去年の系列があれば 今の評価額 − 去年末の評価額・％も出る）
  *   H 保有が空ならカードを出さない  I 1銘柄だけなら全周の1つの円
+ *   J 為替込みの前日比（v9.9.205・fx.prev があるとき）: 合計・うち為替・各行を**独立に計算した値**と突き合わせる／円建ての行は為替の影響を受けない
+ *   K fx.prev が無い・取得失敗の据え置き（stale）の日は株価だけ（画面にそう書く）
  *
  * 使い方: NODE_PATH=$(npm root -g) node night/check_pfc_card.js [--width 360]
  *   前提: playwright と Chromium。終了コード 1 = 1件でも ✗。
@@ -44,8 +46,8 @@ const POS = [
 const PX = { MSFT: [500, -1.9608], ASML: [1500, 0.5], XLK: [200, -1.0], SMH: [610, -3.0], QQQM: [300, 0.0] };
 // 評価額: MSFT 600,000 / ASML 225,000 / XLK 720,000 / SMH 366,000 / QQQM 360,000 ＝ 2,271,000
 const TOT = 2271000;
-const DASH = () => ({ asof: '2026-10-09T01:00:00+00:00', fx: { USDJPY: FX }, news: {},
-  quotes: Object.fromEntries(Object.entries(PX).map(([t, [px, c]]) => [t, { px, prev: px / (1 + c / 100), chgPct: c, src: 'fixture' }])) });
+const DASH = (o = {}) => ({ asof: '2026-10-09T01:00:00+00:00', fx: Object.assign({ USDJPY: FX }, o.fx || {}), news: {},
+  quotes: Object.assign(Object.fromEntries(Object.entries(PX).map(([t, [px, c]]) => [t, { px, prev: px / (1 + c / 100), chgPct: c, src: 'fixture' }])), o.q || {}) });
 const SERIES = (extra) => {
   const days = ['2026-04-08', '2026-10-08'], val = [225000, 2200000];
   const s = { days, val, inv: [226006, 2148003], tr: val.slice(), bmk: [226006, 2100000], tickers: POS.map(p => p.t), n: 5, base_ccy: 'JPY' };
@@ -70,7 +72,7 @@ const jr = (r, o) => r.fulfill({ status: 200, contentType: 'application/json', b
     p.on('pageerror', e => errs.push('PAGEERROR ' + e.message));
     await p.route('**/*', r => {
       const u = r.request().url();
-      if (/out\/dashboard\.json/.test(u)) return o.noDash ? r.fulfill({ status: 404, body: '' }) : jr(r, DASH());
+      if (/out\/dashboard\.json/.test(u)) return o.noDash ? r.fulfill({ status: 404, body: '' }) : jr(r, DASH(o));
       if (/out\/returns_series\.json/.test(u)) return jr(r, SERIES(o.prevYear));
       return r.continue();
     });
@@ -112,6 +114,8 @@ const jr = (r, o) => r.fulfill({ status: 200, contentType: 'application/json', b
       ok(a && a.ytdP === '--%', '年初来比の％は「--%」（今年に買い始めた＝年初の評価額0）');
       ok(a && /^[−]?\d+\.\d\d%$/.test(a.plP), `評価損益の％（${a && a.plP}）`);
       ok(a && a.sw <= a.cw, `横にはみ出さない（${a && a.sw}/${a && a.cw}）`);
+      const h0 = await p.evaluate(() => document.querySelector('.rb-hero').innerText);
+      ok(/株価のみ/.test(h0), 'fx.prev が無い日の見出しは「株価のみ」（為替を黙って0と読まない）');
       await ctx.close();
     }
 
@@ -141,9 +145,12 @@ const jr = (r, o) => r.fulfill({ status: 200, contentType: 'application/json', b
     {
       const { p, ctx } = await open(); await showDash(p, base, true);
       await p.click('.pfc-kebab'); await p.click('#pfcMenu button:has-text("金額を隠す")'); await p.waitForTimeout(1400);
-      const r = await p.evaluate(() => ({ txt: document.getElementById('pfcCard').innerText, key: localStorage.getItem('pf:showMoney') }));
+      const r = await p.evaluate(() => { const c = document.getElementById('pfcCard').cloneNode(true);
+        const fx = (c.querySelector('.pfc-fx') || {}).textContent || ''; c.querySelectorAll('.pfc-fx').forEach(e => e.remove());
+        return { txt: c.innerText, fx, key: localStorage.getItem('pf:showMoney') }; });
       ok(r.key === '0', 'pf:showMoney=0（隠す）になる');
-      ok(!/¥[0-9]/.test(r.txt), 'カードの中に ¥数字 が1つも残らない');
+      ok(!/¥[0-9]/.test(r.txt), '保有の金額は ¥数字 が1つも残らない（ドル円の行は市場の値なので除く）');
+      ok(/ドル円 ¥150\.00/.test(r.fx), 'ドル円は保有の金額ではないので、隠してもそのまま出る');
       ok(/\d+\.\d\d%/.test(r.txt) && /割合/.test(r.txt), '％（評価損益・割合）は出したまま');
       await ctx.close();
     }
@@ -217,6 +224,69 @@ const jr = (r, o) => r.fulfill({ status: 200, contentType: 'application/json', b
       const r = await p.evaluate(() => ({ n: document.querySelectorAll('.pfc-ring circle').length, da: document.querySelector('.pfc-ring circle').getAttribute('stroke-dasharray'), w: document.querySelector('.pfc-w').textContent }));
       ok(r.n === 1 && parseFloat(r.da.split(' ')[0]) > 620 && /100\.0%/.test(r.w), `全周の1つの円（${r.da}・${r.w}）`);
       await ctx.close();
+    }
+
+    // ── 独立な計算（門のコードを写さない）: 各行の 前日の評価額 ＝ 株価を前日へ戻す × ドル円も前日へ戻す（ドル建てだけ）
+    const expectDay = (pos, quotes, fxNow, fxPrev) => {
+      let day = 0, prevSum = 0, fxJ = 0, priceJ = 0; const rows = {};
+      for (const x of pos) {
+        const q = quotes[x.t]; if (!q) continue;
+        const usd = x.ccy !== 'JPY', k = usd ? fxNow : 1;
+        const val = x.sh * q[0] * k;
+        const vPx = val / (1 + q[1] / 100);
+        const vPrev = usd && fxPrev ? vPx * (fxPrev / fxNow) : vPx;
+        day += val - vPrev; prevSum += vPrev; if (usd && fxPrev) fxJ += val * (1 - fxPrev / fxNow);
+        // 株価の分（前日のドル円で換算）＝株数×(今の株価−前日の株価)×前日のドル円。前日の株価 ＝ 今の株価 ÷ (1+前日比%)
+        priceJ += x.sh * (q[0] - q[0] / (1 + q[1] / 100)) * (usd ? (fxPrev || fxNow) : 1);
+        rows[x.kind === 'ETF' ? x.t : x.nm] = [val - vPrev, (val / vPrev - 1) * 100];
+      }
+      return { day, dayP: day / prevSum * 100, fxJ, priceJ, rows };
+    };
+
+    console.log('■ J. 為替込みの前日比（fx.prev がある日）');
+    {
+      const FXP = 148;
+      const JP = { t: '6146', nm: 'ディスコ', sleeve: 'castle', kind: '個別', ccy: 'JPY', sh: 100, bjpy: 3000000, bd: '2026-04-20', npx: 0, v: 0 };
+      const pos2 = POS.concat([JP]);
+      const q2 = Object.assign({}, PX, { '6146': [38000, 1.0] });
+      const { p, ctx } = await open({ fx: { prev: FXP, chgPct: (FX / FXP - 1) * 100, src: 'fixture', asof: '2026-10-09T01:00:00+00:00' },
+        q: { '6146': { px: 38000, prev: 38000 / 1.01, chgPct: 1.0, src: 'fixture' } } });
+      await showDash(p, { ...base, positions: pos2 }, true);
+      const e = expectDay(pos2, q2, FX, FXP);
+      const r = await p.evaluate(() => { const c = document.getElementById('pfcCard'), D = window.__pfcData;
+        return { fxIn: D.fxIn, day: D.dayJ, dayP: D.dayP, fxJ: D.dayFxJ, hero: document.querySelector('.rb-hero').innerText.replace(/\s+/g, ' '),
+                 sub: [...c.querySelectorAll('.pfc-s')].map(x => x.textContent).join(' | '), note: c.querySelector('.pfc-note').innerText,
+                 rows: Object.fromEntries(D.rows.map(x => [x.label, [x.day, x.dayP]])), asof: document.getElementById('dashAsof').innerText }; });
+      ok(r.fxIn === true, 'fx.prev があれば為替込み（fxIn）');
+      ok(Math.abs(r.day - e.day) < 1, `合計の前日比 ＝ 独立計算（${Math.round(r.day)} / ${Math.round(e.day)}）`);
+      ok(Math.abs(r.dayP - e.dayP) < 0.001, `前日比の％（${r.dayP.toFixed(3)} / ${e.dayP.toFixed(3)}）`);
+      ok(Math.abs(r.fxJ - e.fxJ) < 1, `うち為替 ＝ 独立計算（${Math.round(r.fxJ)} / ${Math.round(e.fxJ)}）`);
+      ok(Math.abs(r.fxJ) > 1 && Math.abs((r.day - r.fxJ) - e.priceJ) < 1, `前日比 ＝ 株価の分（前日のドル円で換算）＋為替の分（${Math.round(e.priceJ)} ＋ ${Math.round(r.fxJ)}）`);
+      ok(Object.entries(e.rows).every(([nm, v]) => r.rows[nm] && Math.abs(r.rows[nm][0] - v[0]) < 1 && Math.abs(r.rows[nm][1] - v[1]) < 0.001), '各行の前日比（円・％）が独立計算と一致');
+      ok(Math.abs(r.rows['ディスコ'][1] - 1.0) < 1e-6, `円建ての行はドル円の影響を受けない（ディスコ +${r.rows['ディスコ'][1].toFixed(3)}%）`);
+      const usdJ = expectDay(POS, PX, FX, FXP).fxJ;
+      ok(Math.abs(r.fxJ - usdJ) < 1, '円建ての行を足しても「うち為替」は変わらない');
+      ok(/株価＋為替・うち為替 \+¥/.test(r.hero), `見出し: 前日比（株価＋為替・うち為替 +¥…）`);
+      ok(/ドル円 ¥150\.00 \(\+1\.35%\)/.test(r.sub) && /自動更新/.test(r.sub), `カードのドル円の行（${r.sub.split('|')[1].trim()}）`);
+      ok(/株価と為替（ドル円）の動き/.test(r.note), 'カードの注記が為替込みになる');
+      ok(/前日比 \+1\.35%/.test(r.asof), '上の「市場データ…$1=¥…」の行にも為替の前日比');
+      await ctx.close();
+    }
+
+    console.log('■ K. fx.prev が無い／据え置き（stale）の日は株価だけ');
+    {
+      const e0 = expectDay(POS, PX, FX, 0);
+      for (const [label, fxo] of [['fx.prev 無し', {}], ['stale', { prev: 148, stale: true }]]) {
+        const { p, ctx } = await open({ fx: fxo }); await showDash(p, base, true);
+        const r = await p.evaluate(() => { const D = window.__pfcData, c = document.getElementById('pfcCard');
+          return { fxIn: D.fxIn, day: D.dayJ, fxJ: D.dayFxJ, hero: document.querySelector('.rb-hero').innerText.replace(/\s+/g, ' '), note: c.querySelector('.pfc-note').innerText,
+                   sub: [...c.querySelectorAll('.pfc-s')].map(x => x.textContent).join(' | '), asof: document.getElementById('dashAsof').innerText }; });
+        ok(r.fxIn === false && r.fxJ === 0, `${label}: 為替を含めない（fxIn=false・うち為替0）`);
+        ok(Math.abs(r.day - e0.day) < 1, `${label}: 前日比は株価だけの独立計算と一致（${Math.round(r.day)}）`);
+        ok(/株価のみ/.test(r.hero) && /為替は含まない/.test(r.note), `${label}: 画面に「為替は含まない」と書く`);
+        if (fxo.stale) ok(/取得失敗＝前回値/.test(r.sub) && /取得失敗＝前回値/.test(r.asof), 'stale: ドル円の行と上の行に「取得失敗＝前回値」と出す（止まっているのを黙らない）');
+        await ctx.close();
+      }
     }
   } finally {
     console.log(errs.length ? '\n' + errs.join('\n') : '\n（ページ内のJSエラーなし）');

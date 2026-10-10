@@ -615,7 +615,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 
 </style>
 <!-- v9.9.189 投資アプリ風の皮（表示だけ・判定に不使用）。この1行を消せば元の和紙の門に戻る -->
-<link rel="stylesheet" href="skin.css?v=20261010-1">
+<link rel="stylesheet" href="skin.css?v=20261010-2">
 <!-- v9.9.131: 人の決定(state.json)の読み書き。**両ページが同じ実装を読む**（写すと必ず割れる・v9.9.65）。
      本体より前に読むのは localStorage.setItem の包み(dirty検出)を先に効かせるため -->
 <script src="state.js?v=20260923-4"></script><script src="icon.js"></script></head><body><div id="pgBg" aria-hidden="true"></div>
@@ -1161,7 +1161,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.204</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.205</span></h1>
     <div style="margin:6px 0 2px"><button id="hintBtn" onclick="ccfToggleHints()" style="padding:5px 11px;background:none;border:1px solid var(--line);border-radius:7px;color:var(--dim);font-size:11.5px;cursor:pointer">欄の注記を出す</button></div>
   <div class="sub"><details class="why plain" data-fold="6"><summary>ℹ この画面について</summary><div class="why-body"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——絶対MOAT指数をΩの直接項に加え(実効≒22%)、<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%。⚠率そのものは退場社の抜けた母集団で測った下限の側で、2013年の質実証プールでは4.2〜19.2%の幅がある〔2026-09-23 に退場日を是正した後の値・是正前は2.0〜25.7%〕）。</div></details></div>
   </div>
@@ -5635,7 +5635,8 @@ function ccfReturnsHTML(R){
 //   （Ω・四関門・売却規律 S1/S2/S3・配分は不変）。
 //   ・年初来比＝今の評価額 − 年初の評価額（out/returns_series.json の日次の評価額）。年初より後に買い始めたなら年初の評価額は0＝「--%」
 //     （0で割らない・測れないものを0と読まない＝ルール7）。保有の一部が系列に入っていなければ測れないので「—」。
-//   ・前日比は株価だけ（為替は含まない・盤の見出しと同じ）。前日の価格が無い行（投資信託など）は「—」。
+//   ・前日比は株価＋為替（v9.9.205〜・ドル建ての行だけ。fx.prev が読めるとき）。fx.prev が無い／据え置きの日は株価だけ＝盤の見出しと同じ。
+//     前日の価格が無い行（投資信託など）は「—」。
 //   ・金額は 🙈金額を隠す（ccfYenM）に従う。シェアの文には割合だけを載せ、金額は載せない。
 //   ・色: 上は青・下は赤（家計アプリの作法）。skin.css §17 の --pfc-up / --pfc-down の2語で門の緑へ替えられる。
 const CCF_PFC_COLORS=['#FFC926','#FFA729','#D4E056','#5C6BC0','#66BB6A','#29B6F6','#F06292','#AB47BC','#26A69A','#FF7043','#8D6E63','#78909C'];
@@ -5722,8 +5723,15 @@ function ccfPfcHTML(D){
   const plPct=D.plP!=null?pc(D.plP,2):'--%';
   const chk=k=>sk===k?' on':'';
   const hid=ccfMoneyHidden();
+  // ドル円の行（v9.9.205）。出所と前日比を出す＝為替が自動で更新されているか／止まっていないかを画面から辿れる
+  const F=D.fx, fxLine=F?`<div class="pfc-s pfc-fx${F.stale?' warn':''}"><span class="nb">ドル円 ¥${(+F.px).toFixed(2)}`
+    +(F.chg!=null?` (${F.chg>0?'+':F.chg<0?'−':''}${Math.abs(F.chg).toFixed(2)}%)`:'')
+    +`</span> <span class="nb">${F.stale?'取得失敗＝前回値':(F.auto?'自動更新':'手入力')}</span></div>`:'';
+  const dayNote=D.fxIn
+    ?`前日比は株価と為替（ドル円）の動きを合わせた円の増減（ドル建ての銘柄だけ）。うち為替は <span class="nb">${D.dayFxJ>0?'+':D.dayFxJ<0?'−':''}${Y(Math.abs(D.dayFxJ))}</span>。`
+    :`前日比は株価だけ（前日のドル円が使えないので為替は含まない）。`;
   return `<section class="pfc" id="pfcCard" aria-label="ポートフォリオ">
-    <div class="pfc-h"><div><div class="pfc-t">ポートフォリオ</div><div class="pfc-s">保有 ${D.n}銘柄・${ccfPfcEsc(D.asof)}</div></div>
+    <div class="pfc-h"><div><div class="pfc-t">ポートフォリオ</div><div class="pfc-s">保有 ${D.n}銘柄・${ccfPfcEsc(D.asof)}</div>${fxLine}</div>
       <button class="pfc-kebab" type="button" onclick="ccfPfcMenu(event)" aria-label="メニュー" aria-haspopup="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></button></div>
     <div class="pfc-menu" id="pfcMenu" role="menu">
       <button type="button" role="menuitem" onclick="ccfToggleMoney()">${hid?'👁 金額を表示':'🙈 金額を隠す'}</button>
@@ -5743,7 +5751,7 @@ function ccfPfcHTML(D){
       <div class="pfc-sc ${D.plAll!=null?cls(D.plAll):'fl'}"><div class="k">評価損益</div><div class="v">${plAmt}</div><div class="p">${plPct}</div></div>
     </div>
     <div class="pfc-ls">${list}</div>
-    <div class="pfc-note">前日比は株価だけ（為替は含まない）。年初来比は年初からの評価額の増減で、買い増しを含む（年初に持っていなければ％は「--」）。評価損益は取得額が判る銘柄だけ。${D.skip&&D.skip.length?`<br>評価額が出せない銘柄（${ccfPfcEsc(D.skip.join('・'))}）は円グラフに含めていない。`:''}</div>
+    <div class="pfc-note">${dayNote}年初来比は年初からの評価額の増減で、買い増しを含む（年初に持っていなければ％は<span class="nb">「--」</span>）。評価損益は取得額が判る銘柄だけ。${D.skip&&D.skip.length?`<br>評価額が出せない銘柄（${ccfPfcEsc(D.skip.join('・'))}）は円グラフに含めていない。`:''}</div>
   </section>`;
 }
 function ccfPfcRepaint(){const el=document.getElementById('pfcCard');if(el&&window.__pfcData){el.outerHTML=ccfPfcHTML(window.__pfcData);ccfPfcFit();}}
@@ -5823,6 +5831,12 @@ async function ccfDash(btn){
   // 保有
   let pf=null; try{pf=JSON.parse(localStorage.getItem('pf:portfolio')||'null');}catch(e){}
   const fxAuto=mkt&&mkt.fx&&mkt.fx.USDJPY, fxMan=pf&&+pf.fx, FX=fxAuto||fxMan||0;
+  // v9.9.205（2026-10-10 ユーザー指示「為替も自動更新できるようにして」）: 前日比に為替の動きも含める。
+  //   fx.prev＝前営業日のドル円（night/fetch_dashboard.py の fetch_fx が毎営業日 out/dashboard.json へ記録）が読めるときだけ。
+  //   無い日・取得失敗の据え置き（fx.stale）の日は従来どおり株価だけ＝**黙って0と読まない**（ルール7）。
+  //   ドル建ての行だけ（円建ての株・投資信託はドル円の影響を受けない）。表示のみ——Ω・四関門・売却規律・配分に触れない
+  const fxPrev=(fxAuto&&mkt.fx&&+mkt.fx.prev>0&&!mkt.fx.stale)?+mkt.fx.prev:0;
+  const fxChgP=(fxPrev>0&&FX>0)?(FX/fxPrev-1)*100:null;
   const Q=(mkt&&mkt.quotes)||{}, NW=(mkt&&mkt.news)||{};
   const yen=ccfYenM;   // 金額を隠す切替に従う
   const sign=n=>(n>0?'+':'')+n.toFixed(2);
@@ -5830,14 +5844,14 @@ async function ccfDash(btn){
   if(btn){btn.disabled=false;btn.textContent=lab;}
   const asof=$('dashAsof');
   if(asof)asof.innerHTML = mkt&&mkt.asof
-    ? `市場データ ${mkt.asof.slice(0,16).replace('T',' ')} UTC　${fxAuto?`$1=¥${fxAuto}（自動）`:(fxMan?`$1=¥${fxMan}（🏦保有の手入力）`:'<b style="color:#d69a3c">為替未取得</b>')}`
+    ? `市場データ ${mkt.asof.slice(0,16).replace('T',' ')} UTC　${fxAuto?`$1=¥${fxAuto}（自動${fxChgP!=null?`・前日比 ${sign(fxChgP)}%`:''}${mkt.fx.stale?'・<b style="color:#d69a3c">取得失敗＝前回値</b>':''}）`:(fxMan?`$1=¥${fxMan}（🏦保有の手入力）`:'<b style="color:#d69a3c">為替未取得</b>')}`
     : '<b style="color:#d69a3c">out/dashboard.json が未生成</b>——GitHub Actions（.github/workflows/market.yml）に FINNHUB_KEY を設定すると毎営業日入る。それまで価格・前日比・ニュースは空欄';
 
   // ── 保有（評価額・含み損益・円換算）
   let rows='', totJ=0, totCost=0, totCostVal=0, noCost=[], miss=[];
-  // v9.9.189: 盤の見出しの「前日比」。**株価の前日比だけ**を円へ直した合計（為替の動きは含まない）。
-  //   価格が取れた行だけで作り、取れなかった行は足さない（0と読まない＝ルール7）。表示のみ・判定に不使用
-  let dayJ=0, dayBase=0;
+  // v9.9.189: 盤の見出しの「前日比」。株価の前日比を円へ直した合計。**v9.9.205〜: fx.prev が読めるときはドル建ての行の為替の動きも含む**
+  //   （上の fxPrev。読めない日は従来どおり株価だけ）。価格が取れた行だけで作り、取れなかった行は足さない（0と読まない＝ルール7）。表示のみ・判定に不使用
+  let dayJ=0, dayPrev=0, dayFxJ=0;   // 前日比の円・前日の評価額の合計・うち為替
   const pfRows=[], pfSkip=[];   // v9.9.204: ポートフォリオのカードへ渡す行（評価額が出せた行／出せなかった行）
   const pos=(pf&&Array.isArray(pf.positions))?pf.positions:[];
   pos.forEach(p=>{
@@ -5857,13 +5871,19 @@ async function ccfDash(btn){
     // ⚠ 合計の含み損益は**取得額が判っている行だけ**で作る。全部の評価額から
     //   一部の取得額を引くと、測れていない行のぶんが利益に化ける（ルール7）
     if(cost>0) totCostVal+=val; else if(val>0) noCost.push(t);
-    if(q&&q.chgPct!=null&&isFinite(q.chgPct)&&val>0){dayJ+=val-val/(1+q.chgPct/100);dayBase+=val;}
+    // 前日の評価額＝株価を前日へ戻し、ドル建てなら**ドル円も前日へ戻した**値。fx.prev が無ければ株価だけ戻す（従来どおり）
+    let vPrev=null;
+    if(q&&q.chgPct!=null&&isFinite(q.chgPct)&&val>0){
+      const vPx=val/(1+q.chgPct/100), usd=(p.ccy!=='JPY'&&fxPrev>0&&FX>0);
+      vPrev=usd?vPx*(fxPrev/FX):vPx;
+      dayJ+=val-vPrev; dayPrev+=vPrev;
+      if(usd)dayFxJ+=val*(1-fxPrev/FX);          // うち為替＝株数×今の株価×(今のドル円−前日のドル円)
+    }
     const pl=cost>0?val-cost:null, plP=cost>0?(val/cost-1)*100:null;
     // ポートフォリオのカードの行。札は 個別株・投資信託＝名前／ETF＝ティッカー（円グラフの札に長い名前は載らない）
     if(val>0){
-      const hasDay=!!(q&&q.chgPct!=null&&isFinite(q.chgPct));
       pfRows.push({t,label:(p.kind==='ETF'?t:(String(p.nm||'').trim()||t)),val,
-                   day:hasDay?val-val/(1+q.chgPct/100):null, dayP:hasDay?+q.chgPct:null, plP});
+                   day:vPrev!=null?val-vPrev:null, dayP:vPrev!=null?(val/vPrev-1)*100:null, plP});
     }else if(sh>0)pfSkip.push(t);
     const L=led[t]||{}, R=L.r||{};
     const ex={s1:'🔴S1',s2:'🟠S2',s3:'🟡S3',hold:'—'}[(R.exit&&R.exit.level)||'hold']||'—';
@@ -5880,24 +5900,25 @@ async function ccfDash(btn){
   // v9.9.189（ユーザー指示「投資サイトと同じようなデザインに」）: 総資産を**残高の見出し**として大きく出す
   //   （Robinhood の作法）。数字の出どころは上の集計そのまま＝新しい計算は前日比の合計だけ。
   const rbc=n=>n>0?'rb-up':n<0?'rb-down':'rb-flat';
-  const dayP=dayBase>0?dayJ/(dayBase-dayJ)*100:null;
+  const dayP=dayPrev>0?dayJ/dayPrev*100:null;
   const head=`<div class="rb-hero">
     <div class="k">総資産${ccfMoneyBtn()}</div>
     <div class="v">${totJ?yen(totJ):'—'}</div>
-    ${dayP!=null?`<div class="d ${rbc(dayJ)}">${dayJ>0?'+':dayJ<0?'−':''}${yen(Math.abs(dayJ))}（${sign(dayP)}%）<span class="t">前日比（株価のみ・為替は含まない）</span></div>`:''}
+    ${dayP!=null?`<div class="d ${rbc(dayJ)}">${dayJ>0?'+':dayJ<0?'−':''}${yen(Math.abs(dayJ))}（${sign(dayP)}%）<span class="t">前日比（${fxPrev>0?`株価＋為替・うち為替 ${dayFxJ>0?'+':dayFxJ<0?'−':''}${yen(Math.abs(dayFxJ))}`:'株価のみ・前日のドル円が使えないので為替は含まない'}）</span></div>`:''}
     ${plAll!=null?`<div class="d ${rbc(plAll)}">${plAll>0?'+':plAll<0?'−':''}${yen(Math.abs(plAll))}（${sign((totCostVal/totCost-1)*100)}%）<span class="t">含み損益</span></div>`:''}
     <div class="chips">
       <span class="chip">保有 <b>${pos.length}</b>件</span>
-      ${FX?`<span class="chip">$1 = <b>¥${FX}</b></span>`:''}
+      ${FX?`<span class="chip">$1 = <b>¥${FX}</b>${fxChgP!=null?` (${sign(fxChgP)}%)`:''}</span>`:''}
       ${noCost.length?`<span class="chip warn" title="取得額(bjpy)も買付単価(bpx)も無い行。評価額は総資産に入るが、含み損益からは外してある——測れていないものを利益に数えないため">含み損益の対象外 ${noCost.join(' / ')}</span>`:''}
     </div></div>`;
   // v9.9.204: ポートフォリオのカード（円グラフ・年初来比・評価損益・銘柄ごとの内訳）。数字は上の集計をそのまま渡す。表示だけ
   window.__pfcData={rows:pfRows, skip:pfSkip, n:pos.filter(p=>(+p.sh||0)>0||(+p.v||0)>0).length, tot:totJ,
-    dayJ:dayJ, dayP:dayP, plAll:plAll, plP:(plAll!=null&&totCost>0)?(totCostVal/totCost-1)*100:null,
+    dayJ:dayJ, dayP:dayP, dayFxJ:dayFxJ, fxIn:fxPrev>0,
+    fx:FX>0?{px:FX, chg:fxChgP, auto:!!fxAuto, stale:!!(mkt&&mkt.fx&&mkt.fx.stale)}:null, plAll:plAll, plP:(plAll!=null&&totCost>0)?(totCostVal/totCost-1)*100:null,
     ytd:ccfPfcYtd(rsr,pos.filter(p=>(+p.sh||0)>0).map(p=>String(p.t||'').toUpperCase()),totJ),
     asof:(mkt&&mkt.asof)?String(mkt.asof).slice(0,10):new Date().toISOString().slice(0,10)};
   const pfcHtml=ccfPfcHTML(window.__pfcData);
-  const hdr=`<div class="led" style="opacity:.65;font-size:10.5px"><span class="ln">銘柄</span><span style="min-width:78px;text-align:right">現在値</span><span style="min-width:82px;text-align:right">前日比</span><span style="min-width:96px;text-align:right">評価額</span><span style="min-width:110px;text-align:right">含み損益</span><span style="min-width:56px;text-align:right">Ω</span><span style="min-width:44px;text-align:right">出口</span></div>`;
+  const hdr=`<div class="led" style="opacity:.65;font-size:10.5px"><span class="ln">銘柄</span><span style="min-width:78px;text-align:right">現在値</span><span style="min-width:82px;text-align:right">前日比（株価）</span><span style="min-width:96px;text-align:right">評価額</span><span style="min-width:110px;text-align:right">含み損益</span><span style="min-width:56px;text-align:right">Ω</span><span style="min-width:44px;text-align:right">出口</span></div>`;
 
   // ── 決算が近い
   const items=(ern&&ern.items)||[]; const today=new Date();
