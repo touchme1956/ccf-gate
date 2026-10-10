@@ -615,7 +615,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 
 </style>
 <!-- v9.9.189 投資アプリ風の皮（表示だけ・判定に不使用）。この1行を消せば元の和紙の門に戻る -->
-<link rel="stylesheet" href="skin.css?v=20260923-7">
+<link rel="stylesheet" href="skin.css?v=20261010-1">
 <!-- v9.9.131: 人の決定(state.json)の読み書き。**両ページが同じ実装を読む**（写すと必ず割れる・v9.9.65）。
      本体より前に読むのは localStorage.setItem の包み(dirty検出)を先に効かせるため -->
 <script src="state.js?v=20260923-4"></script><script src="icon.js"></script></head><body><div id="pgBg" aria-hidden="true"></div>
@@ -1161,7 +1161,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.203</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.204</span></h1>
     <div style="margin:6px 0 2px"><button id="hintBtn" onclick="ccfToggleHints()" style="padding:5px 11px;background:none;border:1px solid var(--line);border-radius:7px;color:var(--dim);font-size:11.5px;cursor:pointer">欄の注記を出す</button></div>
   <div class="sub"><details class="why plain" data-fold="6"><summary>ℹ この画面について</summary><div class="why-body"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——絶対MOAT指数をΩの直接項に加え(実効≒22%)、<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%。⚠率そのものは退場社の抜けた母集団で測った下限の側で、2013年の質実証プールでは4.2〜19.2%の幅がある〔2026-09-23 に退場日を是正した後の値・是正前は2.0〜25.7%〕）。</div></details></div>
   </div>
@@ -5629,6 +5629,163 @@ function ccfReturnsHTML(R){
     +`データ源 ${R.source||'—'}・${R.generated||'—'} 生成</div></details></div>`;
 }
 
+// ── 🏦保有の「ポートフォリオ」カード（v9.9.204・2026-10-10 ユーザー指示「このデザインと同じものを門のポートフォリオに加えたい」）──
+//   家計アプリの「ポートフォリオ」画面（円グラフ・年初来比・評価損益・銘柄ごとの割合と前日比）と同じ作り。
+//   **表示だけ**——数字は ccfDash が集計した評価額・取得額・前日比をそのまま渡す。新しい判定・採点・配分は持たない
+//   （Ω・四関門・売却規律 S1/S2/S3・配分は不変）。
+//   ・年初来比＝今の評価額 − 年初の評価額（out/returns_series.json の日次の評価額）。年初より後に買い始めたなら年初の評価額は0＝「--%」
+//     （0で割らない・測れないものを0と読まない＝ルール7）。保有の一部が系列に入っていなければ測れないので「—」。
+//   ・前日比は株価だけ（為替は含まない・盤の見出しと同じ）。前日の価格が無い行（投資信託など）は「—」。
+//   ・金額は 🙈金額を隠す（ccfYenM）に従う。シェアの文には割合だけを載せ、金額は載せない。
+//   ・色: 上は青・下は赤（家計アプリの作法）。skin.css §17 の --pfc-up / --pfc-down の2語で門の緑へ替えられる。
+const CCF_PFC_COLORS=['#FFC926','#FFA729','#D4E056','#5C6BC0','#66BB6A','#29B6F6','#F06292','#AB47BC','#26A69A','#FF7043','#8D6E63','#78909C'];
+function ccfPfcEsc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+// n>0 上向き（青）／n<0 下向き（赤）／0 横ばい（灰）の丸いバッジ
+function ccfPfcBadge(n){
+  const k=n>0?'up':n<0?'dn':'fl';
+  const d=n>0?'M5 11 11 5M6 5h5v5':n<0?'M5 5 11 11M6 11h5V6':'M4 8h8';
+  return `<svg class="pfc-b ${k}" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8"/><path d="${d}"/></svg>`;
+}
+// 円グラフの札の折り返し（全角=1・半角=0.56 の概算幅・最大 maxLines 行・溢れたら末尾を…）
+function ccfPfcWrap(s,fs,maxW,maxLines){
+  const ch=Array.from(String(s||'')), w=c=>(c.charCodeAt(0)>0x2e7f?1:0.56)*fs;
+  const L=[]; let cur='', cw=0, i=0;
+  for(; i<ch.length; i++){
+    const x=w(ch[i]);
+    if(cw+x>maxW && cur){
+      if(L.length===maxLines-1) break;
+      L.push(cur); cur=''; cw=0;
+    }
+    cur+=ch[i]; cw+=x;
+  }
+  if(i<ch.length){
+    while(cur && cw+w('…')>maxW){ const last=Array.from(cur).pop(); cur=cur.slice(0,cur.length-last.length); cw-=w(last); }
+    cur+='…';
+  }
+  if(cur)L.push(cur);
+  return L;
+}
+// 年初来比＝今の評価額 − 年初の評価額。返り値 {amt,pct}（年初の評価額が0なら pct=null＝「--%」）／測れなければ null
+function ccfPfcYtd(rsr,held,tot){
+  if(!rsr||!Array.isArray(rsr.days)||!Array.isArray(rsr.val)||!rsr.days.length||rsr.days.length!==rsr.val.length)return null;
+  const tk=new Set((rsr.tickers||[]).map(x=>String(x).toUpperCase()));
+  if(!held.length||held.some(t=>!tk.has(t)))return null;       // 一部が系列に無いまま比べると、欠けた分が増減に化ける
+  const y0=new Date().getFullYear()+'-01-01';
+  let base=0, found=false;
+  for(let i=rsr.days.length-1;i>=0;i--){ if(String(rsr.days[i])<y0){ base=+rsr.val[i]; found=true; break; } }
+  if(found&&!(base>0))return null;                               // 年初の評価額が読めない
+  return {amt:tot-base, pct:found?(tot/base-1)*100:null};        // found=false＝系列の最初の日が今年＝今年に買い始めた（年初は0）
+}
+function ccfPfcSortKey(){try{const v=localStorage.getItem('pf:pfcSort');return (v==='day'||v==='pl')?v:'val';}catch(e){return 'val';}}
+function ccfPfcHTML(D){
+  if(!D||!D.rows||!D.rows.length)return '';
+  const Y=ccfYenM;
+  const cls=n=>n>0?'up':n<0?'dn':'fl';
+  const mark=n=>n<0?'−':'';
+  const yenS=n=>mark(n)+Y(Math.abs(n));                           // 負は「−¥1,473」（¥の後ろに負号を置かない）
+  const pc=(n,d)=>mark(n)+Math.abs(n).toFixed(d)+'%';
+  const byVal=D.rows.slice().sort((a,b)=>b.val-a.val);
+  const sumV=byVal.reduce((s,r)=>s+r.val,0);
+  byVal.forEach((r,i)=>{r.color=CCF_PFC_COLORS[i%CCF_PFC_COLORS.length]; r.share=r.val/sumV*100;});
+  // ── 円グラフ（12時から時計回り・評価額の大きい順・円と円のあいだに細い隙間）
+  const R=100, C=2*Math.PI*R, GAP=byVal.length>1?2:0;
+  let acc=0, segs='', labs='';
+  byVal.forEach(r=>{
+    const len=C*r.val/sumV, vis=Math.max(len-GAP,0.5), off=acc+GAP/2;
+    segs+=`<circle cx="120" cy="120" r="${R}" fill="none" stroke="${r.color}" stroke-width="40" stroke-dasharray="${vis.toFixed(2)} ${(C-vis).toFixed(2)}" stroke-dashoffset="${(-off).toFixed(2)}" transform="rotate(-90 120 120)"><title>${ccfPfcEsc(r.label)} ${r.share.toFixed(1)}%</title></circle>`;
+    const lines=ccfPfcWrap(r.label,11,58,2);
+    const lw=Math.max.apply(null,lines.map(s=>Array.from(s).reduce((a,c)=>a+(c.charCodeAt(0)>0x2e7f?11:6.2),0)));
+    if(len>=Math.max(38,lw*.85)){                                  // 狭い円には札を付けない（重なって読めない）
+      const th=2*Math.PI*(acc+len/2)/C, x=120+R*Math.sin(th), y=120-R*Math.cos(th), y0=y-(lines.length-1)*6.5;
+      labs+=`<text class="pfc-lb" x="${x.toFixed(1)}" y="${y0.toFixed(1)}" text-anchor="middle" dominant-baseline="central">`
+        +lines.map((s,i)=>`<tspan x="${x.toFixed(1)}" dy="${i?13:0}">${ccfPfcEsc(s)}</tspan>`).join('')+`</text>`;
+    }
+    acc+=len;
+  });
+  const dayTxt=D.dayP!=null?`${yenS(D.dayJ)}(${pc(D.dayP,1)})${ccfPfcBadge(D.dayJ)}`:'—';
+  const tot=Y(D.tot), small=tot.length>11;
+  // ── 内訳（並びは ⋮ の切替。円グラフの色と順は評価額順のまま＝点の色で円と結ぶ）
+  const sk=ccfPfcSortKey();
+  const ord=byVal.slice();
+  if(sk==='day')ord.sort((a,b)=>(b.dayP==null?-1e9:b.dayP)-(a.dayP==null?-1e9:a.dayP)||b.val-a.val);
+  else if(sk==='pl')ord.sort((a,b)=>(b.plP==null?-1e9:b.plP)-(a.plP==null?-1e9:a.plP)||b.val-a.val);
+  const list=ord.map(r=>{
+    const nm=ccfPfcEsc(r.label), big=Array.from(r.label).reduce((w,c)=>w+(c.charCodeAt(0)>0x2e7f?17:9.5),0)<=95;
+    return `<div class="pfc-r"><span class="pfc-dot" style="--pfc-c:${r.color}"></span><span class="pfc-n${big?'':' sm'}" title="${nm}">${nm}</span>`
+      +`<span class="pfc-rr"><span class="pfc-v">${Y(r.val)}</span><span class="pfc-w">割合 : ${r.share.toFixed(1)}%</span>`
+      +(r.dayP!=null?`<span class="pfc-dd ${cls(r.day)}">前日比: <span class="nb">${yenS(r.day)}</span> <span class="nb">(${pc(r.dayP,1)})${ccfPfcBadge(r.day)}</span></span>`:`<span class="pfc-dd fl">前日比: —</span>`)
+      +`</span></div>`;
+  }).join('');
+  const ytdAmt=D.ytd?`${yenS(D.ytd.amt)}${ccfPfcBadge(D.ytd.amt)}`:'—';
+  const ytdPct=(D.ytd&&D.ytd.pct!=null)?pc(D.ytd.pct,2):'--%';
+  const plAmt=D.plAll!=null?`${yenS(D.plAll)}${ccfPfcBadge(D.plAll)}`:'—';
+  const plPct=D.plP!=null?pc(D.plP,2):'--%';
+  const chk=k=>sk===k?' on':'';
+  const hid=ccfMoneyHidden();
+  return `<section class="pfc" id="pfcCard" aria-label="ポートフォリオ">
+    <div class="pfc-h"><div><div class="pfc-t">ポートフォリオ</div><div class="pfc-s">保有 ${D.n}銘柄・${ccfPfcEsc(D.asof)}</div></div>
+      <button class="pfc-kebab" type="button" onclick="ccfPfcMenu(event)" aria-label="メニュー" aria-haspopup="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></button></div>
+    <div class="pfc-menu" id="pfcMenu" role="menu">
+      <button type="button" role="menuitem" onclick="ccfToggleMoney()">${hid?'👁 金額を表示':'🙈 金額を隠す'}</button>
+      <div class="pfc-mh">内訳の並び</div>
+      <button type="button" role="menuitem" class="${chk('val').trim()}" onclick="ccfPfcSet('val')">評価額の大きい順</button>
+      <button type="button" role="menuitem" class="${chk('day').trim()}" onclick="ccfPfcSet('day')">前日比の高い順</button>
+      <button type="button" role="menuitem" class="${chk('pl').trim()}" onclick="ccfPfcSet('pl')">損益率の高い順</button>
+    </div>
+    <div class="pfc-dn">
+      <svg class="pfc-ring" viewBox="0 0 240 240" role="img" aria-label="保有の割合の円グラフ">${segs}${labs}</svg>
+      <div class="pfc-c"><div class="pfc-c1">合計</div><div class="pfc-c2${small?' sm':''}">${tot}</div>
+        <div class="pfc-c3 ${D.dayP!=null?cls(D.dayJ):'fl'}">前日比</div><div class="pfc-c4 ${D.dayP!=null?cls(D.dayJ):'fl'}">${dayTxt}</div></div>
+      <button class="pfc-share" type="button" onclick="ccfPfcShare()" aria-label="割合をシェア"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5 15.4 17.5M15.4 6.5 8.6 10.5"/></svg>シェア</button>
+    </div>
+    <div class="pfc-st">
+      <div class="pfc-sc ${D.ytd?cls(D.ytd.amt):'fl'}"><div class="k">年初来比</div><div class="v">${ytdAmt}</div><div class="p">${ytdPct}</div></div>
+      <div class="pfc-sc ${D.plAll!=null?cls(D.plAll):'fl'}"><div class="k">評価損益</div><div class="v">${plAmt}</div><div class="p">${plPct}</div></div>
+    </div>
+    <div class="pfc-ls">${list}</div>
+    <div class="pfc-note">前日比は株価だけ（為替は含まない）。年初来比は年初からの評価額の増減で、買い増しを含む（年初に持っていなければ％は「--」）。評価損益は取得額が判る銘柄だけ。${D.skip&&D.skip.length?`<br>評価額が出せない銘柄（${ccfPfcEsc(D.skip.join('・'))}）は円グラフに含めていない。`:''}</div>
+  </section>`;
+}
+function ccfPfcRepaint(){const el=document.getElementById('pfcCard');if(el&&window.__pfcData){el.outerHTML=ccfPfcHTML(window.__pfcData);ccfPfcFit();}}
+// 名前の字の大きさを、右の列を除いた幅に合わせる。1語の名前（Microsoft 等）は1行に収まるまで 12.5px まで下げ、
+// 空白や全角を含む名前は2行まで許す（それでも溢れたら…）。**表示の調整だけ**——端末のフォント（Inter／Roboto／Noto）で幅が変わるため、CSS だけでは決められない
+function ccfPfcFit(){
+  const root=document.getElementById('pfcCard'); if(!root)return;
+  root.querySelectorAll('.pfc-n').forEach(n=>{
+    n.style.fontSize='';
+    const txt=n.textContent||'', maxL=/[\u2e80-\uffff\s]/.test(txt)?2:1;
+    let fs=parseFloat(getComputedStyle(n).fontSize)||17;
+    const lines=()=>Math.round(n.scrollHeight/((parseFloat(getComputedStyle(n).lineHeight))||fs*1.3));
+    while(lines()>maxL&&fs>12.5){fs-=.5;n.style.fontSize=fs+'px';}
+  });
+}
+window.addEventListener('resize',()=>{clearTimeout(ccfPfcFit._t);ccfPfcFit._t=setTimeout(ccfPfcFit,150);});
+if(document.fonts){if(document.fonts.ready)document.fonts.ready.then(()=>ccfPfcFit());if(document.fonts.addEventListener)document.fonts.addEventListener('loadingdone',()=>ccfPfcFit());}
+function ccfPfcMenu(ev){if(ev)ev.stopPropagation();const m=document.getElementById('pfcMenu');if(m)m.classList.toggle('on');}
+function ccfPfcSet(k){try{localStorage.setItem('pf:pfcSort',k);}catch(e){} ccfPfcRepaint();}
+function ccfPfcToast(msg){
+  let t=document.getElementById('pfcToast');
+  if(!t){t=document.createElement('div');t.id='pfcToast';t.className='pfc-toast';t.setAttribute('role','status');document.body.appendChild(t);}
+  t.textContent=msg;t.classList.add('on');
+  clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),2200);
+}
+// シェア＝**割合だけ**（金額は載せない）。共有シートが使えなければクリップボードへ
+function ccfPfcShare(){
+  const D=window.__pfcData; if(!D||!D.rows)return;
+  const rows=D.rows.slice().sort((a,b)=>b.val-a.val), sumV=rows.reduce((s,r)=>s+r.val,0);
+  const sg=n=>n>0?'+':n<0?'−':'';
+  const L=['ポートフォリオ（'+D.asof+'）'].concat(rows.map(r=>r.label+' '+(r.val/sumV*100).toFixed(1)+'%'));
+  if(D.dayP!=null)L.push('前日比 '+sg(D.dayJ)+Math.abs(D.dayP).toFixed(1)+'%');
+  if(D.plP!=null)L.push('評価損益 '+sg(D.plP)+Math.abs(D.plP).toFixed(2)+'%');
+  const text=L.join('\n');
+  if(navigator.share){navigator.share({title:'ポートフォリオ',text:text}).catch(()=>{});return;}
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(()=>ccfPfcToast('割合をコピーしました（金額は入っていません）'),()=>ccfPfcToast('コピーできませんでした'));
+  }else ccfPfcToast('この端末では共有できません');
+}
+document.addEventListener('click',e=>{const m=document.getElementById('pfcMenu');if(m&&m.classList.contains('on')&&!e.target.closest('#pfcMenu'))m.classList.remove('on');});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){const m=document.getElementById('pfcMenu');if(m)m.classList.remove('on');}});
+
 async function ccfDash(btn){
   const box=$('dashBox'); if(!box)return;
   const lab=btn?btn.textContent:''; if(btn){btn.disabled=true;btn.textContent='読込中…';}
@@ -5644,10 +5801,11 @@ async function ccfDash(btn){
   //   v9.9.94→95 のAPHとまったく同じ「盤では🟢・Ⅵでは⛔」が三度目の再発になる（v9.9.65の掟）。
   // v9.9.155: トータルリターン（out/returns.json）も読む。**計算は端末の単一実装
   //   night/fetch_returns.py が持ち、門は描くだけ**（dashboard.json と同じ作法・v9.9.65）。
-  const [mkt,ern,stl,vfl,pnd,pidx,rtn]=await Promise.all([j('out/dashboard.json'),j('out/next_earnings.json'),
+  // v9.9.204: ポートフォリオのカードの「年初来比」用に日次の評価額（out/returns_series.json）も読む。表示だけ
+  const [mkt,ern,stl,vfl,pnd,pidx,rtn,rsr]=await Promise.all([j('out/dashboard.json'),j('out/next_earnings.json'),
                                              j('out/stale_bs.json'),j('out/validate_fail.json'),
                                              j('out/pending.json'),
-                                             j('out/packs_index.json'),j('out/returns.json'),
+                                             j('out/packs_index.json'),j('out/returns.json'),j('out/returns_series.json'),
                                              ccfLoadIrr85Hist(),ccfLoadIrr85Scope(),ccfLoadProfiles()]);
   const dPackT=pidx?new Set((pidx.packs||[]).map(f=>String(f).replace(/_gate_pack\.json$/,'').toUpperCase())):null;
   // v9.9.140: 盤も Ⅵ と同じ ccfGateInput を呼ぶ（**読めなければ blind に積んで画面に出す**）
@@ -5680,6 +5838,7 @@ async function ccfDash(btn){
   // v9.9.189: 盤の見出しの「前日比」。**株価の前日比だけ**を円へ直した合計（為替の動きは含まない）。
   //   価格が取れた行だけで作り、取れなかった行は足さない（0と読まない＝ルール7）。表示のみ・判定に不使用
   let dayJ=0, dayBase=0;
+  const pfRows=[], pfSkip=[];   // v9.9.204: ポートフォリオのカードへ渡す行（評価額が出せた行／出せなかった行）
   const pos=(pf&&Array.isArray(pf.positions))?pf.positions:[];
   pos.forEach(p=>{
     const t=String(p.t||'').toUpperCase(); if(!t)return;
@@ -5700,6 +5859,12 @@ async function ccfDash(btn){
     if(cost>0) totCostVal+=val; else if(val>0) noCost.push(t);
     if(q&&q.chgPct!=null&&isFinite(q.chgPct)&&val>0){dayJ+=val-val/(1+q.chgPct/100);dayBase+=val;}
     const pl=cost>0?val-cost:null, plP=cost>0?(val/cost-1)*100:null;
+    // ポートフォリオのカードの行。札は 個別株・投資信託＝名前／ETF＝ティッカー（円グラフの札に長い名前は載らない）
+    if(val>0){
+      const hasDay=!!(q&&q.chgPct!=null&&isFinite(q.chgPct));
+      pfRows.push({t,label:(p.kind==='ETF'?t:(String(p.nm||'').trim()||t)),val,
+                   day:hasDay?val-val/(1+q.chgPct/100):null, dayP:hasDay?+q.chgPct:null, plP});
+    }else if(sh>0)pfSkip.push(t);
     const L=led[t]||{}, R=L.r||{};
     const ex={s1:'🔴S1',s2:'🟠S2',s3:'🟡S3',hold:'—'}[(R.exit&&R.exit.level)||'hold']||'—';
     if(!q&&sh>0)miss.push(t);
@@ -5726,6 +5891,12 @@ async function ccfDash(btn){
       ${FX?`<span class="chip">$1 = <b>¥${FX}</b></span>`:''}
       ${noCost.length?`<span class="chip warn" title="取得額(bjpy)も買付単価(bpx)も無い行。評価額は総資産に入るが、含み損益からは外してある——測れていないものを利益に数えないため">含み損益の対象外 ${noCost.join(' / ')}</span>`:''}
     </div></div>`;
+  // v9.9.204: ポートフォリオのカード（円グラフ・年初来比・評価損益・銘柄ごとの内訳）。数字は上の集計をそのまま渡す。表示だけ
+  window.__pfcData={rows:pfRows, skip:pfSkip, n:pos.filter(p=>(+p.sh||0)>0||(+p.v||0)>0).length, tot:totJ,
+    dayJ:dayJ, dayP:dayP, plAll:plAll, plP:(plAll!=null&&totCost>0)?(totCostVal/totCost-1)*100:null,
+    ytd:ccfPfcYtd(rsr,pos.filter(p=>(+p.sh||0)>0).map(p=>String(p.t||'').toUpperCase()),totJ),
+    asof:(mkt&&mkt.asof)?String(mkt.asof).slice(0,10):new Date().toISOString().slice(0,10)};
+  const pfcHtml=ccfPfcHTML(window.__pfcData);
   const hdr=`<div class="led" style="opacity:.65;font-size:10.5px"><span class="ln">銘柄</span><span style="min-width:78px;text-align:right">現在値</span><span style="min-width:82px;text-align:right">前日比</span><span style="min-width:96px;text-align:right">評価額</span><span style="min-width:110px;text-align:right">含み損益</span><span style="min-width:56px;text-align:right">Ω</span><span style="min-width:44px;text-align:right">出口</span></div>`;
 
   // ── 決算が近い
@@ -5778,7 +5949,7 @@ async function ccfDash(btn){
     :'<div style="font-size:12px;color:var(--dim)">ニュース未取得（FINNHUB_KEY 未設定）</div>';
 
   const sec=(t,b,note)=>`<h2 class="serif" style="font-size:1.1em;margin:20px 0 6px;color:var(--gold-bright)">${t}</h2>${note?`<div style="font-size:11px;color:var(--dim);margin-bottom:5px">${note}</div>`:''}${b}`;
-  box.innerHTML = ccfGateBlindHTML(dBlind) + head
+  box.innerHTML = ccfGateBlindHTML(dBlind) + head + pfcHtml
     + sec('💰 銘柄', (pos.length?hdr+rows:'<div style="font-size:12.5px;color:var(--dim)">「✎ 株数・買値を編集」で株数・買値を入れると評価額と含み損益が出る。</div>')
         + (miss.length?`<div style="font-size:11px;color:#d69a3c;margin-top:6px;line-height:1.8">価格未取得: <b>${miss.join(' / ')}</b><br>
             <span style="color:var(--dim)">日本株は<b>無料で自動取得できる経路が無い</b>（2026-08-02実測: Finnhub 401／Alpha Vantage 空／stooq 404／Yahoo はCIのIPから弾かれる／J-Quants無料は12週遅延）。
@@ -5806,6 +5977,7 @@ async function ccfDash(btn){
         `買うのはここだけ（四関門を通り、席の上位${CCF_SEATS}社に入った銘柄）。金額は🛒買付順位の「今月の入金額」から按分される`)
     + sec('📅 次回決算（21日以内）', ernHtml, '決算が来たら <code>python kessan_check.py</code>（日本株は <code>kessan_check_jp.py</code>）を回す')
     + sec('📰 最新ニュース', newsHtml, '判定には使わない——原本（10-Q/有報）に書かれるまで門は動かない');
+  ccfPfcFit();   // v9.9.204: ポートフォリオのカードの名前の字を幅に合わせる（表示だけ）
 }
 // ── ⚙ 自動化（v9.9.79 で「🔔 イベント」として新設・2026-08-04 ユーザー要望「決算も含めて別のタブで欲しい」）
 //   v9.9.149(2026-08-17 ユーザー指示「イベントの名前を変えて欲しい。自動化など当てはまるものに」)で改称。
