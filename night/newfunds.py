@@ -97,7 +97,10 @@ def key(s):
 
 
 def same_vehicle(a, b):
-    """器の名前が同じか（bestfund_data.VEH の名前は（…）の注記を外して比べる。短い名前は完全一致だけ＝VT と VTI を混ぜない）"""
+    """器の名前が同じか。まずそのまま比べ、次に bestfund_data.VEH の（…）の注記（例:（中で VOO 0.03%））を外して比べる。
+    短い名前は完全一致だけ（VT と VTI を混ぜない）"""
+    if key(a) == key(b):
+        return True
     ka, kb = key(re.sub(r'（[^）]*）', '', a)), key(re.sub(r'（[^）]*）', '', b))
     if ka == kb:
         return True
@@ -252,12 +255,17 @@ def tax_pct(b):
 
 # 中で外国の ETF を買う器（投信ライブラリーの信託報酬に中の ETF の費用が入っていない）。名前の一部 → (中の ETF, 年%, 出所)
 INNER = {
-    'グローバルX防衛テックETF': ('SHLD', 0.50, 'out/defense_alts.json（466A＝SHLD を円で持つ・合計 0.5275%）'),
     'SBI・V・S&P500': ('VOO', 0.03, 'night/bestfund_data.VEH'),
     'SBI・インベスコQQQ': ('QQQM', 0.15, '名前（中で QQQ・QQQM）'),
     'インベスコQQQファンド': ('QQQ（587A）', 0.18, 'インベスコ・アセット・マネジメント（中で QQQ・合計 0.3175% 程度）'),
 }
 SUSPECT = re.compile(r'(グローバルX|SBI・V・|SBI・SPDR|SBI・iシェアーズ|SBIネクスト|SBI欧州|SBIエネルギー|楽天・全米|楽天・米国高配当|一歩先いく)')
+# 投信ライブラリーの信託報酬が JPX の銘柄概要と合わない東証 ETF（Global X の 0.025% は使えない）→ JPX の信託報酬（税込）で上書き
+FEE_OVERRIDE = {
+    'グローバルX防衛テックETF': (0.5275, 'JPX の銘柄概要（466A）・out/defense_alts.json'),
+    'グローバルX韓国半導体・トップ10ETF': (0.4775, 'JPX の銘柄概要（633A・程度）'),
+    'グローバルX NASDAQ100・デイリー・カバード・コールETF': (0.2775, 'JPX の銘柄概要（563A・程度）'),
+}
 
 
 def inner_of(name):
@@ -276,10 +284,14 @@ def new_cost_jp(r, b):
     inn = inner_of(n)
     tx = tax_pct(b) if b in D.VEH else None
     note = []
-    if inn:
+    ov = next((v for k2, v in FEE_OVERRIDE.items() if key(k2) in key(n)), None)
+    if ov:
+        note.append(f'投信ライブラリーの信託報酬 {fee_in}% は JPX の銘柄概要と合わない→ {ov[0]}%（{ov[1]}）で置き換えた')
+        fee_in = ov[0]
+    elif inn:
         note.append(f'中で {inn[0]}（{inn[1]}%）を買う＝投信ライブラリーの信託報酬に入っていない分を足した（{inn[2]}）')
     elif fee is not None and fee < 0.12 and SUSPECT.search(n) and r.get('investArea3kindCd') != '1':
-        note.append('中で外国の ETF を買う形の可能性（その ETF の費用は投信ライブラリーの信託報酬に入っていない）＝表の費用は下限')
+        note.append('投信ライブラリーの信託報酬が運用会社・JPX の数字と合わない例がある（Global X の 0.025%・中で外国の ETF を買う器の分が入らない など）＝この表の費用は下限')
     tot = None
     if fee_in is not None and tx is not None:
         tot = round(fee_in + (inn[1] if inn else 0) + tx, 4)
@@ -344,8 +356,8 @@ def incumbents(rows):
         if any(same_vehicle(n, v2['vehicle']) for (_, v2) in meas.values()):
             continue   # 実測がある器は (1) の実測を使う（事前登録: 実測があれば実測）
         nc = new_cost_jp(r, b)
-        if nc['total'] is None or nc['note'] and not nc['inner']:
-            continue   # 中の ETF の費用が分からない器は既存の比べに使わない（下限の数字で既存を安く見せない）
+        if nc['total'] is None or any('下限' in x for x in nc['note']):
+            continue   # 表の費用が下限でしかない器は既存の比べに使わない（下限の数字で既存を安く見せない）
         it = {'vehicle': n, 'kind': '東証ETF' if etf else '投信', 'cost': nc['total'], 'basis': '表の費用＋外国税',
               'like_for_like': nc['total'], 'est': est, 'src': f'投信ライブラリー（{r.get("associFundCd")}）'}
         if r.get('nisaFlg') == '1':
@@ -354,13 +366,13 @@ def incumbents(rows):
             add(b, '成長', it)
     for b in out:
         for acct in out[b]:
-            seen, lst = set(), []
-            for it in sorted(out[b][acct], key=lambda x: (x['cost'], x['vehicle'])):
-                if key(it['vehicle']) in seen:
+            # 同じ器が二つの出所から入ったら実測のほうを残す（事前登録: 実測があれば実測）
+            lst = []
+            for it in sorted(out[b][acct], key=lambda x: (not x['basis'].startswith('実測'), x['cost'], x['vehicle'])):
+                if any(same_vehicle(it['vehicle'], y['vehicle']) for y in lst):
                     continue
-                seen.add(key(it['vehicle']))
                 lst.append(it)
-            out[b][acct] = lst
+            out[b][acct] = sorted(lst, key=lambda x: (x['cost'], x['vehicle']))
     return out
 
 
@@ -405,8 +417,7 @@ def judge(e, inc, ce):
                 why.append('自分の記録が1年未満で実際の連動が測れない')
             if (e.get('aum_oku') or 0) < 50:
                 why.append(f'純資産が小さい（{e.get("aum_oku")}億円）')
-            if e['vehicle_kind'] == '東証ETF':
-                why.append('東証 ETF＝楽天の積立に対応しているかは確かめていない')
+            # 東証 ETF は楽天の「かぶツミ」で毎月の積立ができる（金額指定でも買うのは整数の口数）＝積立に対応していない、には当たらない
             return ('G2' if why else 'G1'), ('費用の線を越える（' + '・'.join(f'{x["account"]}枠で {x["cheaper_by_registered"]:+.3f}%' for x in hit) + '）' +
                                             ('。ただし ' + '・'.join(why) if why else ''))
         ok = [x for x in rows if x.get('eligible') and x.get('incumbent_registered')]
@@ -450,6 +461,7 @@ INDEX_HISTORY = {
                                  '算出開始 2026-02（2016-07 まで遡って試算）・docs/CLAUDE_ARCHIVE.md の rf 節で検定済み（A・境界）', None),
     'ドイツ株式・DAX': ('DAX（ドイツの大型40社）', 38.3, 'Deutsche Börse・1988-07-01 公表開始（live.deutsche-boerse.com の「Facts from 30 years of DAX」）', 'DEVXUS'),
     'NZAM上場投信DAX': ('DAX（ドイツの大型40社）', 38.3, 'Deutsche Börse・1988-07-01 公表開始（live.deutsche-boerse.com の「Facts from 30 years of DAX」）', 'DEVXUS'),
+    'Solactiveグローバル・メモリ': ('Solactive Global Memory Index', 0.3, 'Solactive のガイドライン v1.0（2026-06-19）: 公表開始 2026-06-19・それより前（2020-05-07〜）は遡って計算', None),
     'ユーロ・ストックス50': ('EURO STOXX 50（ユーロ圏の大型50社）', 28.6, 'STOXX・1998-02-26 公表開始（stoxx.com の「The EURO STOXX 50 and STOXX Ltd. turn 20」）', 'DEVXUS'),
 }
 # defense_alts（2026-10-10・eb3f176）で既に判定した防衛の器（結論: ITA のまま）
@@ -472,6 +484,9 @@ OUTSIDE_UNIVERSE = [
     {'what': '楽天証券が「こどもNISA」専用の信託報酬ゼロの投資信託を出すと発表（2026-10-09）',
      'facts': 'ファンド名・指数・運用会社・開始日は未定（準備が整い次第公表）。こどもNISA は 2027年1月から。門の計画は iFreeNEXT NASDAQ100（0.495%）',
      'src': '楽天証券 2026-10-09 プレスリリース（PR TIMES）'},
+    {'what': 'eMAXIS NASDAQ100インデックス（三菱UFJ・2021-01-29 設定・税込0.2035%）は 2026年中はつみたて投資枠に入らない。2027年1月の決算で運用実績5年以上になり、他の要件を満たせば届出の見込み',
+     'facts': '実際の費用は 3年 0.360%・5年 0.489%（out/bestfund_vehicles.json）＝iFreeNEXT NASDAQ100（0.621%・0.643%）より年 0.15〜0.26% 低い。入れば、つみたて投資枠とこどもNISA の NASDAQ100 の器の候補になる（楽天・プラス・NASDAQ-100〔2024-01-30 設定・実際 2年 0.336%〕は5年の要件を満たすのが早くて 2029年）',
+     'src': '三菱UFJアセットマネジメントの FAQ（faq1.am.mufg.jp）'},
     {'what': 'SBI・オールカントリー・インデックス・ファンド（税込0.055%・2026-11-17 設定）と SBI・ゼロ・オールカントリー（0.00%・こどもNISA 専用）',
      'facts': '発表は 2026-10-01（窓の中）・設定は窓の外。SBI アセットの器で、楽天で売るかは不明（同じ会社の SBI NASDAQ100 は楽天に無い）',
      'src': 'SBI アセットマネジメント 2026-10-01 発表'},
@@ -763,12 +778,12 @@ def main(refresh=False, skip_td=False):
         '新しい器は自分の記録が1年未満＝本当の費用（指数との差）は測れない。既存の器の多くは実測（表に出ない費用を含む）で、新しい器は表の費用＝新しい器に有利に傾いた比べ。'
         '公平のため、どの器も表の費用＋外国税で比べた値（like_for_like）も並べた',
         '費用は税込の年率（%）。外国税は NISA で取り戻せない配当の源泉税＝k×配当利回り（bestfund_data.VEH）。米国 ETF は両替 年0.02% を足した',
-        '投信ライブラリーの信託報酬は、中で外国の ETF を買う器ではその ETF の費用を含まない（例: グローバルX 防衛テック ETF は 0.0275% と載るが、中の SHLD 0.50% を足して 0.5275%）。'
-        '分かったものは足し、分からないものは「表の費用は下限」と書いた（既存の比べには使わない）',
+        '投信ライブラリーの信託報酬は運用会社・JPX の数字と合わないことがある: Global X の東証 ETF の一部は 0.025% と載るが JPX の銘柄概要では 466A 0.5275%・633A 0.4775%（置き換えた）。'
+        '中で外国の ETF を買う器（インベスコ QQQ ファンド＝QQQ・SBI・V＝VOO・一歩先いく防衛テック＝513A）はその ETF の費用を含まない（分かったものは足した）。分からないものは「表の費用は下限」と書いた（既存の比べには使わない）',
         '東証 ETF は分配金を払い出す（中で再投資しない）＝NISA で受け取った分配金を買い直すと成長投資枠を使う。投信（分配0円）とはここが違う',
         '除外の「レバレッジ・インバース」は事前登録の語（ブル・ショート ほか）をそのまま当てた。語が別の単語の一部だっただけの本（偽の当たり）: ' + ('、'.join(fp) if fp else 'なし') +
         '（どれも今持っている賭け・上位3には当たらない＝戻しても判定は「参考」）。ロング・ショート戦略の本は売りを使う運用なので語どおり外した: ' + str(len(ls)) + '本',
-        '楽天での取扱は投信ライブラリーの販売会社の欄で見た（東証 ETF・米国 ETF は楽天で売買できるとした）。楽天の積立の可否・NISA の表示・ポイントは見ていない',
+        '楽天での取扱は投信ライブラリーの販売会社の欄で見た（東証 ETF・米国 ETF は楽天で売買できるとした）。東証 ETF は楽天の「かぶツミ」で毎月・金額指定の積立ができる（買うのはその金額内の整数の口数・NISA 可・2024-09-24 楽天証券の発表）。楽天のポイント・NISA の画面の表示は見ていない',
         '投信ライブラリーの NISA の印は遅れることがある（例: SBI NASDAQ100 は資産運用業協会の成長投資枠リストに 2026-04-21 から載るが、ライブラリーの印は対象外の 9）。'
         '判定に効く器（今持っている賭け・上位3）は資産運用業協会のリストと突き合わせた（NZAM 534A・533A・SPDR 449A・Smart-i NASDAQ100 は成長投資枠の対象）',
     ]
