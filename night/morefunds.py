@@ -400,28 +400,58 @@ def part2(prof):
     a = max(min(fm[nm]) for nm in fm)
     kf = [k for k in months(a, 202609) if all(k in fm[nm] for nm in fm)]
     fund_tab = {nm: stats(fm[nm], kf) for nm in fm}
-    # 集中の度合い（ETF 側のお金のうちメガ10の10社に入る割合）
+    # 集中の度合い（ETF 側のお金のうちメガ10の10社に入る割合）＝事前登録。FANG+・テック12 と1社の最大（NVDA）は事後の参考
     prof_old = json.load(open(os.path.join(BASE, 'out', 'etf_profiles.json'))).get('etfs') or {}
     H = {t: {h[0].upper(): float(h[1]) for h in (prof_old.get(t) or {}).get('h') or []} for t in ('QQQ', 'SMH', 'ITA')}
-    mega = [t.upper() for t in prof['MEGA10']['constituents']]
-    goog = {'GOOGL', 'GOOG'}
+    for t in H:                                   # GOOGL と GOOG は同じ会社として GOOGL に寄せる
+        if 'GOOG' in H[t]:
+            H[t]['GOOGL'] = H[t].get('GOOGL', 0.0) + H[t].pop('GOOG')
+    norm = {t: sum(H[t].values()) for t in H}
 
-    def share(h, names):
-        s = 0.0
-        for k, w in h.items():
-            if k in names or (k in goog and (goog & set(names))):
-                s += w
-        return s / sum(h.values())
-    m_ndx, m_smh, m_ita = share(H['QQQ'], mega), share(H['SMH'], mega), share(H['ITA'], mega)
-    conc = {'メガ10の10社（月次報告の時点）': mega, 'asof': prof['MEGA10'].get('asof'), '出典': prof['MEGA10'].get('src'),
-            'NASDAQ100 の中の10社の比重(%)': round(100 * m_ndx, 1), 'SMH の中(%)': round(100 * m_smh, 1), 'ITA の中(%)': round(100 * m_ita, 1),
+    def etf_share(t, names):
+        return sum(w for k, w in H[t].items() if k in names) / norm[t]
+
+    def money_share(names, fund_w=None, replace=None):
+        """ETF 側（NASDAQ100 50 / SMH 20 / ITA 15）のお金のうち names に入る割合。fund_w＝足す器の中身の重み、replace＝'NDX'（NASDAQ100 の15を替える）か 'ITA'"""
+        w = {'QQQ': 50, 'SMH': 20, 'ITA': 15}
+        extra = 0.0
+        if replace == 'NDX':
+            w['QQQ'] = 35
+        elif replace == 'ITA':
+            w['ITA'] = 0
+        if replace:
+            extra = 15 * sum(v for k, v in fund_w.items() if k in names)
+        return round(100 * (sum(w[t] * etf_share(t, names) for t in w) + extra) / 85, 1)
+    mega = [t.upper() for t in prof['MEGA10']['constituents']]
+    mega_w = {t: 0.10 for t in mega}
+    conc = {'メガ10の10社': mega, 'asof': prof['MEGA10'].get('asof'), '出典': prof['MEGA10'].get('src'),
+            'NASDAQ100 の中の10社の比重(%)': round(100 * etf_share('QQQ', mega), 1), 'SMH の中(%)': round(100 * etf_share('SMH', mega), 1),
+            'ITA の中(%)': round(100 * etf_share('ITA', mega), 1),
+            'NASDAQ100 に入っていない会社': [t for t in mega if t not in H['QQQ']],
             'ETF 側のお金のうち10社に入る割合(%)': {
-                '今の形（NASDAQ100 50 / SMH 20 / ITA 15）': round(100 * (50 * m_ndx + 20 * m_smh + 15 * m_ita) / 85, 1),
-                'NASDAQ100 の15をメガ10に（35 / メガ10 15 / 20 / 15）': round(100 * (35 * m_ndx + 15 * 1.0 + 20 * m_smh + 15 * m_ita) / 85, 1),
-                'ITA をメガ10に（50 / 20 / メガ10 15）': round(100 * (50 * m_ndx + 20 * m_smh + 15 * 1.0) / 85, 1)},
+                '今の形（NASDAQ100 50 / SMH 20 / ITA 15）': money_share(mega),
+                'NASDAQ100 の15をメガ10に（35 / メガ10 15 / 20 / 15）': money_share(mega, mega_w, 'NDX'),
+                'ITA をメガ10に（50 / 20 / メガ10 15）': money_share(mega, mega_w, 'ITA')},
             '注': 'NASDAQ100・SMH・ITA の中身は out/etf_profiles.json（2026-08-19）。GOOGL と GOOG は同じ会社として数えた'}
+    post = {}
+    for key, fw in (('FANG+（等金額10社）', {t: 0.10 for t in prof['FANG_PLUS']['constituents']}),
+                    ('テック12（12%×7・3.2%×5）', {k.upper(): v for k, v in prof['TECH12']['weights_review'].items()})):
+        names = set(fw)
+        post[key] = {'NASDAQ100 の中の比重(%)': round(100 * etf_share('QQQ', names), 1),
+                     'NASDAQ100 に入っていない会社': sorted(t for t in names if t not in H['QQQ']),
+                     '今の形': money_share(names), 'NASDAQ100 の15を替えた形': money_share(names, fw, 'NDX'), 'ITA を替えた形': money_share(names, fw, 'ITA')}
+    nv = {'今の形': money_share({'NVDA'})}
+    for key, fw in (('メガ10', mega_w), ('FANG+', {t: 0.10 for t in prof['FANG_PLUS']['constituents']}),
+                    ('テック12', {k.upper(): v for k, v in prof['TECH12']['weights_review'].items()})):
+        nv[f'NASDAQ100 の15を{key}に'] = money_share({'NVDA'}, fw, 'NDX')
+    conc['事後（参考）FANG+・テック12 の同じ物差し'] = post
+    conc['事後（参考）NVDA 1社の割合(%)'] = nv
     tp = json.load(open(os.path.join(BASE, 'out', 'tech_persist.json')))
-    base_rate = {'tech_persist ③（時価総額の最大の1割・CRSP 1926〜）': tp['Q2_最大の1割−市場(%/年)'], '直近10年の最大の1割−市場(%/年)': tp['今の位置'].get('最大の1割−市場 直近10年%/年')}
+    base_rate = {'tech_persist ③（時価総額の最大の1割・CRSP 1926〜）': tp['Q2_最大の1割−市場(%/年)'], '直近10年の最大の1割−市場(%/年)': tp['今の位置'].get('最大の1割−市場 直近10年%/年'),
+                 'Dimensional Quick Take（CRSP 1927–2025・初めて米国の上位10社に入った会社・S&P500 との年率の差）': {
+                     '10年前': 12.0, '5年前': 20.3, '3年前': 27.2, '入った後3年': 0.3, '入った後5年': -1.7, '入った後10年': -1.6,
+                     '社数': '前 44/43/34・後 58/56/50（3/5/10年）', '出典': 'https://www.dimensional.com/chmedia/394308/source/download/dimensional-quick-takes.pdf（Think Twice About Chasing the Biggest Stocks）',
+                     '注': '初めて入った会社の平均＝上位10社を持ち続ける器の成績そのものではない'}}
     return dict(窓=W, 形の例_W1_円=shapes, 投信の基準価額=dict(窓=f'{kf[0]}〜{kf[-1]}', 表=fund_tab), 集中の度合い=conc, 基礎率=base_rate,
                 器の一覧_日本=family_table_jp(), 米国ETF=prof.get('US_ETFS'))
 
