@@ -332,11 +332,15 @@ def h1(ch, cost):
                 for cmp_ in ('ACWI', 'SP500'):
                     if b == cmp_:
                         continue
-                    wc = window_multiples(ref[cmp_], yrs, start=st if pname != '実物と指数だけ' else ch[b]['first_real'])
+                    # 『実物と指数だけ』は比べる相手も実物と指数の期間に限る（2026-10-11 独立の検算の指摘で是正・事後。
+                    #  是正の前は相手が代わりの系列〔ACWI の 2001 年より前・S&P500 の 1988-02 より前〕を含んでいた）
+                    sc = st if pname != '実物と指数だけ' else max(ch[b]['first_real'], ch[cmp_]['first_real'])
+                    wc = window_multiples(ref[cmp_], yrs, start=sc)
                     common = [k for k in wm if k in wc]
                     if common:
                         row[f'beat_{cmp_}'] = round(sum(1 for k in common if wm[k] > wc[k]) / len(common), 3)
                         row[f'beat_{cmp_}_n'] = len(common)
+                        row[f'beat_{cmp_}_from'] = min(common)
                 pe[f'{yrs}y'] = row
             if pe:
                 e[pname] = pe
