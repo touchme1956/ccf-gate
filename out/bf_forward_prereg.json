@@ -1,0 +1,397 @@
+{
+ "angle": "bf_forward",
+ "generated": "2026-10-11",
+ "registered_before_measuring": true,
+ "what_exists_at_registration": "前向きの月（2026-11 以降）のデータはまだ1日も無い。登録は 2026-10-11（10月の途中）なので 2026-10 の月は使わない。登録の前に見たのは ≤2026-09 の基準価額の歴史だけで、設計（追従のぶれ σ_d・切り詰め B・賭けの大きさ λ）と、bestfund の判定（out/bestfund.json・FANG+ が登録どおりの1位）に使った",
+ "asked_by": "ユーザー「時間を使って最高の投資信託かETFを探して。歴史検証そして未来検証全てやって最も良いとあなたが判断するものが何か調べ抜いて。」（2026-10-11）。事前登録 out/bestfund_prereg.json（d5eab7f）live_forward_test の約束「最良の1本が既存の前向きの検定（mw_forward の H1・nx_forward）に入っていなければ、同じ規約で前向きの検定を1本登録する」",
+ "question": "bestfund の登録どおりの最良の1本（iFreeNEXT FANG+インデックス）は、登録の後の月でも、0.2pt 以内で並んだ2位（eMAXIS Slim 米国株式〔S&P500〕）に勝つか。いつ見ても有効な検定（e過程）で毎月追い、e ≥ 20 で『勝ち』とする",
+ "why_forward": [
+  "bestfund の FANG+ の1位は、歴史の世界 A1・A2 と上乗せの世界 E がどれも同じ約9年の記録（2017-10〜2026-09）から来ている＝同じ証拠を3回数えている。感度19本のうち1位は10本（70% に届かず『堅い』ではない）で、感度の平均順位は S&P500 3.63 に対し FANG+ 6.84",
+  "前向きの月は誰も見ていない。器・相手・賭けの大きさ・打ち切りを今日固定すれば、結果は漏れなく読める",
+  "e過程（賭けの資産）は毎月のぞいても・いつ止めても α を守る（Ville の不等式 P(sup E ≥ 1/α) ≤ α）"
+ ],
+ "same_conventions_as": {
+  "source": "out/nx_forward_prereg.json（b8579d18）と night/nx_forward.py（e過程の関数 run_e・cs_bounds・e_bh を import してそのまま使う＝単一実装）",
+  "copied": "賭け E_t = Π(1 + λ x̃_s)・λ = min(μ_d/σ_d², 1/(2B))・切り詰め B = 4σ_m を 0.5% 単位で切り上げ・μ_d = 相手の登録前の上乗せ × 0.5 を [0.5, 3.0]%/年・逆向きの e_f（見込みなし・拘束しない）・20年の打ち切り・切り詰めた平均のいつ見ても有効な帯（−10〜+10%/年・0.1刻み・12か月以上）・一度取り込んだ月は固定・3か月待って出ない月は欠測（e を動かさない）・日本の投信の月は「その後の月の基準価額の行がある月だけ」・副の μ_d は 1.0 固定",
+  "different": [
+   "主の仮説は1本（K=1）なので線は e ≥ 20（nx は主3本で 60）",
+   "比べるのは円の基準価額の総リターンどうし（nx の F1・F2 は米ドルの ETF）。信託報酬は基準価額の中で引かれている＝費用を足さない",
+   "最初の前向きの月は 2026-11（登録が10月の途中のため）。正式に見る月は毎年11月（10月までの12か月がそろった後）",
+   "副に「逆向き（μ0=0）」を置いた: 主は片側（FANG+ の上乗せ）だけを見るので、『S&P500 のほうが良かった』の側も同じ λ・B で記録する（報告のみ）"
+  ]
+ },
+ "overlap_check": {
+  "checked_at": "2026-10-11（この枝の out/mw_forward_prereg.json と out/nx_forward_prereg.json の仮説の一覧）",
+  "existing": "mw_forward: H1 ETF 側（QQQM75/SMH25）対 SPY／H2・H3 城 対 SPY・QQQM／H4 米国外の割安＋勢い／H5 新興国／H6 米国の質（QUAL）／H7 cop_at／H8 新興国の紙。nx_forward: F1 業種 ETF の勢い／F2 ブランド価値の上位10社／F3 日本の能動の投信の上位1/4／F4 RSST／F5 国の配当利回り（と各副）",
+  "verdict": "FANG+（NYSE FANG+ 指数・iFreeNEXT FANG+）を持つ仮説は無い＝登録する"
+ },
+ "funds": {
+  "FANG": {
+   "name": "iFreeNEXT FANG+インデックス",
+   "isin": "JP90C000FZD4",
+   "assoc": "04311181",
+   "co": "大和アセットマネジメント",
+   "fee_pct_tax_incl": 0.7755,
+   "index": "NYSE FANG+ 指数（円換算）"
+  },
+  "SP500": {
+   "name": "eMAXIS Slim 米国株式（S&P500）",
+   "isin": "JP90C000GKC6",
+   "assoc": "03311187",
+   "co": "三菱UFJアセットマネジメント",
+   "fee_pct_tax_incl": 0.0814,
+   "index": "S&P500（配当込み・円換算）"
+  },
+  "NDX": {
+   "name": "iFreeNEXT NASDAQ100インデックス",
+   "isin": "JP90C000GUN2",
+   "assoc": "04317188",
+   "co": "大和アセットマネジメント",
+   "fee_pct_tax_incl": 0.495,
+   "index": "NASDAQ100（配当込み・円換算）"
+  },
+  "ACWI": {
+   "name": "eMAXIS Slim 全世界株式（オール・カントリー）",
+   "isin": "JP90C000H1T1",
+   "assoc": "0331418A",
+   "co": "三菱UFJアセットマネジメント",
+   "fee_pct_tax_incl": 0.05775,
+   "index": "MSCI ACWI（配当込み・円換算）"
+  }
+ },
+ "hypotheses": {
+  "G1_FANG_vs_SP500": {
+   "definition": "iFreeNEXT FANG+インデックス 対 eMAXIS Slim 米国株式（S&P500）（円・基準価額の総リターン・信託報酬を引いた後）",
+   "family": "主（判定）",
+   "portfolio": "iFreeNEXT FANG+インデックス",
+   "benchmark": "eMAXIS Slim 米国株式（S&P500）",
+   "currency": "JPY",
+   "direction": "相手より上（FANG+ − 相手 の切り詰めた平均 ≤ 0 を帰無に）",
+   "cost_rule": "費用は足さない（信託報酬は基準価額の中で毎日引かれている）。分配金は基準価額で再投資（4本とも分配の実績なし＝念のための決まり）",
+   "mu_d_rule": "登録前（2018-08〜2026-09）の FANG+ − S&P500 の算術の超過 × 0.5 を [0.5, 3.0]%/年 に収める",
+   "why": "bestfund の登録どおりの最良の1本（CE γ=2 で1位）と、0.2pt 以内で並んだ2位（S&P500 の最安の投信）。つみたて投資枠でどちらも買える",
+   "frozen": {
+    "sigma_d": 17.982,
+    "sigma_window": [
+     201808,
+     202609
+    ],
+    "n_months": 98,
+    "sigma_source": "iFreeNEXT FANG+インデックス − eMAXIS Slim 米国株式（S&P500） の月次の差（基準価額の総リターン・円・信託報酬の後）",
+    "mu_d": 3.0,
+    "mu_source": "FANG−SP500 の登録前の算術の超過（2018-08〜2026-09） = +12.131%/年 × 0.5 → [0.5, 3.0] に収める",
+    "B": 0.21,
+    "lambda_kelly": 0.9278,
+    "lambda": 0.9278,
+    "lambda_capped": false,
+    "mu_f": 3.0,
+    "clipped_months_hist": 0,
+    "hist_mean_ann_pct": 12.131,
+    "hist_geo_ann_pct": {
+     "port": 31.61,
+     "bench": 19.57,
+     "diff": 12.04
+    },
+    "hist_nw_t": 1.52
+   }
+  },
+  "G1r_SP500_vs_FANG": {
+   "definition": "同じ組の逆向き（S&P500 が FANG+ に勝つ・μ0=0）＝『FANG+ を選んだのが外れだった』の側（副・判定に使わない）",
+   "family": "副（報告だけ）",
+   "portfolio": "iFreeNEXT FANG+インデックス",
+   "benchmark": "eMAXIS Slim 米国株式（S&P500）",
+   "currency": "JPY",
+   "direction": "逆向き（相手 − FANG+ の切り詰めた平均 ≤ 0 を帰無に）",
+   "cost_rule": "費用は足さない（信託報酬は基準価額の中で毎日引かれている）。分配金は基準価額で再投資（4本とも分配の実績なし＝念のための決まり）",
+   "mu_d_rule": "G1 と同じ λ・B（μ0=0・futility なし）",
+   "why": "主の検定は片側（FANG+ の上乗せ）だけを見る。逆の側（S&P500 のほうが良かった）も同じ λ・B の e過程で記録する（報告のみ）",
+   "frozen": {
+    "sigma_d": 17.982,
+    "sigma_window": [
+     201808,
+     202609
+    ],
+    "n_months": 98,
+    "sigma_source": "iFreeNEXT FANG+インデックス − eMAXIS Slim 米国株式（S&P500） の月次の差（基準価額の総リターン・円・信託報酬の後）",
+    "mu_d": 0.0,
+    "mu_source": "逆向き（μ0=0）・λ と B は G1_FANG_vs_SP500 と同じ（futility は持たない）",
+    "B": 0.21,
+    "lambda_kelly": 0.9278,
+    "lambda": 0.9278,
+    "lambda_capped": false,
+    "mu_f": null,
+    "clipped_months_hist": 0,
+    "hist_mean_ann_pct": 12.131,
+    "hist_geo_ann_pct": {
+     "port": 31.61,
+     "bench": 19.57,
+     "diff": 12.04
+    },
+    "hist_nw_t": 1.52
+   }
+  },
+  "G2_FANG_vs_NDX": {
+   "definition": "iFreeNEXT FANG+インデックス 対 iFreeNEXT NASDAQ100インデックス（ユーザーの今の主力の器）（副・判定に使わない）",
+   "family": "副（報告だけ）",
+   "portfolio": "iFreeNEXT FANG+インデックス",
+   "benchmark": "iFreeNEXT NASDAQ100インデックス",
+   "currency": "JPY",
+   "direction": "相手より上（FANG+ − 相手 の切り詰めた平均 ≤ 0 を帰無に）",
+   "cost_rule": "費用は足さない（信託報酬は基準価額の中で毎日引かれている）。分配金は基準価額で再投資（4本とも分配の実績なし＝念のための決まり）",
+   "mu_d_rule": "1.0%/年 固定（nx_forward の副と同じ＝検出したい最小の上乗せ）",
+   "why": "今の主力（NASDAQ100）から FANG+ へ替える価値があるか（報告のみ）",
+   "frozen": {
+    "sigma_d": 12.598,
+    "sigma_window": [
+     201809,
+     202609
+    ],
+    "n_months": 97,
+    "sigma_source": "iFreeNEXT FANG+インデックス − iFreeNEXT NASDAQ100インデックス の月次の差（基準価額の総リターン・円・信託報酬の後）",
+    "mu_d": 1.0,
+    "mu_source": "fixed 1.0（0.5〜3.0 の中・nx_forward の副と同じ）",
+    "B": 0.15,
+    "lambda_kelly": 0.6301,
+    "lambda": 0.6301,
+    "lambda_capped": false,
+    "mu_f": 1.0,
+    "clipped_months_hist": 0,
+    "hist_mean_ann_pct": 7.188,
+    "hist_geo_ann_pct": {
+     "port": 30.98,
+     "bench": 24.0,
+     "diff": 6.98
+    },
+    "hist_nw_t": 1.34
+   }
+  },
+  "G3_FANG_vs_ACWI": {
+   "definition": "iFreeNEXT FANG+インデックス 対 eMAXIS Slim 全世界株式（オール・カントリー）（副・判定に使わない）",
+   "family": "副（報告だけ）",
+   "portfolio": "iFreeNEXT FANG+インデックス",
+   "benchmark": "eMAXIS Slim 全世界株式（オール・カントリー）",
+   "currency": "JPY",
+   "direction": "相手より上（FANG+ − 相手 の切り詰めた平均 ≤ 0 を帰無に）",
+   "cost_rule": "費用は足さない（信託報酬は基準価額の中で毎日引かれている）。分配金は基準価額で再投資（4本とも分配の実績なし＝念のための決まり）",
+   "mu_d_rule": "1.0%/年 固定（nx_forward の副と同じ＝検出したい最小の上乗せ）",
+   "why": "日本で最も多く積み立てられている相手（報告のみ）",
+   "frozen": {
+    "sigma_d": 19.0,
+    "sigma_window": [
+     201811,
+     202609
+    ],
+    "n_months": 95,
+    "sigma_source": "iFreeNEXT FANG+インデックス − eMAXIS Slim 全世界株式（オール・カントリー） の月次の差（基準価額の総リターン・円・信託報酬の後）",
+    "mu_d": 1.0,
+    "mu_source": "fixed 1.0（0.5〜3.0 の中・nx_forward の副と同じ）",
+    "B": 0.22,
+    "lambda_kelly": 0.277,
+    "lambda": 0.277,
+    "lambda_capped": false,
+    "mu_f": 1.0,
+    "clipped_months_hist": 0,
+    "hist_mean_ann_pct": 15.233,
+    "hist_geo_ann_pct": {
+     "port": 34.01,
+     "bench": 18.29,
+     "diff": 15.73
+    },
+    "hist_nw_t": 1.91
+   }
+  }
+ },
+ "families_and_multiplicity": {
+  "main": {
+   "members": [
+    "G1_FANG_vs_SP500"
+   ],
+   "line": 20.0,
+   "why": "主は1本（K=1）。e ≥ 20（α=0.05）で『勝ち』"
+  },
+  "sub": {
+   "members": [
+    "G1r_SP500_vs_FANG",
+    "G2_FANG_vs_NDX",
+    "G3_FANG_vs_ACWI"
+   ],
+   "line": 60.0,
+   "why": "副3本（逆向き・NASDAQ100 の器・全世界株）。Bonferroni の 60 を併記するが、ここが越えても『勝ち』とは言わない（報告）"
+  },
+  "cross_session": {
+   "K": 20,
+   "line": 400.0,
+   "why": "mw_forward（8本）・nx_forward（8本）と合わせた全セッションの線（参考）"
+  },
+  "e_bh": "各族で e-BH（偽発見率5%・Wang & Ramdas 2022）も報告する（判定は上の線だけ）"
+ },
+ "e_process": {
+  "active_return": "x_t = r_FANG+,t − r_相手,t（月次・円の基準価額の総リターンどうし）。t は 2026-11 から",
+  "clip": "x̃_t = min(B, max(−B, x_t))。B = 4 × σ_d/√12 を 0.005 刻みで切り上げ（σ_d＝登録前の月次の差の標準偏差×√12）",
+  "null": "H0: 各月、過去を条件とした E[x̃_t] ≤ 0（逆向きの G1r は E[−x̃_t] ≤ 0）",
+  "bet": "E_t = Π_{s≤t} (1 + λ x̃_s)。λ = min(μ_d/σ_d², 1/(2B))（年率の小数）。1+λx̃ ≥ 0.5",
+  "reject": "主: E_t ≥ 20 に一度でも達したら『勝ち』（α=0.05）。達した月を記録し、以後も記録は続ける（結論は変えない）",
+  "futility": "逆向きの e過程 F_t = Π (1 + λ (μ_d/12 − x̃_s))。F_t ≥ 20 で『設計の上乗せ μ_d 以上は無い』＝見込みなし（拘束しない）",
+  "horizon": "最長 2046-10（2026-11〜の240か月＝20年）。それまでにどちらにも達しなければ『証明できず（未決）』で打ち切る",
+  "confidence_sequence": "参考（判定に使わない）: 同じ λ で μ0 の格子（−10〜+10%/年・0.1刻み）を退けた範囲から、切り詰めた平均の年率の、いつ見ても有効な下限・上限（12か月以上たってから）",
+  "no_change": "器・相手・λ・B・μ_d・線は変えない（変えたら別の新しい登録として e=1 から）"
+ },
+ "stopping_rules": [
+  "勝ち: G1 の E_t が 20 に達した月で結論を固定する（その後の月も記録するが結論は変えない）",
+  "見込みなし: F_t ≥ 20（設計の上乗せ μ_d=3%/年 は無いと言える）。拘束しない＝記録は続けるが、ユーザーに報告する",
+  "打ち切り: 2046-10 で未決なら『証明できず』",
+  "器の終わり: どちらかの投信が償還・繰上償還・指数の変更・併合をしたら、その仮説はそこで止める（別の投信に差し替えない）。最後の行から10日以上増えなければ止める決まりを確かめる（ログに出す）",
+  "データの源（投信総合検索ライブラリー）が3か月を超えて取れない月は欠測として飛ばす（0 で埋めない）。欠測の月は e を動かさない"
+ ],
+ "review": {
+  "monthly": "毎月（CI に1段足せば自動・ci_suggestion）。e過程なので毎月のぞいても有効",
+  "formal": "毎年11月（REVIEW_MONTH=11）。10月までの前向きの12か月がそろった後に、各仮説の e・e_f・帯・累積の差を報告する。最初の正式の見る日は 2027-11（2026-11〜2027-10）",
+  "event": "G1 が 20 か e_f ≥ 20 に達したら、その月に報告する",
+  "who_decides": "判定は報告だけ。配分・器を変えるかはユーザーの明示指示の領分"
+ },
+ "update_procedure": {
+  "command": "python3 night/bf_forward.py update",
+  "steps": [
+   "1. 4本の基準価額の CSV を投信総合検索ライブラリーから取り直す（この道具のキャッシュ・6時間）",
+   "2. 前向きの月を古い順に取り込む（完了した月だけ＝その後の月の行がある月・途中の月が未完なら先へ進まない・3か月待って出ない月は欠測）。一度取り込んだ月の x は固定",
+   "3. e・e_f・帯・族の e-BH を計算して out/bf_forward.json へ"
+  ],
+  "first_runs": "最初の成績（2026-11）は 2026-12 の最初の営業日の基準価額が出た後の最初の update で入る",
+  "runtime": "数秒〜1分（CSV 4本）"
+ },
+ "data_rules": {
+  "source": "一般社団法人投資信託協会 投信総合検索ライブラリーの基準価額の CSV（/FdsWeb/FDST030000/csv-file-download?isinCd=…&associFundCd=…）。セッションは nx_jpfunds_data.Lib（UA に個人の連絡先を載せない）",
+  "monthly_return": "月次の総リターン＝その月の日々の (基準価額＋分配金)÷前日の基準価額 の積 − 1（nx_jpfunds_data.monthly_tr・最初の日を含む月と、31日を超える空きの後の月は値なし）",
+  "month_complete": "その後の月の基準価額の行がある月だけ（月末の基準価額が確定して公表された後）",
+  "timing": "4本とも米国の前日の引け×当日のドル円で基準価額を出す（同じ時刻の構造）＝月末の基準価額どうしの差に時刻のずれは入らない",
+  "jump_guard": "1日の (基準価額＋分配金)÷前日 が (0.6, 1.6) の外なら止める（分割・誤値を黙って月次にしない）",
+  "lock": "一度取り込んだ月の x は固定（後の訂正は反映しない）",
+  "order": "月は順番に取り込む。途中の月が未完なら先へ進まない。3か月待っても出ない月は欠測（0 で埋めない・絶対のルール7）"
+ },
+ "frozen": {
+  "design": {
+   "G1_FANG_vs_SP500": {
+    "sigma_d": 17.982,
+    "sigma_window": [
+     201808,
+     202609
+    ],
+    "n_months": 98,
+    "sigma_source": "iFreeNEXT FANG+インデックス − eMAXIS Slim 米国株式（S&P500） の月次の差（基準価額の総リターン・円・信託報酬の後）",
+    "mu_d": 3.0,
+    "mu_source": "FANG−SP500 の登録前の算術の超過（2018-08〜2026-09） = +12.131%/年 × 0.5 → [0.5, 3.0] に収める",
+    "B": 0.21,
+    "lambda_kelly": 0.9278,
+    "lambda": 0.9278,
+    "lambda_capped": false,
+    "mu_f": 3.0,
+    "clipped_months_hist": 0,
+    "hist_mean_ann_pct": 12.131,
+    "hist_geo_ann_pct": {
+     "port": 31.61,
+     "bench": 19.57,
+     "diff": 12.04
+    },
+    "hist_nw_t": 1.52
+   },
+   "G2_FANG_vs_NDX": {
+    "sigma_d": 12.598,
+    "sigma_window": [
+     201809,
+     202609
+    ],
+    "n_months": 97,
+    "sigma_source": "iFreeNEXT FANG+インデックス − iFreeNEXT NASDAQ100インデックス の月次の差（基準価額の総リターン・円・信託報酬の後）",
+    "mu_d": 1.0,
+    "mu_source": "fixed 1.0（0.5〜3.0 の中・nx_forward の副と同じ）",
+    "B": 0.15,
+    "lambda_kelly": 0.6301,
+    "lambda": 0.6301,
+    "lambda_capped": false,
+    "mu_f": 1.0,
+    "clipped_months_hist": 0,
+    "hist_mean_ann_pct": 7.188,
+    "hist_geo_ann_pct": {
+     "port": 30.98,
+     "bench": 24.0,
+     "diff": 6.98
+    },
+    "hist_nw_t": 1.34
+   },
+   "G3_FANG_vs_ACWI": {
+    "sigma_d": 19.0,
+    "sigma_window": [
+     201811,
+     202609
+    ],
+    "n_months": 95,
+    "sigma_source": "iFreeNEXT FANG+インデックス − eMAXIS Slim 全世界株式（オール・カントリー） の月次の差（基準価額の総リターン・円・信託報酬の後）",
+    "mu_d": 1.0,
+    "mu_source": "fixed 1.0（0.5〜3.0 の中・nx_forward の副と同じ）",
+    "B": 0.22,
+    "lambda_kelly": 0.277,
+    "lambda": 0.277,
+    "lambda_capped": false,
+    "mu_f": 1.0,
+    "clipped_months_hist": 0,
+    "hist_mean_ann_pct": 15.233,
+    "hist_geo_ann_pct": {
+     "port": 34.01,
+     "bench": 18.29,
+     "diff": 15.73
+    },
+    "hist_nw_t": 1.91
+   },
+   "G1r_SP500_vs_FANG": {
+    "sigma_d": 17.982,
+    "sigma_window": [
+     201808,
+     202609
+    ],
+    "n_months": 98,
+    "sigma_source": "iFreeNEXT FANG+インデックス − eMAXIS Slim 米国株式（S&P500） の月次の差（基準価額の総リターン・円・信託報酬の後）",
+    "mu_d": 0.0,
+    "mu_source": "逆向き（μ0=0）・λ と B は G1_FANG_vs_SP500 と同じ（futility は持たない）",
+    "B": 0.21,
+    "lambda_kelly": 0.9278,
+    "lambda": 0.9278,
+    "lambda_capped": false,
+    "mu_f": null,
+    "clipped_months_hist": 0,
+    "hist_mean_ann_pct": 12.131,
+    "hist_geo_ann_pct": {
+     "port": 31.61,
+     "bench": 19.57,
+     "diff": 12.04
+    },
+    "hist_nw_t": 1.52
+   }
+  },
+  "design_end": 202609,
+  "first_forward_month": 202611,
+  "max_end": 204610,
+  "tool_sha256_at_registration": "f44803686239152041cbffe13f968aadf83ccd84ce96dbd41108fb7092115a10",
+  "note": "design は night/bf_forward.py design の出力をそのまま写した（登録前の ≤2026-09 の基準価額だけ）"
+ },
+ "power_analysis_spec": {
+  "method": "各仮説の登録前の月次の差から平均を引き、12か月の塊で円環ブロック・ブートストラップ（4,000本×40年）。真の上乗せ μ ∈ {−3, 0, 1, 3, 6, 10}%/年 を足し、上と同じ切り詰め・λ・B で e と e_f を回す",
+  "outputs": "3・5・10・20年以内に e≥20・族の線に達する確率、線に達するまでの年数の中央、見込みなし（e_f≥20）の確率、理想の賭けの目安 6/IR² 年、5・10・20年で50%の確率で線に届くのに要る真の上乗せ",
+  "note": "検出力は前向きのデータを使わない（登録前の歴史と仮の上乗せだけ）。結果は out/bf_forward.json の power（init が計算）",
+  "expected_before_computing": "G1 の追従のぶれ σ_d は 17.982%/年。設計の上乗せ μ_d=3%/年 なら IR = 0.167、理想の賭けでも e≥20 まで約 6/IR² = 216 年。★真の上乗せが設計の 3%/年 程度なら、20年のうちに『勝ち』が出る見込みはほぼ無い。決着が付くのは真の上乗せが年10%前後（歴史の +12%/年 に近い）ときだけ。『勝ちが出ない』は『勝ちが無い』ではない"
+ },
+ "contamination": [
+  "★FANG+ を最良に選んだのは bestfund の結果（登録前の約9年の歴史を含む）を見た後。だから歴史の数字はこの前向きの検定の証拠にならない。前向きの月だけが証拠",
+  "μ_d の出どころ（登録前の FANG+ − S&P500 の超過 +12.1%/年）は、FANG+ を選ぶのに使ったのと同じ期間。これは賭けの大きさ（検出力）にだけ効き、e過程の有効性（α）には効かない",
+  "設計のぶれ σ_d と B を決めるのに、登録前の歴史（≤2026-09）を見た（nx と同じ）。2026-10 の途中の値は使わない（最初の月は 2026-11）"
+ ],
+ "known_limits": [
+  "★検出力が非常に低い: 追従のぶれが約18%/年あると、真の上乗せが年3%なら決着まで数百年かかる。power の表で年ごとの確率を出す",
+  "e過程の帰無は『切り詰めた平均』。負の裾が B を超える月が多いと甘くなる（切られた月の数を毎回報告する）",
+  "FANG+ は10社を等分に持つ指数で、指数の銘柄の入れ替え（ICE の規則）がある。指数の規則が変わっても、器（iFreeNEXT FANG+）が同じ指数を追う限り続ける。器が指数を替えたら止める",
+  "これは「最良の1本」の検定で、積立の倍率そのもの（CE）の検定ではない。月次の差の平均で測る",
+  "日本の投信の基準価額は米国の前日の引け×当日のドル円で、月末の日付の取り方は4本で同じ（時刻のずれは無い）。ただし祝日の違いで月末の行が1日ずれる月がありうる（両方とも同じ日付の構造なのでほぼ相殺）"
+ ],
+ "ci_suggestion": "ops.yml の forward ジョブに1段（mw・nx と同じ形）: `python3 night/forward_run_mark.py bf started` → `timeout 600 python3 night/bf_forward.py update` → 印。出力 out/bf_forward.json を forward ジョブのコミットに足す。凍結の検査（out/forward_frozen.json に群 bf・night/check_forward_frozen.py の --group の選択肢）も同時に足す。★足すかはユーザーの判断（bestfund の事前登録 live_forward_test）",
+ "grade": "N/A（前向きの検定のインフラと設計。歴史の格付けは付けない）",
+ "tool": "night/bf_forward.py（design / init / update / selftest）→ out/bf_forward.json"
+}
