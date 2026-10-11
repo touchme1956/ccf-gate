@@ -87,15 +87,34 @@ def forms(prox):
     }
 
 
+# ★事後（結果を見た後に足した参考・判定と勧め方には使わない）: 個別株を20にするなら、ITA でなく別の所から5を回したら
+POSTHOC = {'P1 事後: NASDAQ100 から5（QQQM 45 / SMH 20 / ITA 15 / 個別株 20）': {'QQQM': 45, 'SMH': 20, 'ITA': 15},
+           'P2 事後: SMH から5（QQQM 50 / SMH 15 / ITA 15 / 個別株 20）': {'QQQM': 50, 'SMH': 15, 'ITA': 15}}
+
+
+def forms_posthoc(prox):
+    out = {}
+    for nm, etf in POSTHOC.items():
+        for mode, lab in (('V', '個別株＝市場'), ('S', '個別株＝席の業種の写し')):
+            f = dict(etf)
+            if mode == 'V':
+                f['VOO'] = CASTLE_NEW
+            else:
+                for k, v in prox.items():
+                    f[k] = f.get(k, 0) + CASTLE_NEW * v
+            out[f'{nm}（{lab}）'] = f
+    return out
+
+
 PAIRS = {'V 全体（個別株＝市場）': ('V1 案（個別株20＝市場）', 'V0 今（個別株15＝市場）'),
          'S 全体（個別株＝席の業種の写し）': ('S1 案（個別株20＝席の業種の写し）', 'S0 今（個別株15＝席の業種の写し）'),
          '参考 ETF 側だけ': ('N1 案の ETF 側（QQQM 50 / SMH 20 / ITA 10）', 'N0 今の ETF 側（QQQM 50 / SMH 20 / ITA 15）')}
 
 
-def forward(FM):
+def forward(FM, PH=None):
     ctx = MF.CB.build(max_k=1)
     tabs = MF.p15_tables()
-    Sx = MF.seat_metrics(ctx, tabs, FM)
+    Sx = MF.seat_metrics(ctx, tabs, dict(FM, **(PH or {})))
     ref = json.load(open(os.path.join(BASE, 'out', 'etf_ita_xlk.json')))['slots']['A']['table']['ITA']
     mine = MF.row_of(Sx, 'ITA')
     for k in ('平均', '最悪', '確率', '五未満', 'ぶれ', '最大下落'):
@@ -109,8 +128,14 @@ def forward(FM):
         ref_rule[nm] = dict(確率_15以上=bool(ra['確率'] >= rb['確率'] - 3), 最悪の世界=bool(ra['最悪'] > rb['最悪']),
                             確率_5未満=bool(ra['五未満'] < rb['五未満']))
         ref_rule[nm]['3つとも'] = all(ref_rule[nm].values())
+    ph_rows, ph_jud = {}, {}
+    for k in (PH or {}):
+        ph_rows[k] = MF.row_of(Sx, k)
+        base = 'V0 今（個別株15＝市場）' if '個別株＝市場' in k else 'S0 今（個別株15＝席の業種の写し）'
+        ph_jud[k] = MF.judge(Sx, k, base)
     return {'自己検問': f"席A の ITA の行が out/etf_ita_xlk.json と一致（平均 {mine['平均']}・最悪 {mine['最悪']}・確率 {mine['確率']}）",
-            '形ごと（主）': rows, '判定（案 − 今）': jud, '参考_future30_options の条件（判定に使わない）': ref_rule}
+            '形ごと（主）': rows, '判定（案 − 今）': jud, '参考_future30_options の条件（判定に使わない）': ref_rule,
+            '事後_個別株20の5をどこから回すか（判定に使わない・今との差）': {'形ごと（主）': ph_rows, '判定（形 − 今）': ph_jud}}
 
 
 def century(FM):
@@ -184,7 +209,10 @@ def concentration(prox_w):
         net = ','.join(f'{k}={v}' for k, v in etf.items())
         p = subprocess.run([sys.executable, os.path.join(BASE, 'night', 'lookthrough.py'), '--what-if', '--castle', castle, '--net', net],
                            capture_output=True, text=True, timeout=300, cwd=BASE)
-        line = next((ln.strip() for ln in p.stdout.splitlines() if ln.strip().startswith('★指定') and '網' in ln), None)
+        # what-if の表の行（城を指定した姿）＝『★指定 QQQM=…（網 N%）』。つるはし比率の表の『★指定の網…（城は今のまま）』は城が今の保有なので読まない
+        line = next((ln.strip() for ln in p.stdout.splitlines() if re.match(r'^★指定 \S+（網 \d+%）', ln.strip())), None)
+        if not line:
+            raise SystemExit('✗ lookthrough の what-if の『★指定 …（網 N%）』の行が見つからない＝出力の形が変わった')
         top = [ln.strip() for ln in p.stdout.splitlines() if re.match(r'^\s+半導体連鎖', ln)]
         out[nm] = {'城（総資産に対する%）': castle, '網': net, 'lookthrough の行（そのまま）': line, '参考_今の保有の半導体連鎖': top[:1]}
     return out
@@ -193,8 +221,9 @@ def concentration(prox_w):
 def main():
     order, prox_w, prox = seats()
     FM = forms(prox)
-    fw = forward(FM)
-    cn = century(FM)
+    PH = forms_posthoc(prox)
+    fw = forward(FM, PH)
+    cn = century(dict(FM, **PH))
     tm = timing()
     cc = concentration(prox_w)
     J = fw['判定（案 − 今）']
@@ -207,6 +236,7 @@ def main():
            '形（合計の比）': {k: {t: round(v, 3) for t, v in f.items()} for k, f in FM.items()},
            '勧め方': '案を勧めるのは①の全体の形が V と S の両方で『堅い価値あり』のときだけ。それ以外は今のまま。②③④は判定に使わない',
            '勧める案（決まりどおり）': rec,
+           '事後の参考（結果を見た後に足した・判定と勧め方に使わない）': '個別株を20にするなら5をどこから回すか: P1 NASDAQ100 から・P2 SMH から（①②に同じ物差しで並べる）。④の読む行の取り違え（城を今のままにした表の行を写していた）も結果を見た後に直した',
            '① 4つの世界と積立の確率': fw, '② 100年の代用（市場との比）': cn, '③ 注文書の時期（目安）': tm, '④ 集中（目標の姿・ETF の中身まで）': cc}
     with open(OUT, 'w', encoding='utf-8') as f:
         json.dump(out, f, ensure_ascii=False, indent=1)
@@ -217,6 +247,10 @@ def main():
     for nm, j in J.items():
         print(nm, '主', j['主'], 'まとめ', j['まとめ'], {v: (x['判定'], x['Δ']) for v, x in j['感度ごと'].items()})
     print('参考の条件', fw['参考_future30_options の条件（判定に使わない）'])
+    ph = fw['事後_個別株20の5をどこから回すか（判定に使わない・今との差）']
+    for k, r in ph['形ごと（主）'].items():
+        j = ph['判定（形 − 今）'][k]
+        print(f"{k:<60} 平均{r['平均']:6.2f} 最悪{r['最悪']:6.2f} 15%以上{r['確率']:5.1f} 5%未満{r['五未満']:5.1f} ぶれ{r['ぶれ']:5.1f} 最大下落{r['最大下落']:6.1f} | 主 {j['主']} まとめ {j['まとめ']} Δ{j['感度ごと']['main']['Δ']}")
     for nm, d in cn.items():
         a, b = d['30年の積立（起点1965〜1995）'], d['20年の積立（起点1965〜2005）']
         print(f"{nm:<34} 30年 中央{a['中央値']} 下位10%{a['下位10%点']} 最悪{a['最悪']} 勝ち{a['市場に勝った割合']} | 20年 中央{b['中央値']} 下位10%{b['下位10%点']} 最悪{b['最悪']} 勝ち{b['市場に勝った割合']}")
