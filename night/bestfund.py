@@ -422,9 +422,15 @@ def summarize_bet(mults, worlds, gamma=GAMMA):
             'p5_irr': float(irr_from_multiple(np.array([np.percentile(pool, 5)]))[0])}
 
 
-def rank_ce(sims, worlds, gamma, pool_bets):
+SENS_TOP5 = {}
+
+
+def rank_ce(sims, worlds, gamma, pool_bets, label=None):
     sc = {b: summarize_bet(sims[b], worlds, gamma)['ce_irr'] for b in pool_bets}
-    return sorted(pool_bets, key=lambda b: -sc[b]), sc
+    order = sorted(pool_bets, key=lambda b: -sc[b])
+    if label:
+        SENS_TOP5[label] = {'top5': [(b, round(100 * sc[b], 2)) for b in order[:5]], 'rank': {b: i + 1 for i, b in enumerate(order)}}
+    return order, sc
 
 
 def worlds_all(ch, cost, bg, cg, dg, lam):
@@ -529,18 +535,18 @@ def main():
     # ── 感度 ──
     sens = {}
     for g in (1, 3, 5):
-        sens[f'γ={g}'] = rank_ce(sims, WORLDS, g, elig)[0][0]
+        sens[f'γ={g}'] = rank_ce(sims, WORLDS, g, elig, label=f'γ={g}')[0][0]
     for w in WORLDS:
         ws = [x for x in WORLDS if x != w]
-        sens[f'世界 {w} を外す'] = rank_ce(sims, ws, GAMMA, elig)[0][0]
-    sens['歴史だけ（A1・A2）'] = rank_ce(sims, ['A1', 'A2'], GAMMA, elig)[0][0]
-    sens['未来だけ（B・C・D・E）'] = rank_ce(sims, ['B', 'C', 'D', 'E'], GAMMA, elig)[0][0]
+        sens[f'世界 {w} を外す'] = rank_ce(sims, ws, GAMMA, elig, label=f'世界 {w} を外す')[0][0]
+    sens['歴史だけ（A1・A2）'] = rank_ce(sims, ['A1', 'A2'], GAMMA, elig, label='歴史だけ（A1・A2）')[0][0]
+    sens['未来だけ（B・C・D・E）'] = rank_ce(sims, ['B', 'C', 'D', 'E'], GAMMA, elig, label='未来だけ（B・C・D・E）')[0][0]
     s125 = simulate(mu, sz, WORLDS, sigma_mult=1.25)
-    sens['σ×1.25'] = rank_ce(s125, WORLDS, GAMMA, elig)[0][0]
+    sens['σ×1.25'] = rank_ce(s125, WORLDS, GAMMA, elig, label='σ×1.25')[0][0]
     del s125
     for nm, sh in (('ドル円の期待 −2%/年（円高）', -0.02), ('ドル円の期待 +1%/年', 0.01)):
         sx = simulate(mu, sz, WORLDS, fx_shift=sh)
-        sens[nm] = rank_ce(sx, WORLDS, GAMMA, elig)[0][0]
+        sens[nm] = rank_ce(sx, WORLDS, GAMMA, elig, label=nm)[0][0]
         del sx
     for nm, al in (('D の戻り0%（今の PER が続く）', 0.0), ('D の戻り100%（中央値まで戻る）', 1.0)):
         dg2 = world_d_gross(cg, alpha=al) if d_note is None else dg
@@ -548,21 +554,21 @@ def main():
         e2, _ = world_e(ch, cost, bnet, cnet, dn2, lam)
         mu2 = dict(mu, D=dn2, E=e2)
         sx = simulate(mu2, sz, WORLDS)
-        sens[nm] = rank_ce(sx, WORLDS, GAMMA, elig)[0][0]
+        sens[nm] = rank_ce(sx, WORLDS, GAMMA, elig, label=nm)[0][0]
         del sx
     e10, _ = world_e(ch, cost, bnet, cnet, dnet, lam10)
     sx = simulate(dict(mu, E=e10), sz, WORLDS)
-    sens['λ を L=10・H=10 から'] = rank_ce(sx, WORLDS, GAMMA, elig)[0][0]
+    sens['λ を L=10・H=10 から'] = rank_ce(sx, WORLDS, GAMMA, elig, label='λ を L=10・H=10 から')[0][0]
     del sx
     cost_u = costs(user_vehicle=True)
     mu_u = {w: dict(mu[w]) for w in WORLDS}
     for w in WORLDS:
         mu_u[w]['NDX'] = mu[w]['NDX'] - (cost_u['NDX'] - cost['NDX']) if w != 'E' else mu[w]['NDX'] - lam * (cost_u['NDX'] - cost['NDX'])
     sx = simulate(mu_u, sz, WORLDS)
-    sens['器の費用をユーザーの今の器（NASDAQ100 は iFreeNEXT 0.495%）で'] = rank_ce(sx, WORLDS, GAMMA, elig)[0][0]
+    sens['器の費用をユーザーの今の器（NASDAQ100 は iFreeNEXT 0.495%）で'] = rank_ce(sx, WORLDS, GAMMA, elig, label='器の費用をユーザーの今の器（NASDAQ100 は iFreeNEXT 0.495%）で')[0][0]
     del sx
     sx = simulate(mu, sz, WORLDS, normal=True, seed_tag='normal')
-    sens['z を正規分布にする'] = rank_ce(sx, WORLDS, GAMMA, elig)[0][0]
+    sens['z を正規分布にする'] = rank_ce(sx, WORLDS, GAMMA, elig, label='z を正規分布にする')[0][0]
     del sx
 
     top = order[0]
@@ -600,6 +606,11 @@ def main():
             'vehicle_best': D.cost_of(pick, 'best'), 'vehicle_tsumitate': D.cost_of(pick, 'tsumitate'), 'vehicle_growth': D.cost_of(pick, 'growth'),
         },
         'sensitivities_top1': sens,
+        'sensitivities_top5': SENS_TOP5,
+        'sensitivity_rank_summary': {b: {'wins': sum(1 for v in sens.values() if v == b),
+                                         'top3': sum(1 for v in SENS_TOP5.values() if v['rank'].get(b, 99) <= 3),
+                                         'mean_rank': round(S.mean(v['rank'][b] for v in SENS_TOP5.values()), 2)}
+                                     for b in elig},
         'prereg_literal_FANG_backtest_included': prereg_literal,
         'reference_current_etf_mix': reference_mix,
         'table': table,

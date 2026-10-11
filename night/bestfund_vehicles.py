@@ -44,6 +44,10 @@ CANDS = {
     'TECH_VGT': [('VGT', 'us', 'VGT', False, True, 0.0009)],
     'FANG': [('iFreeNEXT FANG+インデックス', 'fund', ('JP90C000FZD4', '04311181'), True, True, 0.007755)],
     'MEGAG': [('MGK', 'us', 'MGK', False, True, 0.0005)],
+    'HEALTH': [('XLV', 'us', 'XLV', False, True, 0.0008)],
+    'HIDIV': [('楽天・米国高配当株式インデックス・ファンド', 'fund', ('JP90C000FUW5', '9I311181'), True, True, 0.00172),
+              ('SBI・V・米国高配当株式インデックス・ファンド', 'fund', ('JP90C000LY24', '89312216'), False, True, 0.001038),
+              ('VYM', 'us', 'VYM', False, True, 0.0004)],
     'GROWTH': [('VUG', 'us', 'VUG', False, True, 0.0003)],
     'KOKUSAI': [('eMAXIS Slim 先進国株式インデックス', 'fund', ('JP90C000ENC5', '03319172'), True, True, 0.000989),
                 ('楽天・プラス・先進国株式（除く日本）', 'fund', ('JP90C000QAT0', '9I31323C'), True, True, 0.00088)],
@@ -61,7 +65,7 @@ IDX = {'NDX': ('yahoo_er', 'QQQ', 0.0020), 'SP500': ('yahoo', '^SP500TR'), 'ACWI
        'EM': ('msci', 891800), 'SEMI_SOX': ('yahoo_er', 'SOXX', 0.0033), 'SEMI_MV': ('yahoo_er', 'SMH', 0.0035),
        'FANG': ('yahoo', '^NYFANG'), 'USTOT': ('yahoo_er', 'VTI', 0.0003), 'TECH_SPDR': ('yahoo_er', 'XLK', 0.0008),
        'TECH_VGT': ('yahoo_er', 'VGT', 0.0009), 'MEGAG': ('yahoo_er', 'MGK', 0.0005), 'GROWTH': ('yahoo_er', 'VUG', 0.0003),
-       'INDIA': ('yahoo_er', 'EPI', 0.0084)}
+       'INDIA': ('yahoo_er', 'EPI', 0.0084), 'HEALTH': ('yahoo_er', 'XLV', 0.0008), 'HIDIV': ('yahoo_er', 'VYM', 0.0004)}
 _cache = {}
 
 
