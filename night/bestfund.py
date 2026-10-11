@@ -156,37 +156,20 @@ def world_b_gross():
 
 # ───────────────────────── 世界 C（機関の予想） ─────────────────────────
 def world_c_gross(bgross, cma=None):
-    """→ {賭け: (C の総額, 機関の平均〔10年〕, 機関の数, 内訳)}。cma は out/bestfund_cma.json を読んだもの"""
+    """→ {賭け: (C の総額, 機関の平均〔10年〕, 機関の数, 内訳)}。機関の数字は night/bestfund_cma.py がそろえた out/bestfund_cma.json
+    （名目・幾何・米国と世界はドル・日本は円）。C＝(10×機関の平均＋10×B)/20（事前登録）"""
     if cma is None:
         if not os.path.exists(CMA):
             return None
         cma = json.load(open(CMA))
     out = {}
     for b in BETS:
-        vals = cma_values_for(b, cma)
-        if not vals:
+        e = cma['bets'].get(b) or {}
+        if not e.get('avg_pct'):
             out[b] = (bgross[b][0], None, 0, '機関の予想を当てられなかった＝B と同じ')
             continue
-        avg = S.mean(v for _, v in vals)
-        out[b] = ((10 * avg + 10 * bgross[b][0]) / 20, avg, len(vals), vals)
-    return out
-
-
-def cma_values_for(b, cma):
-    """賭け b に当てる機関ごとの10年の名目・幾何の年率（米国・世界はドル、日本は円）。対応表は cma の 'mapping' に従う"""
-    out = []
-    want = cma['bet_to_class'].get(b)
-    if not want:
-        return out
-    for inst in cma['institutions']:
-        cls = None
-        for c in want:
-            if c in inst['nominal_geometric']:
-                cls = c
-                break
-        if cls is None:
-            continue
-        out.append((inst['name'], inst['nominal_geometric'][cls]))
+        avg = e['avg_pct'] / 100
+        out[b] = ((10 * avg + 10 * bgross[b][0]) / 20, avg, e['n'], [(v['institution'], v['class'], v['value_pct']) for v in e['values']])
     return out
 
 
@@ -197,25 +180,31 @@ def g20_of(gc, gl):
     return math.exp(sum(math.log1p(g) for g in path) / 20) - 1
 
 
+G_L = {'US': 0.05, 'GLOBAL': 0.05, 'DEV': 0.05, 'EM': 0.06, 'INDIA': 0.06, 'JAPAN': 0.035}   # 事前登録 future_worlds.D.g20
+D_REGION = {'ACWI': 'GLOBAL', 'KOKUSAI': 'DEV', 'DEVXUS': 'DEV', 'DXUS_VAL': 'DEV', 'EM': 'EM', 'EM_VAL': 'EM', 'INDIA': 'INDIA',
+            'TOPIX': 'JAPAN', 'N225': 'JAPAN'}
+
+
 def world_d_gross(cgross, val=None, alpha=0.5):
-    """→ {賭け: (D の総額, 内訳 dict or 'C と同じ')}。alpha は割高さの戻りの割合（主 0.5・感度 0 と 1）"""
+    """→ {賭け: (D の総額, 内訳 dict or 'C と同じ')}。alpha は割高さの戻りの割合（主 0.5・感度 0 と 1）。
+    入力（今の PER・同じ物差しの PER の長期の中央値・配当利回り・アナリストの長期の伸びの予想 g_c）は out/bestfund_valuations.json"""
     if val is None:
         if not os.path.exists(VAL):
             return None
         val = json.load(open(VAL))
-    gl = val['g_L']
     out = {}
     for b in BETS:
-        v = val['bets'].get(b)
+        v = (val.get('bets') or {}).get(b)
         need = ('pe_now', 'pe_median', 'dy', 'g_c')
-        if not v or any(v.get(k) in (None, '') for k in need):
-            out[b] = (cgross[b][0], 'C と同じ（入力が欠けた）')
+        if b in ('GOLD', 'BOND') or not v or any(v.get(k) in (None, '') for k in need):
+            out[b] = (cgross[b][0], 'C と同じ（入力が欠けた）' if b not in ('GOLD', 'BOND') else 'C と同じ（PER の無い資産）')
             continue
-        g = g20_of(v['g_c'], gl[v.get('g_L_region', 'US')])
+        gl = G_L[D_REGION.get(b, 'US')]
+        g = g20_of(v['g_c'], gl)
         pe_t = v['pe_now'] * (v['pe_median'] / v['pe_now']) ** alpha
         dv = math.log(pe_t / v['pe_now']) / 20
         out[b] = (v['dy'] + g + dv, dict(dy=v['dy'], g_c=v['g_c'], g20=round(g, 4), pe_now=v['pe_now'], pe_median=v['pe_median'],
-                                        dv=round(dv, 4), g_L=gl[v.get('g_L_region', 'US')]))
+                                        dv=round(dv, 4), g_L=gl, src=v.get('src')))
     return out
 
 
@@ -438,32 +427,66 @@ def rank_ce(sims, worlds, gamma, pool_bets):
     return sorted(pool_bets, key=lambda b: -sc[b]), sc
 
 
+def worlds_all(ch, cost, bg, cg, dg, lam):
+    a1, a1n = world_hist(ch, cost, D.A1)
+    a2, a2n = world_hist(ch, cost, D.A2)
+    bnet = {b: bg[b][0] - cost[b] for b in BETS}
+    cnet = {b: cg[b][0] - cost[b] for b in BETS}
+    dnet = {b: dg[b][0] - cost[b] for b in BETS}
+    e, edet = world_e(ch, cost, bnet, cnet, dnet, lam)
+    return {'A1': a1, 'A2': a2, 'B': bnet, 'C': cnet, 'D': dnet, 'E': e}, {'A1': a1n, 'A2': a2n, 'E': edet}
+
+
+# ───────────────────────── 参考: 今の ETF 側の配合（事前登録の外・判定には使わない） ─────────────────────────
+REF_MIX = {'NDX': 50, 'SEMI_MV': 20, 'DEFENSE': 15}     # portfolio.json の ETF 側（NASDAQ100 50・SMH 20・その他15＝ITA）を正規化
+
+
+def ref_mix(ch, cost, mu):
+    """今の ETF 側を毎月組み直した混合の各世界の年率・σ・z（世界 B〜E は重みつき平均＋分散の上乗せ ½(Σwσ²−w'Σw)＝etf_forward_combo と同じ）"""
+    tot = sum(REF_MIX.values())
+    w = {b: v / tot for b, v in REF_MIX.items()}
+    ks = sorted(set.intersection(*[set(ch[b]['usd']) for b in w]))
+    mix_usd = {k: sum(w[b] * ch[b]['usd'][k] for b in w) for k in ks}
+    mix_jpy = D.to_jpy(mix_usd)
+    c = sum(w[b] * cost[b] for b in w)
+    a1 = geo(mix_usd, months(*D.A1)) - c
+    a2 = geo(mix_usd, months(*D.A2)) - c
+    k1 = months(*D.A1)
+    X = np.array([[math.log1p(ch[b]['usd'][k]) for k in k1] for b in w])
+    cov = np.cov(X) * 12
+    wv = np.array([w[b] for b in w])
+    div = 0.5 * (float(np.sum(wv * np.diag(cov))) - float(wv @ cov @ wv))
+    out = {'A1': a1, 'A2': a2}
+    for wd in ('B', 'C', 'D', 'E'):
+        out[wd] = sum(w[b] * mu[wd][b] for b in w) + div
+    lx = np.array([math.log1p(mix_jpy[k]) for k in k1])
+    s = lx.std(ddof=1) * math.sqrt(12)
+    z = (lx - lx.mean()) / lx.std(ddof=1)
+    return out, (s, z, f'{k1[0]}〜{k1[-1]}'), {'weights': {b: round(v, 3) for b, v in w.items()}, 'cost': c, 'diversification_bonus': div}
+
+
 def main():
     ch = D.chains()
     cost = costs()
     elig = [b for b in BETS if D.eligible(b)]
     tsumi = [b for b in elig if D.cost_of(b, 'tsumitate')]
-    a1, a1n = world_hist(ch, cost, D.A1)
-    a2, a2n = world_hist(ch, cost, D.A2)
     bg, b_inputs = world_b_gross()
-    bnet = {b: bg[b][0] - cost[b] for b in BETS}
     cg = world_c_gross(bg)
     c_note = None
     if cg is None:
         cg = {b: (bg[b][0], None, 0, '暫定: 機関の予想の材料がまだ無い＝B と同じ') for b in BETS}
         c_note = '⚠ 暫定（out/bestfund_cma.json が無い）'
-    cnet = {b: cg[b][0] - cost[b] for b in BETS}
     dg = world_d_gross(cg)
     d_note = None
     if dg is None:
         dg = {b: (cg[b][0], '暫定: 割高さの材料がまだ無い＝C と同じ') for b in BETS}
         d_note = '⚠ 暫定（out/bestfund_valuations.json が無い）'
-    dnet = {b: dg[b][0] - cost[b] for b in BETS}
     per = json.load(open(PERSIST))
     lam = per['lambda_main']['lambda']
     lam10 = per['lambda_L10_H10']['lambda']
-    e, edet = world_e(ch, cost, bnet, cnet, dnet, lam)
-    mu = {'A1': a1, 'A2': a2, 'B': bnet, 'C': cnet, 'D': dnet, 'E': e}
+    mu, wnotes = worlds_all(ch, cost, bg, cg, dg, lam)
+    a1n, a2n, edet = wnotes['A1'], wnotes['A2'], wnotes['E']
+    bnet, cnet, dnet = mu['B'], mu['C'], mu['D']
     sz = sigma_z(ch)
 
     # ── 主の模擬 ──
@@ -472,6 +495,36 @@ def main():
     order = sorted(elig, key=lambda b: -summ[b]['ce_irr'])
     best = {w: max(mu[w][b] for b in elig) for w in WORLDS}
     regret = {b: max(best[w] - mu[w][b] for w in WORLDS) for b in BETS}
+
+    # ── 参考: 今の ETF 側の配合（判定・順位には使わない） ──
+    rm_mu, rm_sz, rm_info = ref_mix(ch, cost, mu)
+    mu_r = {w: {'MIX': rm_mu[w]} for w in WORLDS}
+    rng = np.random.default_rng(int(hashlib.sha256(f'{SEED}:MIX:'.encode()).hexdigest()[:8], 16))
+    rm_sims = {}
+    for w in WORLDS:
+        zz = rm_sz[1][rng.integers(0, len(rm_sz[1]), size=(N_PATHS, N_M))]
+        rm_sims[w] = dca_multiple(math.log1p(rm_mu[w]) / 12 + rm_sz[0] / math.sqrt(12) * zz)
+    rm_sum = summarize_bet(rm_sims, WORLDS)
+    reference_mix = {'what': '今の ETF 側（NASDAQ100 50・SMH 20・ITA 15 を正規化・毎月の組み直し）＝参考（事前登録の外・判定に使わない）',
+                     **rm_info, 'worlds_pct': {w: pct(rm_mu[w]) for w in WORLDS}, 'sigma_pct': pct(rm_sz[0], 1),
+                     'CE_γ2': pct(rm_sum['ce_irr']), 'CE_γ1': pct(irr_from_multiple(np.array([ce(np.concatenate([rm_sims[w] for w in WORLDS]), 1)]))[0]),
+                     'CE_γ5': pct(irr_from_multiple(np.array([ce(np.concatenate([rm_sims[w] for w in WORLDS]), 5)]))[0]),
+                     'median': pct(rm_sum['median_irr']), 'p5': pct(rm_sum['p5_irr']), 'P15': round(rm_sum['p_ge15'], 3), 'P_loss': round(rm_sum['p_loss'], 3)}
+    del rm_sims
+
+    # ── 事前登録どおりのデータ（FANG の試算期間を含む）での主の判定＝是正の影響を見せる ──
+    ch_pre = dict(ch)
+    fp = D.chain_prereg('FANG')
+    ch_pre['FANG'] = dict(ch['FANG'], usd=fp['usd'], jpy=fp['jpy'], segs=fp['segs'], first=fp['first'])
+    mu_pre, _ = worlds_all(ch_pre, cost, bg, cg, dg, lam)
+    sz_pre = sigma_z(ch_pre)
+    sims_pre = simulate(mu_pre, sz_pre, WORLDS)
+    summ_pre = {b: summarize_bet(sims_pre[b], WORLDS) for b in BETS}
+    order_pre = sorted(elig, key=lambda b: -summ_pre[b]['ce_irr'])
+    prereg_literal = {'top5': [(b, pct(summ_pre[b]['ce_irr'])) for b in order_pre[:5]],
+                      'FANG': {'CE_γ2': pct(summ_pre['FANG']['ce_irr']), 'worlds': {w: pct(mu_pre[w]['FANG']) for w in WORLDS}},
+                      'note': 'NYSE FANG+ の 2014-10〜2017-09（発表前の試算）を含めた事前登録どおりの系列での主の順位（是正の前）'}
+    del sims_pre
 
     # ── 感度 ──
     sens = {}
@@ -547,6 +600,8 @@ def main():
             'vehicle_best': D.cost_of(pick, 'best'), 'vehicle_tsumitate': D.cost_of(pick, 'tsumitate'), 'vehicle_growth': D.cost_of(pick, 'growth'),
         },
         'sensitivities_top1': sens,
+        'prereg_literal_FANG_backtest_included': prereg_literal,
+        'reference_current_etf_mix': reference_mix,
         'table': table,
         'worlds_notes': {'A1': a1n, 'A2': a2n, 'C': c_note, 'D': d_note, 'E_lambda': lam, 'E_lambda_L10H10': lam10, 'E_detail': edet,
                          'B_inputs': b_inputs, 'B_src': {b: bg[b][3] for b in BETS},
@@ -564,6 +619,8 @@ def main():
         w = t['世界(%/年)']
         print(f"{t['rank_eligible']:2d} {t['bet']:10} {t['CE_γ2(%/年)']:6.2f} {t['中央(%/年)']:6.2f} {t['5%点(%/年)']:6.2f} {t['P(≥15%)']:5.2f} {t['P(元本割れ)']:5.2f} "
               f"{w['A1']:6.2f} {w['A2']:6.2f} {w['B']:6.2f} {w['C']:6.2f} {w['D']:6.2f} {w['E']:6.2f} {t['最大の後悔(%/年)']:5.2f} {t['σ(円・%/年)']:5.1f} {t['費用(%/年)']:6.3f}")
+    print('参考 今のETF側:', reference_mix)
+    print('事前登録どおり（FANG 試算込み）:', prereg_literal)
     print('判定:', doc['verdict'])
     print('感度:', sens)
 

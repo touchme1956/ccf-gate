@@ -55,58 +55,182 @@ CANDS = {
 }
 
 
-def ann(r, ks):
-    if not ks or any(k not in r for k in ks):
+# 指数の日次（器の円建ての総リターンと比べる相手）: yahoo＝配当込みの指数 / yahoo_er＝同じ指数の米国ETF＋経費率（指数の配当込みが
+# Yahoo に無いもの）/ msci＝MSCI の配当込み（NETR）の日次（日本の投信は円、米国ETF はドル）/ price＝価格指数（投信のベンチマーク自身が価格指数）
+IDX = {'NDX': ('yahoo_er', 'QQQ', 0.0020), 'SP500': ('yahoo', '^SP500TR'), 'ACWI': ('msci', 892400), 'KOKUSAI': ('msci', 991200),
+       'EM': ('msci', 891800), 'SEMI_SOX': ('yahoo_er', 'SOXX', 0.0033), 'SEMI_MV': ('yahoo_er', 'SMH', 0.0035),
+       'FANG': ('yahoo', '^NYFANG'), 'USTOT': ('yahoo_er', 'VTI', 0.0003), 'TECH_SPDR': ('yahoo_er', 'XLK', 0.0008),
+       'TECH_VGT': ('yahoo_er', 'VGT', 0.0009), 'MEGAG': ('yahoo_er', 'MGK', 0.0005), 'GROWTH': ('yahoo_er', 'VUG', 0.0003),
+       'INDIA': ('yahoo_er', 'EPI', 0.0084)}
+_cache = {}
+
+
+def _daily_levels(ret):
+    """{yyyymmdd: 日次リターン} → {yyyymmdd: 水準}"""
+    lv, x = {}, 1.0
+    for k in sorted(ret):
+        x *= 1 + ret[k]
+        lv[k] = x
+    return lv
+
+
+def idx_daily(bet, ccy):
+    key = (bet, ccy)
+    if key in _cache:
+        return _cache[key]
+    import mw_common as M
+    spec = IDX[bet]
+    if spec[0] == 'msci':
+        url = (f'https://app2.msci.com/products/service/index/indexmaster/getLevelDataForGraph?currency_symbol={ccy}&index_variant=NETR'
+               f'&start_date=20150101&end_date={D.END}30&data_frequency=DAILY&baseValue=false&index_codes={spec[1]}')
+        j = json.loads(M.get(url, name=f'bf_msci_{spec[1]}_NETR_{ccy}_daily_{D.END}.json', max_age_days=30))
+        lv = {x['calc_date']: x['level_eod'] for x in j['indexes']['INDEX_LEVELS']}
+        out = (lv, ccy)
+    else:
+        r = M.yahoo(spec[1], interval='1d')
+        if spec[0] == 'yahoo_er':
+            r = {k: v + spec[2] / 252 for k, v in r.items()}
+        out = (_daily_levels(r), 'USD')
+    _cache[key] = out
+    return out
+
+
+def fx_daily():
+    if 'fx' in _cache:
+        return _cache['fx']
+    import gaps_common as G, csv, io
+    raw = G._cached('fred_DEXJPUS.csv', 'https://fred.stlouisfed.org/graph/fredgraph.csv?id=DEXJPUS').decode()
+    fx = {}
+    for row in list(csv.reader(io.StringIO(raw)))[1:]:
+        if len(row) >= 2 and row[1] not in ('.', ''):
+            try:
+                fx[int(row[0].replace('-', ''))] = float(row[1])
+            except ValueError:
+                pass
+    _cache['fx'] = fx
+    return fx
+
+
+def _before(sorted_keys, d):
+    """d より前で最も近いキー（二分探索）"""
+    import bisect
+    i = bisect.bisect_left(sorted_keys, d)
+    return sorted_keys[i - 1] if i > 0 else None
+
+
+def window_dates(dates, yrs):
+    end = max(k for k in dates if k <= D.END * 100 + 31)
+    target = end - yrs * 10000
+    cand = [k for k in dates if k >= target]
+    return (min(cand), end) if cand else (None, None)
+
+
+def _rolling_td(levels_v, levels_i, dates, yrs):
+    """器と指数の水準（同じ日付の列）から、直近 yrs 年の中の『1年ごとの差』を毎日ずらして平均した年率の差（窓の両端の時刻ずれの雑音をならす）"""
+    end = dates[-1]
+    start = end - yrs * 10000
+    import bisect
+    diffs = []
+    for i, t in enumerate(dates):
+        if t < start + 10000:
+            continue
+        j = bisect.bisect_left(dates, t - 10000)
+        if j >= i or dates[j] < start:
+            continue
+        s_ = dates[j]
+        span = (datetime.date(t // 10000, t // 100 % 100, t % 100) - datetime.date(s_ // 10000, s_ // 100 % 100, s_ % 100)).days / 365.25
+        if span < 0.95:
+            continue
+        diffs.append((math.log(levels_v[t] / levels_v[s_]) - math.log(levels_i[t] / levels_i[s_])) / span)
+    if len(diffs) < 100:
         return None
-    return math.exp(math.fsum(math.log1p(r[k]) for k in ks) * 12 / len(ks)) - 1
+    m = sum(diffs) / len(diffs)
+    return math.exp(m) - 1, len(diffs)
 
 
-def last_months(n, end=D.END):
-    out, y, m = [], end // 100, end % 100
-    for _ in range(n):
-        out.append(y * 100 + m)
-        m -= 1
-        if m == 0:
-            y, m = y - 1, 12
-    return sorted(out)
+def td_fund(bet, isin, assoc, yrs):
+    """日本の投信: 基準価額＋分配金の総リターン vs 指数（1日前の米国の終値 × 前日のドル円、MSCI は前営業日の円建て）"""
+    rows = [r for r in D.jita_daily(isin, assoc) if r[0] <= D.END * 100 + 31]
+    if len(rows) < 300:
+        return None
+    lv_f, x = {}, 1.0
+    lv_f[rows[0][0]] = x
+    for (a, n0, _), (b, n1, v1) in zip(rows, rows[1:]):
+        x *= (n1 + v1) / n0
+        lv_f[b] = x
+    dates = [d for d, _, _ in rows]
+    if dates[-1] - dates[0] < yrs * 10000:
+        return None
+    lv, ccy = idx_daily(bet, 'JPY')
+    keys = sorted(lv)
+    lv_i = {}
+    if ccy == 'JPY':
+        for d in dates:
+            k = _before(keys, d)
+            if k:
+                lv_i[d] = lv[k]
+    else:
+        fx = fx_daily()
+        fk = sorted(fx)
+        for d in dates:
+            k, f = _before(keys, d), _before(fk, d)
+            if k and f:
+                lv_i[d] = lv[k] * fx[f]
+    dd = [d for d in dates if d in lv_i]
+    res = _rolling_td(lv_f, lv_i, dd, yrs)
+    if res is None:
+        return None
+    return res[0], dd[0] if dd[0] > dd[-1] - yrs * 10000 else dd[-1] - yrs * 10000, dd[-1]
 
 
-def vehicle_monthly_jpy(kind, key):
-    if kind in ('fund', 'jp'):
-        return D.jita_monthly(key[0], key[1])
-    return D.to_jpy(D.yahoo_tr(key))
+def td_us(bet, tick, yrs):
+    import mw_common as M
+    r = {k: v for k, v in M.yahoo(tick, interval='1d').items() if k <= D.END * 100 + 31}
+    lv_e = _daily_levels(r)
+    dates = sorted(lv_e)
+    if dates[-1] - dates[0] < yrs * 10000:
+        return None
+    lv, ccy = idx_daily(bet, 'USD')
+    keys = sorted(lv)
+    lv_i = {}
+    for d in dates:
+        k = _before(keys, d + 1)
+        if k:
+            lv_i[d] = lv[k]
+    dd = [d for d in dates if d in lv_i]
+    res = _rolling_td(lv_e, lv_i, dd, yrs)
+    if res is None:
+        return None
+    return res[0], dd[-1] - yrs * 10000, dd[-1]
 
 
 def compare(bet):
-    ch = D.chains()
-    idx = ch[bet]['jpy']
     v = D.VEH[bet]
     rows = []
     for nm, kind, key, tsumi, grow, er in CANDS.get(bet, []):
-        r = vehicle_monthly_jpy(kind, key)
         e = {'vehicle': nm, 'kind': kind, 'tsumitate': tsumi, 'growth': grow, 'listed_fee': round(100 * er, 4)}
+        extra = (v['k'] * v['dy'] + D.FX_FEE) if kind == 'us' else 0.0
         for yrs in (3, 5):
-            ks = last_months(12 * yrs)
-            a, b = ann(r, ks), ann(idx, ks)
-            if a is None or b is None:
+            res = None
+            if bet in IDX:
+                res = td_fund(bet, key[0], key[1], yrs) if kind in ('fund', 'jp') else td_us(bet, key, yrs)
+            if res is None:
                 e[f'td_{yrs}y'] = None
                 continue
-            td = a - b
-            extra = (v['k'] * v['dy'] + D.FX_FEE) if kind == 'us' else 0.0
+            td, a, b = res
             e[f'td_{yrs}y'] = round(100 * td, 3)
             e[f'cost_{yrs}y'] = round(100 * (-td + extra), 3)
+            e[f'window_{yrs}y'] = f'{a}〜{b}'
         c = e.get('cost_5y') if e.get('cost_5y') is not None else e.get('cost_3y')
-        e['cost_used'] = c
-        e['cost_basis'] = '5年' if e.get('cost_5y') is not None else ('3年' if e.get('cost_3y') is not None else '記録が3年未満＝表の経費率＋外国税')
-        if c is None:
-            e['cost_used'] = round(100 * (er + v['k'] * v['dy'] + (D.FX_FEE if kind == 'us' else 0.0)), 3)
+        e['cost_basis'] = '5年' if e.get('cost_5y') is not None else ('3年' if e.get('cost_3y') is not None else '記録が3年未満（または指数の日次が無い）＝表の経費率＋外国税')
+        e['cost_used'] = c if c is not None else round(100 * (er + v['k'] * v['dy'] + (D.FX_FEE if kind == 'us' else 0.0)), 3)
         rows.append(e)
     best = {}
     for acct, flag in (('つみたて', 'tsumitate'), ('成長', 'growth')):
         cand = [x for x in rows if x[flag] and x['cost_used'] is not None]
         if cand:
             best[acct] = min(cand, key=lambda x: x['cost_used'])['vehicle']
-    return {'bet': bet, 'ja': D.JA[bet], 'vehicles': rows, 'best': best}
+    return {'bet': bet, 'ja': D.JA[bet], 'index_for_td': IDX.get(bet), 'vehicles': rows, 'best': best}
 
 
 def main(bets=None):
@@ -116,7 +240,7 @@ def main(bets=None):
     res = {'generated': datetime.date.today().isoformat(), 'tool': 'night/bestfund_vehicles.py', 'prereg': 'out/bestfund_prereg.json（d5eab7f）H5',
            'bets': [compare(b) for b in bets],
            '⚠': ['日本の投信は米国の前日の終値・当日のドル円で基準価額が決まる＝月次の差は1日ずれの雑音を含む（年率は3年・5年でならした）',
-                 '指数の円建ては FRED のドル円（ニューヨーク正午）で換算。投信は東京のその日のレート＝わずかにずれる',
+                 '日本の投信は『1日前の米国の終値 × 前日のドル円（FRED・ニューヨーク正午）』、MSCI の指数は前営業日の円建ての値と比べた（基準価額の決まり方に時刻を合わせる）',
                  '米国ETF は配当の外国税（NISA で戻らない 10%×配当利回り）と両替の手数料（年0.02%）を足した']}
     json.dump(res, open(OUT, 'w'), ensure_ascii=False, indent=1)
     for b in res['bets']:

@@ -68,7 +68,7 @@ CHAINS = {
                  ('proxy', ('french_ind', ['Chips']), '代わり: French の Chips')],
     'TECH_SPDR': [('actual', ('yahoo', 'XLK'), 'XLK'), ('proxy', ('french_tech',), '代わり: French のテック3業種（時価総額で加重）')],
     'TECH_VGT': [('actual', ('yahoo', 'VGT'), 'VGT'), ('actual', ('yahoo', 'XLK'), 'XLK'), ('proxy', ('french_tech',), '代わり: French のテック3業種')],
-    'FANG': [('index', ('yahoo', '^NYFANG'), 'NYSE FANG+（価格）')],
+    'FANG': [('index', ('yahoo_from', '^NYFANG', 201710), 'NYSE FANG+（価格・発表後 2017-10〜）')],
     'SOFT': [('actual', ('yahoo', 'IGV'), 'IGV'), ('proxy', ('french_ind_minshare', 'Softw', 0.0025), '代わり: French の Softw（時価総額の0.25%以上の月）')],
     'INET': [('actual', ('yahoo', 'FDN'), 'FDN')],
     'MEGAG': [('actual', ('yahoo', 'MGK'), 'MGK'), ('actual', ('yahoo', 'VUG'), 'VUG'),
@@ -102,6 +102,10 @@ CHAINS = {
     'GOLD': [('actual', ('yahoo', 'GLD'), 'GLD'), ('index', ('gold_fut',), '金の先物（GC=F の月末）'), ('index', ('fred_gold',), 'FRED の金価格（取れれば）')],
     'BOND': [('actual', ('yahoo', 'BND'), 'BND'), ('actual', ('yahoo', 'VBMFX'), 'VBMFX')],
 }
+# ★結果を見た後の是正（データの質・事前登録の外・2026-10-11）: NYSE FANG+ は 2017-09-26 に発表された指数で、2014-09-19〜2017-09-25 は
+#   発表時に選んだ銘柄で後から計算した試算（ICE の説明どおり）。実際の値ではないので主の計算から外した。事前登録どおりの系列（2014-10〜）は
+#   CHAINS_PREREG に残し、bestfund.py の感度『事前登録どおり（FANG の試算期間を含む）』で並べる
+CHAINS_PREREG = {'FANG': [('index', ('yahoo', '^NYFANG'), 'NYSE FANG+（価格・試算期間 2014-10〜 を含む＝事前登録どおり）')]}
 JPY_NATIVE = {'TOPIX', 'N225'}
 JA = {
     'ACWI': '全世界株（オール・カントリー）', 'SP500': 'S&P500', 'USTOT': '米国株全体', 'NDX': 'NASDAQ100', 'KOKUSAI': '先進国株（日本除く）',
@@ -524,6 +528,9 @@ def source(spec):
     kind = spec[0]
     if kind == 'yahoo':
         return yahoo_tr(spec[1]), {}
+    if kind == 'yahoo_from':
+        return {k: v for k, v in yahoo_tr(spec[1]).items() if k >= spec[2]}, {
+            'note': f'{spec[2]} より前は指数の発表前の試算（後から選んだ銘柄での計算）なので使わない'}
     if kind == 'jita_nav':
         return jita_monthly(spec[1], spec[2]), {'note': 'Yahoo の配当込みの値が壊れていた（毎年7月に−400%など）ので投信協会の基準価額と分配金で作った'}
     if kind == 'px_div_nav':
@@ -580,12 +587,12 @@ def _prev(m):
     return (m // 100 - 1) * 100 + 12 if m % 100 == 1 else m - 1
 
 
-def build_chain(bet):
+def build_chain(bet, spec_list=None):
     """→ (月次リターン {yyyymm: 小数}（ドル建て、日本の賭けは円建て）, 区間の表 list, つなぎ目の点検 list)"""
     out, segs, checks = {}, [], []
     boundary = None
     prev_series = None
-    for kind, spec, label in CHAINS[bet]:
+    for kind, spec, label in (spec_list or CHAINS[bet]):
         s, extra = source(spec)
         if kind == 'actual':
             er = ACTUAL_ER[spec[3] if spec[0] == 'jita_nav' else spec[1]]
@@ -623,6 +630,13 @@ def build_chain(bet):
         segs.append(dict(label=label, kind=kind, frm=min(take), to=max(take), months=len(take), **({'extra': extra} if extra else {})))
         prev_series = s
     return out, segs, checks
+
+
+def chain_prereg(bet):
+    """事前登録どおりのつなぎ（是正の前）→ {'usd':…, 'jpy':…}"""
+    r, segs, _ = build_chain(bet, CHAINS_PREREG[bet])
+    usd, jpy = (to_usd(r), r) if bet in JPY_NATIVE else (r, to_jpy(r))
+    return {'usd': usd, 'jpy': jpy, 'segs': segs, 'first': min(r), 'last': max(r)}
 
 
 def to_jpy(r_usd):
