@@ -71,6 +71,11 @@ DATA = {
     'PXF': ('PXF', 'DFIVX', 200706), 'DEM': ('DEM', 'DFEVX', 200707), 'GLDM': ('GLD', 'GOLD_FUT', 200412),
 }
 SAME_WINDOW = {'EPI', 'VIG', 'VYM', 'RSP'}   # 2000年より後に始まる＝A1 は同じ窓の SPY との差で
+# 外の道具が候補を足すための口（既定は空＝この道具自身の数字は変わらない）。morefunds.py が SCHD を足すのに使う（2026-10-11）
+#   EXTRA_PROXY = {代理の名前: 月次リターンの dict を返す関数}  ／  EXTRA_STYLE = {候補: 型の上乗せを借りる候補（style の鍵）}  ／  EXTRA_PROFILES（下）
+EXTRA_PROXY = {}
+EXTRA_STYLE = {}
+EXTRA_PROFILES = {}   # {ティッカー: out/etf_forward_profiles.json の etfs と同じ形}（候補の器の経費率・配当利回り・中身）
 TOPIX_ER = 0.0006                            # 東証の TOPIX 連動ETF の経費率と置く（事前登録）
 MOAT_ER = 0.0046                             # MOAT の経費率（out/etf_profiles.json）＝French の代理の期間に引く
 MIN_SHARE = 0.0025                           # 業種の長い歴史を測る月の下限（米国株の時価総額に占める比重）＝結果を見た後の是正
@@ -170,6 +175,8 @@ def build_chains(log):
                 p = {k: v - MOAT_ER / 12 for k, v in big_hiop.items()}   # French の期間は MOAT の費用を引く（事前登録）
             elif proxy == 'GOLD_FUT':
                 p = gold_futures_monthly()
+            elif proxy in EXTRA_PROXY:
+                p = EXTRA_PROXY[proxy]()
             else:
                 p = y(proxy)
             ov = [k for k in r if k in p and k > last]
@@ -200,6 +207,7 @@ def main(write=True):
     prof_old = (json.load(open(os.path.join(BASE, 'out', 'etf_profiles.json'))).get('etfs') or {})
     pnew_path = os.path.join(BASE, 'out', 'etf_forward_profiles.json')
     prof_new = (json.load(open(pnew_path)).get('etfs') or {}) if os.path.exists(pnew_path) else {}
+    prof_new = {**prof_new, **EXTRA_PROFILES}
 
     # ── 費用と配当利回り（買う器） ──
     def er_dy(t):
@@ -345,6 +353,8 @@ def main(write=True):
         'PXF': ('先進国（米国除く）BIG HiBM − その市場', *x_vs(dx['BIG HiBM'], dxm)),
         'DEM': ('新興国 BIG HiBM − その市場', *x_vs(em['BIG HiBM'], emm)),
     }
+    for c_, src_ in EXTRA_STYLE.items():
+        style[c_] = style[src_]
     sector = {'QQQM', 'XLK', 'SMH', 'XLV', 'XLP', 'XLU', 'XLE', 'ITA'}
 
     def world_b(c, shrink=SHRINK, raw=False):
