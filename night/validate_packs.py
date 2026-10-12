@@ -155,6 +155,16 @@ def check(path):
         warns.append(f"空欄だが _meta.nulls に理由が無い: {' '.join(blank)}"
                      f"（空欄自体は健全。理由が失われているのが問題）")
 
+    # --- 粗利率の水準 gpm（v9.9.212・堀の6本目の機械の柱）: 値も空欄の理由も無い＝fill_gpm を回していない ---
+    # 2026-10-12 新設。判断項目の空欄は warn どまりだが、これは FAIL にする——
+    #   gpm は審査官ではなく night/fill_gpm.py が入れる欄で、測れない社にも理由を書く。値も理由も無いのは
+    #   「測れない」ではなく「道具を回していない」で、黙っていると堀指数が残りの柱で割り直され（空欄＝残りの平均）、
+    #   ブラウザ（要修正しか切らない）と端末（未解決の警告まで切る）で投下可が食い違う。FAIL は validate_fail.json を通じて
+    #   両方の第四の関門に同じく届く。キーがパックに無い場合も同じ（新しい審査のパックは採取器のドラフトから作られ gpm を持たない）
+    if not has_val(d.get("gpm")) and not nulls.get("gpm"):
+        fails.append(f"gpm（粗利率の水準・堀の6本目の機械の柱）が無く、_meta.nulls.gpm に理由も無い"
+                     f"——`python3 night/fill_gpm.py --only {code} --write` を回す（測れない社は理由を書く）")
+
     # --- dom の刻み（正は audit_moat.grade_dom・v9.9.41） ---
     dom = d.get("dom")
     if has_val(dom):

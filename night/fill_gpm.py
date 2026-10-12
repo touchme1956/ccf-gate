@@ -32,6 +32,10 @@ night/fill_gpm.py — 粗利率の水準 gpm（直近5会計年度の粗利率�
   ・粗利の行も原価の行も無い社（売上原価を開示しない業態）・3年に届かない社
   ・空欄の社は堀指数で残りの柱に割り直される（今の5本の空欄と同じ扱い）——**測れないことで得をする向きがあり得る**ので、
     毎回の実行で空欄の社を一覧に出す
+  ・**取れない（通信の失敗）と測れない（原本に無い）を分ける**（2026-10-12・ルール7の親戚）: SEC・EDINET が一時的に
+    応答しない・ティッカーの一覧を取れない、のような失敗では**パックに何も書かない**（前の値も空欄の理由も残す）。
+    旧版はこれを空欄の理由として書き、前回の測定値まで消していた。取れなかった社は一覧に出し、終了コード 2 で知らせる
+    ——もう一度回せばよい。CIK はティッカーの一覧に無ければパックの `_meta.source`（SEC の提出書類の URL）から読む
 
 ■ 帯（門の ccfGpmBand が持つ。**切れ目は測定値であって発明ではない**）
       gpm < 26.8%      → 50
@@ -42,7 +46,10 @@ night/fill_gpm.py — 粗利率の水準 gpm（直近5会計年度の粗利率�
   acqS5 の帯（7ビンテージの三分位の切れ目の中央値）と同じ作り方。参考: 1990年代の入口（1995〜1999年度）では 21.7 / 36.5
 
 実行: python3 night/fill_gpm.py [--write] [--only MSFT,6146] [--list] [--us-only|--jp-only]
+      審査の納品の前に `python3 night/fill_gpm.py --only {T} --write`（gpm は機械の柱＝審査官は書かない。
+      値も _meta.nulls.gpm も無いパックは納品検査 night/validate_packs.py が FAIL にする）
 出力: パックの gpm・_meta.evidence.gpm・_meta.provenance.gpm="machine"（または _meta.nulls.gpm）
+終了コード: 取れなかった社（一時的な失敗）が1社でもあれば 2
 キャッシュ: 日本株の有報のテキスト out/_nx_cache/gpm_jp/{docID}.txt（gitignore）
 """
 import glob, gzip, json, os, re, statistics, sys, time, unicodedata, urllib.error, urllib.request, zipfile
@@ -64,6 +71,10 @@ COST = {'us-gaap': ['CostOfRevenue', 'CostOfGoodsAndServicesSold'], 'ifrs-full':
 GP = 'GrossProfit'
 
 
+class Transient(Exception):
+    """取れない（通信の一時的な失敗）。測れない（原本に無い）とは別——パックに何も書かない"""
+
+
 def band(g):
     """門の ccfGpmBand と同じ（表示と集計用）"""
     if g is None:
@@ -76,7 +87,8 @@ _ZF = None
 
 
 def facts_of(cik):
-    """companyfacts（zip を先に・無ければ SEC の API）。取れなければ None"""
+    """companyfacts（zip を先に・無ければ SEC の API）。XBRL が無い社（404）は None。
+    通信の失敗が続けば Transient（測れない、ではない＝呼び手はパックに何も書かない）"""
     global _ZF
     name = 'CIK%010d.json' % int(cik)
     try:
@@ -87,6 +99,7 @@ def facts_of(cik):
     except KeyError:
         pass
     u = 'https://data.sec.gov/api/xbrl/companyfacts/%s' % name
+    why = ''
     for i in range(3):
         try:
             r = urllib.request.urlopen(urllib.request.Request(u, headers=dict(HDRS, **{'Accept-Encoding': 'gzip'})), timeout=180)
@@ -98,10 +111,12 @@ def facts_of(cik):
         except urllib.error.HTTPError as e:
             if e.code == 404:
                 return None
+            why = 'HTTP %d' % e.code
             time.sleep(2 ** i)
-        except Exception:
+        except Exception as e:
+            why = '%s: %s' % (type(e).__name__, e)
             time.sleep(2 ** i)
-    return None
+    raise Transient('SEC の companyfacts を取れない（%s）' % why)
 
 
 def _days(a, b):
@@ -333,7 +348,7 @@ def jp_gpm(t, pack, log):
     # FY が分かる有報は Y・Y−2・Y−4 を先に読む（1冊で2期読めるので3冊で窓の5年がそろう）
     tgt = {Y, Y - 2, Y - 4}
     ids = sorted(ids, key=lambda d: (0 if known.get(d) in tgt else 1, -(known.get(d) or 0), [-ord(ch) for ch in d]))
-    got, seen_fy, notes = {}, set(), []
+    got, seen_fy, notes, flaky = {}, set(), [], []
     for d in ids:
         if all(y in got for y in W):
             break
@@ -342,6 +357,8 @@ def jp_gpm(t, pack, log):
         txt, why = jp_text(d)
         if txt is None:
             notes.append('%s 取れない（%s）' % (d, why))
+            if not (why.startswith('HTTP 404') or why.startswith('PDF を読めない')):
+                flaky.append('%s（%s）' % (d, why))     # 通信の失敗＝測れない、ではない
             continue
         cov = RB.cover_info(txt.split('<<<BODY>>>', 1)[0].replace('<<<COVER>>>', ''))
         if not RB.is_yuho(cov.get('kind')) or not cov.get('fy_end'):
@@ -367,6 +384,8 @@ def jp_gpm(t, pack, log):
                     got[yy] = {'y': yy, 'gm': round(v * 100, 2), 'rev': r_, 'gp': g_, 'doc': d, 'fy': fy, 'head': head}
     det = [got[y] for y in W if y in got]
     if len(det) < NEED:
+        if flaky:
+            raise Transient('有報PDFを取れない: %s' % '／'.join(flaky[:3]))
         return None, det, '窓 %d〜%d 年で粗利率が測れた年が %d 年（3年に届かない）%s' % (W[0], W[-1], len(det), ('／' + '／'.join(notes[:3])) if notes else '')
     g = round(statistics.median(x['gm'] for x in det), 1)
     return g, det, 'EDINET 有報PDF'
@@ -392,6 +411,14 @@ def cik_maps():
     return sic, cikx, bycik
 
 
+def cik_from_pack(pack):
+    """パックの _meta.source（審査に使った SEC の提出書類の URL）から CIK を読む。
+    ティッカーの一覧に無い社（社名・ティッカーの変更直後・一覧の取りこぼし）の控え。
+    evidence は他社の提出書類も引くので読まない"""
+    m = re.search(r'edgar/data/(\d+)/', str((pack.get('_meta') or {}).get('source') or ''))
+    return int(m.group(1)) if m else None
+
+
 def is_jp_ticker(t):
     return bool(re.fullmatch(r'\d{4}[A-Z]?', t))
 
@@ -403,7 +430,7 @@ def main():
         only = {x.strip().upper() for x in sys.argv[sys.argv.index('--only') + 1].split(',')}
     us_only, jp_only = '--us-only' in sys.argv, '--jp-only' in sys.argv
     sic, cikx, bycik = cik_maps()
-    rows, changed = [], 0
+    rows, changed, flaky = [], 0, []
     for f in sorted(glob.glob(os.path.join(BASE, 'out', '*_gate_pack.json'))):
         t = os.path.basename(f).replace('_gate_pack.json', '')
         if only and t.upper() not in only:
@@ -415,24 +442,30 @@ def main():
         m = d.setdefault('_meta', {})
         rd = str(m.get('reportDate') or '')
         g, det, why, src = None, [], '', ''
-        if jp:
-            g, det, why = jp_gpm(t, d, None)
-            src = 'jp'
-        else:
-            ent = sic.get(t) or {}
-            cik = ent.get('cik') or cikx.get(t.upper())
-            s4 = ent.get('sic') or (bycik.get(str(int(cik))) if cik else None)
-            if not cik:
-                why = 'ティッカーから CIK を解決できない（SEC の XBRL に現れない社）'
-            elif s4 and str(s4).startswith('6'):
-                why = '金融・不動産（SIC %s）＝検定の母集団の外（粗利率が事業の質を表さない）' % s4
+        try:
+            if jp:
+                g, det, why = jp_gpm(t, d, None)
+                src = 'jp'
             else:
-                facts = facts_of(cik)
-                if facts is None:
-                    why = 'SEC の companyfacts を取れない'
+                ent = sic.get(t) or {}
+                cik = ent.get('cik') or cikx.get(t.upper()) or cik_from_pack(d)
+                s4 = ent.get('sic') or (bycik.get(str(int(cik))) if cik else None)
+                if not cik:
+                    if not cikx:
+                        raise Transient('SEC のティッカーの一覧を取れず、控えも無い')
+                    why = 'ティッカーから CIK を解決できない（SEC の XBRL に現れない社・_meta.source にも SEC の URL が無い）'
+                elif s4 and str(s4).startswith('6'):
+                    why = '金融・不動産（SIC %s）＝検定の母集団の外（粗利率が事業の質を表さない）' % s4
                 else:
-                    g, det, why = sec_gpm(facts, rd)
-            src = 'sec'
+                    facts = facts_of(cik)
+                    if facts is None:
+                        why = 'SEC に XBRL の companyfacts が無い（CIK %s）' % cik
+                    else:
+                        g, det, why = sec_gpm(facts, rd)
+                src = 'sec'
+        except Transient as e:
+            flaky.append((t, str(e)))        # 取れない＝測れない、ではない。パックには何も書かない（前の値も理由も残す）
+            continue
         if g is not None:
             if src == 'sec':
                 yrs = ' / '.join('%d %.1f%%%s' % (x['y'], x['gm'], '' if x['how'] == 'GrossProfit' else '（' + x['how'] + '）') for x in det)
@@ -482,8 +515,13 @@ def main():
         for t, g, ev in rows:
             if g is not None:
                 print('  %-6s %5.1f%% 帯%d  %s' % (t, g, band(g), ev[:200]))
+    if flaky:
+        print('取れなかった社 %d社（通信の一時的な失敗＝測れない、ではない。パックには何も書いていない・前の値と理由はそのまま。もう一度回す）:' % len(flaky))
+        for t, why in flaky:
+            print('  %-6s %s' % (t, why[:160]))
     print('書き込み %d社%s' % (changed, '' if write else '（--write で反映）'))
+    return 2 if flaky else 0
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())
