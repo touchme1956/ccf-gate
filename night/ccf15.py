@@ -3,19 +3,22 @@
 
 ユーザー指示（2026-10-12）「あなた自身が作るETFが欲しい」→「moomoo証券を使った細かいポートフォリオ」→
 「15％を細かくあなた自身が作るETFだよ？あなた自身運営するETFだよ？銘柄数は多くても構わない。」→（v2）
-「中身の決め方はすべての銘柄対象であなたが出せる最高のETFそして見直し基準にして。」
+「中身の決め方はすべての銘柄対象であなたが出せる最高のETFそして見直し基準にして。」→（v3）
+「ではなくリスクをとってNASDAQ超えを狙うETFにして」「もちろん質の高さは残して」
 
 役目（規則の正本は out/ccf15_rules.json。ここに数字を写さない）:
-  v2: 米国の全業種の浮動株上位1000社から、門の検問を通った（壊れない）会社を、時価×質の傾きの重みで約100社・1社5%まで持つ。
-  上乗せは約束しない——このリポジトリの検証で、個人が持てる形で2007年以降の S&P500 型の市場に確かに勝った規則は
-  見つかっていない（docs/CLAUDE_ARCHIVE.md の mw・edge・nx）。v2 の事前登録の判定も『S&P500 並み・規則の上乗せは偶然と区別できない』。
-  v1（テックの外・同じ重み・75社）は out/ccf15_rules_v1.json と holdings_v1・backtest_v1 で再現できる。
+  v3: 米国の金融を除く浮動株上位1000社から、門の検問を通った（壊れない）会社のうち、質の総合と勢い（12-1か月）の両方が
+  上位半分の社を時価の大きい順に30社・時価の重み・1社10%まで持つ。NASDAQ100（QQQ）に勝つことを狙い、ぶれと下落が大きいことを受け入れる。
+  上乗せは約束しない——このリポジトリの検証で、2009年以降に NASDAQ100 に勝った規則は見つかっていない（docs/CLAUDE_ARCHIVE.md の nx）。
+  v1（テックの外・同じ重み・75社）は out/ccf15_rules_v1.json と holdings_v1・backtest_v1、
+  v2（全銘柄・時価×質の傾き・100社）は out/ccf15_rules_v2.json と holdings_v2・backtest_v2 で再現できる。
 
 使い方:
   python3 night/ccf15.py fetch       # SEC frames・業種・株価をキャッシュへ（out/_ccf15_cache・gitignore）
-  python3 night/ccf15.py census      # 母集団の形（業種・除外の理由の数）だけを見る（株価のリターンは見ない）
-  python3 night/ccf15.py holdings    # 今日の中身（今年7月の組＝会社ごとに6月末に出ていた決算）→ out/ccf15.json（規則の method で v1／v2）
-  python3 night/ccf15.py backtest    # 事前登録どおりの過去の検証 → out/ccf15_backtest.json（v2: out/ccf15_prereg_v2.json）
+  python3 night/ccf15.py census      # 母集団の形（v1 の作り方の数）だけを見る（株価のリターンは見ない）
+  python3 night/ccf15.py holdings    # 今日の中身（今年7月の組＝会社ごとに6月末に出ていた決算）→ out/ccf15.json（規則の method で v1／v2／v3）
+  python3 night/ccf15.py backtest    # 事前登録どおりの過去の検証 → out/ccf15_backtest.json（v3: out/ccf15_prereg_v3.json）
+  python3 night/ccf15.py backtest_v2 # v2 の検証の再現 → out/ccf15_backtest_v2.json（holdings_v2 は今日の中身を v2 の作り方で出すだけ）
   python3 night/ccf15.py backtest_v1 # v1（テックの外・同じ重み・out/ccf15_prereg.json）の検証の再現 → out/ccf15_backtest_v1.json
   python3 night/ccf15.py nav         # 紙の上の値動き（立ち上げ日から・日次）→ out/ccf15_nav.json
 
@@ -50,6 +53,8 @@ OUT_HOLD = os.path.join(BASE, 'out', 'ccf15.json')
 OUT_BT = os.path.join(BASE, 'out', 'ccf15_backtest.json')
 OUT_BT1 = os.path.join(BASE, 'out', 'ccf15_backtest_v1.json')     # v1（テックの外・同じ重み）の検証の記録
 RULES_V1 = os.path.join(BASE, 'out', 'ccf15_rules_v1.json')        # v1 の規則書（事前登録 23d1aed の sha256 と同じ中身）
+RULES_V2 = os.path.join(BASE, 'out', 'ccf15_rules_v2.json')        # v2 の規則書（事前登録 dfcd740・結果の後の文言の直しを含む＝選び方は同じ）
+OUT_BT2 = os.path.join(BASE, 'out', 'ccf15_backtest_v2.json')     # v2（全銘柄・時価×質の傾き・100社）の検証の記録
 OUT_NAV = os.path.join(BASE, 'out', 'ccf15_nav.json')
 YUA = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"}
 
@@ -786,7 +791,7 @@ def prefetch_prices(ctx, R):
                 continue
             if ctx.c2t.get(c):
                 need.add(ctx.c2t[c])
-    need |= {'VOO', 'QUAL', 'SPHQ'}
+    need |= {'VOO', 'QUAL', 'SPHQ', 'SPMO'} | set(BENCH3)
     todo = sorted(t for t in need if not os.path.exists(os.path.join(CACHE, 'px', f'{t}.json')))
     print(f'株価: {len(need)} 本（未取得 {len(todo)}）', flush=True)
     done = [0]
@@ -1230,12 +1235,11 @@ def mv_value(ctx, c, asof, key, D):
     return None, None
 
 
-def tilt_of(ctx, elig_nf, Dc, R):
-    """質で傾ける（金融を除く、検問を通った社の中で）: 粗利÷総資産・営業CF÷総資産・3年の株数の変化の順位の平均 → 三分位 → 倍率。
-    物差しが min_metrics 個そろわない社は入れない（呼び出し側で1倍＝傾けない）。Dc: 会社ごとの決算の年"""
-    k = R['rank']
+def quality_comp(ctx, elig, Dc, k):
+    """質の総合: 粗利÷総資産・営業CF÷総資産・k['dsh_years'] 年の株数の変化（少ないほど上）の elig の中の順位の平均。
+    物差しが k['min_metrics'] 個そろわない社は入れない（質を測れない）。Dc: 会社ごとの決算の年。戻り値: (総合, 物差しの生の値)"""
     met = {'gpa': {}, 'cfoa': {}, 'dsh': {}}
-    for c in elig_nf:
+    for c in elig:
         D = Dc.get(c)
         f = (ctx.F.get(c) or {}).get(D) if D is not None else None
         if f is None:
@@ -1249,10 +1253,17 @@ def tilt_of(ctx, elig_nf, Dc, R):
             met['dsh'][c] = d
     rk = {'gpa': pct(met['gpa'], True), 'cfoa': pct(met['cfoa'], True), 'dsh': pct(met['dsh'], False)}
     comp = {}
-    for c in elig_nf:
+    for c in elig:
         v = [rk[m][c] for m in k['metrics'] if c in rk[m]]
         if len(v) >= k['min_metrics']:
             comp[c] = sum(v) / len(v)
+    return comp, met
+
+
+def tilt_of(ctx, elig_nf, Dc, R):
+    """質で傾ける（v2・金融を除く、検問を通った社の中で）: 質の総合（quality_comp）→ 三分位 → 倍率。
+    物差しが min_metrics 個そろわない社は入れない（呼び出し側で1倍＝傾けない）。Dc: 会社ごとの決算の年"""
+    comp, met = quality_comp(ctx, elig_nf, Dc, R['rank'])
     tl = R['tilt']
     order = sorted(comp, key=lambda c: (comp[c], c))
     n = len(order)
@@ -1263,12 +1274,9 @@ def tilt_of(ctx, elig_nf, Dc, R):
     return tilt, comp, met
 
 
-def cohort_v2(ctx, Y, R, prev=None, px_key=None, fetch=False, prev_pool=None):
-    """Y 年7月の組（6月末の時点で使える決算＝会社ごとに4月1日までに終わった最新の会計年度）。
-    prev: 前の年の顔ぶれ（CIK）＝緩衝帯で残す候補。prev_pool: 比べる相手（同じ土俵の時価の重み）の前の年の顔ぶれ＝同じ緩衝帯"""
+def _pool_mv(ctx, Y, R, key, fetch):
+    """Y 年7月の組の土俵（v2・v3 共通）: 浮動株の上位 → 業種・ティッカー・key の月の株価がある社 → 時価（mv_value）と決算の年（decision_year）"""
     asof = dt.date(Y, 6, 30)
-    D = Y - 1
-    key = px_key or Y * 100 + 6
     U, SL = R['universe'], R['select']
     ranked, fl = universe2(ctx.FL, asof, U['float_top'])
     ctx.need_sic(ranked, fetch)
@@ -1312,6 +1320,19 @@ def cohort_v2(ctx, Y, R, prev=None, px_key=None, fetch=False, prev_pool=None):
                 note('時価: 浮動株が無い→株数×株価')
         else:
             mv[c] = fl[c][0]
+    return asof, ranked, fl, pool, mv, Dc, scaled, log
+
+
+def cohort_v2(ctx, Y, R, prev=None, px_key=None, fetch=False, prev_pool=None):
+    """Y 年7月の組（6月末の時点で使える決算＝会社ごとに4月1日までに終わった最新の会計年度）。
+    prev: 前の年の顔ぶれ（CIK）＝緩衝帯で残す候補。prev_pool: 比べる相手（同じ土俵の時価の重み）の前の年の顔ぶれ＝同じ緩衝帯"""
+    D = Y - 1
+    key = px_key or Y * 100 + 6
+    SL = R['select']
+    asof, ranked, fl, pool, mv, Dc, scaled, log = _pool_mv(ctx, Y, R, key, fetch)
+
+    def note(k):
+        log[k] = log.get(k, 0) + 1
     elig, why = [], {}
     for c in pool:
         if R['kills'].get('off'):
@@ -1429,7 +1450,8 @@ def v1_returns():
 
 
 def backtest_v2():
-    R = rules()
+    """v2（全銘柄・時価×質の傾き・100社・事前登録 out/ccf15_prereg_v2.json）の検証を、v2 の規則書のまま作り直す（記録の再現用）"""
+    R = json.load(open(RULES_V2, encoding='utf-8'))
     PR = json.load(open(os.path.join(BASE, 'out', 'ccf15_prereg_v2.json'), encoding='utf-8'))
     ev = PR['evaluation']
     ctx = Ctx(fetch=False)
@@ -1483,22 +1505,474 @@ def backtest_v2():
            'sensitivity': sens, '生き残りの偏り（消えた社の数・上位1000社のうち）': gone, 'gaps': gaps,
            'growth': growth({'CCF15': rH, 'SPY': B['SPY'], 'QQQ': B['QQQ'], 'ITA': B['ITA'], 'RSP': B['RSP']}),
            'cohorts': logs}
-    json.dump(doc, open(OUT_BT, 'w'), ensure_ascii=False, indent=1)
+    json.dump(doc, open(OUT_BT2, 'w'), ensure_ascii=False, indent=1)
     print(json.dumps({'J1': v1v, 'J1_ex': ex1, 'J2': v2v, 'dcagr': dg, 'dmaxdd': dd, 'turnover_mean': doc['turnover_mean'],
                       'CCF15': st['CCF15'], 'SPY': st['SPY'], 'QQQ': st['QQQ']}, ensure_ascii=False, indent=1))
 
 
+# ───────────────────────── v3: 質を残して、いま勝っている大型株へ集中（NASDAQ100 超えを狙う） ─────────────────────────
+BENCH3 = ['QQQ', 'SPY', 'SMH', 'MTUM', 'MGK', 'QUAL', 'SPHQ', 'RSP', 'ITA']   # MTUM＝米国の勢い（2013-04〜）・MGK＝米国の巨大成長株
+PREREG_V3 = os.path.join(BASE, 'out', 'ccf15_prereg_v3.json')
+TAX_JP = 0.20315          # 特定口座の売却益の税（所得税15.315%＋住民税5%）
+
+
+def momentum(ctx, c, key, months=12, skip=1):
+    """勢い: key の月（7月の組なら6月）の skip か月前の終値 ÷ months か月前の終値 − 1（配当込みの adjclose）。
+    12-1 なら前の年の6月末 → その年の5月末。どちらかの月の値が無ければ None（測れない・上場から1年未満など）"""
+    p = (ctx.PX.get(ctx.c2t.get(c)) or {}).get('m') or {}
+    k1, k0 = ym_add(key, -skip), ym_add(key, -months)
+    if k1 in p and k0 in p and p[k0] > 0:
+        return p[k1] / p[k0] - 1
+    return None
+
+
+def top_set(vals, frac):
+    """vals（会社→値・大きいほど上）の上位 frac に入る社の集合（同点は平均の順位）。frac が無いか1以上なら線なし＝None"""
+    if frac is None or frac >= 1:
+        return None
+    p = pct(vals, True)
+    return {c for c, v in p.items() if v >= 1 - frac - 1e-9}
+
+
+def weights_v3(members, mv, SL):
+    """時価の比（1社 cap まで）。感度で 同じ重み（equal）・時価の平方根（sqrt）"""
+    if not members:
+        return {}
+    if SL.get('weighting') == 'equal':
+        return {c: 1 / len(members) for c in members}
+    if SL.get('weighting') == 'sqrt':
+        return cap_weights({c: math.sqrt(mv[c]) for c in members}, SL['cap'])
+    return cap_weights({c: mv[c] for c in members}, SL['cap'])
+
+
+def substantive(ws):
+    """検問の理由のうち、測った結果として落ちた（壊れた）もの。『測れない』だけなら壊れたとは読まない（ルール7）"""
+    return [w for w in (ws or []) if '測れない' not in w]
+
+
+def cohort_v3(ctx, Y, R, prev=None, px_key=None, fetch=False, prev_pool=None):
+    """Y 年7月の組（v3）。土俵と時価は v2 と同じ（_pool_mv）。検問 → 質の総合と勢い（どちらも検問を通った社の中の順位）→
+    入る＝両方が上位 enter_top で、時価の上位 n 社／残る＝前の年から持っている社で、両方が上位 stay_top、
+    時価の順位（入る線の内の社と並べて）が buffer_rank 以内。
+    比べる相手（同じ土俵）＝検問・質・勢いなしの時価の上位 n 社（土俵の中の順位で同じ緩衝帯・同じ上限）"""
+    key = px_key or Y * 100 + 6
+    mkey = Y * 100 + 6                   # 勢いはいつも6月末で測る（7月の組。10月に作っても同じ組なら同じ値）
+    SL, QK, MK = R['select'], R['quality'], R['momentum']
+    asof, ranked, fl, pool, mv, Dc, scaled, log = _pool_mv(ctx, Y, R, key, fetch)
+
+    def note(k):
+        log[k] = log.get(k, 0) + 1
+    elig, why = [], {}
+    for c in pool:
+        if R['kills'].get('off'):
+            w = []                                  # 感度『検問なし』
+        elif Dc[c] is None:
+            w = ['決算が無い（6月末に出ていた年次決算が無い・測れない）']
+        elif is_fin(ctx.SIC[c]):
+            w = fin_kills(ctx.F, c, Dc[c], R) if R.get('kills_fin') else ['金融（持たない）']
+        else:
+            w = kills(ctx.F, c, Dc[c], R)
+        if w:
+            why[c] = w
+            note(f'外す: {w[0]}')
+            continue
+        elig.append(c)
+    comp, met = quality_comp(ctx, elig, Dc, QK)
+    mom = {}
+    for c in elig:
+        m = momentum(ctx, c, mkey, MK['months'], MK['skip'])
+        if m is not None:
+            mom[c] = m
+    qE, qS = top_set(comp, QK['enter_top']), top_set(comp, QK['stay_top'])
+    mE, mS = top_set(mom, MK['enter_top']), top_set(mom, MK['stay_top'])
+
+    def passes(c, qs, ms):
+        return (qs is None or c in qs) and (ms is None or c in ms)
+    E1 = [c for c in elig if passes(c, qE, mE)]
+    E2 = {c for c in elig if passes(c, qS, mS)}
+    e1 = sorted(E1, key=lambda c: (-mv[c], c))
+
+    def pos(c):                                     # 時価の順位（入る線の内の社と並べて）
+        return 1 + sum(1 for e in e1 if e != c and (-mv[e], e) < (-mv[c], c))
+    members = e1[:SL['n']]
+    kept = [c for c in (prev or []) if c in E2 and c not in members and pos(c) <= SL['buffer_rank']]
+    members = members + kept
+    w = weights_v3(members, mv, SL)
+    porder = sorted(pool, key=lambda c: (-mv[c], c))
+    prank = {c: i + 1 for i, c in enumerate(porder)}
+    pmem = porder[:SL['n']]
+    pmem += [c for c in (prev_pool or []) if c in prank and prank[c] <= SL['buffer_rank'] and c not in pmem]
+    pw = cap_weights({c: mv[c] for c in pmem}, SL['cap'])     # 同じ土俵の時価の上位 n 社（検問・質・勢いなし・同じ社数と上限）
+    for c in elig:
+        if c in members:
+            continue
+        if qE is not None and c not in comp:
+            note('目標の外: 質が測れない')
+        elif qE is not None and c not in qE:
+            note('目標の外: 質が入る線の外')
+        elif mE is not None and c not in mom:
+            note('目標の外: 勢いが測れない（株価が12か月分ない）')
+        elif mE is not None and c not in mE:
+            note('目標の外: 勢いが入る線の外')
+        else:
+            note('目標の外: 両方の線の内だが時価の順位が外')
+    return dict(Y=Y, Dc=Dc, key=key, mkey=mkey, ranked=ranked, fl=fl, pool=pool, elig=elig, comp=comp, met=met, mom=mom,
+                qE=qE, mE=mE, qS=qS, mS=mS, E1=e1, E2=E2, members=members, kept=kept, w=w, pw=pw, pmem=pmem,
+                mv=mv, rank={c: pos(c) for c in members}, prank=prank, why=why, log=log, scaled=scaled)
+
+
+def paper_path(ctx, by_year, last):
+    """紙の上の ETF（7月の頭に目標の重みで買い、翌年6月まで持ったまま・月の株価が欠けた社はその月0%）の
+    月次リターン・各月のはじめの重み・各年の終わりの重み・欠けた月の数（basket_returns_w と同じ持ち方）"""
+    out, at, ends, gaps = {}, {}, {}, 0
+    for Y in sorted(by_year):
+        base = Y * 100 + 6
+        W = {t: w for t, w in by_year[Y].items() if ctx.PX.get(t) and base in ctx.PX[t]['m'] and w > 0}
+        tot = sum(W.values())
+        if not W or tot <= 0:
+            continue
+        val = {t: w / tot for t, w in W.items()}
+        lastp = {t: ctx.PX[t]['m'][base] for t in W}
+        for i in range(1, 13):
+            k = ym_add(base, i)
+            if k > last:
+                break
+            tv = sum(val.values())
+            at[k] = {t: v / tv for t, v in val.items()}
+            rs = {}
+            for t in W:
+                p = ctx.PX[t]['m'].get(k)
+                if p is None:
+                    rs[t] = 0.0
+                    gaps += 1
+                else:
+                    rs[t] = p / lastp[t] - 1
+                    lastp[t] = p
+            out[k] = sum(val[t] * rs[t] for t in W) / tv
+            for t in W:
+                val[t] *= 1 + rs[t]
+        tv = sum(val.values())
+        ends[Y] = {t: v / tv for t, v in val.items()}
+    return out, at, ends, gaps
+
+
+def run_backtest_v3(ctx, R, last):
+    H, P, logs, broke, prev, prevP = {}, {}, {}, {}, None, None
+    for Y in COHORTS:
+        if Y * 100 + 6 > last:
+            break
+        co = cohort_v3(ctx, Y, R, prev=prev, prev_pool=prevP)
+        H[Y] = {ctx.c2t[c]: w for c, w in co['w'].items()}
+        P[Y] = {ctx.c2t[c]: w for c, w in co['pw'].items()}
+        broke[Y] = {ctx.c2t[c] for c, ws in co['why'].items() if substantive(ws)}
+        prev, prevP = co['members'], co['pmem']
+        top10 = sorted(co['w'].items(), key=lambda kv: -kv[1])[:10]
+        logs[Y] = {'母集団（上位）': len(co['ranked']), '同じ土俵（金融を除く・株価のある社）': len(co['pool']), '検問を通った': len(co['elig']),
+                   '質も勢いも入る線の内': len(co['E1']), '持つ': len(co['members']), '緩衝帯で残した': len(co['kept']),
+                   'テックの比重': round(sum(w for c, w in co['w'].items() if is_tech(ctx.SIC[c])), 3),
+                   '上位10社の比重': round(sum(w for _, w in top10), 3), '上位10社': [ctx.c2t[c] for c, _ in top10],
+                   '中身': sorted(H[Y], key=lambda t: -H[Y][t]), '内訳': co['log'], '時価を株価で直せた社': co['scaled']}
+    rH, atH, eH, gH = paper_path(ctx, H, last)
+    rP, _, eP, gP = paper_path(ctx, P, last)
+    return dict(rH=rH, rP=rP, atH=atH, H=H, P=P, broke=broke, logs=logs, gaps={'H': gH, 'P': gP},
+                toH=turnover(H, eH), toP=turnover(P, eP))
+
+
+def monthly_rets(ctx, t):
+    """ティッカーの月次リターン（{yyyymm: r}）。欠けた月は入れない＝その月0%で、次に値のある月に最後の値からの変化として数える"""
+    p = (ctx.PX.get(t) or {}).get('m') or {}
+    ks = sorted(p)
+    return {k: p[k] / p[a] - 1 for a, k in zip(ks, ks[1:]) if p[a] > 0}
+
+
+def irr_m(n, final):
+    """毎月はじめに1を n か月入れて、n か月目の終わりに final になったときの年率（お金の重みつき・%）"""
+    if n <= 0 or not final or final <= 0:
+        return None
+    lo, hi = -0.5, 0.5
+    for _ in range(200):
+        mid = (lo + hi) / 2
+        if sum((1 + mid) ** i for i in range(1, n + 1)) > final:
+            hi = mid
+        else:
+            lo = mid
+    return round(((1 + (lo + hi) / 2) ** 12 - 1) * 100, 2)
+
+
+def dca_operational(ctx, at, broke, tax=TAX_JP, rets=None):
+    """実際の運用の近似（J5）: 毎月はじめに1ドルを、紙の上の ETF のその月のはじめの重みから足りない社へ（足りない分の比で）入れる。
+    7月のはじめ（6月末の値）に、測った結果として検問に落ちた社だけ売る。売却益に tax（同じ暦年の損と通算・売った時に引く＝
+    特定口座の源泉徴収あり）。それ以外は売らない（目標から外れた社は持ったまま・買い足さない）。最後に全部売った場合の税も出す。
+    rets: {ティッカー: {yyyymm: r}}（検査用。無ければ株価から作る）"""
+    R_ = dict(rets or {})
+
+    def r_of(t, k):
+        if t not in R_:
+            R_[t] = monthly_rets(ctx, t)
+        return R_[t].get(k, 0.0)
+    hold, basis = {}, {}
+    cash, n, sells, realized = 0.0, 0, 0, 0.0
+    yr, gain, withheld, paid = None, 0.0, 0.0, 0.0
+    drift = {}
+    for k in sorted(at):
+        if k // 100 != yr:
+            yr, gain, withheld = k // 100, 0.0, 0.0
+        if k % 100 == 7:
+            for t in sorted(t for t in hold if t in broke.get(k // 100, ())):
+                v, b = hold.pop(t), basis.pop(t)
+                cash += v
+                gain += v - b
+                realized += v - b
+                sells += 1
+                due = tax * max(0.0, gain) - withheld      # 同じ年の損と通算（足りなければ戻る）
+                cash -= due
+                withheld += due
+                paid += due
+        cash += 1.0
+        n += 1
+        tw = at[k]
+        V = sum(hold.values()) + cash
+        d = {t: max(0.0, w * V - hold.get(t, 0.0)) for t, w in tw.items()}
+        sd = sum(d.values())
+        if sd >= cash:
+            buys = {t: cash * x / sd for t, x in d.items() if x > 0}
+        else:
+            buys = {t: d[t] + (cash - sd) * w for t, w in tw.items()}
+        for t, b in buys.items():
+            hold[t] = hold.get(t, 0.0) + b
+            basis[t] = basis.get(t, 0.0) + b
+        cash = 0.0
+        if k % 100 == 6:                                  # 7月の入れ替えの直前に、紙の上の ETF からどれだけずれたか（片道）
+            V = sum(hold.values())
+            drift[k // 100] = round(0.5 * sum(abs(hold.get(t, 0.0) / V - tw.get(t, 0.0)) for t in set(hold) | set(tw)), 3)
+        for t in hold:
+            hold[t] *= 1 + r_of(t, k)
+    V = sum(hold.values())
+    unreal = sum(hold[t] - basis[t] for t in hold)
+    final_tax = tax * max(0.0, gain + unreal) - withheld
+    after = V - final_tax
+    return {'months': n, 'final': round(V, 3), 'multiple': round(V / n, 4) if n else None, 'irr': irr_m(n, V),
+            'after_tax': round(after, 3), 'after_multiple': round(after / n, 4) if n else None, 'irr_after_tax': irr_m(n, after),
+            'taxes_paid_during': round(paid, 4), 'final_tax': round(final_tax, 4), 'sells_broken': sells,
+            'realized_gain': round(realized, 4), 'names_held_end': len(hold), 'drift_before_july': drift}
+
+
+def dca_plain(r, months, tax=TAX_JP):
+    """同じ積立（毎月はじめに1ドル）を売らずに持ち続けた場合（QQQ・SPY・紙の上の ETF＝中で入れ替えても税がかからない形）。最後に全部売った場合の税も"""
+    v = 0.0
+    for k in months:
+        v = (v + 1) * (1 + r.get(k, 0.0))
+    n = len(months)
+    after = v - tax * max(0.0, v - n)
+    return {'months': n, 'final': round(v, 3), 'multiple': round(v / n, 4) if n else None, 'irr': irr_m(n, v),
+            'after_tax': round(after, 3), 'after_multiple': round(after / n, 4) if n else None, 'irr_after_tax': irr_m(n, after)}
+
+
+def by_cohort_year(series, last):
+    """各年の組（7月〜翌6月）のリターン（%）。全部の月がそろう系列だけ"""
+    out = []
+    for Y in COHORTS:
+        ks = [k for k in (ym_add(Y * 100 + 6, i) for i in range(1, 13)) if k <= last]
+        if not ks:
+            break
+        row = {'組': Y, '月数': len(ks)}
+        for name, r in series.items():
+            if all(k in r for k in ks):
+                row[name] = round((math.prod(1 + r[k] for k in ks) - 1) * 100, 1)
+        out.append(row)
+    return out
+
+
+def growth_returns(path):
+    """過去の版の検証の1ドルの推移から月次リターンを戻す（並べるため）"""
+    if not os.path.exists(path):
+        return {}
+    g = json.load(open(path, encoding='utf-8')).get('growth') or {}
+    ks, v = g.get('months') or [], g.get('CCF15') or []
+    out, prev = {}, 1.0
+    for k, x in zip(ks, v):
+        out[k] = x / prev - 1
+        prev = x
+    return out
+
+
+def backtest_v3():
+    R = rules()
+    PR = json.load(open(PREREG_V3, encoding='utf-8'))
+    ev = PR['evaluation']
+    ctx = Ctx(fetch=False)
+    spy = (ctx.px('SPY') or {}).get('m') or {}
+    last = max(k for k in spy if k < int(dt.date.today().strftime('%Y%m')))
+    a = COHORTS[0] * 100 + 7
+    run = run_backtest_v3(ctx, R, last)
+    rH, rP = run['rH'], run['rP']
+    B = {t: etf_returns(ctx, t, a, last) for t in BENCH3 + ['SPMO']}
+    q = B['QQQ']
+    ser = {'CCF15': rH, '同じ土俵の時価の上位30社（検問・質・勢いなし）': rP, 'CCF15 v2（全銘柄・時価×質の傾き・100社）': growth_returns(OUT_BT2)}
+    ser.update({t: B[t] for t in BENCH3 + ['SPMO']})
+    st = {k: stats(v, q) for k, v in ser.items() if v}
+    j1 = ev['J1']
+    sH, sQ = stats(rH, q), stats(q, q)
+    dg, dd = round(sH['cagr'] - sQ['cagr'], 2), round(sH['maxdd'] - sQ['maxdd'], 1)
+    ex1 = MW.excess_stats(rH, q)
+    if ex1 and ex1['ex_ann'] >= j1['win_ex'] and ex1['t'] is not None and ex1['t'] >= j1['win_t']:
+        v1v = 'NASDAQ100 に勝った'
+    elif dg <= -j1['lose_dcagr']:
+        v1v = 'NASDAQ100 より悪い'
+    else:
+        v1v = 'NASDAQ100 並み（差は偶然と区別できない）'
+    j2 = ev['J2']
+    ex2 = MW.excess_stats(rH, rP)
+    if ex2 and ex2['ex_ann'] >= j2['ex_ann'] and ex2['t'] is not None and ex2['t'] >= j2['t']:
+        v2v = '規則に中身あり（同じ土俵の時価の上位30社に勝った）'
+    elif ex2 and ex2['ex_ann'] <= -j2['ex_ann'] and ex2['t'] is not None and ex2['t'] <= -j2['t']:
+        v2v = '規則で負けた（同じ土俵の時価の上位30社に負けた）'
+    else:
+        v2v = '差は偶然と区別できない'
+    slot, slot_v = judge_slot(rH, B['ITA'], q, B['SMH'], ev['J3_slot'], ev['J3_slot']['dca_months'])
+    vs = {t: MW.excess_stats(rH, B[t]) for t in ('QQQ', 'SPY', 'SMH', 'MTUM', 'MGK', 'QUAL', 'RSP', 'ITA')}
+    months = sorted(run['atH'])
+    j5 = {'CCF15（運用の近似: 積立・壊れた社だけ売る・売却益の税）': dca_operational(ctx, run['atH'], run['broke']),
+          'CCF15（紙の上の ETF をそのまま積立・中の入れ替えに税なし）': dca_plain(rH, months),
+          'QQQ': dca_plain(q, months), 'SPY': dca_plain(B['SPY'], months)}
+    sens = {}
+    for name, kw in ev['sensitivity'].items():
+        r2 = run_backtest_v3(ctx, variant(R, **kw), last)
+        h2 = r2['rH']
+        s2 = stats(h2, q)
+        sens[name] = {'stats': s2, 'vs_qqq': MW.excess_stats(h2, q), 'vs_same_pool': MW.excess_stats(h2, rP),
+                      'vs_qqq_cagr': round(s2['cagr'] - sQ['cagr'], 2), 'vs_qqq_maxdd': round(s2['maxdd'] - sQ['maxdd'], 1),
+                      'turnover_mean': round(S.mean(r2['toH'].values()), 3) if r2['toH'] else None,
+                      'names_mean': round(S.mean(len(v) for v in r2['H'].values()), 1)}
+        print(f"  感度 {name}: 年率 {s2['cagr']}（QQQ との差 {sens[name]['vs_qqq_cagr']:+.2f}pt）", flush=True)
+    gone = {Y: run['logs'][Y]['内訳'].get('今はティッカーが無い（買収・倒産などで消えた社＝生き残りの偏り）', 0) for Y in run['logs']}
+    doc = {'generated': dt.date.today().isoformat(), 'tool': 'night/ccf15.py backtest', 'method': 'v3',
+           'prereg': 'out/ccf15_prereg_v3.json（コミットは結果の前）', 'rules_version': R['version'],
+           'window': [a, last], 'stats': st,
+           'J1_NASDAQ100と比べて': {'verdict': v1v, 'dcagr': dg, 'dmaxdd': dd, 'excess': ex1},
+           'J2_規則の効き': {'verdict': v2v, 'vs_same_pool': ex2},
+           '参考_その他15%でITAの代わり': {'verdict': slot_v, **slot},
+           'CCF15と相手の差': vs,
+           '各年（7月〜翌6月）': by_cohort_year({'CCF15': rH, 'QQQ': q, '同じ土俵': rP, 'SPY': B['SPY'], 'SMH': B['SMH']}, last),
+           'J5_運用の近似（毎月1ドルの積立）': j5,
+           'turnover': run['toH'], 'turnover_same_pool': run['toP'],
+           'turnover_mean': round(S.mean(run['toH'].values()), 3) if run['toH'] else None,
+           'sensitivity': sens, '生き残りの偏り（今ティッカーが無い社の数・金融を除く上位1000社のうち）': gone, 'gaps': run['gaps'],
+           'growth': growth({'CCF15': rH, 'QQQ': q, 'SPY': B['SPY'], 'SMH': B['SMH']}),
+           'cohorts': run['logs']}
+    json.dump(doc, open(OUT_BT, 'w'), ensure_ascii=False, indent=1)
+    print(json.dumps({'J1': v1v, 'J1_ex': ex1, 'dcagr': dg, 'dmaxdd': dd, 'J2': v2v, 'J2_ex': ex2, 'J3': slot_v,
+                      'turnover_mean': doc['turnover_mean'], 'CCF15': st['CCF15'], 'QQQ': st['QQQ'], 'SPY': st['SPY'],
+                      'J5': {k: {x: v[x] for x in ('multiple', 'after_multiple', 'irr', 'irr_after_tax')} for k, v in j5.items()}},
+                     ensure_ascii=False, indent=1))
+
+
+def holdings_v3():
+    R = rules()
+    ctx = Ctx(fetch=True)
+    today = dt.date.today()
+    Y = today.year if today >= dt.date(today.year, 7, 1) else today.year - 1
+    spy = (ctx.px('SPY', True) or {}).get('m') or {}
+    now = max(spy)                                   # いちばん新しい月（今月の途中の足）＝今も売買されている社だけ・今の株価で時価を直す
+    old = json.load(open(OUT_HOLD, encoding='utf-8')) if os.path.exists(OUT_HOLD) else {}
+    prev = None
+    if old.get('method') == 'v3' and old.get('cohort') != f'{Y}年7月の組':
+        prev = [r['cik'] for r in old.get('holdings', [])]          # 前の年の顔ぶれ＝緩衝帯で残す候補
+    co = cohort_v3(ctx, Y, R, prev=prev, px_key=now, fetch=True)
+    qp = pct(co['comp'], True) if co['comp'] else {}
+    mp = pct(co['mom'], True) if co['mom'] else {}
+    QK, MK = R['quality'], R['momentum']
+
+    def r1(x, k=1):
+        return None if x is None else round(x, k)
+    rows = []
+    for c, w in sorted(co['w'].items(), key=lambda kv: -kv[1]):
+        D = co['Dc'][c]
+        f = ctx.F[c][D]
+        rs = [ctx.F[c][y]['roic_used'] for y in range(D - 4, D + 1) if y in ctx.F[c] and ctx.F[c][y]['roic_used'] is not None]
+        rows.append({'t': ctx.c2t[c], 'nm': ctx.names.get(c, ''), 'cik': c, 'sic': ctx.SIC[c], 'sector': sector_ja(ctx.SIC[c]),
+                     'w': round(w, 6), 'rank': co['rank'][c], 'kept': c in co['kept'], 'tech': is_tech(ctx.SIC[c]),
+                     'mv_b': round(co['mv'][c] / 1e9, 1), 'fy_end': f.get('end'),
+                     'q_pct': r1(qp.get(c), 3), 'mom12': r1(co['mom'][c] * 100) if c in co['mom'] else None, 'm_pct': r1(mp.get(c), 3),
+                     'gpa': r1(f['gpa'], 3), 'cfoa': r1(f['cfoa'], 3),
+                     'dsh3': None if c not in co['met']['dsh'] else round(co['met']['dsh'][c] * 100, 1),
+                     'roic5': round(S.median(rs), 1) if rs else None, 'nde': r1(f['nde'], 2)})
+    nxt = [{'t': ctx.c2t[c], 'nm': ctx.names.get(c, ''), 'sector': sector_ja(ctx.SIC[c]), 'rank': i + 1,
+            'mv_b': round(co['mv'][c] / 1e9, 1)}
+           for i, c in enumerate(co['E1']) if c not in co['w']][:25]
+    by_sector = {}
+    for r in rows:
+        by_sector[r['sector']] = round(by_sector.get(r['sector'], 0) + r['w'], 6)
+
+    def reason(c):
+        if c in co['why']:
+            return co['why'][c][0]
+        if c not in co['comp']:
+            return '質が測れない（物差しが2つそろわない）'
+        if co['qE'] is not None and c not in co['qE']:
+            return f"質が上位{QK['enter_top']:.0%}の外（{qp[c]:.0%}の位置）"
+        if c not in co['mom']:
+            return '勢いが測れない（株価が12か月分ない）'
+        if co['mE'] is not None and c not in co['mE']:
+            return f"勢いが上位{MK['enter_top']:.0%}の外（12-1か月 {co['mom'][c]:+.0%}）"
+        return '両方の線の内だが時価の順位が外'
+    big = [{'t': ctx.c2t[c], 'nm': ctx.names.get(c, ''), 'mv_b': round(co['mv'][c] / 1e9, 1), 'why': reason(c)}
+           for c in sorted(co['pool'], key=lambda c: -co['mv'][c]) if c not in co['w']][:25]
+    lost = [c for c in co['ranked'][:300] if not ctx.c2t.get(c)]
+    sn = sec_names(lost, True)
+    gone = []
+    for c in lost:
+        x = sn.get(c) or {}
+        recent = (x.get('last') or '') >= (today - dt.timedelta(days=400)).isoformat()
+        exited = any(f in ('15-12B', '15-12G', '15-15D', '25-NSE') for f in (x.get('last_forms') or []))
+        gone.append({'cik': c, 'rank': co['ranked'].index(c) + 1, 'float_b': round(co['fl'][c][0] / 1e9, 1), 'name': x.get('name', ''),
+                     'former': (x.get('former') or [])[:2], 'last': x.get('last'), 'last_forms': x.get('last_forms'),
+                     'read': '上場をやめた（買収・倒産など）' if exited or not recent else 'まだ届け出がある＝番号が変わった疑い（SUCCESSORS を確かめる）'})
+    mk = co['mkey']
+    doc = {'name': R['name'], 'ja': R['ja'], 'version': R['version'], 'method': 'v3', 'rules': 'out/ccf15_rules.json',
+           'generated': today.isoformat(), 'cohort': f'{Y}年7月の組', 'price_month': now,
+           'momentum_window': f'{ym_add(mk, -MK["months"]) // 100}年{ym_add(mk, -MK["months"]) % 100}月末→{ym_add(mk, -MK["skip"]) // 100}年{ym_add(mk, -MK["skip"]) % 100}月末',
+           'data_note': f"決算は会社ごとに、{Y}年4月1日までに終わった最新の会計年度（6月末に出ていた10-K）。重みは今の株価で直した時価",
+           'counts': {'母集団（公開浮動株時価の上位）': len(co['ranked']), '金融を除き株価のある社': len(co['pool']),
+                      '壊れないの検問を通った': len(co['elig']), '質が入る線の内': len(co['qE'] or co['elig']),
+                      '勢いが入る線の内': len(co['mE'] or co['elig']), '両方': len(co['E1']), '持つ': len(co['members']),
+                      '緩衝帯で残した': len(co['kept'])},
+           'テックの比重': round(sum(r['w'] for r in rows if r['tech']), 4), '上位10社の比重': round(sum(r['w'] for r in rows[:10]), 4),
+           '外した理由': co['log'], '大きいのに持たない社（時価の大きい順）': big,
+           'ティッカーの無い大きな社（浮動株の上位300社のうち）': gone,
+           'by_sector': dict(sorted(by_sector.items(), key=lambda kv: -kv[1])),
+           'holdings': rows, '次の候補（両方の線の内で持たなかった上位）': nxt}
+    json.dump(doc, open(OUT_HOLD, 'w'), ensure_ascii=False, indent=1)
+    print(f"{len(rows)} 社（{doc['cohort']}・勢い {doc['momentum_window']}）・テック {doc['テックの比重']:.1%}・上位10社 {doc['上位10社の比重']:.1%}")
+    for r in rows:
+        print(f"  {r['rank']:3d} {r['t']:6s} {r['w']*100:5.2f}% 質{r['q_pct']} 勢い{r['mom12']}% {r['sector']:10s} {r['nm'][:34]}")
+    print('大きいのに持たない社:', [(b['t'], b['why']) for b in big[:15]])
+    sus = [g for g in gone if g['read'].startswith('まだ')]
+    print(f'ティッカーの無い大きな社 {len(gone)} 社（番号が変わった疑い {len(sus)} 社）:', [(g['rank'], g['name'][:28], g['last']) for g in sus[:10]])
+
+
 def backtest():
-    if rules().get('method') == 'v2':
+    m = rules().get('method')
+    if m == 'v3':
+        backtest_v3()
+    elif m == 'v2':
         backtest_v2()
     else:
         backtest_v1()
 
 
 def holdings():
-    R = rules()
-    if R.get('method') != 'v2':
-        return holdings_v1()
+    m = rules().get('method')
+    if m == 'v3':
+        return holdings_v3()
+    if m == 'v2':
+        return holdings_v2()
+    return holdings_v1()
+
+
+def holdings_v2():
+    """今日の中身を v2 の作り方（規則書 out/ccf15_rules_v2.json）で出す（記録の再現用・書き出さない）"""
+    R = json.load(open(RULES_V2, encoding='utf-8'))
     ctx = Ctx(fetch=True)
     today = dt.date.today()
     Y = today.year if today >= dt.date(today.year, 7, 1) else today.year - 1
@@ -1555,8 +2029,7 @@ def holdings():
            'ティッカーの無い大きな社（浮動株の上位300社のうち）': gone,
            'by_sector': dict(sorted(by_sector.items(), key=lambda kv: -kv[1])),
            'holdings': rows, '次の候補（持たなかった上位）': nxt}
-    json.dump(doc, open(OUT_HOLD, 'w'), ensure_ascii=False, indent=1)
-    print(f"{len(rows)} 社（{doc['cohort']}）・テック {doc['テックの比重']:.1%}・金融 {doc['金融の比重']:.1%}・上位10社 {doc['上位10社の比重']:.1%}")
+    print(f"{len(rows)} 社（{doc['cohort']}・v2 の作り方・書き出さない）・テック {doc['テックの比重']:.1%}・金融 {doc['金融の比重']:.1%}・上位10社 {doc['上位10社の比重']:.1%}")
     for r in rows[:30]:
         print(f"  {r['rank']:4d} {r['t']:6s} {r['w']*100:5.2f}% 傾き{r['tilt']} {r['sector']:10s} {r['nm'][:36]}")
     print('大きいのに外した社:', [(b['t'], b['why']) for b in big[:12]])
@@ -1705,10 +2178,14 @@ def main():
         holdings()
     elif cmd == 'holdings_v1':
         holdings_v1()
+    elif cmd == 'holdings_v2':
+        holdings_v2()
     elif cmd == 'backtest':
         backtest()
     elif cmd == 'backtest_v1':
         backtest_v1()
+    elif cmd == 'backtest_v2':
+        backtest_v2()
     elif cmd == 'nav':
         nav()
     else:

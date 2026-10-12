@@ -264,5 +264,107 @@ k.PX['Q']['c'][201206] = k.PX['Q']['m'][201206] = 0.26
 v, n = C.verify_float(k, 5, 301e9, '2012-06-30')
 check('浮動株: 株数が2,000億株を超えれば1000で割る', close(v, 301e6, 1) and n == 1)
 
+# ───────── v3: 質と勢いの線・30社・緩衝帯・運用の近似 ─────────
+k = mvctx({}, 1e8)
+k.PX['Q']['m'] = {202506: 20.0, 202605: 30.0, 202606: 40.0}
+check('勢い: 12-1か月は最後の1か月を除く', close(C.momentum(k, 5, 202606, 12, 1), 0.5))
+check('勢い: 6-1か月', C.momentum(k, 5, 202606, 6, 1) is None)
+k.PX['Q']['m'][202512] = 25.0
+check('勢い: 6-1か月（12月末→5月末）', close(C.momentum(k, 5, 202606, 6, 1), 0.2))
+del k.PX['Q']['m'][202506]
+check('勢い: 12か月前の値が無ければ測れない', C.momentum(k, 5, 202606, 12, 1) is None)
+ts = C.top_set({'a': 1, 'b': 2, 'c': 3, 'd': 4}, 0.5)
+check('線: 上位半分', ts == {'c', 'd'})
+check('線: 上位2/3', C.top_set({'a': 1, 'b': 2, 'c': 3, 'd': 4}, 0.667) == {'b', 'c', 'd'})
+check('線: 1以上は線なし', C.top_set({'a': 1}, 1.0) is None)
+check('壊れた理由: 測れないだけは壊れたと読まない', C.substantive(['決算が無い（測れない）', 'ROICが3年分ない（測れない）']) == [] and
+      C.substantive(['営業赤字', '自己資本が測れない']) == ['営業赤字'])
+w = C.weights_v3(['a', 'b', 'c'], {'a': 4.0, 'b': 1.0, 'c': 1.0}, {'cap': 0.5})
+check('重み: 時価の比で上限まで', close(w['a'], 0.5) and close(w['b'], 0.25))
+w = C.weights_v3(['a', 'b'], {'a': 9.0, 'b': 1.0}, {'cap': 0.9, 'weighting': 'sqrt'})
+check('重み: 時価の平方根', close(w['a'], 0.75))
+w = C.weights_v3(['a', 'b'], {'a': 9.0, 'b': 1.0}, {'cap': 0.9, 'weighting': 'equal'})
+check('重み: 同じ重み', close(w['a'], 0.5))
+
+
+class FakeCtx:
+    def need_sic(self, ciks, fetch):
+        pass
+
+    def px(self, t, fetch=False):
+        return self.PX.get(t)
+
+
+def v3ctx():
+    k = FakeCtx()
+    spec = {1: (600, 0.9, 0.5), 2: (500, 0.1, 0.4), 3: (400, 0.8, -0.1), 4: (300, 0.7, 0.3), 5: (200, 0.6, 0.2), 6: (100, 0.2, -0.2)}
+    k.FL, k.c2t, k.SIC, k.PX, k.F, k.names = {}, {}, {}, {}, {}, {}
+    for c, (mv, q, m) in spec.items():
+        t = f'T{c}'
+        k.FL[c] = {'2025-06-30': float(mv)}
+        k.c2t[c] = t
+        k.SIC[c] = 3674
+        k.PX[t] = {'m': {202506: 100.0, 202605: 100.0 * (1 + m), 202606: 100.0 * (1 + m)},
+                   'c': {202506: 10.0, 202605: 10.0, 202606: 10.0}, 'splits': []}
+        k.F[c] = {y: {'oi': 10.0, 'eq': 100.0, 'nde': None, 'icov': None, 'z': None, 'roic_used': 20.0, 'gpa': q, 'cfoa': q,
+                      'sh': None, 'end': f'{y}-12-31', 'assets': 1000.0, 'classified': True} for y in range(2021, 2026)}
+    return k
+
+
+RV3 = {'universe': {'float_top': 10, 'exclude_sic': [[6000, 6799, '金融']]},
+       'kills': {'nde_max': 4, 'intcov_min': 3, 'z2_min': 1.1, 'wacc': 9.0, 'roic_years': 5, 'roic_min_years': 3},
+       'quality': {'metrics': ['gpa', 'cfoa', 'dsh'], 'min_metrics': 2, 'dsh_years': 3, 'enter_top': 0.5, 'stay_top': 0.667},
+       'momentum': {'months': 12, 'skip': 1, 'enter_top': 0.5, 'stay_top': 0.667},
+       'select': {'n': 1, 'buffer_rank': 2, 'cap': 0.1}}
+co = C.cohort_v3(v3ctx(), 2026, RV3)
+check('v3: 入る線は質と勢いの両方', co['E1'] == [1, 4], str(co['E1']))
+check('v3: 残る線は上位2/3', co['E2'] == {1, 4, 5}, str(co['E2']))
+check('v3: 時価の大きい順に n 社', co['members'] == [1] and close(co['w'][1], 1.0))
+co = C.cohort_v3(v3ctx(), 2026, RV3, prev=[5])
+check('v3: 緩衝帯の外（入る線の内の社と並べて3位）なら残さない', co['members'] == [1])
+R2 = C.variant(RV3, select__buffer_rank=3)
+co = C.cohort_v3(v3ctx(), 2026, R2, prev=[5, 3])
+check('v3: 緩衝帯の内なら残す・残る線の外（勢いが下）は残さない', co['members'] == [1, 5] and co['kept'] == [5])
+co = C.cohort_v3(v3ctx(), 2026, RV3, prev_pool=[2])
+check('v3: 比べる相手は検問・質・勢いなしの時価の上位（緩衝帯つき）', co['pmem'] == [1, 2])
+co = C.cohort_v3(v3ctx(), 2026, C.variant(RV3, quality__enter_top=1.0, quality__stay_top=1.0))
+check('v3: 質の線なし（感度）なら勢いだけ', co['E1'] == [1, 2, 4])
+k = v3ctx()
+k.SIC[1] = 6022
+co = C.cohort_v3(k, 2026, RV3)
+check('v3: 金融は持たない（土俵の外）', 1 not in co['pool'] and co['members'] == [4])
+k = v3ctx()
+del k.PX['T1']['m'][202506]
+co = C.cohort_v3(k, 2026, RV3)
+check('v3: 勢いが測れない社（上場1年未満）は入らない', 1 not in co['E1'] and co['members'] == [4])
+k = v3ctx()
+for y in range(2021, 2026):
+    k.F[4][y]['oi'] = -1.0
+co = C.cohort_v3(k, 2026, RV3)
+check('v3: 検問に落ちた社は入らない・壊れた理由として残る', 4 not in co['elig'] and C.substantive(co['why'][4]) != [])
+
+# 運用の近似（積立・壊れた社だけ売る・売却益の税・同じ年の通算）
+at = {202307: {'A': 1.0}, 202308: {'A': 1.0}, 202407: {'B': 1.0}}
+rets = {'A': {202307: 1.0}, 'B': {}}
+o = C.dca_operational(None, at, {2024: {'A'}}, rets=rets)
+check('運用: 壊れた社を売り、利益に税を引いて次の目標へ', close(o['taxes_paid_during'], C.TAX_JP, 1e-4) and o['sells_broken'] == 1
+      and close(o['final'], 4.0 - C.TAX_JP, 1e-3))
+check('運用: 最後に売る税はもう引いた分を数えない', close(o['final_tax'], 0.0, 1e-9))
+at = {202307: {'A': 0.25, 'C': 0.75}, 202407: {'B': 1.0}}
+rets = {'A': {202307: 1.0}, 'C': {202307: -1 / 3}, 'B': {}}
+o = C.dca_operational(None, at, {2024: {'A', 'C'}}, rets=rets)
+check('運用: 同じ年の損と通算（利益と損が同じなら税0・先に引いた分は戻る）', close(o['taxes_paid_during'], 0.0, 1e-9) and close(o['final'], 2.0, 1e-9))
+at = {202307: {'A': 1.0}, 202308: {'B': 1.0}}
+rets = {'A': {202307: 1.0}, 'B': {}}
+o = C.dca_operational(None, at, {}, rets=rets)
+check('運用: 目標から外れただけの社は売らない', o['names_held_end'] == 2 and close(o['final'], 3.0) and o['sells_broken'] == 0)
+check('運用: 最後に売れば利益に税', close(o['after_tax'], 3.0 - C.TAX_JP * 1.0, 1e-3))
+o = C.dca_plain({202301: 0.0, 202302: 0.0}, [202301, 202302])
+check('積立: 値動きなしなら1倍・年率0', close(o['multiple'], 1.0) and o['irr'] == 0.0)
+check('年率（お金の重みつき）: 月1%なら年12.68%', C.irr_m(12, sum(1.01 ** i for i in range(1, 13))) == 12.68)
+yy = C.by_cohort_year({'A': {C.ym_add(202306, i): 0.01 for i in range(1, 13)}}, 202406)
+row = [r for r in yy if r['組'] == 2023][0]
+check('各年: 7月〜翌6月の複利・そろわない系列は書かない', close(row['A'], round((1.01 ** 12 - 1) * 100, 1)) and 'A' not in yy[0])
+
 print(f'check_ccf15: {ok} 件 OK・{bad} 件 NG')
 sys.exit(1 if bad else 0)
