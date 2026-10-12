@@ -141,6 +141,30 @@ def _alt(j, tags, ymin):
     return out
 
 
+def merged_win(j, tags, W):
+    """候補＝代替を gate0 の接ぎ規則で1本に。ただし主系列は『窓 W の年を最も多く持つ候補』（同数なら年数の多い候補）。
+       gate0 の規則のまま（年数の多い候補が主）だと、2018年の収益認識の基準で過去の年を修正した社（例 Microsoft）は
+       新しいタグが主になり、修正した年が古いタグと2%以上食い違うので古いタグごと捨てられ、2011〜2015年の売上が消える
+       （moat_repl_posthoc.merged_pref と同じ考え方を前方の窓に当てる）"""
+    cands = []
+    for t in tags:
+        d = {y: v for y, v in BC.annual_rows(j, t, None).items() if y >= FWD_LO}
+        if d:
+            cands.append((t, d))
+    if not cands:
+        return {}
+    cands.sort(key=lambda c: (-sum(1 for y in W if y in c[1]), -len(c[1])))
+    merged = dict(cands[0][1])
+    for _t, d in cands[1:]:
+        ov = [y for y in merged if y in d]
+        if not all(merged[y] == 0 or abs(d[y] - merged[y]) / abs(merged[y]) <= RGP.SEAM_TOL for y in ov):
+            continue
+        for y, v in d.items():
+            if y not in merged:
+                merged[y] = v
+    return merged
+
+
 def fwd_one(cik):
     try:
         j = json.loads(_Z.read(f'CIK{int(cik):010d}.json'))
@@ -148,15 +172,16 @@ def fwd_one(cik):
         return cik, None
     if not (j.get('facts') or {}).get('us-gaap'):
         return cik, None
-    rev = MTP.merged(j, RGP.REV_TAGS, None, FWD_LO)
+    rev10, rev20 = merged_win(j, RGP.REV_TAGS, W10), merged_win(j, RGP.REV_TAGS, W20)
+    eq10, eq20 = merged_win(j, EQ_TAGS, W10), merged_win(j, EQ_TAGS, W20)
     pre = _alt(j, PRE_TAGS, FWD_LO)
     itr = _alt(j, INT_TAGS, FWD_LO)
     op = {y: v for y, v in BC.annual_rows(j, 'OperatingIncomeLoss', None).items() if y >= FWD_LO}
-    eq = MTP.merged(j, EQ_TAGS, None, FWD_LO)
     ltd = _alt(j, LTD_TAGS, FWD_LO)
     sbc = _alt(j, SBC_TAGS, FWD_LO)
     rows = {}
     for y in range(FWD_LO, 2026):
+        rev, eq = (rev10, eq10) if y <= max(W10) else (rev20, eq20)    # 2007〜2013 は窓10の主系列・2014年以降は窓20の主系列
         rv = rev.get(y)
         r = {'rev': rv, 'em': None, 'em0': None, 'opm': None, 'rg': None, 'rg0': None}
         if rv is not None and rv > 0:
