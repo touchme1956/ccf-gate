@@ -29,6 +29,9 @@ const fs=require('fs'), path=require('path');
 const ROOT=path.dirname(__dirname);
 const {scorePack}=require('./score_all.js');
 const all=process.argv.includes('--all');
+// v9.9.213（2026-10-12）: 関門の線を写さない——門の const CCF_MOAT_GATE を読む（旧版は70を書いていた＝関門を75へ上げた日に古くなった）
+const GATE=+((fs.readFileSync(path.join(ROOT,'index.html'),'utf8').match(/const CCF_MOAT_GATE\s*=\s*(\d+(?:\.\d+)?)/)||[])[1]);
+if(!(GATE>0)){console.error('✗ index.html の CCF_MOAT_GATE を読めなかった（関門の線が分からないので判定しない）');process.exit(1);}
 const rows=JSON.parse(fs.readFileSync(path.join(ROOT,'out/score_all.json'),'utf8'));
 const pk=t=>{const f=path.join(ROOT,'out',t+'_gate_pack.json');return fs.existsSync(f)?JSON.parse(fs.readFileSync(f,'utf8')):null;};
 const moatOf=(b,dom)=>{const d=JSON.parse(JSON.stringify(b));d.dom=dom;let r;try{r=scorePack(d);}catch(e){return null;}
@@ -42,11 +45,11 @@ for(const x of target){
   const a=moatOf(b,null), c=moatOf(b,50), e=moatOf(b,70);
   if(a==null||c==null) continue;
   out.push({t:x.t,buy:!!x.buy,s:x.s,blank:a,d50:c,d70:e,gain:+(a-c).toFixed(1),
-    passBlank:a>=70, passD50:c>=70});
+    passBlank:a>=GATE, passD50:c>=GATE});
 }
 out.sort((p,q)=>q.gain-p.gain);
 console.log(`対象 ${target.length}社${all?'（全件）':'（判定圏Ω72+）'} / うち dom空欄 ${blanks}社\n`);
-console.log('銘柄     投下可    Ω    空欄   dom=50  dom=70   下駄   関門70');
+console.log(`銘柄     投下可    Ω    空欄   dom=50  dom=70   下駄   関門${GATE}`);
 for(const r of out)
   console.log(`${r.t.padEnd(8)}${(r.buy?'🟢':'  ').padEnd(6)}${String(r.s).padStart(5)}`
     +`${String(r.blank).padStart(7)}${String(r.d50).padStart(8)}${String(r.d70).padStart(8)}`
@@ -54,5 +57,5 @@ for(const r of out)
 const g=out.map(r=>r.gain), avg=g.reduce((a,b)=>a+b,0)/g.length;
 const dep=out.filter(r=>r.passBlank&&!r.passD50);
 console.log(`\n平均の下駄 +${avg.toFixed(1)}pt（dom=50と確定した場合との差）`);
-console.log(`関門70の通過が空欄に依存している社: ${dep.length}社  ${dep.map(r=>r.t+(r.buy?'🟢':'')).join(' ')||'なし'}`);
+console.log(`関門${GATE}の通過が空欄に依存している社: ${dep.length}社  ${dep.map(r=>r.t+(r.buy?'🟢':'')).join(' ')||'なし'}`);
 console.log(`うち現在の投下可: ${dep.filter(r=>r.buy).length}社`);

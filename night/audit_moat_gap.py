@@ -124,8 +124,25 @@ def gpm_band(v):
 # 正は index.html の SELECT／審査プロトコル。**規約に無い刻みは提示しない**
 GRADES = {"dom": [50, 70, 85, 100], "irr": [50, 70, 85, 100], "rep": [35, 60, 80, 100],
           "dur": [55, 75, 85, 100], "moatW": [50, 70, 85, 100]}
-# 正は index.html の CCF_MOAT_GATE（v9.9.49 で 75→70・2026-07-29 ユーザー明示指示）
-PASS = 70.0
+# 正は index.html の CCF_MOAT_GATE。★2026-10-12（v9.9.213 で 70→75）: 手で写すのをやめ、**門の定数を読む**
+#   （写しは必ず古くなる——重みの写しと同じ型。旧版はここに 70.0 を書いていた）。読めないときだけ既定値へ落ち、その旨を必ず表示する。
+_PASS_DEFAULT = 75.0   # v9.9.213
+
+
+def _gate_pass():
+    try:
+        src = open(os.path.join(BASE, "index.html"), encoding="utf-8").read()
+        m = re.search(r"const CCF_MOAT_GATE\s*=\s*([\d.]+)", src)
+        if m:
+            return float(m.group(1))
+    except OSError:
+        pass
+    print("⚠ index.html の CCF_MOAT_GATE を読めなかった——既定値（v9.9.213 の75）で判定する。門と食い違っていないか確かめること",
+          file=sys.stderr)
+    return _PASS_DEFAULT
+
+
+PASS = _gate_pass()
 
 
 def num(v):

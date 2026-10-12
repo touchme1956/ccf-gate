@@ -502,12 +502,19 @@ def check(h, f):
         pass
 
     # ⑨ 堀の関門の線が文中と一致するか
+    #   v9.9.213（2026-10-12・関門を 70→75 へ上げた日）: 「堀N+」「堀の関門N」も見る。旧版は「絶対MOAT指数N以上/+」しか見ておらず、
+    #   本文の「四関門（Ω75+ ∧ 堀70+ ∧ …）」や見出しの「堀70+だが…」は関門を上げても黙っていた（その日は手で grep して洗った）。
+    #   新しく足した2つの形だけ、直前160字に 当時・日付・版番号 がある経緯の記述を除く
+    #   （例「当時（2026-08-12）の投下可10社のうち…堀の関門70を割る」は当時の事実であって今の規則ではない）。
     if f['moat_gate']:
         bad = []
-        for m in re.finditer(r'絶対MOAT指数\s*(\d+)\s*(?:以上|\+)', h):
+        histmark9 = re.compile(r'当時|v9\.9\.\d+|\d{4}-\d\d-\d\d')
+        for m in re.finditer(r'絶対MOAT指数\s*(\d+)\s*(?:以上|\+)|堀(\d+)\+|堀の関門\s*(\d+)(?![\d.])', h):
             if in_js_comment(h, m.start()):
                 continue
-            if int(m.group(1)) != f['moat_gate']:
+            if m.group(1) is None and histmark9.search(h[max(0, m.start() - 160):m.start()]):
+                continue
+            if int(m.group(1) or m.group(2) or m.group(3)) != f['moat_gate']:
                 bad.append((line_of(h, m.start()),
                             strip_tags(h[max(0, m.start() - 80):m.start() + 90])))
         if bad:
