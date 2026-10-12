@@ -615,7 +615,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 
 </style>
 <!-- v9.9.189 投資アプリ風の皮（表示だけ・判定に不使用）。この1行を消せば元の和紙の門に戻る -->
-<link rel="stylesheet" href="skin.css?v=20261010-5">
+<link rel="stylesheet" href="skin.css?v=20261012-1">
 <!-- v9.9.131: 人の決定(state.json)の読み書き。**両ページが同じ実装を読む**（写すと必ず割れる・v9.9.65）。
      本体より前に読むのは localStorage.setItem の包み(dirty検出)を先に効かせるため -->
 <script src="state.js?v=20261010-2"></script><script src="icon.js"></script></head><body><div id="pgBg" aria-hidden="true"></div>
@@ -1043,7 +1043,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 
   <div class="lens" style="border-color:#779">
    <div class="lh"><span class="ln">IPS — ポートフォリオ構築と行動規律（段階1・2026-07-12制定）</span></div>
-   <div class="ld"><details class="why" data-fold="2"><summary>詳しく</summary><div class="why-body"><b>①ポジションサイジング（時価総額Tier）</b>——対象は四関門を通り、席の上位に入った社だけ。目標ウェイト: <b>時価総額Tier（T1≥1兆$:8 / T2 3千億〜1兆:6 / T3 1千億〜3千億:4 / T4 3百億〜1千億:3 / T5 &lt;3百億:2 の相対値を個別の按分枠へ正規化）</b>。<b style="color:var(--gold-bright)">1銘柄の上限は無し</b>（<b>v9.9.188・2026-09-22 ユーザー明示指示「ケリーいらない」で ¼ケリー上限8% を撤廃</b>。戻すなら <code>const CAP=8</code>）。<b>席の順＝合成点順</b>。時価総額は <code>px×(ni÷eps)</code> で作り、日本株はドル円で揃える（パックの <code>mcap</code> 欄は使わない）。<u>一社でも時価総額が測れなければ等ウェイトへ倒す</u>——部分集合だけ傾けると「測れた社だけが重くなる」＝測定の穴が配分に化ける。<br><b>投下の四関門</b>——Ω75+は「持ってよい」の資格に過ぎない。<b>新規投下はΩ75+かつ絶対MOAT指数75+かつ点検の要修正0件かつ事業の収縮なし（売上縮小∧営業利益率低下でない）</b>を要し、さらに<b>合成点順で席に入った社（第五の枠）</b>だけが実際に買付枠に入る（四段は資格・第五の枠は席数。席から溢れた社は🔵次点＝資格は保つが買わない）。指値は<b>階段で置く</b>——資金の1/2を開通ライン・1/2をfair線（終着PER線=倍率の重力ゼロ）。倍率拡大は計上しない=掟六と両立。<b>掟六v2（2026-07-23・成長連動）</b>——門Xの終着PERは<b>min(現PER, clamp(8+g,16,30))</b>で成長に連動（McKinsey価値ドライバー準拠：成熟g4%は22倍が正当だが持続成長する高ROIC企業は28-30倍が正当）。<b>高成長はPERが高くても複利をもたらす</b>ため、成長産業と成熟産業を一律の終着PER22で測らない。ただしgは実証CAGR頭打ち・現PERを超えない（ハイプと倍率拡大は封じる）。<b>間（価格ゲート）も同思想</b>——実証成長×資本効率×堀無傷（cagr≥15・ROIC≥20・erosion none・disrupt≠threat＝<b>grower</b>）の銘柄は、一律の論外線（PER50・V0上限）を成長連動で緩める（PER論外62・V0上限は下限を68/52へ引き上げ・ROIC文脈EV上限×1.3）。<u>V0上限は固定値ではなく質連動</u>——<code>perCeil=clamp(質×0.75, 55, 70)</code>・<code>evCeil=clamp(質×0.56, 40, 52)</code>（v9.2最終で固定60/45から動的へ。質88→PER上限66／質80→60／質73以下→55）。これでΩ75+×門X✓を通過する高成長株（IRMD型）が一律キャップだけで押し目待ちに落ちるのを是正。<b>格＝評価スコアには一切触れず、間（act）のみ</b>。緩和はgrower4条件を全て満たす銘柄に限定し、安全弁（V0）は残す。<br>
+   <div class="ld"><details class="why" data-fold="2"><summary>詳しく</summary><div class="why-body"><b>①ポジションサイジング（時価総額Tier）</b>——対象は四関門を通り、席の上位に入った社だけ。目標ウェイト: <b>時価総額Tier（T1≥1兆$:8 / T2 3千億〜1兆:6 / T3 1千億〜3千億:4 / T4 3百億〜1千億:3 / T5 &lt;3百億:2 の相対値を個別の按分枠へ正規化）</b>。<b style="color:var(--gold-bright)">1銘柄の上限は無し</b>（<b>v9.9.188・2026-09-22 ユーザー明示指示「ケリーいらない」で ¼ケリー上限8% を撤廃</b>。戻すなら <code>CCF_CASTLE_CAP</code> を 8 に）。<b>席の順＝合成点順</b>。時価総額は <code>px×(ni÷eps)</code> で作り、日本株はドル円で揃える（パックの <code>mcap</code> 欄は使わない）。<u>一社でも時価総額が測れなければ等ウェイトへ倒す</u>——部分集合だけ傾けると「測れた社だけが重くなる」＝測定の穴が配分に化ける。<br><b>投下の四関門</b>——Ω75+は「持ってよい」の資格に過ぎない。<b>新規投下はΩ75+かつ絶対MOAT指数75+かつ点検の要修正0件かつ事業の収縮なし（売上縮小∧営業利益率低下でない）</b>を要し、さらに<b>合成点順で席に入った社（第五の枠）</b>だけが実際に買付枠に入る（四段は資格・第五の枠は席数。席から溢れた社は🔵次点＝資格は保つが買わない）。指値は<b>階段で置く</b>——資金の1/2を開通ライン・1/2をfair線（終着PER線=倍率の重力ゼロ）。倍率拡大は計上しない=掟六と両立。<b>掟六v2（2026-07-23・成長連動）</b>——門Xの終着PERは<b>min(現PER, clamp(8+g,16,30))</b>で成長に連動（McKinsey価値ドライバー準拠：成熟g4%は22倍が正当だが持続成長する高ROIC企業は28-30倍が正当）。<b>高成長はPERが高くても複利をもたらす</b>ため、成長産業と成熟産業を一律の終着PER22で測らない。ただしgは実証CAGR頭打ち・現PERを超えない（ハイプと倍率拡大は封じる）。<b>間（価格ゲート）も同思想</b>——実証成長×資本効率×堀無傷（cagr≥15・ROIC≥20・erosion none・disrupt≠threat＝<b>grower</b>）の銘柄は、一律の論外線（PER50・V0上限）を成長連動で緩める（PER論外62・V0上限は下限を68/52へ引き上げ・ROIC文脈EV上限×1.3）。<u>V0上限は固定値ではなく質連動</u>——<code>perCeil=clamp(質×0.75, 55, 70)</code>・<code>evCeil=clamp(質×0.56, 40, 52)</code>（v9.2最終で固定60/45から動的へ。質88→PER上限66／質80→60／質73以下→55）。これでΩ75+×門X✓を通過する高成長株（IRMD型）が一律キャップだけで押し目待ちに落ちるのを是正。<b>格＝評価スコアには一切触れず、間（act）のみ</b>。緩和はgrower4条件を全て満たす銘柄に限定し、安全弁（V0）は残す。<br>
    <b>①-b 器（口座）の選択——非課税枠は「配分」と同じ重さの決断</b>——
    同じ期待リターンでも、非課税なら税（20.315%）のぶん終価が増える——<u>E[r] は推定だが、税率は確定している</u>。<br>
    <b>新NISA（2024〜）の枠と、門のETF／個別の対応</b>——つみたて投資枠 年120万＋成長投資枠 年240万＝
@@ -1161,7 +1161,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.213</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.214</span></h1>
     <div style="margin:6px 0 2px"><button id="hintBtn" onclick="ccfToggleHints()" style="padding:5px 11px;background:none;border:1px solid var(--line);border-radius:7px;color:var(--dim);font-size:11.5px;cursor:pointer">欄の注記を出す</button></div>
   <div class="sub"><details class="why plain" data-fold="6"><summary>ℹ この画面について</summary><div class="why-body"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——絶対MOAT指数をΩの直接項に加え(実効≒22%)、<b>四関門の一つ（絶対MOAT指数75+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%。⚠率そのものは退場社の抜けた母集団で測った下限の側で、2013年の質実証プールでは4.2〜19.2%の幅がある〔2026-09-23 に退場日を是正した後の値・是正前は2.0〜25.7%〕）。</div></details></div>
   </div>
@@ -5933,6 +5933,141 @@ function ccfPfcShare(){
   }else ccfPfcToast('この端末では共有できません');
 }
 document.addEventListener('click',e=>{const m=document.getElementById('pfcMenu');if(m&&m.classList.contains('on')&&!e.target.closest('#pfcMenu'))m.classList.remove('on');});
+// ── 🏦保有の「目標ポートフォリオ」カード（v9.9.214・2026-10-12 ユーザー指示「門の保有に目標ポートフォリオをあの円グラフと同じやつが欲しい」）──
+//   今のカード（ccfPfcHTML・v9.9.204）と同じ形の円グラフで**目標の比率**を出す。**表示だけ**——数字は注文書と同じ単一実装から採る（v9.9.65）:
+//   ・ETF・投資信託の区分＝ccfNetRows（portfolio.json の target.ami_weights。同じ指数の本〔QQQM・iDeCo の本〕は目標の本に、
+//     目標0%で持っている本〔XLK など〕は「その他」の区分に数える＝注文書の区分の比率と同じ）
+//   ・個別株の各社＝ccfCastleWeights（🛒買付順位の目標ウェイトと同じ関数）。席は盤の四関門＋ccfAllocTop（Ⅵと同じ判定）
+//   ・「今」＝注文書の区分の比率と同じ ccfPfLive（🏦保有の台帳・読めなければ portfolio.json の保有の写し＝注文書と同じ倒し方・どちらかを副題に出す）。
+//     どちらも読めなければ「今」は出さない（0と読まない＝ルール7）
+//   新しい判定・採点・配分は持たない（Ω・四関門・席・売却規律 S1/S2/S3・配分は不変）。**金額は出さない**（割合だけ＝🙈金額を隠すの外）。
+//   ・色: 今のカードと同じ保有には同じ色（区分は中の保有のうち今いちばん大きい本の色）＝二つの円グラフを色で見比べられる。
+//   ・クラスは .pft-*（今のカードの検査が数える .pfc-ring 等とぶつけない）。枠と色の変数はルートの .pfc から（skin.css §19）。
+function ccfPftModel(pfJ,exJ,led,buy,fxU,pfRows,nmOf){
+  const T=(pfJ&&pfJ.target)||null; if(!T)return null;
+  const NET=ccfNetRows(null,pfJ), LV=NET.live||null;
+  const nowT=t=>LV?((LV.byT[t]&&+LV.byT[t].w)||0):null;
+  const held={}; (pfRows||[]).forEach(r=>{ held[r.t]=r; });
+  // 名前: 保有の名前（今のカードと同じ）→ 台帳の名前の残り（日本株「3923 ラクス」→ラクス）→ 原本の法人名（out/profiles.json の legal）→ 無し
+  const nmO=nmOf||{}, nameOf=t=>(held[t]&&held[t].label&&held[t].label!==t)?held[t].label:(nmO[t]||'');
+  const ledNm=t=>{ const n=String((((led||{})[t]||{}).nm)||'').trim(), i=n.indexOf(' '); return i>0?n.slice(i+1).trim():''; };
+  const legal=t=>{ try{ const P=(typeof CCF_PROFILE!=='undefined'&&CCF_PROFILE)?CCF_PROFILE[t]:null; return (P&&P.legal)?String(P.legal):''; }catch(e){ return ''; } };
+  const etf=[], etfExtra=[], castle=[], castleExtra=[];
+  // ETF・投資信託の区分（目標>0 の本・並びは ami_names の順＝注文書の区分の比率と同じ）
+  (NET.rows||[]).forEach(r=>{
+    if(r.sameAs)return;                                        // 同じ指数の本は目標の本へ数えた（QQQM → iFreeNEXT）
+    const fd=r.fund||null, pos=LV?(+r.pos||0):null;
+    if(!((+r.tw||0)>0)){                                       // 目標0%の本: その他の区分に数えたものは出さない
+      if(!r.otherOf&&LV&&(+r.pos||0)>0)etfExtra.push({k:'n:'+r.t,nm:r.t,sub:'目標0%（売らずに持ち続ける）',tw:0,now:pos});
+      return;
+    }
+    const al=r.aliasNm||[], oth=r.oth||[];
+    etf.push({k:'n:'+r.t, tw:+r.tw, now:pos,
+      label:r.otherBuy?'その他':(fd?(fd.index||r.t):r.t),
+      nm:r.otherBuy?(r.otherLabel||'その他 ETF・投資信託'):(fd?(fd.index||fd.short||r.t):r.t),
+      sub:r.otherBuy?(r.t+' で買う'+(oth.length?'・'+oth.join('・')+' を含む':''))
+         :fd?((fd.short||fd.name||r.t)+' で買う'+(al.length?'・'+al.join('・')+' を含む':''))
+         :nameOf(r.t),
+      members:[r.t].concat(r.alias||[],oth)});
+  });
+  (NET.drop||[]).forEach(d=>{ if(!d.otherOf&&LV&&(+d.pos||0)>0)etfExtra.push({k:'n:'+d.t,nm:d.t,sub:'目標に無い本（売らずに持ち続ける）',tw:0,now:+d.pos}); });
+  // 個別株（🛒買付順位の twInfo と同じ材料・同じ関数）
+  const CT=(+T.shiro_castle_pct>0)?+T.shiro_castle_pct:50;     // renderPlan の CITY_TOTAL と同じ（読めなければ既定50も同じ）
+  const EX={}; ((exJ&&exJ.items)||[]).forEach(x=>{ if(x&&x.t)EX[String(x.t).toUpperCase()]=x; });
+  const seat=(buy||[]), seatT=new Set(seat.map(v=>v.t));
+  const exT=Object.keys(led||{}).filter(t=>EX[t]&&!seatT.has(t));   // renderPlan の exRows と同じ（台帳に居る門外例外・席の外）
+  const exFixed=exT.reduce((a,t)=>a+(!EX[t].in_castle_split?(+EX[t].weight_pct||0):0),0);
+  const CITY=Math.max(0,CT-exFixed);
+  const mc=t=>ccfMcapUSD(((led||{})[t]||{}).d,fxU);
+  const exS=exT.filter(t=>EX[t].in_castle_split).map(t=>({t,m:mc(t),over:EX[t].tier_override}));
+  const CW=ccfCastleWeights(seat.map(v=>({t:v.t,m:mc(v.t)})),exS,CITY,CCF_CASTLE_CAP,T,seat.map(v=>v.t));
+  const cw=t=>+((CW&&CW.w&&CW.w[t])||0), rk=(CW&&CW.rank)||{};
+  // 行の名前と注記: 名前が判れば「名前」＋注記にティッカー、判らなければ「ティッカー」＋注記に法人名
+  const nmSub=t=>{ const n=nameOf(t)||ledNm(t); return n?{nm:n, id:t}:{nm:t, id:legal(t)}; };
+  seat.forEach(v=>{ const q=nmSub(v.t);
+    castle.push({k:'c:'+v.t, tw:cw(v.t), now:nowT(v.t), label:v.t, nm:q.nm,
+      sub:(q.id?q.id+'・':'')+'席'+(rk[v.t]||'—')+'位・Ω'+(+v.s).toFixed(1), members:[v.t]}); });
+  exS.forEach(x=>{ const q=nmSub(x.t); castle.push({k:'c:'+x.t, tw:cw(x.t), now:nowT(x.t), label:x.t, nm:q.nm, sub:(q.id?q.id+'・':'')+'門外の判断（按分に入る例外）', members:[x.t]}); });
+  exT.filter(t=>!EX[t].in_castle_split&&(+EX[t].weight_pct||0)>0)
+    .forEach(t=>{ const q=nmSub(t); castle.push({k:'c:'+t, tw:+EX[t].weight_pct, now:nowT(t), label:t, nm:q.nm, sub:(q.id?q.id+'・':'')+'門外の判断（特別枠）', members:[t]}); });
+  const csum=castle.reduce((a,x)=>a+x.tw,0), ledN=Object.keys(led||{}).length;
+  // 席の重みの合計が個別株の目標に届かない分（席が0社など）。黙って割り直さず、理由つきの1行で残す
+  if(CT-csum>0.05)castle.push({k:'c:_rest', tw:CT-csum, now:null, label:'個別株', nm:'個別株（席が空いている分）',
+    sub:!ledN?'台帳が空なので席を出せない（📚台帳の「⭳ 全パック一括取込」）'
+       :seat.length?'席の重みが個別株の目標に届かない分':'今は四関門を通る社が無い（その月の入金は ETF へ回る）', members:[]});
+  if(LV)Object.keys(LV.byT).forEach(t=>{ const x=LV.byT[t];   // 席の外で持っている個別株（売らない・目標0%）
+    if(x.sleeve!=='城'||!(+x.w>0)||castle.some(c=>c.k==='c:'+t))return;
+    const q=nmSub(t);
+    castleExtra.push({k:'c:'+t, nm:q.nm, sub:(q.id?q.id+'・':'')+'席の外（目標0%・売らずに持ち続ける）', tw:0, now:+x.w}); });
+  // 色: 今のカード（評価額の大きい順に CCF_PFC_COLORS）と同じ保有は同じ色。区分は中の保有のうち今いちばん大きい本の色
+  const all=etf.concat(castle), cur={}, used=new Set();
+  (pfRows||[]).slice().sort((a,b)=>b.val-a.val).forEach((r,i)=>{ cur[r.t]=CCF_PFC_COLORS[i%CCF_PFC_COLORS.length]; });
+  all.forEach(L=>{ const ms=(L.members||[]).filter(t=>cur[t]&&!used.has(cur[t]))
+      .sort((a,b)=>((held[b]&&held[b].val)||0)-((held[a]&&held[a].val)||0));
+    if(ms.length){ L.color=cur[ms[0]]; used.add(L.color); } });
+  //   持っていない本・社は、まだ使っていない色を順に（今のカードの12色の後に予備の6色＝席10社＋区分3つ＋α でも重ならない）
+  const PAL=CCF_PFC_COLORS.concat(['#9CCC65','#5C9EAD','#EC407A','#7E57C2','#C0CA33','#A1887F']);
+  let ci=0; all.forEach(L=>{ if(L.color)return;
+    while(ci<PAL.length&&used.has(PAL[ci]))ci++;
+    L.color=PAL[ci%PAL.length]; used.add(L.color); ci++; });
+  const etfT=etf.reduce((a,x)=>a+x.tw,0);
+  return {etf, etfExtra, castle, castleExtra, etfT, castleT:CT, etfNow:LV?+LV.n:null, castleNow:LV?+LV.c:null,
+          seats:seat.length, ledN, mode:(CW&&CW.mode)||'', rankMiss:!!(CW&&CW.rankMiss), sum:etfT+CT,
+          live:!!LV, src:LV?LV.src:'', asof:LV?(LV.asof||''):'', netMiss:NET.miss||[], otherErr:(NET.other&&NET.other.err)||''};
+}
+function ccfPftHTML(M){
+  if(!M)return '';
+  const esc=ccfPfcEsc;
+  const all=M.etf.concat(M.castle).filter(x=>x.tw>0);
+  const sumT=all.reduce((a,x)=>a+x.tw,0); if(!(sumT>0))return '';
+  const f=v=>(Math.abs(v*10-Math.round(v*10))<1e-6?v.toFixed(1):v.toFixed(2));   // 50.0／3.0／2.68（端数がある時だけ2桁）
+  const g=v=>(Math.abs(v-Math.round(v))<1e-6?String(Math.round(v)):f(v));
+  // ── 円グラフ（今のカードと同じ作り・12時から時計回り・目標の並び＝ETF の区分→個別株の席の順）
+  const R=100, C=2*Math.PI*R, GAP=all.length>1?2:0;
+  let acc=0, segs='', labs='';
+  all.forEach(r=>{
+    const len=C*r.tw/sumT, vis=Math.max(len-GAP,0.5), off=acc+GAP/2;
+    segs+=`<circle cx="120" cy="120" r="${R}" fill="none" stroke="${r.color}" stroke-width="40" stroke-dasharray="${vis.toFixed(2)} ${(C-vis).toFixed(2)}" stroke-dashoffset="${(-off).toFixed(2)}" transform="rotate(-90 120 120)"><title>${esc(r.nm)} 目標${f(r.tw)}%</title></circle>`;
+    const lines=ccfPfcWrap(r.label,11,58,2);
+    const lw=Math.max.apply(null,lines.map(s=>Array.from(s).reduce((a,c)=>a+(c.charCodeAt(0)>0x2e7f?11:6.2),0)));
+    if(len>=Math.max(38,lw*.85)){                                  // 狭い円には札を付けない（今のカードと同じ線）
+      const th=2*Math.PI*(acc+len/2)/C, x=120+R*Math.sin(th), y=120-R*Math.cos(th), y0=y-(lines.length-1)*6.5;
+      labs+=`<text class="pft-lb" x="${x.toFixed(1)}" y="${y0.toFixed(1)}" text-anchor="middle" dominant-baseline="central">`
+        +lines.map((s,i)=>`<tspan x="${x.toFixed(1)}" dy="${i?13:0}">${esc(s)}</tspan>`).join('')+`</text>`;
+    }
+    acc+=len;
+  });
+  // 今との差: あと＝目標に足りない（新しい入金はここへ）／多い＝目標を超えている（売らずに、入金が薄めるのを待つ）
+  //   今と差は小数1桁（注文書の区分の比率「今17.4%」と同じ）。目標は端数があるときだけ2桁（席の重み 2.68% など）
+  const gap=(tw,now)=>{ if(now==null)return ''; const d=tw-now;
+    if(Math.abs(d)<0.05)return `<span class="pft-d fl">目標どおり</span>`;
+    return d>0?`<span class="pft-d up">あと ${d.toFixed(1)}pt</span>`:`<span class="pft-d fl">${(-d).toFixed(1)}pt 多い</span>`; };
+  const rr=(tw,now)=>`<span class="pft-rr"><span class="pft-v">${f(tw)}%</span>${now!=null?`<span class="pft-w">今 ${now.toFixed(1)}%</span>`:''}${gap(tw,now)}</span>`;
+  const row=r=>`<div class="pft-r${r.tw>0?'':' z'}" data-k="${esc(r.k)}">`
+    +(r.tw>0?`<span class="pft-dot" style="--pfc-c:${r.color}"></span>`:`<span class="pft-dot z" aria-hidden="true"></span>`)
+    +`<span class="pft-nb"><span class="pft-n">${esc(r.nm)}</span>${r.sub?`<span class="pft-sb">${esc(r.sub)}</span>`:''}</span>`+rr(r.tw,r.now)+`</div>`;
+  const grp=(nm,sub,tw,now)=>`<div class="pft-g"><span class="pft-nb"><span class="pft-n">${nm}</span>${sub?`<span class="pft-sb">${sub}</span>`:''}</span>${rr(tw,now)}</div>`;
+  const modeTxt={rank:'席の順位で重み',equal_rule:'均等',equal:'均等（時価総額が測れない社がある）',mcap:'時価総額Tier',hand:'手で決めた重み',none:''}[M.mode]||'';
+  const list=grp('ETF・投資信託','',M.etfT,M.etfNow)
+    + M.etf.map(row).join('') + M.etfExtra.map(row).join('')
+    + grp('個別株',`四関門を通った席の${M.seats}社${modeTxt?'・'+modeTxt:''}`,M.castleT,M.castleNow)
+    + M.castle.map(row).join('') + M.castleExtra.map(row).join('');
+  const warn=[];
+  if(Math.abs(M.sum-100)>0.5)warn.push(`目標の合計が ${f(M.sum)}%（100%ではない）——portfolio.json の target を確かめる（黙って割り直していない）。`);
+  if(M.rankMiss)warn.push('castle_rank_weights が読めないので、個別株は均等へ倒している（🛒買付順位と同じ扱い）。');
+  if(M.netMiss&&M.netMiss.length)warn.push(`ETF の重み（ami_weights）が無い本: ${esc(M.netMiss.join('・'))}——ETF は等分へ倒している（注文書と同じ扱い）。`);
+  if(M.otherErr)warn.push(esc(M.otherErr)+'。');
+  return `<section class="pfc pft" id="pftCard" aria-label="目標ポートフォリオ">
+    <div class="pft-t">目標ポートフォリオ</div>
+    <div class="pft-s">目標＝portfolio.json の target・個別株は四関門を通った席の社${M.live?`／今＝${M.src==='snapshot'?'portfolio.json の保有の写し':'🏦保有の台帳'}${M.asof?'（'+esc(M.asof)+'）':''}`:''}</div>
+    <div class="pft-dn">
+      <svg class="pft-ring" viewBox="0 0 240 240" role="img" aria-label="目標の割合の円グラフ">${segs}${labs}</svg>
+      <div class="pft-c"><div class="pft-c1">目標</div><div class="pft-c2">${g(M.etfT)} : ${g(M.castleT)}</div><div class="pft-c3">ETF・投資信託 : 個別株</div></div>
+    </div>
+    <div class="pft-ls">${list}</div>
+    <div class="pft-note">${warn.length?`<span class="pft-warn">⚠ ${warn.join('<br>⚠ ')}</span><br>`:''}目標との差は<b>新しい入金で埋める</b>（売らない）。<span class="up">あと</span>＝目標に足りない分（今月の入金はこちらへ回る）・多い＝目標を超えている分（入金が薄めるのを待つ）。今月いくら買うかは 🛒買付順位の注文書。${M.live?'':'今の比率は保有（🏦保有の台帳・portfolio.json の写し）が読めないので出していない。'}色は上のポートフォリオと同じ保有には同じ色。</div>
+  </section>`;
+}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){const m=document.getElementById('pfcMenu');if(m)m.classList.remove('on');}});
 
 // ── 🏦保有の「銘柄の詳細」（v9.9.209・2026-10-10 ユーザー「保有の銘柄を押すとこのような画面が出て詳細が見れるようにして」＝家計アプリの「タグ」詳細の写真）──
@@ -6128,10 +6263,12 @@ async function ccfDash(btn){
   //   night/fetch_returns.py が持ち、門は描くだけ**（dashboard.json と同じ作法・v9.9.65）。
   // v9.9.204: ポートフォリオのカードの「年初来比」用に日次の評価額（out/returns_series.json）も読む。表示だけ
   // v9.9.209: 銘柄の詳細の「配当利回り」用に out/holdings_div.json（直近12か月の1株配当・night/fetch_divs.py）も読む。表示だけ
-  const [mkt,ern,stl,vfl,pnd,pidx,rtn,rsr,dvj]=await Promise.all([j('out/dashboard.json'),j('out/next_earnings.json'),
+  // v9.9.214: 目標ポートフォリオのカード用に portfolio.json（target）と gate_exceptions.json（門外例外）も読む。表示だけ
+  const [mkt,ern,stl,vfl,pnd,pidx,rtn,rsr,dvj,pfJ,exJ]=await Promise.all([j('out/dashboard.json'),j('out/next_earnings.json'),
                                              j('out/stale_bs.json'),j('out/validate_fail.json'),
                                              j('out/pending.json'),
                                              j('out/packs_index.json'),j('out/returns.json'),j('out/returns_series.json'),j('out/holdings_div.json'),
+                                             j('portfolio.json'),j('gate_exceptions.json'),
                                              ccfLoadIrr85Hist(),ccfLoadIrr85Scope(),ccfLoadProfiles()]);
   const dPackT=pidx?new Set((pidx.packs||[]).map(f=>String(f).replace(/_gate_pack\.json$/,'').toUpperCase())):null;
   // v9.9.140: 盤も Ⅵ と同じ ccfGateInput を呼ぶ（**読めなければ blind に積んで画面に出す**）
@@ -6282,8 +6419,12 @@ async function ccfDash(btn){
       +NW[t].slice(0,2).map(n=>`<div style="font-size:11.5px;color:var(--ink-soft);margin-left:8px;line-height:1.65">・<a href="${n.u}" target="_blank" rel="noopener" style="color:var(--ink-soft)">${(n.h||'').slice(0,110)}</a> <span style="color:var(--dim)">${n.s||''}</span></div>`).join('')+'</div>').join('')
     :'<div style="font-size:12px;color:var(--dim)">ニュース未取得（FINNHUB_KEY 未設定）</div>';
 
+  // v9.9.214: 目標ポートフォリオのカード（今のカードの下）。席は上の buy（Ⅵと同じ四関門・ccfAllocTop）・重みは ccfCastleWeights（注文書と同じ）
+  const nmOf={}; pos.forEach(p=>{ const t=String(p.t||'').toUpperCase(); if(t&&p.nm)nmOf[t]=String(p.nm).trim(); });
+  window.__pftData=ccfPftModel(pfJ,exJ,led,buy,(+fxAuto||0),pfRows,nmOf);
+  const pftHtml=ccfPftHTML(window.__pftData);
   const sec=(t,b,note)=>`<h2 class="serif" style="font-size:1.1em;margin:20px 0 6px;color:var(--gold-bright)">${t}</h2>${note?`<div style="font-size:11px;color:var(--dim);margin-bottom:5px">${note}</div>`:''}${b}`;
-  box.innerHTML = ccfGateBlindHTML(dBlind) + moneyRow + pfcHtml
+  box.innerHTML = ccfGateBlindHTML(dBlind) + moneyRow + pfcHtml + pftHtml
     + sec('💰 銘柄', (pos.length?hdr+rows:'<div style="font-size:12.5px;color:var(--dim)">「✎ 株数・買値を編集」で株数・買値を入れると評価額と含み損益が出る。</div>')
         + (miss.length?`<div style="font-size:11px;color:#d69a3c;margin-top:6px;line-height:1.8">価格未取得: <b>${miss.join(' / ')}</b><br>
             <span style="color:var(--dim)">日本株は<b>無料で自動取得できる経路が無い</b>（2026-08-02実測: Finnhub 401／Alpha Vantage 空／stooq 404／Yahoo はCIのIPから弾かれる／J-Quants無料は12週遅延）。
@@ -7222,6 +7363,46 @@ function ccfRankWeights(list,city,cap,units){
   list.forEach(x=>{ w[x.t]=Math.min(cap==null?Infinity:cap,city*unit[x.t]/us); });
   return {mode:'rank',w,missing:[],n:list.length,tier,handMiss:[],unit,rank,usum:us,units:U};
 }
+// ── 個別の目標ウェイトの単一実装（v9.9.214・2026-10-12 ユーザー指示「門の保有に目標ポートフォリオをあの円グラフと同じやつが欲しい」）──
+//   🛒買付順位（renderPlan の twInfo）と 🏦保有の「目標ポートフォリオ」のカード（ccfPftModel）が**同じ答え**を読むために切り出した。
+//   中身は renderPlan にあった式そのまま——**振る舞いは変えていない**（v9.9.65「同じ台帳を見る二つが違うことを言ってはいけない」）。
+//   seat＝席の社 [{t,m}]（m＝時価総額・ccfMcapUSD）／exS＝按分に入る門外例外 [{t,m,over}]（over＝tier_override）／
+//   city＝個別の按分の枠（%）／cap＝1銘柄の上限（CCF_CASTLE_CAP）／target＝portfolio.json の target／
+//   rankOrd＝席の順（Ωの降順＝🛒買付順位の行の順・v9.9.91の掟）。省けば seat の順。
+//   返り値は ccfMcapWeights・ccfRankWeights と同じ形（mode・w・tier・missing・handMiss・rank・unit…）。
+// ★1銘柄の上限は v9.9.188（2026-09-22 ユーザー明示指示「ケリーいらない」）で撤廃＝Infinity。戻すならこの1語を 8 に（旧: renderPlan の `const CAP=8`）。
+const CCF_CASTLE_CAP=Infinity;
+function ccfCastleWeights(seat,exS,city,cap,target,rankOrd){
+  seat=seat||[]; exS=exS||[]; target=target||{};
+  const CITY=city, CAP=cap;
+  const list=seat.concat(exS).map(r=>({t:r.t,m:r.m}));
+  // Tierの指定は門外例外にだけ（席の社は測定で決まる）
+  const over={}; exS.forEach(r=>{ if(r.over)over[r.t]=r.over; });
+  // ★手で決めた重み（v9.9.162）。正本は portfolio.json の target.castle_weights。
+  //   欠けていれば Tier へ倒して名指しする（ccfMcapWeights の中で判定）。
+  const HW=(()=>{const h=target.castle_weights; if(!h)return null;
+    const o={}; for(const k in h){const v=+h[k]; if(v>0)o[String(k).toUpperCase()]=v;} return o;})();
+  // ★均等（2026-09-26 ユーザー明示指示「すべての銘柄を平等に投下できるようにする」）: 正本は portfolio.json の
+  //   target.castle_weighting（'equal'＝席＋按分に入る門外例外を等分／'tier'＝時価総額Tier〔従来〕）。
+  //   手で決めた重み(castle_weights)が揃っていればそちらが優先（従来の規約どおり）。
+  const CWM=String(target.castle_weighting||'tier').toLowerCase();
+  const handAll=!!(HW&&list.length&&list.every(x=>+HW[x.t]>0));
+  // ★席の順位で重み（v9.9.198・2026-10-05 ユーザー明示指示「上位5社は比率を高めにして」）: 'rank'＝
+  //   target.castle_rank_weights（相対の重み・席の1位から順）を個別の按分枠へ正規化（ccfRankWeights の頭注）。
+  //   席の順は rankOrd（Ωの降順＝行の順・v9.9.91の掟）。重みが読めなければ均等へ倒して名指しする（rankMiss）。
+  if(CWM==='rank'&&!handAll&&list.length){
+    const ord=(rankOrd||seat.map(r=>r.t)).map(t=>({t})).concat(exS.map(r=>({t:r.t,ex:true})));
+    const R=ccfRankWeights(ord,CITY,CAP,target.castle_rank_weights);
+    if(R)return R;
+    const w={}, tier={}; list.forEach(x=>{w[x.t]=Math.min(CAP,CITY/list.length); tier[x.t]='均等';});
+    return {mode:'equal_rule',w,missing:[],n:list.length,tier,handMiss:[],rankMiss:true};
+  }
+  if(CWM==='equal'&&!handAll&&list.length){
+    const w={}, tier={}; list.forEach(x=>{w[x.t]=Math.min(CAP,CITY/list.length); tier[x.t]='均等';});
+    return {mode:'equal_rule',w,missing:[],n:list.length,tier,handMiss:[]};
+  }
+  return ccfMcapWeights(list,CITY,CAP,over,HW);
+}
 function ccfAllocTop(cands,maxN){
   maxN=maxN||CCF_SEATS;
   // 相関の束＝装置・材料・検査・EDA・デバイスまで含む「半導体連鎖」（CLAUDE.md の用法に合わせる）。
@@ -8146,8 +8327,8 @@ async function renderPlan(){
   //     新規資金でしか薄まらず、実際の線は「守る」ではなく「これ以上 自分から破らない」だった。その線も今日やめた。
   //   ⚠**撤廃しても残るもの**: Ω・採点式・四関門・堀の関門70・売却規律S1/S2/S3・席の数(CCF_SEATS)・
   //     Tierの刻み(8:6:4:3:2)・門Xの遮断器。**動くのは金額の配り方だけ。**
-  //   戻すなら CAP を 8 に戻す1文字（旧: `const CAP=8`）。
-  const CAP=Infinity; // allocSet/passIn/passOut は pass 直後で定義済み（点灯にも使うため）
+  //   戻すなら CCF_CASTLE_CAP（v9.9.214 から定数は ccfCastleWeights の上）を 8 に戻す1語（旧: `const CAP=8`）。
+  const CAP=CCF_CASTLE_CAP; // allocSet/passIn/passOut は pass 直後で定義済み（点灯にも使うため）
   // ★個別の合計(CITY_TOTAL)は特別枠を含む。按分の枠 CITY は exFixed を引いた残り＝下で定義する
   //   （旧実装は CITY=60 が**按分の枠**で、特別枠 TDG 8.8% はその上に乗っていたので
   //    実際の個別は 68.8%・ETFは 31.2% だった＝表の『ETF40/個別60』と食い違っていた）
@@ -8244,36 +8425,12 @@ async function renderPlan(){
   //     ⚠上限8%に当たる社は無い（MSFT 7.41 が最大）。旧・個別60%では MSFT だけが8.00%で張り付いていた。
   //   【一つ前の姿(v9.9.158)】按分枠41.2%＝50%−特別枠TDG8.8%・14社で 6.46/4.85/3.23/2.42/1.62%。
   //   【不変】Ω・採点式・四関門・堀の関門70・売却規律S1/S2/S3・上限8%・席の選定。動くのは金額の配り方だけ。
+  // ★v9.9.214: 式は ccfCastleWeights（単一実装）へ切り出した——🏦保有の「目標ポートフォリオ」のカードが同じ関数を読む（v9.9.65）。
+  //   中身（手で決めた重み→席の順位の重み→均等→時価総額Tier の順・頭注の規約）は変えていない。
   const twInfo=(()=>{
-    const seat=pass.filter(r=>allocSet.has(r.t));
-    const exS=exRows.filter(r=>(exOf(r)||{}).in_castle_split);
-    const list=seat.concat(exS).map(r=>({t:r.t,m:r.mcapU}));
-    // Tierの指定は門外例外にだけ（席の社は測定で決まる）
-    const over={}; exS.forEach(r=>{const o=(exOf(r)||{}).tier_override; if(o)over[r.t]=o;});
-    // ★手で決めた重み（v9.9.162）。正本は portfolio.json の target.castle_weights。
-    //   欠けていれば Tier へ倒して名指しする（ccfMcapWeights の中で判定）。
-    const HW=(()=>{const h=((__pf&&__pf.target)||{}).castle_weights; if(!h)return null;
-      const o={}; for(const k in h){const v=+h[k]; if(v>0)o[String(k).toUpperCase()]=v;} return o;})();
-    // ★均等（2026-09-26 ユーザー明示指示「すべての銘柄を平等に投下できるようにする」）: 正本は portfolio.json の
-    //   target.castle_weighting（'equal'＝席＋按分に入る門外例外を等分／'tier'＝時価総額Tier〔従来〕）。
-    //   手で決めた重み(castle_weights)が揃っていればそちらが優先（従来の規約どおり）。
-    const CWM=String((((__pf&&__pf.target)||{}).castle_weighting)||'tier').toLowerCase();
-    const handAll=!!(HW&&list.length&&list.every(x=>+HW[x.t]>0));
-    // ★席の順位で重み（v9.9.198・2026-10-05 ユーザー明示指示「上位5社は比率を高めにして」）: 'rank'＝
-    //   target.castle_rank_weights（相対の重み・席の1位から順）を個別の按分枠へ正規化（ccfRankWeights の頭注）。
-    //   席の順は passIn（Ωの降順＝行の順・v9.9.91の掟）。重みが読めなければ均等へ倒して名指しする（rankMiss）。
-    if(CWM==='rank'&&!handAll&&list.length){
-      const ord=passIn.map(r=>({t:r.t})).concat(exS.map(r=>({t:r.t,ex:true})));
-      const R=ccfRankWeights(ord,CITY,CAP,((__pf&&__pf.target)||{}).castle_rank_weights);
-      if(R)return R;
-      const w={}, tier={}; list.forEach(x=>{w[x.t]=Math.min(CAP,CITY/list.length); tier[x.t]='均等';});
-      return {mode:'equal_rule',w,missing:[],n:list.length,tier,handMiss:[],rankMiss:true};
-    }
-    if(CWM==='equal'&&!handAll&&list.length){
-      const w={}, tier={}; list.forEach(x=>{w[x.t]=Math.min(CAP,CITY/list.length); tier[x.t]='均等';});
-      return {mode:'equal_rule',w,missing:[],n:list.length,tier,handMiss:[]};
-    }
-    return ccfMcapWeights(list,CITY,CAP,over,HW);
+    const seat=pass.filter(r=>allocSet.has(r.t)).map(r=>({t:r.t,m:r.mcapU}));
+    const exS=exRows.filter(r=>(exOf(r)||{}).in_castle_split).map(r=>({t:r.t,m:r.mcapU,over:(exOf(r)||{}).tier_override}));
+    return ccfCastleWeights(seat,exS,CITY,CAP,(__pf&&__pf.target)||{},passIn.map(r=>r.t));
   })();
   // 検査器（night/shadow_seats.js）が席ごとの目標％を判断そのものから読めるように公開する（判定は変えない・v9.9.140 と同じ作法）
   try{ window.__ccfCastleW={mode:twInfo.mode,w:Object.assign({},twInfo.w),rank:Object.assign({},twInfo.rank||{}),
