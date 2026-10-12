@@ -8,7 +8,9 @@
   世界     … A1・A2・B・C（night/etf_forward_rank.py と同じ）＋ D（R3: 2026年の長期予想の中央値・out/bestpf_cma_2026.json）。
              重み π は R8（out/bestpf_calibration.json）の主。
   確率     … etf_p15 と同じ: 各世界の伸び m=ln(1+年率)・σ=√(w'Sw)（A1 の窓）・毎月 N(m/12, σ²/12) の20年の積立の内部収益率の表。
-  選び方   … P10π（内部収益率≥10% の確率の π 加重）が最大。0.5pt 以内は P15π で。
+  選び方   … ★2026-10-12 ユーザー明示指示「15％以上を、狙う。」で事前登録を改めた（amendment_2026_10_12・本番の前）:
+             P15π（内部収益率≥15% の確率の π 加重）が最大。0.5pt 以内は P5π（5%未満の確率）が低いほう→ぶれが小さいほう。
+             旧の主（P10π が最大・0.5pt 以内は P15π）も並べて出す。
              制約: ETF 側 2〜5本・10%刻み・1本 60%以下・最悪の世界 ≥ S&P500（VOO）の最悪の世界。
   頑健さ   … 感度（世界を1つずつ外す・K4・K2・π の別の作り方・C を GMO/Vanguard に・π を等しく）で、主の1位が
              半分以上の感度で上位1%に残らなければ、全感度の平均順位が最良の案を採る。
@@ -274,16 +276,21 @@ def main():
         vv = world_vals(vdot, voo_bs, var)
         pv = probs(vv, np.sqrt(voo_bs['q2'] if var == 'K2' else voo_bs['q1']), pi)
         feas = pr['worst'] >= float(pv['worst'][0]) - 1e-12
-        key = np.where(feas, pr['P10'], -1.0)
+        key = np.where(feas, pr['P15'], -1.0)
         best = float(key.max())
-        near = np.where(feas & (pr['P10'] >= best - TIE))[0]
-        i_best = int(near[np.argmax(pr['P15'][near])])
+        near = np.where(feas & (pr['P15'] >= best - TIE))[0]
+        i_best = int(near[np.lexsort((g['vol'][near], pr['P5'][near]))[0]])
+        k10 = np.where(feas, pr['P10'], -1.0)
+        near10 = np.where(feas & (pr['P10'] >= float(k10.max()) - TIE))[0]
+        i_p10 = int(near10[np.argmax(pr['P15'][near10])])
+        i_nocap = None
         # 順位（大きいほど良い・実行可能でないものは最下位）
         rk = np.empty(N); o = np.argsort(-key, kind='stable'); rk[o] = np.arange(N)
         ent = dict(pi=pi, n_feasible=int(feas.sum()), voo_worst=float(pv['worst'][0]), pick=int(i_best),
-                   pick_P10=float(pr['P10'][i_best]), pick_P15=float(pr['P15'][i_best]))
+                   pick_P10=float(pr['P10'][i_best]), pick_P15=float(pr['P15'][i_best]), pick_P10_old_rule=int(i_p10))
         if var == 'main':
             main_pick = i_best
+            main_p10 = i_p10
             main_pr, main_wv, main_feas = pr, wv, feas
         else:
             nf = max(int(feas.sum()), 1)
@@ -291,7 +298,7 @@ def main():
             ent['main_pick_in_top1pct'] = bool(rk[main_pick] < 0.01 * nf)
             rank_sum += rk; rank_cnt += 1
         results[var] = ent
-        print(f'{var:<10} 実行可能 {feas.sum():,}  1位 P10π {100 * pr["P10"][i_best]:.1f}%（{time.time() - t0:.0f}秒）', flush=True)
+        print(f'{var:<10} 実行可能 {feas.sum():,}  1位 P15π {100 * pr["P15"][i_best]:.1f}%（{time.time() - t0:.0f}秒）', flush=True)
 
     n_top = sum(1 for v in results if v != 'main' and results[v].get('main_pick_in_top1pct'))
     n_sens = sum(1 for v in results if v != 'main')
@@ -356,13 +363,22 @@ def main():
     rowbs = lambda i: dict(a1g=float(g['a1g'][i]), a2g=float(g['a2g'][i]), vol=float(g['vol'][i]), mdd=float(g['mdd'][i]), q1=float(g['q1'][i]), q2=float(g['q2'][i]))   # noqa: E731
     picks = {'最終（事前登録の規則）': describe(final_vec, rowbs(final_i), '最終'),
              '主の1位': describe(Wint[main_pick].astype(np.float64) / 10, rowbs(main_pick), '主の1位'),
-             '平均順位の1位（頑健）': describe(Wint[i_robust].astype(np.float64) / 10, rowbs(i_robust), '平均順位の1位')}
+             '平均順位の1位（頑健）': describe(Wint[i_robust].astype(np.float64) / 10, rowbs(i_robust), '平均順位の1位'),
+             '旧の主（P10π が最大）': describe(Wint[main_p10].astype(np.float64) / 10, rowbs(main_p10), '旧の主 P10π')}
+    # 参考: 1本の上限なし（単体を含む）で P15π が最大の単体（選択には使わない）
+    single = {}
+    for j, c in enumerate(assets):
+        e = np.zeros(n); e[j] = 1.0
+        bs1 = dict(a1g=float(CB.path_stats(G1[j][None, :], len(k1))[0][0]), a2g=float(np.expm1(np.log1p(G2[j]).sum() * 12 / len(k2))),
+                   vol=float(rows[c]['vol_A1']), mdd=float(rows[c]['maxdd_A1']), q1=float(S1[j, j]), q2=float(S2[j, j]))
+        single[c] = describe(e, bs1, f'単体 {c}')
+    best_single = max(single, key=lambda c: single[c]['P15π'])
     named_out = {}
     for j, nm in enumerate(named):
         named_out[nm] = describe(NW[j], dict(a1g=float(n_bs['a1g'][j]), a2g=float(n_bs['a2g'][j]), vol=float(n_bs['vol'][j]), mdd=float(n_bs['mdd'][j]),
                                              q1=float(n_bs['q1'][j]), q2=float(n_bs['q2'][j])), nm)
     # 上位20（主）
-    keyM = np.where(main_feas, main_pr['P10'], -1.0)
+    keyM = np.where(main_feas, main_pr['P15'], -1.0)
     top = np.argsort(-keyM)[:20]
     top20 = [dict(weights=wdict_i(int(i)), P10π=round(100 * float(main_pr['P10'][i]), 2), P15π=round(100 * float(main_pr['P15'][i]), 2),
                   π加重の年率=round(100 * float(main_pr['mean_pi'][i]), 2), 最悪の世界=round(100 * float(main_pr['worst'][i]), 2),
@@ -379,8 +395,11 @@ def main():
         per_asset={c: dict(A1=round(100 * rows[c]['A1'], 2), A2=round(100 * rows[c]['A2'], 2), B=round(100 * rows[c]['B'], 2), C=round(100 * rows[c]['C'], 2),
                            D=round(100 * Dmap[c], 2), K4_adj=round(100 * float(chips_adj[i]), 2), vol_A1=round(100 * math.sqrt(S1[i, i]), 1))
                    for i, c in enumerate(assets)},
-        robustness=dict(n_sens=n_sens, main_pick_in_top1pct=n_top, rule='半分以上の感度で上位1%に残れば主の1位、残らなければ平均順位の1位', main_kept=bool(robust_ok)),
+        robustness=dict(n_sens=n_sens, main_pick_in_top1pct=n_top, rule='半分以上の感度で上位1%（P15π の順位）に残れば主の1位、残らなければ平均順位の1位', main_kept=bool(robust_ok)),
         sens=results, picks=picks, named=named_out, top20_main=top20,
+        single_assets={c: {k: single[c][k] for k in ('P15π', 'P10π', 'π加重の年率', '最悪の世界', 'ぶれ', '最大下落')} for c in single},
+        best_single_uncapped=dict(asset=best_single, **{k: single[best_single][k] for k in ('P15π', 'P10π', 'π加重の年率', '最悪の世界', 'ぶれ', '最大下落')}),
+        objective='P15π（ユーザー明示指示「15％以上を、狙う。」・事前登録の amendment_2026_10_12）',
         top1000_presence_pct=dict(sorted(freq.items(), key=lambda kv: -kv[1])), top1000_avg_weight_pct=dict(sorted(avgw.items(), key=lambda kv: -kv[1])),
         corr_A1={c: {d: round(float(corr[i, j]), 2) for j, d in enumerate(assets)} for i, c in enumerate(assets)},
         warn=['世界の数字は仮定。確率は「毎月のリターンが独立な正規分布・ぶれと相関は 2000-2026 と同じ」の上の数字',
