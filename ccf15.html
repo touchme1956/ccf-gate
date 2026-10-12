@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ja"><head><script>try{document.documentElement.setAttribute("data-theme",localStorage.getItem("ccf_theme")||"light");}catch(e){document.documentElement.setAttribute("data-theme","light");}</script>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CCF15 私のETF</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--line:#e3e6ea;--ink:#0f1114;--ink2:#2b3038;--mute:#50565f;--up:#08873a;--down:#c62a1a;--info:#1e5fd1;--warn:#9a5b00;--hl:#f0f3f7;
+  --grid:#e1e0d9;--axis:#c3c2b7;--s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a}
+html[data-theme="dark"],html[data-theme="soft"]{--bg:#121417;--card:#1a1d21;--line:#2a2e34;--ink:#f4f5f6;--ink2:#c9ccd1;--mute:#9aa0a8;--up:#29d35a;--down:#ff6a4d;--info:#6ea8ff;--warn:#f0a93a;--hl:#22262b;
+  --grid:#2c2c2a;--axis:#383835;--s1:#3987e5;--s2:#d95926;--s3:#199e70}
+*{box-sizing:border-box}
+html,body{background:var(--bg)}
+body{margin:0;color:var(--ink);font:15px/1.7 "Inter","Noto Sans JP","Hiragino Kaku Gothic ProN",sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1100px;margin:0 auto;padding:18px 16px 60px}
+a{color:var(--info)}
+h1{font-size:22px;margin:4px 0 2px}
+.sub{color:var(--mute);font-size:13px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:14px 0}
+.card h2{font-size:16px;margin:0 0 8px}
+.warn{border-left:3px solid var(--warn)}
+.kpis{display:flex;flex-wrap:wrap;gap:10px;margin:6px 0}
+.kpi{flex:1 1 150px;border:1px solid var(--line);border-radius:10px;padding:8px 12px;min-width:0}
+.kpi b{display:block;font-size:12.5px;color:var(--mute);font-weight:500}
+.kpi span{font-size:19px;font-weight:600}
+.note{font-size:13px;color:var(--mute);margin:6px 0 0}
+ul.plain{margin:4px 0 0;padding-left:20px}
+ul.plain li{margin:2px 0}
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
+th{position:sticky;top:0;background:var(--card);color:var(--mute);font-weight:500;text-align:right;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+th.s{cursor:pointer;user-select:none}
+th.on{color:var(--ink)}
+th:first-child,td:first-child{text-align:left}
+td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+td.l{text-align:left}
+td.nm{text-align:left;white-space:normal;min-width:150px;max-width:260px}
+.p{color:var(--up)}.n{color:var(--down)}
+.verdict{display:inline-block;font-weight:600;padding:1px 8px;border-radius:8px;border:1px solid var(--line);margin-right:6px}
+.v-bad{border-color:var(--down)}.v-mid{border-color:var(--mute)}.v-good{border-color:var(--up)}
+.bars{display:grid;grid-template-columns:minmax(90px,140px) 1fr 28px;gap:4px 10px;font-size:13px;align-items:center;margin-top:6px}
+.bars i{display:block;height:8px;border-radius:4px;background:var(--s1)}
+.bars span:last-child{text-align:right;font-variant-numeric:tabular-nums}
+/* グラフ */
+.viz{position:relative}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--ink2);margin:4px 0 2px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{display:inline-block;width:16px;height:2px;border-radius:1px}
+svg.chart{display:block;width:100%;height:auto;overflow:visible;outline:none}
+svg.chart:focus-visible{outline:2px solid var(--info);outline-offset:2px;border-radius:4px}
+.tip{position:absolute;pointer-events:none;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:12.5px;box-shadow:0 2px 8px rgba(0,0,0,.12);display:none;min-width:150px;z-index:2}
+.tip .d{color:var(--mute);margin-bottom:2px}
+.tip .r{display:flex;align-items:center;gap:8px;justify-content:space-between}
+.tip .r b{font-weight:600;font-variant-numeric:tabular-nums}
+.tip .r span{display:inline-flex;align-items:center;gap:6px;color:var(--ink2)}
+.tip .r i{display:inline-block;width:12px;height:2px;border-radius:1px}
+</style></head><body><div class="wrap">
+<div class="sub"><a href="index.html">← 門へ戻る</a></div>
+<h1>CCF15 — 私が運営するETF</h1>
+<div class="sub" id="meta">読み込み中…</div>
+
+<div class="card warn" id="status"><h2>いまの位置づけ</h2><div class="note">読み込み中…</div></div>
+
+<div class="card" id="rules"><h2>決まり（規則書）</h2><div class="note">読み込み中…</div></div>
+
+<div class="card" id="nav"><h2>紙の上の値動き</h2><div class="note">読み込み中…</div></div>
+
+<div class="card" id="hold"><h2>今の中身</h2><div class="note">読み込み中…</div></div>
+
+<div class="card" id="bt"><h2>過去の検証（事前登録）</h2><div class="note">読み込み中…</div></div>
+
+<div class="card" id="how"><h2>お金を入れるなら</h2>
+<ul class="plain note">
+<li><b>証券会社</b>: moomoo 証券の「micro米国株」（1ドルから金額で・1株未満で買える・NISA なら売買手数料0円・為替の手数料は別）</li>
+<li><b>NISA</b>: NISA は1人1社。今は2人とも楽天なので、moomoo で非課税にするには1人の NISA を年単位で移す手続きが要る（楽天に届け出 → moomoo へ提出・2週間〜1か月・移った年から）。その年に楽天の NISA で1回でも買うと、その年は移れない</li>
+<li><b>買い方</b>: 毎月この ETF に入るお金は、目標（同じ重み）から一番足りない社から金額で買う。売らない（NISA の中では売らない決まり）。7月の入れ替えで外れた社は持ったまま買い足さない</li>
+<li><b>いつから</b>: 今の決まり（売らない・足りない区分から買う）では、どちらの15%の区分も今は目標を超えているので、新しいお金が回り始めるのは「その他」なら2027年11月ごろ・「個別株」なら2028年6月ごろ（値段が横ばいの場合）</li>
+</ul></div>
+
+<div class="card"><h2>限界</h2><ul class="plain note" id="lim">
+<li>上乗せは約束しない。このリポジトリの検証で、個人が持てる形で2007年以降の S&amp;P500 型の市場に確かに勝った規則は見つかっていない</li>
+<li>過去の検証は、今ティッカーがある会社だけで組んだ（倒産・買収で消えた会社が入らない）＝CCF15 も「同じ土俵の平均」も実際より良く見える。本物の ETF（ITA・SPY など）との比較は CCF15 に有利に偏っている</li>
+<li>SEC の決算データは「最後に出された値」（あとで直された値）のことがある。業種コードは今の値</li>
+<li>2013〜2026年は米国のテックが勝った一つの時代で、テックの外のかごには不利な窓</li>
+<li>紙の上の値動きも過去の検証も、手数料・為替・税は引いていない（ドル建て）</li>
+<li>判定（Ω・四関門・売却規律・配分）には一切使っていない。表示だけ</li>
+</ul></div>
+</div>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const el=(tag,attrs,kids)=>{const e=document.createElement(tag);if(attrs)for(const k in attrs){if(k==='class')e.className=attrs[k];else if(k==='text')e.textContent=attrs[k];else if(k==='style')e.style.cssText=attrs[k];else e.setAttribute(k,attrs[k]);}(kids||[]).forEach(c=>e.appendChild(typeof c==='string'?document.createTextNode(c):c));return e;};
+const fmt=(v,d=1)=>v==null||!isFinite(v)?'—':(+v).toFixed(d);
+const pct=(v,d=1)=>v==null||!isFinite(v)?'—':((v>0?'+':'')+(+v).toFixed(d)+'%');
+const getJ=u=>fetch(u,{cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error(u+' '+r.status);return r.json();});
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const SERIES=[{k:'CCF15',name:'CCF15（私のETF）',c:'--s1'},{k:'ITA',name:'ITA（今の「その他」）',c:'--s2'},{k:'SPY',name:'S&P500（SPY）',c:'--s3'}];
+
+// ── 折れ線（同じ縦軸・2px・端の点・凡例・十字線のツールチップ・矢印キー）──
+function lineChart(host,xs,xlab,ser,yfmt,ytick){
+  host.textContent='';
+  const lg=el('div',{class:'legend'});ser.forEach(s=>lg.appendChild(el('span',{},[el('i',{style:'background:var('+s.c+')'}),s.name])));
+  host.appendChild(lg);
+  const box=el('div',{class:'viz'});host.appendChild(box);
+  const W=Math.max(300,Math.min(1060,box.clientWidth||host.clientWidth||600)),H=Math.round(Math.max(220,Math.min(340,W*0.42)));
+  const m={l:46,r:76,t:12,b:26};
+  const ns='http://www.w3.org/2000/svg';
+  const sv=document.createElementNS(ns,'svg');sv.setAttribute('class','chart');sv.setAttribute('viewBox','0 0 '+W+' '+H);sv.setAttribute('tabindex','0');
+  sv.setAttribute('role','img');sv.setAttribute('aria-label',ser.map(s=>s.name+' '+yfmt(s.v[s.v.length-1])).join('、'));
+  box.appendChild(sv);
+  const all=[].concat(...ser.map(s=>s.v)).filter(v=>v!=null);
+  let lo=Math.min(...all),hi=Math.max(...all);const pad=(hi-lo)*0.06||1;lo-=pad;hi+=pad;
+  const ticks=ytick(lo,hi);lo=Math.min(lo,ticks[0]);hi=Math.max(hi,ticks[ticks.length-1]);
+  const X=i=>m.l+(W-m.l-m.r)*(xs.length>1?i/(xs.length-1):0.5),Y=v=>m.t+(H-m.t-m.b)*(1-(v-lo)/(hi-lo));
+  const mk=(t,a)=>{const e=document.createElementNS(ns,t);for(const k in a)e.setAttribute(k,a[k]);sv.appendChild(e);return e;};
+  ticks.forEach(t=>{mk('line',{x1:m.l,x2:W-m.r,y1:Y(t),y2:Y(t),stroke:'var(--grid)','stroke-width':1});const tx=mk('text',{x:m.l-6,y:Y(t)+4,'text-anchor':'end','font-size':11,fill:'var(--mute)'});tx.textContent=yfmt(t);});
+  const xt=xlab(xs);xt.forEach(([i,lab])=>{const tx=mk('text',{x:X(i),y:H-6,'text-anchor':'middle','font-size':11,fill:'var(--mute)'});tx.textContent=lab;});
+  mk('line',{x1:m.l,x2:W-m.r,y1:H-m.b,y2:H-m.b,stroke:'var(--axis)','stroke-width':1});
+  ser.forEach(s=>{let d='';s.v.forEach((v,i)=>{if(v==null)return;d+=(d?'L':'M')+X(i).toFixed(1)+' '+Y(v).toFixed(1);});
+    mk('path',{d,fill:'none',stroke:'var('+s.c+')','stroke-width':2,'stroke-linejoin':'round','stroke-linecap':'round'});});
+  // 端の点と値（重なるなら値は凡例とツールチップに任せる）
+  const ends=ser.map(s=>({s,v:s.v[s.v.length-1],y:Y(s.v[s.v.length-1])})).sort((a,b)=>a.y-b.y);
+  ends.forEach((e,i)=>{mk('circle',{cx:X(xs.length-1),cy:e.y,r:4,fill:'var('+e.s.c+')',stroke:'var(--card)','stroke-width':2});
+    const near=ends.some((o,j)=>j!==i&&Math.abs(o.y-e.y)<14);
+    if(!near){const tx=mk('text',{x:X(xs.length-1)+8,y:e.y+4,'font-size':12,fill:'var(--ink2)'});tx.textContent=e.s.k+' '+yfmt(e.v);}});
+  // 十字線
+  const cross=mk('line',{x1:0,x2:0,y1:m.t,y2:H-m.b,stroke:'var(--axis)','stroke-width':1,visibility:'hidden'});
+  const dots=ser.map(s=>mk('circle',{r:4,fill:'var('+s.c+')',stroke:'var(--card)','stroke-width':2,visibility:'hidden'}));
+  const tip=el('div',{class:'tip'});box.appendChild(tip);
+  let cur=-1;
+  const show=i=>{cur=Math.max(0,Math.min(xs.length-1,i));const x=X(cur);cross.setAttribute('x1',x);cross.setAttribute('x2',x);cross.setAttribute('visibility','visible');
+    tip.textContent='';tip.appendChild(el('div',{class:'d',text:xs[cur]}));
+    ser.map((s,j)=>({s,j,v:s.v[cur]})).sort((a,b)=>(b.v??-1e9)-(a.v??-1e9)).forEach(o=>{
+      if(o.v==null){dots[o.j].setAttribute('visibility','hidden');return;}
+      dots[o.j].setAttribute('cx',x);dots[o.j].setAttribute('cy',Y(o.v));dots[o.j].setAttribute('visibility','visible');
+      tip.appendChild(el('div',{class:'r'},[el('b',{text:yfmt(o.v)}),el('span',{},[el('i',{style:'background:var('+o.s.c+')'}),o.s.name])]));});
+    tip.style.display='block';const bw=box.clientWidth,px=x/W*bw;
+    tip.style.left=Math.max(0,Math.min(bw-tip.offsetWidth,px+(px>bw/2?-tip.offsetWidth-12:12)))+'px';tip.style.top='28px';};
+  const hide=()=>{cross.setAttribute('visibility','hidden');dots.forEach(d=>d.setAttribute('visibility','hidden'));tip.style.display='none';};
+  sv.addEventListener('pointermove',ev=>{const r=sv.getBoundingClientRect();const x=(ev.clientX-r.left)/r.width*W;show(Math.round((x-m.l)/(W-m.l-m.r)*(xs.length-1)));});
+  sv.addEventListener('pointerleave',hide);
+  sv.addEventListener('focus',()=>show(cur<0?xs.length-1:cur));sv.addEventListener('blur',hide);
+  sv.addEventListener('keydown',ev=>{if(ev.key==='ArrowLeft'){show(cur-1);ev.preventDefault();}else if(ev.key==='ArrowRight'){show(cur+1);ev.preventDefault();}});
+}
+const niceTicks=(lo,hi,n=4)=>{const span=hi-lo,step0=span/n,mag=Math.pow(10,Math.floor(Math.log10(step0)));const st=[1,2,2.5,5,10].map(f=>f*mag).find(s=>s>=step0)||mag*10;const out=[];for(let v=Math.floor(lo/st)*st;v<=hi+1e-9;v+=st)out.push(+v.toFixed(6));return out;};
+
+// ── 読み込み ──
+Promise.all(['out/ccf15_rules.json','out/ccf15.json','out/ccf15_backtest.json','out/ccf15_nav.json'].map(u=>getJ(u).catch(e=>({__err:String(e)})))).then(([R,H,B,N])=>{
+  if(R.__err||H.__err){$('meta').textContent='読み込めませんでした: '+(R.__err||H.__err);return;}
+  $('meta').textContent=`${R.ja}・規則 ${R.version}・立ち上げ ${R.launch}・中身は${H.cohort}（${H.data_year}年の決算）・${H.holdings.length}社・1社 ${(100/H.holdings.length).toFixed(2)}%`;
+  // 位置づけ
+  {const c=$('status');c.textContent='';c.appendChild(el('h2',{text:'いまの位置づけ'}));
+    const j1=B.__err?null:B['J1_選び方'],j2=B.__err?null:B['J2_ITAの代わり'];
+    const ul=el('ul',{class:'plain note'});
+    ul.appendChild(el('li',{text:'中身と入れ替えの決まりは私（Claude）が決め、この規則書のとおりに運営します。会話をまたいで記憶を持たないので、判断はすべて規則書に書いてあります。'}));
+    ul.appendChild(el('li',{text:'今はお金を入れず、紙の上で運用しています（立ち上げ日の中身を持ったまま、毎営業日の終値で値をつける）。どの15%に置くか・お金を入れるかは未定です。'}));
+    if(j2)ul.appendChild(el('li',{text:`過去（${String(B.window[0]).slice(0,4)}年7月〜${String(B.window[1]).slice(0,4)}年${+String(B.window[1]).slice(4)}月）の検証では、「その他」の15%で ITA の代わりにすると、資産全体の年率が ${fmt(Math.abs(j2.dcagr),2)}pt ${j2.dcagr<0?'低く':'高く'}、最大の下落が ${fmt(Math.abs(j2.dmaxdd),1)}pt ${j2.dmaxdd<0?'深く':'浅く'}なった＝事前に決めた判定は「${j2.verdict}」。`}));
+    if(j1)ul.appendChild(el('li',{text:`選び方の上乗せ（同じ土俵の平均との差）は年 ${pct(j1.vs_same_pool.ex_ann,2)}・t ${fmt(j1.vs_same_pool.t,2)}＝「${j1.verdict}」。中身は「S&P500 からテックを除き、同じ重みにしたもの」とほぼ同じ動きでした。`}));
+    c.appendChild(ul);}
+  // 規則
+  {const c=$('rules');c.textContent='';c.appendChild(el('h2',{text:'決まり（規則書 '+R.version+'）'}));
+    c.appendChild(el('p',{class:'note',text:R.purpose}));
+    const ul=el('ul',{class:'plain note'});
+    [['母集団',R.universe_note+'。除く業種: '+R.universe.exclude_sic.map(x=>x[2]).join('・')],['壊れないの検問',R.kills_note],['並べる',R.rank_note],['選ぶ',`${R.select.n}社。${R.select_note.replace('n 社','').replace('max_per_sic2 社',R.select.max_per_sic2+'社')}`],['重み',R.weight_note],['入れ替え',R.reconstitute],['買う',R.buy],['売る',R.sell],['しないこと',R.not_doing]]
+      .forEach(([k,v])=>ul.appendChild(el('li',{},[el('b',{text:k+': '}),v])));
+    c.appendChild(ul);
+    c.appendChild(el('p',{class:'note'},['正本: ',el('a',{href:'out/ccf15_rules.json',text:'out/ccf15_rules.json'}),'・事前登録: ',el('a',{href:'out/ccf15_prereg.json',text:'out/ccf15_prereg.json'}),'・道具: night/ccf15.py']));}
+  // 紙の上の値動き
+  {const c=$('nav');c.textContent='';c.appendChild(el('h2',{text:'紙の上の値動き（'+R.launch+'〜・10,000から）'}));
+    const S=(N&&N.series)||[];
+    if(!S.length){c.appendChild(el('p',{class:'note',text:'立ち上げ日（'+R.launch+'）の米国の終値から値がつきます（日本時間の翌朝。market.yml が毎営業日つける）。'}));}
+    else{const last=S[S.length-1];
+      const k=el('div',{class:'kpis'});SERIES.forEach(s=>{const v=s.k==='CCF15'?last.nav:last[s.k];k.appendChild(el('div',{class:'kpi'},[el('b',{text:s.name}),el('span',{text:v==null?'—':pct((v/10000-1)*100,2)})]));});c.appendChild(k);
+      if(S.length>=2){const host=el('div');c.appendChild(host);
+        const draw=()=>lineChart(host,S.map(r=>r.d),xs=>{const n=xs.length,step=Math.max(1,Math.ceil(n/6));const o=[];for(let i=0;i<n;i+=step)o.push([i,xs[i].slice(5)]);return o;},
+          SERIES.map(s=>({...s,v:S.map(r=>s.k==='CCF15'?r.nav:(r[s.k]??null))})),v=>Math.round(v).toLocaleString(),(lo,hi)=>niceTicks(lo,hi,4));
+        draw();let t;addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(draw,150);});}
+      c.appendChild(el('p',{class:'note',text:`${S[0].d} から ${last.d} まで・${N.periods&&N.periods.length?N.periods[N.periods.length-1].n:''}社。${N.note||''}`}));}}
+  // 今の中身
+  {const c=$('hold');c.textContent='';c.appendChild(el('h2',{text:`今の中身（${H.holdings.length}社・同じ重み）`}));
+    const cn=H.counts;const k=el('div',{class:'kpis'});
+    [['母集団（浮動株の上位）',cn['母集団（公開浮動株時価の上位）']],['金融・テックを除いた',cn['金融・テックを除いた']],['壊れないの検問を通った',cn['壊れないの検問を通った']],['選んだ',cn['選んだ']]].forEach(([a,b])=>k.appendChild(el('div',{class:'kpi'},[el('b',{text:a}),el('span',{text:b+'社'})])));
+    c.appendChild(k);
+    const sec=Object.entries(H.by_sector);const mx=Math.max(...sec.map(x=>x[1]));
+    const bars=el('div',{class:'bars'});sec.slice(0,12).forEach(([s,n])=>{bars.appendChild(el('span',{text:s}));bars.appendChild(el('span',{},[el('i',{style:'width:'+(n/mx*100).toFixed(0)+'%'})]));bars.appendChild(el('span',{text:String(n)}));});
+    c.appendChild(el('p',{class:'note',text:'業種（社数の多い順・上位12）'}));c.appendChild(bars);
+    const cols=[['rank','#',0],['t','銘柄',null],['nm','会社',null],['sector','業種',null],['w','重み',2],['gpa','粗利÷総資産',2],['cfoa','営業CF÷総資産',2],['dsh3','株数の変化(3年)',1],['roic5','ROIC 5年中央値',1],['nde','純負債÷EBITDA',2]];
+    const tw=el('div',{class:'tw'});const tb=el('table');tw.appendChild(tb);c.appendChild(tw);
+    let sk='rank',sd=1,full=false;
+    const more=el('button',{type:'button',style:'margin-top:8px;font:inherit;font-size:13px;padding:4px 12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer'});
+    more.addEventListener('click',()=>{full=!full;render();});
+    const render=()=>{tb.textContent='';const tr=el('tr');cols.forEach(([k,lab])=>{const th=el('th',{class:'s'+(k===sk?' on':''),text:lab+(k===sk?(sd>0?' ▲':' ▼'):'')});th.addEventListener('click',()=>{if(sk===k)sd=-sd;else{sk=k;sd=(k==='rank'||k==='t'||k==='nm'||k==='sector'||k==='dsh3'||k==='nde')?1:-1;}render();});tr.appendChild(th);});
+      tb.appendChild(el('thead',{},[tr]));const body=el('tbody');
+      const rows=[...H.holdings].sort((a,b)=>{const x=a[sk],y=b[sk];if(x==null&&y==null)return 0;if(x==null)return 1;if(y==null)return -1;return (typeof x==='string'?x.localeCompare(y):x-y)*sd;}).slice(0,full?undefined:25);
+      more.textContent=full?'上位25社だけにする':`${H.holdings.length}社すべてを見る`;
+      rows.forEach(r=>{const tr=el('tr');cols.forEach(([k,lab,d])=>{let v=r[k];let txt;if(k==='w')txt=(v*100).toFixed(2)+'%';else if(k==='dsh3')txt=v==null?'—':pct(v,1);else if(d!=null&&typeof v==='number')txt=fmt(v,d);else txt=v==null?'—':String(v);
+        tr.appendChild(el('td',{class:k==='nm'?'nm':(k==='t'||k==='sector'?'l':''),text:txt}));});body.appendChild(tr);});tb.appendChild(body);};
+    render();c.appendChild(more);
+    c.appendChild(el('p',{class:'note',text:'見出しを押すと並べ替え。粗利÷総資産が「—」の社は、決算書に粗利の行が無い（サービス業など）＝残りの物差しで並べた。株数の変化はマイナス＝自社株買いで株が減った。'}));}
+  // 過去の検証
+  {const c=$('bt');c.textContent='';
+    if(B.__err){c.appendChild(el('h2',{text:'過去の検証'}));c.appendChild(el('p',{class:'note',text:'まだありません'}));}
+    else{const w0=String(B.window[0]),w1=String(B.window[1]);
+      c.appendChild(el('h2',{text:`過去の検証（事前登録・${w0.slice(0,4)}年${+w0.slice(4)}月〜${w1.slice(0,4)}年${+w1.slice(4)}月）`}));
+      const st=B.stats;const k=el('div',{class:'kpis'});
+      [['CCF15（私のETF）','CCF15'],['ITA（今の「その他」）','ITA'],['S&P500（SPY）','SPY'],['同じ土俵の平均','同じ土俵の平均（生き残り）']].forEach(([a,b])=>k.appendChild(el('div',{class:'kpi'},[el('b',{text:a+'・年率'}),el('span',{text:fmt(st[b].cagr,1)+'%'})])));
+      c.appendChild(k);
+      const j1=B['J1_選び方'],j2=B['J2_ITAの代わり'];
+      const cls=v=>/良い|中身あり/.test(v)?'v-good':(/悪い|負けた/.test(v)?'v-bad':'v-mid');
+      c.appendChild(el('p',{},[el('span',{class:'verdict '+cls(j1.verdict),text:'選び方'}),`${j1.verdict}（同じ土俵の平均との差 年 ${pct(j1.vs_same_pool.ex_ann,2)}・t ${fmt(j1.vs_same_pool.t,2)}）`]));
+      c.appendChild(el('p',{},[el('span',{class:'verdict '+cls(j2.verdict),text:'ITA の代わり'}),`${j2.verdict}（NASDAQ100 50・SMH 20・枠 15 の資産全体で、年率 ${fmt(j2.with_ccf15.cagr,2)}% 対 ${fmt(j2.with_ita.cagr,2)}%・最大の下落 ${fmt(j2.with_ccf15.maxdd,1)}% 対 ${fmt(j2.with_ita.maxdd,1)}%・10年の積立の倍率の中央 ${fmt(j2.dca_median_ccf15,2)} 対 ${fmt(j2.dca_median_ita,2)}）`]));
+      const g=B.growth;if(g&&g.months){const host=el('div');c.appendChild(el('p',{class:'note',text:'1ドルの推移（配当込み・ドル建て）'}));c.appendChild(host);
+        const xs=g.months.map(m=>String(m).slice(0,4)+'-'+String(m).slice(4));
+        const draw=()=>lineChart(host,xs,xs=>{const o=[];xs.forEach((x,i)=>{if(x.endsWith('-01')&&(+x.slice(0,4))%2===0)o.push([i,x.slice(0,4)]);});return o;},
+          SERIES.map(s=>({...s,v:g[s.k]})),v=>v<=0?'0':'×'+(Math.abs(v-Math.round(v))<1e-9?String(Math.round(v)):(+v).toFixed(1)),(lo,hi)=>niceTicks(Math.max(0,lo),hi,4));
+        draw();let t;addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(draw,150);});}
+      const rows=[['CCF15','CCF15（私のETF）'],['同じ土俵の平均（生き残り）','同じ土俵の平均（生き残り）'],['検問を通った社の平均','検問を通った社の平均'],['ITA','ITA'],['SPY','S&P500（SPY）'],['RSP','S&P500 同じ重み（RSP）'],['SPXT','S&P500 テック除く（SPXT・2015年10月〜）'],['QQQ','NASDAQ100（QQQ）'],['SMH','半導体（SMH）']];
+      const tw=el('div',{class:'tw'});const tb=el('table');tw.appendChild(tb);
+      const hd=el('tr');['','年率','ぶれ','最大の下落','2020年','2022年','QQQとの相関'].forEach(h=>hd.appendChild(el('th',{text:h})));tb.appendChild(el('thead',{},[hd]));
+      const body=el('tbody');rows.forEach(([key,lab])=>{const s=st[key];if(!s)return;const tr=el('tr');
+        [lab,fmt(s.cagr,1)+'%',fmt(s.vol,1)+'%',fmt(s.maxdd,1)+'%',s.y2020==null?'—':pct(s.y2020,1),s.y2022==null?'—':pct(s.y2022,1),fmt(s.corr_qqq,2)].forEach((v,i)=>tr.appendChild(el('td',{class:i===0?'nm':'',text:v})));body.appendChild(tr);});
+      tb.appendChild(body);c.appendChild(tw);
+      // 感度
+      const sens=B.sensitivity||{};const tw2=el('div',{class:'tw'});const t2=el('table');tw2.appendChild(t2);
+      const h2=el('tr');['感度（判定には使わない）','年率','同じ土俵との差','t','選び方','ITA の代わり'].forEach(h=>h2.appendChild(el('th',{text:h})));t2.appendChild(el('thead',{},[h2]));
+      const b2=el('tbody');Object.entries(sens).forEach(([nm,v])=>{const tr=el('tr');[nm,fmt(v.stats.cagr,1)+'%',pct(v.vs_same_pool.ex_ann,2),fmt(v.vs_same_pool.t,2),v.J1,v.J2].forEach((x,i)=>tr.appendChild(el('td',{class:i===0||i>=4?'nm':'',text:x})));b2.appendChild(tr);});
+      t2.appendChild(b2);c.appendChild(el('p',{class:'note',text:'感度を変えても判定は同じ向きでした。'}));c.appendChild(tw2);
+      const gone=B['生き残りの偏り（消えた社の数・上位1000社のうち）']||{};
+      c.appendChild(el('p',{class:'note',text:'生き残りの偏り: 浮動株の上位1000社のうち、今はティッカーが無い（買収・倒産などで消えた）社の数 '+Object.entries(gone).map(([y,n])=>y+'年 '+n).join('・')+'。この社は検証に入っていない。'}));
+      c.appendChild(el('p',{class:'note'},['結果の全文: ',el('a',{href:'out/ccf15_backtest.json',text:'out/ccf15_backtest.json'})]));}}
+});
+</script>
+</body></html>

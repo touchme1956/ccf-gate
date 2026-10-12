@@ -77,8 +77,8 @@ REV = ['Revenues', 'RevenueFromContractWithCustomerExcludingAssessedTax',
        'RevenueFromContractWithCustomerIncludingAssessedTax', 'SalesRevenueNet']
 COGS = ['CostOfRevenue', 'CostOfGoodsAndServicesSold', 'CostOfGoodsSold']   # 代替（総額）。先に当たった一つ
 CASH = ['CashAndCashEquivalentsAtCarryingValue', 'CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents']
-YEARS = range(2008, 2026)          # 決算の年（frames は会計年度の終わりの暦年に寄せる＝実測 PG 2025-06-30 → CY2025）
-FLOAT_YEARS = range(2010, 2027)
+YEARS = range(2008, dt.date.today().year)   # 決算の年（〜去年。frames は会計年度の終わりの暦年に寄せる＝実測 PG 2025-06-30 → CY2025）
+FLOAT_YEARS = range(2010, dt.date.today().year + 1)
 
 
 def rules():
@@ -583,7 +583,7 @@ def cohort(ctx, Y, R, px_key=None, fetch=False):
 
 
 BENCH = ['ITA', 'SPY', 'RSP', 'QQQ', 'SMH', 'SPXT']     # SPXT = S&P500 からテック（情報技術）を除いた指数の ETF（2015-09〜）
-COHORTS = range(2013, 2027)                            # 7月の組（2013年7月〜。決算は前の暦年）
+COHORTS = range(2013, dt.date.today().year + 1)        # 7月の組（2013年7月〜今年。決算は前の暦年）
 
 
 def prefetch_prices(ctx, R):
@@ -720,6 +720,19 @@ def mix(parts):
     return {k: sum(w * s[k] for w, s in parts) / tw for k in ks}
 
 
+def growth(series):
+    """同じ月から始めた1ドルの推移（ページのグラフ用・月末の値）。全部がそろう月だけ"""
+    ks = sorted(set.intersection(*[set(v) for v in series.values()]))
+    out, lv = {'months': ks}, {}
+    for name, r in series.items():
+        v, path = 1.0, []
+        for k in ks:
+            v *= 1 + r[k]
+            path.append(round(v, 4))
+        out[name] = path
+    return out
+
+
 def dca(r, months):
     ks = sorted(r)
     out = []
@@ -829,7 +842,9 @@ def backtest():
            '検問の効き（参考）': kill_ex,
            'J2_ITAの代わり': {'verdict': slot_v, **slot},
            'CCF15と相手の差': vs, 'sensitivity': sens,
-           '生き残りの偏り（消えた社の数・上位1000社のうち）': gone, 'gaps': gaps, 'cohorts': logs}
+           '生き残りの偏り（消えた社の数・上位1000社のうち）': gone, 'gaps': gaps,
+           'growth': growth({'CCF15': rH, 'ITA': B['ITA'], 'SPY': B['SPY'], 'RSP': B['RSP'], 'QQQ': B['QQQ']}),
+           'cohorts': logs}
     json.dump(doc, open(OUT_BT, 'w'), ensure_ascii=False, indent=1)
     print(json.dumps({'J1': sel_v, 'J1_ex': sel_ex, 'J2': slot_v, 'dcagr': slot['dcagr'], 'dmaxdd': slot['dmaxdd'],
                       'CCF15': st['CCF15'], 'ITA': st['ITA'], 'SPY': st['SPY']}, ensure_ascii=False, indent=1))
@@ -875,41 +890,83 @@ def holdings():
 
 
 # ───────────────────────── 紙の上の値動き（立ち上げ日から） ─────────────────────────
-def nav():
+def _d8(s):
+    return int(s.replace('-', ''))
+
+
+def _ds(d):
+    return f'{d // 10000:04d}-{d // 100 % 100:02d}-{d % 100:02d}'
+
+
+def nav(today=None):
+    """立ち上げ日の中身を同じ重みで持ったまま、毎営業日の終値で値をつける（配当込み・手数料・為替・税は引かない）。
+    7月の入れ替えで中身（out/ccf15.json の cohort）が変わったら、新しい『期』を足して前の期の値につなぐ
+    （期の境目の日は前の期の終値で閉じ、同じ日の終値から新しい中身で始める）"""
     R = rules()
     H = json.load(open(OUT_HOLD, encoding='utf-8'))
-    launch = R['launch']
-    names = [r['t'] for r in H['holdings']]
-    px = {t: yahoo_d(t, launch) for t in names + ['ITA', 'SPY', 'QQQ', 'RSP']}
-    d0 = int(launch.replace('-', ''))
-    days = sorted({d for t in names if px.get(t) for d in px[t] if d >= d0})
-    base = None
-    for d in days:
-        if sum(1 for t in names if px.get(t) and d in px[t]) >= 0.95 * len(names):
-            base = d
-            break
-    if base is None:
+    old = json.load(open(OUT_NAV, encoding='utf-8')) if os.path.exists(OUT_NAV) else {}
+    periods = old.get('periods') or []
+    names_now = [r['t'] for r in H['holdings']]
+    if not periods:
+        periods = [{'from': R['launch'], 'cohort': H['cohort'], 'holdings': names_now}]
+    elif periods[-1]['cohort'] != H['cohort']:
+        periods.append({'from': None, 'cohort': H['cohort'], 'holdings': names_now})   # 境目の日は下で決める
+    bench = ['ITA', 'SPY', 'QQQ', 'RSP']
+    allt = sorted({t for p in periods for t in p['holdings']} | set(bench))
+    px = {t: yahoo_d(t, R['launch']) for t in allt}
+    days = sorted({d for t in allt if px.get(t) for d in px[t] if d >= _d8(R['launch'])})
+    if today:
+        days = [d for d in days if d <= today]
+    if periods[-1]['from'] is None:
+        if not days:
+            print('入れ替えの境目の日が決まらない（終値が無い）')
+            return
+        periods[-1]['from'] = _ds(days[-1])
+
+    def base_of(p):
+        d0 = _d8(p['from'])
+        for d in days:
+            if d >= d0 and sum(1 for t in p['holdings'] if px.get(t) and d in px[t]) >= 0.95 * len(p['holdings']):
+                return d
+        return None
+    lastp, rows, level = {}, [], 10000.0
+    bases = [base_of(p) for p in periods]
+    if bases[0] is None:
         print('まだ立ち上げ日の終値がそろっていない（米国の取引が終わったあとに回す）')
         return
-    lastp = {}
-    rows = []
-    for d in [x for x in days if x >= base]:
-        for t in px:
-            if px.get(t) and d in px[t]:
-                lastp[t] = px[t][d]
-        v = sum((lastp[t] / px[t][base]) for t in names if px.get(t) and base in px[t] and t in lastp)
-        n = sum(1 for t in names if px.get(t) and base in px[t])
-        row = {'d': f'{d // 10000:04d}-{d // 100 % 100:02d}-{d % 100:02d}', 'nav': round(10000 * v / n, 2)}
-        for b in ('ITA', 'SPY', 'QQQ', 'RSP'):
-            if px.get(b) and base in px[b] and b in lastp:
-                row[b] = round(10000 * lastp[b] / px[b][base], 2)
-        rows.append(row)
-    missing = [t for t in names if not px.get(t) or base not in px[t]]
-    doc = {'name': R['name'], 'launch': launch, 'base_day': rows[0]['d'], 'start': 10000, 'n': len(names) - len(missing),
-           'missing': missing, 'note': '紙の上の値動き（配当込みの終値で、立ち上げ日の中身を同じ重みで持ったまま）。手数料・為替・税は引いていない',
-           'series': rows}
+    for i, p in enumerate(periods):
+        b = bases[i]
+        if b is None:
+            break
+        nxt = bases[i + 1] if i + 1 < len(bases) and bases[i + 1] is not None else None
+        ref = {t: px[t][b] for t in p['holdings'] if px.get(t) and b in px[t]}
+        p['base_day'], p['n'], p['missing'] = _ds(b), len(ref), [t for t in p['holdings'] if t not in ref]
+        p['level_at_base'] = round(level, 2)
+        start_level = level
+        for d in [x for x in days if x >= b and (nxt is None or x <= nxt)]:
+            for t in allt:
+                if px.get(t) and d in px[t]:
+                    lastp[t] = px[t][d]
+            v = sum(lastp.get(t, ref[t]) / ref[t] for t in ref) / len(ref)
+            level = start_level * v
+            if rows and rows[-1]['d'] == _ds(d):
+                continue        # 境目の日は前の期の終値で閉じたので重ねない
+            rows.append({'d': _ds(d), 'nav': round(level, 2)})
+    b0 = bases[0]
+    for row in rows:
+        d = _d8(row['d'])
+        for t in bench:
+            s = px.get(t) or {}
+            if b0 in s:
+                pv = max((x for x in s if x <= d), default=None)
+                if pv is not None:
+                    row[t] = round(10000 * s[pv] / s[b0], 2)
+    doc = {'name': R['name'], 'launch': R['launch'], 'base_day': _ds(b0), 'start': 10000, 'periods': periods,
+           'note': '紙の上の値動き（配当込みの終値で、期のはじめの中身を同じ重みで持ったまま）。手数料・為替・税は引いていない。7月の入れ替えで期が変わる',
+           'generated': dt.date.today().isoformat(), 'series': rows}
     json.dump(doc, open(OUT_NAV, 'w'), ensure_ascii=False, indent=1)
-    print(f"{rows[-1]['d']}: CCF15 {rows[-1]['nav']} / ITA {rows[-1].get('ITA')} / SPY {rows[-1].get('SPY')} / QQQ {rows[-1].get('QQQ')}（{rows[0]['d']}＝10,000）")
+    last = rows[-1]
+    print(f"{last['d']}: CCF15 {last['nav']} / ITA {last.get('ITA')} / SPY {last.get('SPY')} / QQQ {last.get('QQQ')}（{rows[0]['d']}＝10,000）")
 
 
 def main():
