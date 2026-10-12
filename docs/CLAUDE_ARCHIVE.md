@@ -18587,3 +18587,11 @@ dom・irr・moatW は私の独立読みと一致。『』の引用は CLS 71・A
 - **税（事前登録どおり、選んだ S30 だけ）**: 倍率を使わないので NISA で持てる＝相手と同じ扱いで、税の差は出ない。毎月戻す代わりに新しいお金を足りない側へ入れても最終額はほぼ同じ（rebalance_policy・±1.5%以内）。倍率を掛けるものは NISA で買えない（課税口座・売るたびに20.315%）。
 - **限界**: 20年の窓は重なっている（独立した20年は A 約1.7回・B 約1.3回）。A の NASDAQ100 は合成・Chips は電子部品を含む。13本を試したので、どれか1本が偶然よく見える余地がある（だから二つの時代の両方を条件にした）。
 - **配分・門・CCF15 は変えていない**。いまの ETF の芯（NASDAQ100 50：SMH 20＝71:29）が、試した中でいちばん近い S30 とほぼ同じ形であることの確認にとどまる——「NASDAQ100 をはっきり超える」作り方は、二つの時代の両方では見つからなかった。
+
+## CCF15 を main から外した（2026-10-12・ユーザー「mainにマージして」→「ただしccf15入れないで」）——道具・ページ・データ・自動の入れ替え・紙の上の値動きを外し、bx だけ残した
+
+- **経緯**: PR #261（マージのコミット 5194391）で CCF15（:18475・:18499・:18531）と bx（:18559）を一緒に main へ入れた直後に、ユーザーから「ただしccf15入れないで」。「main へマージ」の但し書きなので、**CCF15 を main に入れない**と読み、入った分を外した（bx は残す）。
+- **外したもの**: 道具 `night/ccf15.py`・部品の検査 `night/check_ccf15.py`（と ci.yml の段）・ページ `ccf15.html`（と 🛒買付順位の見出しのリンク）・データ11本（`out/ccf15.json`・`out/ccf15_backtest*.json` 3本・`out/ccf15_nav.json`・`out/ccf15_prereg*.json` 3本・`out/ccf15_rules*.json` 3本）・**毎年7月6日の自動の入れ替え `.github/workflows/ccf15.yml`**・**market.yml の毎営業日の『紙の上の値動き』の段**（と git add の `out/ccf15_nav.json`）・ops.yml の注記・回転盤（`night/ops_status.py`）の2行・`.gitignore` の作業キャッシュの行。共有のファイル（market.yml・ops.yml・ops_status.py・index.html・.gitignore）は CCF15 の変更しか入っていなかったので、マージ前の main（4db25e4）の版へそのまま戻した。紙の上の値動きは一度も値がつく前に止めた（最初の値は market.yml の 21:30UTC の実行でつく予定だった）。
+- **残したもの**: この書庫の3節（v1〜v3 の規則・事前登録・結果）と CLAUDE.md の索引の3行（「main には入れない」を付けた）——記録は消さない。todo `ccf15_slot_decide`・`ccf15_review_2027` は done（消さない）。bx の事前登録 `out/beatndx_prereg.json` と道具 `night/beatndx.py` の本文には CCF15 の名前が出てくるが、結果の前に固定した記録なので書き換えていない。
+- **戻すとき**: 外したファイルは git の履歴にある（`git checkout 5194391 -- night/ccf15.py ccf15.html out/ccf15*.json .github/workflows/ccf15.yml` ほか・market.yml の段は 5194391 の版から）。戻すなら毎年7月の自動のコミットが main に増えるので、CLAUDE.md の「main への自動 push」の例外にも書き足すこと。
+- **変えていないもの**: Ω・四関門・売却規律 S1/S2/S3・配分（portfolio.json）・採点。CCF15 にはお金を入れていない。

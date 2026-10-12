@@ -89,14 +89,6 @@ jobs:
       - name: 配当（直近12か月・表示専用）
         continue-on-error: true
         run: timeout 300 python3 night/fetch_divs.py | tail -8
-      # ── CCF15（私が運営する15%の枠のETF）の紙の上の値動き（2026-10-12 新設・表示専用）──
-      #   ユーザー「15％を細かくあなた自身が作るETFだよ？あなた自身運営するETFだよ？」。規則は out/ccf15_rules.json。
-      #   立ち上げ日（rules の launch）の中身をその重みのまま持ったまま、毎営業日の終値（配当込み）で値をつける。
-      #   7月の入れ替え（ccf15.yml）で中身が変わったら新しい期としてつなぐ。Yahoo の日足（鍵不要）。判定・配分には不使用。
-      #   ⚠ 下の git add に out/ccf15_nav.json を入れ忘れると「毎営業日 作り直して捨てる」型になる。
-      - name: CCF15 の紙の上の値動き（表示専用）
-        continue-on-error: true
-        run: timeout 600 python3 night/ccf15.py nav | tail -3
 
       - name: コミット
         run: |
@@ -115,7 +107,7 @@ jobs:
           #   ここは今日は全パス実在するが、`out/gate_history.jsonl` / `out/gate_state.json` は
           #   gate_history.py が初回に作るまで存在しない＝**新しい環境では全滅する**形だった。
           . night/git_add_safe.sh
-          ccf_git_add market_data.json out/dashboard.json out/holdings_div.json out/returns.json out/returns_series.json out/ccf15_nav.json 'out/*_gate_pack.json' out/score_all.json out/er_ledger.json out/validate_fail.json out/gate_history.jsonl out/gate_state.json
+          ccf_git_add market_data.json out/dashboard.json out/holdings_div.json out/returns.json out/returns_series.json 'out/*_gate_pack.json' out/score_all.json out/er_ledger.json out/validate_fail.json out/gate_history.jsonl out/gate_state.json
           git diff --staged --quiet || git commit -m "$MSG"
           # ⚠2026-08-18: 素の `git push` は remote が進んだだけで弾かれ、
           #   **作ったコミットがまるごと捨てられる**（market.yml が2営業日連続で70ファイル失った）。
