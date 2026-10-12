@@ -311,6 +311,8 @@ WHAT = {
     "nxforward": "楽天で持てる規則（業種ETFの勢い・ブランド上位10社・国内株式の能動の投信の上位1/4）とその副・参考の8本を、終わった月ごとに e過程で更新する。10月は投信の選び直しで約30分かかる。判定には使わない。止まると、値を取れない月が3か月で『欠測』として固定される（待ちが2か月に達した月・欠測を固定した月・最後の実行の記録の『失敗』・実行そのものの失敗や時間切れがあれば⚠にする）",
     "mwformsec": "前向きの検定の SEC 版（H7）の組入れを毎年7月に作り直す。1.4GB の一括ファイルが要るので CI では回せない人の作業。遅れると、その年の11月2日の ops の実行で7月が『欠測』として固定され、以後1か月ずつ失われる（固定した欠測は戻せない）",
     "backtest": "『当時読めた数字だけ』で過去に遡って採点し、その後の実際のリターンと突き合わせる。成長の減衰など、予実台帳の答えを先取りするための材料",
+    "ccf15nav": "私（Claude）が運営する15%の枠のETF（CCF15）の紙の上の基準価額を、毎営業日の終値でつける。表示だけで判定には不使用。止まると値動きの記録に穴が空き、5年後（2031年10月）の見直しの材料が欠ける（後から埋められない）",
+    "ccf15": "CCF15 の中身を規則書（out/ccf15_rules.json）どおりに毎年7月に選び直し、事前登録した過去の検証を1年分足して作り直す。表示だけで判定には不使用。止まると去年の顔ぶれのまま（検問に落ちた＝壊れた会社が残る）",
 }
 
 
@@ -666,6 +668,13 @@ def build():
               or git_date(os.path.relpath(f, BASE)) or "" for f in
               glob.glob(os.path.join(BASE, "out", "backtest_*.json"))), default=None) or None,
          "gate0.yml（年1・7月）／手動 python3 night/backtest_core.py", True),
+        # 2026-10-12: CCF15（私が運営する15%の枠のETF）。毎営業日の紙の上の値動きと、年1回の入れ替え
+        ("ccf15nav", "CCF15 の紙の上の値動き", "毎営業日", 4,
+         json_field("out/ccf15_nav.json", "generated") or git_date("out/ccf15_nav.json"),
+         "market.yml 平日21:30UTC／手動 python3 night/ccf15.py nav", True),
+        ("ccf15", "CCF15 の7月の入れ替え", "年1(7月)", 430,
+         json_field("out/ccf15.json", "generated") or git_date("out/ccf15.json"),
+         "ccf15.yml（毎年7月6日）／手動 python3 night/ccf15.py fetch → holdings → backtest", True),
     ]
     rows = []
     for id_, name, cad, due, last, how, auto in items:

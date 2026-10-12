@@ -1,0 +1,46 @@
+# CCF15（私が運営する15%の枠のETF）の年1回の入れ替え（2026-10-12 新設・表示専用）
+#
+# 規則 out/ccf15_rules.json（v2）どおりに、毎年7月に中身を選び直し（out/ccf15.json）、
+# 事前登録 out/ccf15_prereg_v2.json の過去の検証を1年分足して作り直す（out/ccf15_backtest.json）。
+# 紙の上の値動き（market.yml が毎営業日）は、中身が変わったら新しい期として前の値につなぐ。
+# SEC frames 約1,000本と株価 約1,700本を取り直す（キャッシュは持ち越さない）ので1時間前後かかる。
+# 以前は ops.yml（月次）の7月だけの段だったが、ops の上限（125分）の中で他の段と時間を取り合うので分けた。
+# ⚠ 表示専用——Ω・四関門・売却規律・配分のどれにも触れない。
+name: ccf15 yearly
+on:
+  schedule:
+    - cron: '41 23 6 7 *'   # 毎年7月6日 23:41 UTC（ops.yml の2日・3日と、米国の7月4日の休場を避ける）
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: ccf15
+  cancel-in-progress: false
+jobs:
+  ccf15:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - name: 部品の検査
+        run: python3 night/check_ccf15.py
+      - name: 取り寄せ（SEC frames・株価・業種）
+        run: timeout 5400 python3 night/ccf15.py fetch | tail -5
+      - name: 中身の選び直し
+        run: timeout 1800 python3 night/ccf15.py holdings | tail -40
+      - name: 過去の検証の作り直し（事前登録 v2）
+        run: timeout 3600 python3 night/ccf15.py backtest | tail -40
+      - name: コミット
+        run: |
+          git config user.name  "ccf-gate bot"
+          git config user.email "noreply@github.com"
+          . night/git_add_safe.sh
+          ccf_git_add out/ccf15.json out/ccf15_backtest.json
+          git diff --staged --quiet || git commit -m "ccf15: 7月の入れ替え $(date -u +%Y-%m-%d)"
+          . night/git_push_safe.sh
+          ccf_git_push

@@ -79,18 +79,7 @@ jobs:
           #   exposure は peak の結果（市場の比重）を読むので peak の後に回す
           timeout 600 python3 night/industry_peak.py | tail -4
           timeout 600 python3 night/industry_exposure.py | tail -4
-      # 2026-10-12: CCF15（私が運営する15%の枠のETF）の年1回の入れ替え（7月のみ・表示専用・判定と配分には不使用）。
-      #   規則 out/ccf15_rules.json どおりに、6月末までに出た決算（前の暦年）で中身を選び直す（out/ccf15.json）。
-      #   紙の上の値動き（market.yml が毎営業日）は、中身が変わったら新しい期として前の値につなぐ。
-      #   SEC frames 約900本と株価 約900本を取り直すので30分前後かかる（キャッシュは持ち越さない）。
-      - name: CCF15 の入れ替え（7月のみ）
-        continue-on-error: true
-        run: |
-          if [ "$(date -u +%m)" = "07" ]; then
-            timeout 3600 python3 night/ccf15.py fetch | tail -3
-            timeout 900 python3 night/ccf15.py holdings | head -3
-            timeout 900 python3 night/ccf15.py backtest | tail -5
-          else echo "7月以外はスキップ"; fi
+      # 2026-10-12: CCF15（私が運営する15%の枠のETF）の年1回の入れ替えは .github/workflows/ccf15.yml（毎年7月6日）へ分けた。
       - name: 監視リスト生成
         continue-on-error: true
         run: python3 make_kanshi.py
@@ -405,7 +394,7 @@ jobs:
           ccf_git_add 'out/*_gate_input.json' 'out/*_hits.txt' out/fetch_run.json
           #   ⚠ `out/market_data.json` は**存在しない**（market_fetch.py は repo 直下の
           #     `market_data.json` に書く）。これが38パス全部を巻き添えにしていた元凶なので外した。
-          ccf_git_add out/next_earnings.json kessan_calendar.ics kanshi_list.json gate1_x_watch.json out/kessan out/divy.json out/v10_shadow.json out/v11_shadow.json out/v11_facts.json out/v11_backtest.json out/ops_status.json out/hist_val_now.json out/irr85_history.json out/irr85_mech_test.json out/profiles.json out/exception_watch.json out/castle_correlation.json out/irr85_scope_life.json out/new_listings_irr.json out/wacc_drift.json out/net_plan.json out/backfill_diff.json out/backfill_stamps.json out/sp500_pe_monthly.json out/growth_trend.json out/calibration.json out/sht_report.json out/_sic_cache.json out/packs_index.json out/logos 'night/chunk*.txt' 'night/rechunk*.txt' night/reaudit_queue.json night/progress.json out/er_ledger.json market_data.json 'out/shadow_*.json' out/gate0_run.json out/industry_trends.json out/industry_long.json out/sic_by_cik.json out/industry_peak.json out/industry_exposure.json out/ccf15.json out/ccf15_backtest.json
+          ccf_git_add out/next_earnings.json kessan_calendar.ics kanshi_list.json gate1_x_watch.json out/kessan out/divy.json out/v10_shadow.json out/v11_shadow.json out/v11_facts.json out/v11_backtest.json out/ops_status.json out/hist_val_now.json out/irr85_history.json out/irr85_mech_test.json out/profiles.json out/exception_watch.json out/castle_correlation.json out/irr85_scope_life.json out/new_listings_irr.json out/wacc_drift.json out/net_plan.json out/backfill_diff.json out/backfill_stamps.json out/sp500_pe_monthly.json out/growth_trend.json out/calibration.json out/sht_report.json out/_sic_cache.json out/packs_index.json out/logos 'night/chunk*.txt' 'night/rechunk*.txt' night/reaudit_queue.json night/progress.json out/er_ledger.json market_data.json 'out/shadow_*.json' out/gate0_run.json out/industry_trends.json out/industry_long.json out/sic_by_cik.json out/industry_peak.json out/industry_exposure.json
           # ⚠ 前向きの検定の出力（out/mw_forward.json・out/nx_forward.json・out/forward_run.json）はここで add しない
           #   ——forward ジョブが別のコミットで先に push する（同じコミットに乗せると rebase の衝突で道連れに捨てられる）。
           git diff --staged --quiet || git commit -m "$MSG"
