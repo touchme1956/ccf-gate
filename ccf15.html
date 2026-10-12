@@ -69,9 +69,9 @@ svg.chart:focus-visible{outline:2px solid var(--info);outline-offset:2px;border-
 
 <div class="card" id="how"><h2>お金を入れるなら</h2>
 <ul class="plain note">
-<li><b>証券会社</b>: moomoo 証券の「micro米国株」（1ドルから金額で・1株未満で買える・NISA なら売買手数料0円・為替の手数料は別）</li>
-<li><b>NISA</b>: NISA は1人1社。今は2人とも楽天なので、moomoo で非課税にするには1人の NISA を年単位で移す手続きが要る（楽天に届け出 → moomoo へ提出・2週間〜1か月・移った年から）。その年に楽天の NISA で1回でも買うと、その年は移れない</li>
-<li><b>買い方</b>: 毎月この ETF に入るお金は、目標（同じ重み）から一番足りない社から金額で買う。売らない（NISA の中では売らない決まり）。7月の入れ替えで外れた社は持ったまま買い足さない</li>
+<li><b>口座</b>: moomoo 証券の特定口座（課税）の「micro米国株」——1ドルから金額で・1株未満で買える。NISA は使わない（2026-10-12 決定）。売買の手数料は約定代金の0.132%（上限22ドル）・為替の手数料は公式の解説で1ドル25銭</li>
+<li><b>税</b>: 配当は米国で10%・日本で20.315%（確定申告の外国税額控除で米国の分を取り戻せる場合がある）。売ると利益に20.315%。この ETF の配当利回りは約1.3%なので、配当の税は年約0.36%。ITA（経費0.37%）と毎年の差はほぼ相殺だが、20年持って売るなら NISA より年0.9pt前後不利（最終額で約15%少ない・年率9%の仮定）</li>
+<li><b>買い方</b>: 毎月この ETF に入るお金は、目標（同じ重み）から一番足りない社から金額で買う。売らない（売ると税がかかるので持ち続けて税を後ろへ回す）。7月の入れ替えで外れた社は持ったまま買い足さない</li>
 <li><b>いつから</b>: 今の決まり（売らない・足りない区分から買う）では、どちらの15%の区分も今は目標を超えているので、新しいお金が回り始めるのは「その他」なら2027年11月ごろ・「個別株」なら2028年6月ごろ（値段が横ばいの場合）</li>
 </ul></div>
 
@@ -159,7 +159,7 @@ Promise.all(['out/ccf15_rules.json','out/ccf15.json','out/ccf15_backtest.json','
   {const c=$('rules');c.textContent='';c.appendChild(el('h2',{text:'決まり（規則書 '+R.version+'）'}));
     c.appendChild(el('p',{class:'note',text:R.purpose}));
     const ul=el('ul',{class:'plain note'});
-    [['母集団',R.universe_note+'。除く業種: '+R.universe.exclude_sic.map(x=>x[2]).join('・')],['壊れないの検問',R.kills_note],['並べる',R.rank_note],['選ぶ',`${R.select.n}社。${R.select_note.replace('n 社','').replace('max_per_sic2 社',R.select.max_per_sic2+'社')}`],['重み',R.weight_note],['入れ替え',R.reconstitute],['買う',R.buy],['売る',R.sell],['しないこと',R.not_doing]]
+    [['母集団',R.universe_note+'。除く業種: '+R.universe.exclude_sic.map(x=>x[2]).join('・')],['壊れないの検問',R.kills_note],['並べる',R.rank_note],['選ぶ',`${R.select.n}社。${R.select_note.replace('n 社','').replace('max_per_sic2 社',R.select.max_per_sic2+'社')}`],['重み',R.weight_note],['入れ替え',R.reconstitute],['買う',R.buy],['売る',R.sell],['口座',R.venue],['しないこと',R.not_doing]]
       .forEach(([k,v])=>ul.appendChild(el('li',{},[el('b',{text:k+': '}),v])));
     c.appendChild(ul);
     c.appendChild(el('p',{class:'note'},['正本: ',el('a',{href:'out/ccf15_rules.json',text:'out/ccf15_rules.json'}),'・事前登録: ',el('a',{href:'out/ccf15_prereg.json',text:'out/ccf15_prereg.json'}),'・道具: night/ccf15.py']));}
