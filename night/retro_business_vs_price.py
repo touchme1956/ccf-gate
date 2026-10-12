@@ -40,7 +40,8 @@ MIN_N = 150
 
 # 事業の未来（cohort が前方窓で実測した会社の姿）と 株価の未来
 BIZ = {
-    "fwd_roic": ("fwd_roic_med5_a1", "前方ROIC(+6..+10年の中央値)"),
+    # 2026-10-11 欄名を訂正: fwd_roic_med5_a1 は asof+1..+5 年の窓（旧の欄名『+6..+10年』は誤り・数字は不変・moat_persist の事前登録で発見）
+    "fwd_roic": ("fwd_roic_med5_a1", "前方ROIC(+1..+5年の中央値)"),
     "fwd_growth": ("fwd_cagr_10y", "前方売上CAGR(10年)"),
     "fwd_opm": ("fwd_opm_10y", "前方営業利益率(10年)"),
 }

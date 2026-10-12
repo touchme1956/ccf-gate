@@ -138,7 +138,8 @@
    "intcov": "機械算出 2025年: 営業利益 ÷ 支払利息 = 8.3。利息タグ InterestExpense（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict",
    "roic": "門式 through-cycle（v9.9.72・5年中央値）。FY2025 10-K(msi-20251231.htm)基準のSEC XBRL。**2026-08-16 に IC縮退ガードの物差しを ICg（控除前の投下資本＝自己資本+有利子負債）へ是正した結果、系列が変わった**——FY2025 は IC 1,668百万$ が ICg 11,572百万$ の **14.4%**（のれん6,800＋無形3,104が投下資本の85.6%を食った）で**算出不能として除外**、逆に FY2021 は債務超過年だが ICg が正で 2割を超えるため**復活**した。5年系列 2021 67.7 / 2022 101.5 / 2023 87.8 / 2024 73.7% の**中央値 80.7%**（旧94.6は FY2025 137.5% を含む窓）。実額(FY2024): NOPAT = 営業利益×(1−実効税率) ÷ IC＝自己資本 + 有利子負債 − のれん − 無形",
    "sbc": "SBC比率＝株式報酬 293.0百万$ ÷ 売上（2025-12-31 期・SEC XBRL ShareBasedCompensation 等 ÷ Revenues 等）＝2.51%。門の定義は「株式報酬÷売上（%）」（index.html の入力欄 SBC比率）",
-   "per": "【2026-09-23 TTM GAAP希薄化EPSへ張り替え 41.21→35.99】per = px **$456.7**（Finnhub 2026-09-22 終値＝_meta.px・out/dashboard.json と同値）÷ **TTM GAAP希薄化EPS $12.69** = **35.99**。TTM（直近4報告四半期・SEC）= FY2025 **12.75**（10-K accn 0000068505-26-000010）− 1H25（〜2025-06-28）**5.57** ＋ 1H26（〜2026-07-04）**5.51**（Q2 2026 10-Q accn 0000068505-26-000028・前年同期も同じ10-Q）。四半期: Q3'25 3.33 ＋ Q4'25 3.85（= 12.75 − 9M 8.90）＋ Q1'26 2.18 ＋ Q2'26 3.33 = 12.69。旧 41.21 は基準の記録が無い値（evidence.per 空欄）。eps 欄（11.08）は据置——門の ccfMcapUSD が px×ni÷eps（＝期末株数）で時価総額Tierを出すため。px÷eps（41.22）と per の差は期間基準の違い（TTM vs 通期）で正常。perF は空欄のまま（_meta.nulls.perF・基準の検問）。"
+   "per": "【2026-09-23 TTM GAAP希薄化EPSへ張り替え 41.21→35.99】per = px **$456.7**（Finnhub 2026-09-22 終値＝_meta.px・out/dashboard.json と同値）÷ **TTM GAAP希薄化EPS $12.69** = **35.99**。TTM（直近4報告四半期・SEC）= FY2025 **12.75**（10-K accn 0000068505-26-000010）− 1H25（〜2025-06-28）**5.57** ＋ 1H26（〜2026-07-04）**5.51**（Q2 2026 10-Q accn 0000068505-26-000028・前年同期も同じ10-Q）。四半期: Q3'25 3.33 ＋ Q4'25 3.85（= 12.75 − 9M 8.90）＋ Q1'26 2.18 ＋ Q2'26 3.33 = 12.69。旧 41.21 は基準の記録が無い値（evidence.per 空欄）。eps 欄（11.08）は据置——門の ccfMcapUSD が px×ni÷eps（＝期末株数）で時価総額Tierを出すため。px÷eps（41.22）と per の差は期間基準の違い（TTM vs 通期）で正常。perF は空欄のまま（_meta.nulls.perF・基準の検問）。",
+   "gpm": "粗利率（粗利÷売上）の直近5会計年度の中央値 = 49.8%（5年: 2021 49.4% / 2022 46.4% / 2023 49.8% / 2024 51.0% / 2025 51.7%）。帯 85（<26.8→50／26.8〜44.0→70／≥44.0→85）。原本: SEC XBRL companyfacts（us-gaap・単位 USD・売上 RevenueFromContractWithCustomerExcludingAssessedTax・粗利 GrossProfit〔無い年は 売上−原価〕・様式 10-K）。night/fill_gpm.py"
   },
   "nulls": {
    "fcf": "PaymentsToAcquirePropertyPlantAndEquipment等capexタグ検死器で不発見。推定回避のためnull(参考: OCF2,837百万$、資産軽ゆえFCFはOCFに近似)",
@@ -185,7 +186,8 @@
    "p1": "machine",
    "acq5": "machine",
    "cagrT": "machine",
-   "sbc": "machine"
+   "sbc": "machine",
+   "gpm": "machine"
   },
   "basis": {
    "roic": "through-cycle-med5(4年・ICg縮退ガード適用後)",
@@ -242,5 +244,6 @@
  "ddate": "2026-10-10",
  "dep": 8,
  "cagrT": -2.01,
- "intcov": 8.3
+ "intcov": 8.3,
+ "gpm": 49.8
 }

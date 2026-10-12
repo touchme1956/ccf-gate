@@ -119,7 +119,8 @@
    "fin": "金融業態ではない（半導体製造装置向け電源）→no",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 1,415,826,000 → 2023年 1,655,800,000 → 2025年 1,798,800,000。A案(端点) 直近2年CAGR 4.23% − その前3年CAGR 5.36% = -1.13pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = +2.61pt ／ 年次YoY {'2021': 2.8, '2022': 26.8, '2023': -10.3, '2024': -10.5, '2025': 21.4} → **採用 +2.61pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
    "intcov": "機械算出 2025年: 営業利益 ÷ 支払利息 = 10.06。利息タグ InterestExpense（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict",
-   "acqS5": "買収支出 5年ぶん合計 185百万$ ÷ 期初総資産(2020-12-31) 1648百万$ ＝ 0.112／内訳: 2024-12-31 14百万$ / 2022-12-31 149百万$ / 2021-12-31 22百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）"
+   "acqS5": "買収支出 5年ぶん合計 185百万$ ÷ 期初総資産(2020-12-31) 1648百万$ ＝ 0.112／内訳: 2024-12-31 14百万$ / 2022-12-31 149百万$ / 2021-12-31 22百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）",
+   "gpm": "粗利率（粗利÷売上）の直近5会計年度の中央値 = 36.6%（5年: 2021 36.6% / 2022 36.6% / 2023 35.8% / 2024 35.7% / 2025 37.7%）。帯 70（<26.8→50／26.8〜44.0→70／≥44.0→85）。原本: SEC XBRL companyfacts（us-gaap・単位 USD・売上 RevenueFromContractWithCustomerExcludingAssessedTax・粗利 GrossProfit〔無い年は 売上−原価〕・様式 10-K）。night/fill_gpm.py"
   },
   "provenance": {
    "cagr": "machine",
@@ -139,7 +140,8 @@
    "eps": "machine",
    "eq": "machine",
    "cagrT": "machine",
-   "acqS5": "machine"
+   "acqS5": "machine",
+   "gpm": "machine"
   },
   "nulls": {
    "p3": "nde を埋めたので門が同表で機械導出する",
@@ -205,5 +207,6 @@
  "moatW": 50,
  "cagrT": 2.61,
  "intcov": 10.06,
- "acqS5": 0.1121
+ "acqS5": 0.1121,
+ "gpm": 36.6
 }

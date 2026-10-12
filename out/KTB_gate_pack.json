@@ -124,7 +124,8 @@
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2021年 2,097,839,000 → 2024年 2,607,578,000 → 2026年 3,152,456,000。A案(端点) 直近2年CAGR 9.95% − その前3年CAGR 7.52% = +2.43pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = 算出不能pt ／ 年次YoY {} → **採用 +2.43pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
    "intcov": "機械算出 2026年: 営業利益 ÷ 支払利息 = 5.418。利息タグ InterestExpenseNonoperating（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict",
    "acqS5": "買収支出 5年ぶん合計 901百万$ ÷ 期初総資産(2021-01-02) 1546百万$ ＝ 0.583／内訳: 2026-01-03 901百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）",
-   "roic": "機械算出 2025年単年（採取器 hd770bc0634 の系列の2025年）: NOPAT 256,494,259（営業利益 336,808,000×(1−実効税率23.8%)） ÷ IC 673,845,000＝自己資本 564,867,000 + 有利子負債 1,143,329,000 − のれん 531,137,000 − 無形 503,214,000（資産計上したソフトを無形の構成要素として含む）＝38.06%。保存済み roicg 15.0 と同じ年・同じNOPAT（単年）。5年中央値なら roic 35.8 / roicg 24.1"
+   "roic": "機械算出 2025年単年（採取器 hd770bc0634 の系列の2025年）: NOPAT 256,494,259（営業利益 336,808,000×(1−実効税率23.8%)） ÷ IC 673,845,000＝自己資本 564,867,000 + 有利子負債 1,143,329,000 − のれん 531,137,000 − 無形 503,214,000（資産計上したソフトを無形の構成要素として含む）＝38.06%。保存済み roicg 15.0 と同じ年・同じNOPAT（単年）。5年中央値なら roic 35.8 / roicg 24.1",
+   "gpm": "粗利率（粗利÷売上）の直近5会計年度の中央値 = 43.8%（4年: 2022 43.1%（売上−CostOfGoodsAndServicesSold） / 2023 41.7%（売上−CostOfGoodsAndServicesSold） / 2024 44.5%（売上−CostOfGoodsAndServicesSold） / 2026 45.1%（売上−CostOfGoodsAndServicesSold））。帯 70（<26.8→50／26.8〜44.0→70／≥44.0→85）。原本: SEC XBRL companyfacts（us-gaap・単位 USD・売上 RevenueFromContractWithCustomerExcludingAssessedTax・粗利 GrossProfit〔無い年は 売上−原価〕・様式 10-K）。night/fill_gpm.py"
   },
   "provenance": {
    "roicg": "machine",
@@ -139,7 +140,8 @@
    "p1": "machine",
    "cagrT": "machine",
    "acqS5": "machine",
-   "roic": "machine"
+   "roic": "machine",
+   "gpm": "machine"
   },
   "nulls": {
    "f5": "【2026-08-03】f5=65 は disrupt=settled（決着済/影響軽微） からの門の導出値 85 と食い違う『逸脱評価』だったが _meta.evidence.f5 に根拠が無かった。導出項目に根拠なき値を残すと門がそれを尊重し、**disruptを直しても f5 が追随しない＝陳腐化する**（night/fill_derived_judgment.py の設計思想）。空欄へ戻して門の導出に委ねる。逸脱させるなら原本根拠を付けて入れ直すこと",
@@ -178,5 +180,6 @@
  "roiic5": 20.4,
  "cagrT": 2.43,
  "intcov": 5.418,
- "acqS5": 0.583
+ "acqS5": 0.583,
+ "gpm": 43.8
 }

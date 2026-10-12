@@ -31,6 +31,9 @@ const fs = require('fs');
 const path = require('path');
 const ROOT = path.dirname(__dirname);
 const HTML = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+// v9.9.213: 表示の文に堀の関門の線を写さない——門の `const CCF_MOAT_GATE` を読む（const はグローバルのプロパティにならないので正規表現で）。
+//   判定そのものは門の ccfMoatGate を呼ぶので、ここは表示だけ。読めなければ「関門」とだけ書く（数字を推測しない）。
+const MOAT_GATE_TXT = (HTML.match(/const CCF_MOAT_GATE\s*=\s*(\d+(?:\.\d+)?)/) || [])[1] || '関門';
 
 // ---- 門のHTMLから「select欄とその既定値」「input欄の既定値」を読む ----
 const SELECTS = {};
@@ -332,7 +335,7 @@ for (const f of fs.readdirSync(path.join(ROOT, 'out'))) {
               vFail: VFAIL[t] ? VFAIL[t].n : undefined,
               pending: PENDING[t] || undefined,   // v9.9.128: 合意済み・未完了の重大事象
               // v9.9.98(2026-08-07 ユーザー明示指示): **門X遮断器 E[r]≥0 を関門から外した**。
-              // 四関門＝Ω75+ ∧ 堀70+ ∧ データ健全（点検err・未解決warn・期末後・納品検査）。
+              // 四関門＝Ω75+ ∧ 堀（門の CCF_MOAT_GATE・v9.9.213 から75）∧ データ健全（点検err・未解決warn・期末後・納品検査）。
               // 門(index.html)の pass=q75c と同一規則（v9.9.65の掟）
               shrink: shrink.hit ? shrink.why : undefined,
               // v9.9.143 ③: 目的の二分（表示専用・判定に不使用）。Ω_raw=壊れない^.459 × 複利^.541 の恒等分解
@@ -458,7 +461,7 @@ if (ALLOC_SEMI_N >= 3)
   console.log(`◇半導体連鎖の集中(注記・席の選定には効かない) ${ALLOC_SEMI_N}社＝席の${ALLOC_SEMI_PCT}%`
     + ` ／ 上限は2026-08-14に撤去（ユーザー明示指示）。1銘柄8%は守るが束の相関は誰も止めない`);
 console.log(`⛔堀不足で見送り(Ω75+だが堀が関門に届かない) ${q75.filter(x => !x.moatOK).length}社`);
-console.log(`⛔点検で見送り(Ω75+・堀70+だが要修正/未解決警告あり) ${q75.filter(x => x.moatOK && !x.audOK).length}社`);
+console.log(`⛔点検で見送り(Ω75+・堀${MOAT_GATE_TXT}+だが要修正/未解決警告あり) ${q75.filter(x => x.moatOK && !x.audOK).length}社`);
 // 期末後の重大事象で落ちた社は**必ず名指しで出す**。黙って消えると v9.9.52
 // 「城の行が理由不明で出ない」と同じ事故になる（四関門を通っているのに枠から消えるので、
 //  理由を書かないと「なぜ居ないのか」が誰にも分からない）。
@@ -484,7 +487,7 @@ console.log(`⛔点検で見送り(Ω75+・堀70+だが要修正/未解決警告
 {
   // v9.9.99: 事業の収縮で落ちた社は**名指しで出す**（黙って消さない・v9.9.52）
   const sh = rows.filter(r => r.s >= 75 && r.moatOK && r.shrink);
-  console.log(`⛔事業の収縮で見送り(Ω75+・堀70+だが売上縮小 ∧ 営業利益率低下) ${sh.length}社`);
+  console.log(`⛔事業の収縮で見送り(Ω75+・堀${MOAT_GATE_TXT}+だが売上縮小 ∧ 営業利益率低下) ${sh.length}社`);
 {
   // v9.9.179: **人の拒否権で落ちた社を名指しで出す**（門は通している＝黙って消さない・v9.9.52）
   const vt = rows.filter(x => x.veto && (x.s >= 75 || x.frame85));

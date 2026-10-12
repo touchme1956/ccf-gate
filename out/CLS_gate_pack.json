@@ -133,7 +133,8 @@
    "beta": "beta 1.464（FMP company profile・2026-10-05取得。門は WACC の計算で 0.8〜1.8 に挟む）",
    "evebit": "EV/EBIT ＝ (時価総額 48.85十億$ ＋ 有利子負債 776.5百万$ − 現金同等物（nde の根拠と同じ・FY2025末） 595.6百万$) ÷ FY2025 営業利益（OperatingIncomeLoss・米国基準。自社株 TRS の評価益 253.0 を含む——除けば 787.7） 1,040.7百万$ ＝ **47.1**（market_fetch と同じ式。表示層＝価格の論外線にだけ使われる）",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 5,748,100,000 → 2023年 7,961,000,000 → 2025年 12,390,900,000。A案(端点) 直近2年CAGR 24.76% − その前3年CAGR 11.47% = +13.29pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = +15.00pt ／ 年次YoY {'2021': -2.0, '2022': 28.7, '2023': 9.8, '2024': 21.2, '2025': 28.5} → **採用 +15.00pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
-   "intcov": "機械算出 2025年: 営業利益 1,040.7百万$ ÷ 支払利息 52.6百万$ ＝ 19.785。利息タグ InterestExpenseNonoperating（night/v11_facts.py の intcov_strict・2026-10-05 に --only で算出。基準＝interest）。⚠ 営業利益に自社株 TRS の評価益 253.0百万$ が入っている（roic・gm の evidence と同じ）——除けば 787.7 ÷ 52.6 ＝ 15.0。どちらもキルの線（3）から遠い"
+   "intcov": "機械算出 2025年: 営業利益 1,040.7百万$ ÷ 支払利息 52.6百万$ ＝ 19.785。利息タグ InterestExpenseNonoperating（night/v11_facts.py の intcov_strict・2026-10-05 に --only で算出。基準＝interest）。⚠ 営業利益に自社株 TRS の評価益 253.0百万$ が入っている（roic・gm の evidence と同じ）——除けば 787.7 ÷ 52.6 ＝ 15.0。どちらもキルの線（3）から遠い",
+   "gpm": "粗利率（粗利÷売上）の直近5会計年度の中央値 = 10.1%（4年: 2022 9.0% / 2023 9.5% / 2024 10.7% / 2025 12.1%）。帯 50（<26.8→50／26.8〜44.0→70／≥44.0→85）。原本: SEC XBRL companyfacts（us-gaap・単位 USD・売上 RevenueFromContractWithCustomerExcludingAssessedTax・粗利 GrossProfit〔無い年は 売上−原価〕・様式 10-K）。night/fill_gpm.py"
   },
   "nulls": {
    "市場データ": "beta/per/perF/evebit/px/shy/gr/gcap/analysts/instOwn/gls/idx/indG は指示書により触らない（新規パック＝null・後から機械充填）",
@@ -169,7 +170,8 @@
    "sbc": "kenshi",
    "roiic": "kenshi",
    "cagrT": "machine",
-   "intcov": "machine"
+   "intcov": "machine",
+   "gpm": "machine"
   },
   "basis": {
    "roic": "through-cycle-med3(2023-2025・米国基準のみ)",
@@ -193,5 +195,6 @@
  "mcap": 48.85,
  "ddate": "2026-10-02",
  "cagrT": 15.0,
- "intcov": 19.785
+ "intcov": 19.785,
+ "gpm": 10.1
 }
