@@ -170,6 +170,8 @@ def main():
     gC_vg = np.array([rows[c]['_c_vg'] for c in assets])
     Dmap, Dsrc, Dj = load_D(rows, assets)
     gD = np.array([Dmap[c] for c in assets])
+    _dl = ((Dj.get('sensitivity_D_net_by_asset') or {}).get('S_no5y_fidi_arith') or {}) if Dj else {}
+    gD_low = np.array([float(_dl[c]) if _dl.get(c) is not None else Dmap[c] for c in assets])   # 事後の参考: R3 の下側の読み方
     pi_main, pi_sens, Pj = load_pi()
     print('π 主', pi_main, '\nπ 感度', pi_sens, flush=True)
 
@@ -214,6 +216,10 @@ def main():
         b, c, dd = gB, gC, gD
         if var == 'K4':
             b, c, dd = gB + chips_adj, gC + chips_adj, gD + chips_adj
+        if var == 'post_K4_full':
+            b, c, dd = gB + 2 * chips_adj, gC + 2 * chips_adj, gD + 2 * chips_adj
+        if var == 'post_D_low':
+            dd = gD_low
         if var == 'C_GMO':
             c = gC_gmo
         if var == 'C_VG':
@@ -262,10 +268,11 @@ def main():
     vdot = lambda x: np.array([float(e_voo @ x)])   # noqa: E731
 
     SENS = ['loo_A1', 'loo_A2', 'loo_B', 'loo_C', 'loo_D', 'K4', 'K2', 'C_GMO', 'C_VG', 'equal_pi'] + [f'pi_{k}' for k in pi_sens]
+    POST = ['post_K4_full', 'post_D_low']      # 事後の参考（頑健さの規則には数えない）: 半導体の基礎率を薄めずに全部／R3 の D の下側
     results = {}
     rank_sum = np.zeros(N); rank_cnt = 0
     main_pick = None
-    for var in ['main'] + SENS:
+    for var in ['main'] + SENS + POST:
         pi = pi_of(var)
         if pi is None:
             continue
@@ -292,6 +299,12 @@ def main():
             main_pick = i_best
             main_p10 = i_p10
             main_pr, main_wv, main_feas = pr, wv, feas
+        elif var in POST:
+            nf = max(int(feas.sum()), 1)
+            ent['main_pick_rank_pct'] = float(100 * rk[main_pick] / nf)
+            ent['main_pick_in_top1pct'] = bool(rk[main_pick] < 0.01 * nf)
+            ent['post_hoc'] = True
+            ent['pick_weights'] = {assets[j]: int(Wint[i_best, j]) * 10 for j in range(n) if Wint[i_best, j]}
         else:
             nf = max(int(feas.sum()), 1)
             ent['main_pick_rank_pct'] = float(100 * rk[main_pick] / nf)
@@ -300,8 +313,12 @@ def main():
         results[var] = ent
         print(f'{var:<10} 実行可能 {feas.sum():,}  1位 P15π {100 * pr["P15"][i_best]:.1f}%（{time.time() - t0:.0f}秒）', flush=True)
 
-    n_top = sum(1 for v in results if v != 'main' and results[v].get('main_pick_in_top1pct'))
-    n_sens = sum(1 for v in results if v != 'main')
+    n_top = sum(1 for v in results if v != 'main' and not results[v].get('post_hoc') and results[v].get('main_pick_in_top1pct'))
+    n_sens = sum(1 for v in results if v != 'main' and not results[v].get('post_hoc'))
+    for v in results:
+        if v != 'main' and 'pick_weights' not in results[v]:
+            i = results[v]['pick']
+            results[v]['pick_weights'] = {assets[j]: int(Wint[i, j]) * 10 for j in range(n) if Wint[i, j]}
     robust_ok = n_top >= n_sens / 2
     avg_rank = np.where(main_feas, rank_sum / max(rank_cnt, 1), np.inf)
     i_robust = int(np.argmin(avg_rank))
