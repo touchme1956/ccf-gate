@@ -11,7 +11,6 @@
   - かごの月次リターン（年1回の持ち替え・持ったまま／毎月同じ重み・欠けた月）
   - 毎月の積立の倍率
 """
-import math
 import os
 import sys
 
@@ -134,6 +133,136 @@ check('積立: 値動きなしなら1倍', len(m) == 1 and close(m[0], 1.0))
 m = C.dca({202301: 1.0, 202302: 0.0}, 2)
 check('積立: 最初の月の2倍は最初の1回だけに効く', close(m[0], 1.5))
 check('月の足し算', C.ym_add(202312, 1) == 202401 and C.ym_add(202401, -1) == 202312)
+
+# ── v2 の部品 ──
+# 浮動株の単位の誤り
+v, n = C.fix_float(4.0958e12, 3.0e9)
+check('浮動株: 1000倍の誤りを直す', close(v, 4.0958e9, 1) and n == 1)
+v, n = C.fix_float(4.429e15, 3.0e9)
+check('浮動株: 100万倍の誤りを直す', close(v, 4.429e9, 1) and n == 2)
+v, n = C.fix_float(2.7e12, 6.5e10)
+check('浮動株: 正しい値（総資産の40倍）は触らない', close(v, 2.7e12, 1) and n == 0)
+v, n = C.fix_float(4.0e6, 3.0e10)
+check('浮動株: 1000分の1の誤りを直す', close(v, 4.0e9, 1) and n == -1)
+check('浮動株: 総資産が無ければ測れない', C.fix_float(1e9, None)[0] is None)
+v, n = C.fix_float(2.6e11, 2.2e9, classified=False)
+check('浮動株: 銀行（流動資産を出さない）の1000倍の誤りを直す', close(v, 2.6e8, 1) and n == 1)
+v, n = C.fix_float(1.5e11, 1.4e11, classified=False)
+check('浮動株: 銀行でも時価が総資産並みなら触らない', close(v, 1.5e11, 1) and n == 0)
+# 営業利益の代わりの道
+oi, src = C.op_income_derived({'GrossProfit': 100.0, 'ResearchAndDevelopmentExpense': 20.0, 'SellingGeneralAndAdministrativeExpense': 30.0})
+check('営業利益: 粗利−研究開発−販管費', close(oi, 50.0) and src == 'derived_gp')
+oi, src = C.op_income_derived({'Revenues': 300.0, 'CostOfRevenue': 200.0, 'GeneralAndAdministrativeExpense': 10.0, 'SellingAndMarketingExpense': 15.0})
+check('営業利益: 売上−原価で粗利・一般管理費＋販売費で販管費', close(oi, 75.0) and src == 'derived_gp')
+oi, src = C.op_income_derived({'IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest': 80.0, 'InterestExpense': 5.0})
+check('営業利益: 税引前＋支払利息', close(oi, 85.0) and src == 'derived_ebit')
+check('営業利益: 何も無ければ測れない', C.op_income_derived({})[0] is None)
+P2 = {7: {2024: {'OperatingIncomeLoss': 50.0, 'StockholdersEquity': 500.0, 'Assets': 800.0, 'Liabilities': 300.0,
+                 'CashAndCashEquivalentsAtCarryingValue': 100.0, 'DepreciationDepletionAndAmortization': 10.0}}}
+f2 = C.features(P2)[7][2024]
+check('借金のタグも支払利息も無い会社は借金0と読む', f2['debt_src'] == 'none' and f2['roic'] is not None)
+P2[7][2024]['InterestExpense'] = 20.0
+f2 = C.features(P2)[7][2024]
+check('利息を払っているのに借金のタグが無ければ測れない', f2['roic'] is None and f2['roicg'] is None)
+# 1社の上限
+w = C.cap_weights({'a': 50, 'b': 30, 'c': 10, 'd': 5, 'e': 5}, 0.3)
+check('上限: 合計は1', close(sum(w.values()), 1.0, 1e-9))
+check('上限: 30%を超えない', max(w.values()) <= 0.3 + 1e-9)
+check('上限: 残りは比を保つ', close(w['c'] / w['d'], 2.0, 1e-9))
+w = C.cap_weights({'a': 1, 'b': 1}, 0.3)
+check('上限: 守れない社数なら掛けない', close(w['a'], 0.5))
+# 金融の検問
+RF = {'kills_fin': {'years': 5, 'min_years': 3, 'roe_min': 9.0}}
+FF2 = {8: {y: {'ni': 12.0, 'eq': 100.0} for y in range(2020, 2025)}}
+check('金融: ROE 12% は通る', C.fin_kills(FF2, 8, 2024, RF) == [])
+FF2[8][2022]['ni'] = -1.0
+check('金融: 前の年の赤字（Berkshire の2022年の評価損など）だけでは外さない', C.fin_kills(FF2, 8, 2024, RF) == [])
+FF2[8][2024]['ni'] = -1.0
+check('金融: 直近の年が赤字なら外す', any('赤字' in w for w in C.fin_kills(FF2, 8, 2024, RF)))
+FF2[8][2024]['ni'] = 12.0
+FF2[8][2022]['ni'] = 5.0
+for y in (2020, 2021, 2023):
+    FF2[8][y]['ni'] = 8.0
+check('金融: ROE の中央値≤9%なら外す', any('ROE' in w for w in C.fin_kills(FF2, 8, 2024, RF)))
+check('業種: 金融とテックの見分け', C.is_fin(6022) and not C.is_fin(7372) and C.is_tech(3674) and C.is_tech(7372) and not C.is_tech(2834))
+# 重みつきのかご・入れ替えの売買の量
+ctx2 = X()
+ctx2.PX = {'A': {'m': {202306: 100.0, 202307: 110.0, 202406: 110.0, 202407: 110.0}}, 'B': {'m': {202306: 100.0, 202307: 100.0, 202406: 100.0, 202407: 100.0}}}
+r, ends, g = C.basket_returns_w(ctx2, {2023: {'A': 0.75, 'B': 0.25}}, 202307)
+check('重みつきのかご: 1か月目', close(r[202307], 0.075))
+check('重みつきのかご: 年の終わりの重み', close(ends[2023]['A'], 0.825 / 1.075))
+to = C.turnover({2023: {'A': 0.5, 'B': 0.5}, 2024: {'A': 0.5, 'B': 0.5}}, {2023: {'A': 0.6, 'B': 0.4}})
+check('売買の量: 0.5×Σ|差|', close(to[2024], 0.1))
+
+# 営業利益の三つ目の道（支払利息のタグも無い）
+oi, src = C.op_income_derived({'IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest': 80.0})
+check('営業利益: 支払利息のタグも無ければ税引前利益だけ（低く出る側）', close(oi, 80.0) and src == 'derived_pretax')
+# 借金の無い会社: 負債合計のタグが無くても
+P3 = {9: {2024: {'OperatingIncomeLoss': 50.0, 'StockholdersEquity': 500.0, 'Assets': 800.0}}}
+check('借金のタグも利息も負債合計も無い会社も借金0と読む', C.features(P3)[9][2024]['debt_src'] == 'none')
+# 純利益の代わりの道
+check('純利益: NetIncomeLoss が無ければ普通株に帰属する純利益', close(C.features({1: {2024: {'NetIncomeLossAvailableToCommonStockholdersBasic': 7.0}}})[1][2024]['ni'], 7.0))
+# 番号が変わった会社: タグごとに今の番号が先・無いタグは古い番号で埋める・古い番号は消す
+old_s = dict(C.SUCCESSORS)
+C.SUCCESSORS.clear()
+C.SUCCESSORS.update({101: 202})
+P4 = {101: {2020: {'Assets': 1.0, 'NetIncomeLoss': 5.0}, 2021: {'Assets': 2.0, 'NetIncomeLoss': 6.0}},
+      202: {2021: {'Assets': 2.5}, 2022: {'Assets': 3.0}}}
+C.merge_successors(P4)
+check('番号の付け替え: 古い番号は消える', 101 not in P4)
+check('番号の付け替え: 古い年は古い番号から', close(P4[202][2020]['NetIncomeLoss'], 5.0))
+check('番号の付け替え: 同じ年は今の番号の値が先・無いタグは古い番号で', close(P4[202][2021]['Assets'], 2.5) and close(P4[202][2021]['NetIncomeLoss'], 6.0))
+C.SUCCESSORS.clear()
+C.SUCCESSORS.update(old_s)
+# 6月末に出ていた決算の年（会計年度の終わりが4月1日より後の年は使わない）
+FD = {1: {2025: {'end': '2025-12-31', 'oi': 1.0}},
+      2: {2025: {'end': '2026-06-30', 'oi': 1.0}, 2024: {'end': '2025-06-30', 'oi': 1.0}},
+      3: {2023: {'end': '2023-12-31', 'oi': 1.0}},
+      4: {2025: {'end': '2026-03-31', 'ni': 1.0}}}
+asof = C.dt.date(2026, 6, 30)
+check('決算の年: 12月決算は前の暦年', C.decision_year(FD, 1, asof, 2026) == 2025)
+check('決算の年: 6月決算は7月に出る年を使わない', C.decision_year(FD, 2, asof, 2026) == 2024)
+check('決算の年: 2年より古ければ測れない', C.decision_year(FD, 3, asof, 2026) is None)
+check('決算の年: 3月決算はその年', C.decision_year(FD, 4, asof, 2026) == 2025)
+# 株数の基準の日（提出の年と会計年度の終わりの月から）
+check('株数の基準: 9月決算・2024年の提出→2024年11月', C.sh_basis_date({'sh_accn': '0000320193-24-000123', 'sh_end': '2024-09-28'}) == C.dt.date(2024, 11, 27))
+check('株数の基準: 12月決算・2025年の提出→2025年2月', C.sh_basis_date({'sh_accn': '0000000001-25-000001', 'sh_end': '2024-12-31'}) == C.dt.date(2025, 2, 26))
+check('株数の基準: accn が無ければ分からない', C.sh_basis_date({'sh_end': '2024-12-31'}) is None)
+
+
+# 時価の推定（浮動株×株価の変化 と 株数×株価 を突き合わせる）
+class Y2:
+    pass
+
+
+def mvctx(fl, sh, splits=()):
+    k = Y2()
+    k.c2t = {5: 'Q'}
+    k.PX = {'Q': {'m': {202306: 10.0, 202406: 10.0, 202506: 20.0, 202606: 40.0},
+                  'c': {202306: 10.0, 202406: 10.0, 202506: 20.0, 202606: 40.0}, 'splits': list(splits)}}
+    k.FL = {5: fl}
+    k.F = {5: {2025: {'sh': sh, 'sh_accn': '0000000005-26-000001', 'sh_end': '2025-12-31', 'end': '2025-12-31', 'assets': 1e9, 'classified': True}}}
+    return k
+
+
+asof = C.dt.date(2026, 6, 30)
+v, how = C.mv_value(mvctx({'2025-06-30': 1.8e9}, 1e8), 5, asof, 202606, 2025)
+check('時価: ふつうは浮動株×株価の変化（配当で膨らまない終値の比）', close(v, 3.6e9, 1) and how == 'fl')
+v, how = C.mv_value(mvctx({'2025-06-30': 7e9}, 1e8), 5, asof, 202606, 2025)
+check('時価: 浮動株が全株の3.5倍なら届け出の誤り→株数×株価', close(v, 4e9, 1) and how == 'sh')
+v, how = C.mv_value(mvctx({'2025-06-30': 1.8e9}, 1e5), 5, asof, 202606, 2025)
+check('時価: 株数が1000分の1なら株数の側の誤り→浮動株', close(v, 3.6e9, 1) and how == 'fl')
+v, how = C.mv_value(mvctx({'2025-06-30': 2e8}, 1e8), 5, asof, 202606, 2025)
+check('時価: 浮動株が全株の1割（親会社が大半）→買える浮動株', close(v, 4e8, 1) and how == 'fl')
+v, how = C.mv_value(mvctx({'2025-06-30': 1.8e9, '2024-06-30': 9e8, '2023-06-30': 9e9}, 1e8), 5, asof, 202606, 2025)
+check('時価: 浮動株は最大3つの中央値（1つの誤りに引きずられない）', close(v, 3.6e9, 1))
+v, how = C.mv_value(mvctx({}, 1e8, splits=[[20260301, 2.0]]), 5, asof, 202606, 2025)
+check('時価: 株数の数字が出た後の分割は掛ける', close(v, 8e9, 1) and how == 'sh_only')
+# 浮動株の株数が2,000億株を超える＝1000倍の届け出（Fannie Mae・Freddie Mac）
+k = mvctx({}, 5.9e9)
+k.PX['Q']['c'][201206] = k.PX['Q']['m'][201206] = 0.26
+v, n = C.verify_float(k, 5, 301e9, '2012-06-30')
+check('浮動株: 株数が2,000億株を超えれば1000で割る', close(v, 301e6, 1) and n == 1)
 
 print(f'check_ccf15: {ok} 件 OK・{bad} 件 NG')
 sys.exit(1 if bad else 0)

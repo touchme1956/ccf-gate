@@ -13,8 +13,9 @@
 使い方:
   python3 night/ccf15.py fetch       # SEC frames・業種・株価をキャッシュへ（out/_ccf15_cache・gitignore）
   python3 night/ccf15.py census      # 母集団の形（業種・除外の理由の数）だけを見る（株価のリターンは見ない）
-  python3 night/ccf15.py holdings    # 今日の中身（今年7月の組＝前の暦年の決算）→ out/ccf15.json
-  python3 night/ccf15.py backtest    # 事前登録 out/ccf15_prereg.json どおりの過去の検証 → out/ccf15_backtest.json
+  python3 night/ccf15.py holdings    # 今日の中身（今年7月の組＝前の暦年の決算）→ out/ccf15.json（規則の method で v1／v2）
+  python3 night/ccf15.py backtest    # 事前登録どおりの過去の検証 → out/ccf15_backtest.json（v2: out/ccf15_prereg_v2.json）
+  python3 night/ccf15.py backtest_v1 # v1（テックの外・同じ重み・out/ccf15_prereg.json）の検証の再現 → out/ccf15_backtest_v1.json
   python3 night/ccf15.py nav         # 紙の上の値動き（立ち上げ日から・日次）→ out/ccf15_nav.json
 
 約束（このリポジトリの絶対のルール7・8に従う）:
@@ -45,6 +46,8 @@ CACHE = os.path.join(BASE, 'out', '_ccf15_cache')
 RULES = os.path.join(BASE, 'out', 'ccf15_rules.json')
 OUT_HOLD = os.path.join(BASE, 'out', 'ccf15.json')
 OUT_BT = os.path.join(BASE, 'out', 'ccf15_backtest.json')
+OUT_BT1 = os.path.join(BASE, 'out', 'ccf15_backtest_v1.json')     # v1（テックの外・同じ重み）の検証の記録
+RULES_V1 = os.path.join(BASE, 'out', 'ccf15_rules_v1.json')        # v1 の規則書（事前登録 23d1aed の sha256 と同じ中身）
 OUT_NAV = os.path.join(BASE, 'out', 'ccf15_nav.json')
 YUA = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"}
 
@@ -57,7 +60,11 @@ DUR = ['OperatingIncomeLoss', 'NetIncomeLoss', 'NetCashProvidedByUsedInOperating
        'DepreciationDepletionAndAmortization', 'DepreciationAndAmortization', 'DepreciationAmortizationAndAccretionNet',
        'GrossProfit', 'Revenues', 'RevenueFromContractWithCustomerExcludingAssessedTax',
        'RevenueFromContractWithCustomerIncludingAssessedTax', 'SalesRevenueNet',
-       'CostOfRevenue', 'CostOfGoodsAndServicesSold', 'CostOfGoodsSold']
+       'CostOfRevenue', 'CostOfGoodsAndServicesSold', 'CostOfGoodsSold',
+       'ResearchAndDevelopmentExpense', 'SellingGeneralAndAdministrativeExpense',
+       'GeneralAndAdministrativeExpense', 'SellingAndMarketingExpense',
+       'ProfitLoss', 'NetIncomeLossAvailableToCommonStockholdersBasic']
+NI = ['NetIncomeLoss', 'NetIncomeLossAvailableToCommonStockholdersBasic', 'ProfitLoss']   # 代替（先に当たった一つ。実測: PNC・Truist・AMT・旧 Cigna）
 SHARES = 'WeightedAverageNumberOfDilutedSharesOutstanding'
 # 残高（年末の瞬間・CYyyyyQ4I）——gaps_sell と同じ候補（負債は『代替』と『構成要素』を分ける）
 INS = ['StockholdersEquity', 'StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest',
@@ -210,11 +217,16 @@ def sic_map(ciks, fetch=True):
 
 
 def yahoo_m(sym, fetch=True):
-    """月足 adjclose（配当込み・yyyymm→値）と株式分割（[(yyyymmdd, 倍率)]）。取れなければ None"""
+    """月足。m＝adjclose（配当込み・リターンに使う）／c＝close（分割だけ戻した終値・時価に使う）と株式分割（[(yyyymmdd, 倍率)]）。
+    取れなければ None。c の無い古いキャッシュは fetch なら取り直す（取らないなら c を持たないまま返す＝呼び出し側が m で代える）"""
     fn = os.path.join(CACHE, 'px', f'{sym}.json')
     if os.path.exists(fn):
         j = json.load(open(fn))
-        return None if j is None else {'m': {int(k): v for k, v in j['m'].items()}, 'splits': j['splits'], 'ccy': j.get('ccy')}
+        if j is None:
+            return None
+        if 'c' in j or not fetch:
+            return {'m': {int(k): v for k, v in j['m'].items()}, 'c': {int(k): v for k, v in (j.get('c') or {}).items()},
+                    'splits': j['splits'], 'ccy': j.get('ccy')}
     if not fetch:
         return None
     t0 = int(dt.datetime(2007, 1, 1).timestamp())
@@ -237,26 +249,33 @@ def yahoo_m(sym, fetch=True):
     out = None
     if res and res.get('timestamp'):
         ind = res['indicators']
-        ser = (ind.get('adjclose') or [{}])[0].get('adjclose') or ind['quote'][0]['close']
+        close = ind['quote'][0].get('close') or []
+        ser = (ind.get('adjclose') or [{}])[0].get('adjclose') or close
         gmt = (res.get('meta') or {}).get('gmtoffset') or 0
-        m = {}
-        for t, v in zip(res['timestamp'], ser):
-            if v is None:
-                continue
+        m, c = {}, {}
+        for i, t in enumerate(res['timestamp']):
             d = dt.datetime.utcfromtimestamp(t + gmt)
-            m[f'{d.year:04d}-{d.month:02d}'] = float(v)
+            k = f'{d.year:04d}-{d.month:02d}'
+            if i < len(ser) and ser[i] is not None:
+                m[k] = float(ser[i])
+            if i < len(close) and close[i] is not None:
+                c[k] = float(close[i])
         m = PXG.vet(sym, m, 'ccf15.yahoo_m', req_start=t0, record=False) or {}
+        c = {k: v for k, v in c.items() if k in m}
         sp = []
         for e in ((res.get('events') or {}).get('splits') or {}).values():
             if e.get('numerator') and e.get('denominator'):
                 d = dt.datetime.utcfromtimestamp(e['date'])
                 sp.append([d.year * 10000 + d.month * 100 + d.day, e['numerator'] / e['denominator']])
         if m:
-            out = {'m': {int(k[:4]) * 100 + int(k[5:]): v for k, v in m.items()}, 'splits': sorted(sp),
-                   'ccy': (res.get('meta') or {}).get('currency')}
+            out = {'m': {int(k[:4]) * 100 + int(k[5:]): v for k, v in m.items()},
+                   'c': {int(k[:4]) * 100 + int(k[5:]): v for k, v in c.items()},
+                   'splits': sorted(sp), 'ccy': (res.get('meta') or {}).get('currency')}
     os.makedirs(os.path.dirname(fn), exist_ok=True)
-    json.dump(None if out is None else {'m': {str(k): v for k, v in out['m'].items()}, 'splits': out['splits'], 'ccy': out['ccy']},
-              open(fn, 'w'))
+    tmp = fn + '.tmp'
+    json.dump(None if out is None else {'m': {str(k): v for k, v in out['m'].items()}, 'c': {str(k): v for k, v in out['c'].items()},
+                                        'splits': out['splits'], 'ccy': out['ccy']}, open(tmp, 'w'))
+    os.replace(tmp, fn)
     time.sleep(0.15)
     return out
 
@@ -327,6 +346,59 @@ def frame_cached(tax, tag, unit, period):
     return json.load(open(fn))
 
 
+# 番号（CIK）が変わった会社: 持株会社への組み替え・本社の国の移転で、同じ株（1株＝1株）が今のティッカーで続いている社だけ。
+# 古い番号の決算と浮動株を今の番号へつなぐ。つながないと古い番号の年は『今はティッカーが無い』で母集団から消える
+# （実測: Exxon は2026年に持株会社へ移って全年が抜けていた・Alphabet 2013〜2015・Disney 2013〜2019・BlackRock 2013〜2024・
+#  Cigna 2013〜2018・Praxair(Linde) 2013〜2018・Avago(Broadcom) 2013〜2018・Medtronic 2013〜2015）。
+# 決め方: SEC の社名・旧社名で組み替えと確かめ、かつ 古い番号の浮動株 ÷（株数×今のティッカーの株価）が年をまたいで
+# 滑らかに 0.3〜3倍に収まる（配当込みの株価なので古い年ほど少し大きく出る）。
+# つながない: 合併で相手の株になった社（Chubb Corp→ACE・Broadcom Corp→Avago・Cooper Industries→Eaton）、
+# 今のティッカーの株価の履歴が別の会社のもの（JCI＝Tyco の履歴・KHC は2015年7月から）、交換が1株＝1株でない社
+SUCCESSORS = {
+    34088: 2115436,     # Exxon Mobil Corp → ExxonMobil Holdings（XOM）
+    1288776: 1652044,   # Google Inc → Alphabet（GOOGL・2015）
+    1001039: 1744489,   # Walt Disney（旧・今は TWDC Enterprises 18）→ Walt Disney（DIS・2019）
+    64670: 1613103,     # Medtronic Inc → Medtronic plc（MDT・2015）
+    1364742: 2012383,   # BlackRock（旧・今は BlackRock Finance）→ BlackRock（BLK・2024）
+    701221: 1739940,    # Cigna Corp（旧・今は Cigna Holding）→ Cigna Group（CI・2018）
+    1441634: 1730168,   # Avago Technologies → Broadcom Ltd（2016）→ Broadcom Inc（AVGO・2018）
+    1649338: 1730168,
+    6769: 1841666,      # Apache Corp → APA Corp（APA・2021）
+    884905: 1707925,    # Praxair（今は Linde Inc）→ Linde plc（LIN・2018）
+    108772: 1770450,    # Xerox Corp → Xerox Holdings（XRX・2019）
+    1058057: 1835632,   # Marvell Technology Group → Marvell Technology Inc（MRVL・2021）
+    1144519: 1996862,   # Bunge Ltd → Bunge Global（BG・2023）
+    820096: 1585364,    # Perrigo Co → Perrigo plc（PRGO・2013）
+    1174746: 1571949,   # IntercontinentalExchange Inc → ICE Group（ICE・2013）
+    1772757: 1883685,   # DraftKings Holdings → DraftKings Inc（DKNG・2022）
+    1832433: 2011641,   # Ferguson plc → Ferguson Enterprises（FERG・2024）
+    815065: 1757898,    # STERIS Corp → STERIS plc（英国 2015）→ STERIS plc（アイルランド・STE・2019）
+    1624899: 1757898,
+    92416: 1692115,     # Southwest Gas Corp → Southwest Gas Holdings（SWX・2017）
+    73088: 1993004,     # NorthWestern Corp → NorthWestern Energy Group（NWE・2023）
+    912752: 1971213,    # Sinclair Broadcast Group → Sinclair Inc（SBGI・2023）
+    31277: 1551182,     # Eaton Corp → Eaton plc（ETN・2012）
+    69499: 1792044,     # Mylan Inc → Mylan NV（2015）→ Viatris（VTRS・2020）
+    1623613: 1792044,
+    808362: 1701605,    # Baker Hughes Inc → BHGE（2017・1株＋現金の配当）→ Baker Hughes Co（BKR）
+}
+
+
+def merge_successors(P):
+    """古い番号の決算を今の番号へ寄せる（同じ年は タグごとに 今の番号の値が先・無いタグだけ古い番号の値で埋める）。古い番号は消す"""
+    for new in sorted(set(SUCCESSORS.values())):
+        olds = sorted((o for o, n in SUCCESSORS.items() if n == new), key=lambda o: max(P.get(o) or {0: None}))
+        merged = {}
+        for o in olds:
+            for y, d in (P.pop(o, None) or {}).items():
+                merged.setdefault(y, {}).update(d)
+        for y, d in (P.get(new) or {}).items():
+            merged.setdefault(y, {}).update(d)
+        if merged:
+            P[new] = merged
+    return P
+
+
 def load_panel():
     P = {}      # cik -> 年 -> {タグ: 値, '_end': 会計年度の終わり}
     for y in YEARS:
@@ -336,13 +408,46 @@ def load_panel():
                 d[t] = v
                 if t == 'OperatingIncomeLoss' and en:
                     d['_end'] = en
+                elif en and '_end_any' not in d:
+                    d['_end_any'] = en
         for cik, v, st, en, accn in frame_cached('us-gaap', SHARES, 'shares', f'CY{y}'):
             d = P.setdefault(cik, {}).setdefault(y, {})
-            d['_sh'], d['_sh_end'] = v, en
+            d['_sh'], d['_sh_end'], d['_sh_accn'] = v, en, accn
         for t in INS:
             for cik, v, st, en, accn in frame_cached('us-gaap', t, 'USD', f'CY{y}Q4I'):
                 P.setdefault(cik, {}).setdefault(y, {})[t] = v
-    return P
+    return merge_successors(P)
+
+
+def op_income_derived(d):
+    """営業利益のタグ（OperatingIncomeLoss）を出していない会社（LLY・JNJ・PFE・MRK など）の代わりの道。
+    (1) 粗利 − 研究開発費 − 販管費（gate0_v8_5.derive_opinc と同じ組み立て。販管費は 一般管理費＋販売費 でもよい）
+    (2) 税引前利益 ＋ 支払利息（営業外の損益を含む近い値。石油など粗利を出さない会社）
+    (3) 税引前利益だけ（支払利息のタグも無い会社。利息のぶん低く出る＝検問に厳しい側）
+    どれも無ければ None（測れない）"""
+    gp = d.get('GrossProfit')
+    if gp is None:
+        rev, cg = first(d, REV), first(d, COGS)
+        gp = (rev - cg) if (rev is not None and cg is not None) else None
+    sga = d.get('SellingGeneralAndAdministrativeExpense')
+    if sga is None and d.get('GeneralAndAdministrativeExpense') is not None and d.get('SellingAndMarketingExpense') is not None:
+        sga = d['GeneralAndAdministrativeExpense'] + d['SellingAndMarketingExpense']
+    if gp is not None and sga is not None:
+        return gp - (d.get('ResearchAndDevelopmentExpense') or 0) - sga, 'derived_gp'
+    pre = first(d, PRETAX)
+    ie = first(d, INTEREST)
+    if pre is not None and ie is not None:
+        return pre + ie, 'derived_ebit'
+    if pre is not None:
+        return pre, 'derived_pretax'      # 支払利息のタグが無い（GE・Newmont・PACCAR など）: 税引前利益で代える＝低く出る側
+    return None, None
+
+
+def no_debt_plausible(d, A):
+    """借金のタグが一つも無いとき、借金0と読んでよいか。支払利息のタグが無いか、あっても総資産の0.2%以下なら借金は無いと読む。
+    利息を払っているのにタグが無い会社は『測れない』のまま（0と読むと投下資本が縮んで ROIC が発散する＝ルール7）"""
+    ie = first(d, INTEREST)
+    return ie is None or (A > 0 and ie <= 0.002 * A)
 
 
 def features(P):
@@ -350,7 +455,9 @@ def features(P):
     for cik, ys in P.items():
         out = {}
         for y, d in ys.items():
-            oi = d.get('OperatingIncomeLoss')
+            oi, op_src = d.get('OperatingIncomeLoss'), 'reported'
+            if oi is None:
+                oi, op_src = op_income_derived(d)
             eq = first(d, EQ)
             A, L = d.get('Assets'), d.get('Liabilities')
             eq_fix = False
@@ -360,6 +467,9 @@ def features(P):
             tax = d.get('IncomeTaxExpenseBenefit')
             t = min(0.5, max(0.0, tax / pre)) if (pre and pre > 0 and tax is not None) else (0.35 if y <= 2017 else 0.21)
             debt = debt_of(d)
+            debt_src = 'tags'
+            if debt is None and A and no_debt_plausible(d, A):
+                debt, debt_src = 0.0, 'none'     # 借金のタグが一つも無く、支払利息も無い（総資産の0.2%以下）＝借金の無い会社（AAPL 2012・META 2017 など）
             roic = roicg = None
             if oi is not None and eq is not None and debt is not None and eq > 0:
                 nopat = oi * (1 - t)
@@ -388,7 +498,10 @@ def features(P):
                           nde=nde, icov=icov, z=z,
                           gpa=(gp / A) if (gp is not None and A and A > 0) else None,
                           cfoa=(ocf / A) if (ocf is not None and A and A > 0) else None,
-                          sh=d.get('_sh'), sh_end=d.get('_sh_end'), end=d.get('_end'))
+                          sh=d.get('_sh'), sh_end=d.get('_sh_end'), sh_accn=d.get('_sh_accn'),
+                          end=d.get('_end') or d.get('_end_any'), ni=first(d, NI),
+                          assets=A, classified=d.get('AssetsCurrent') is not None,
+                          op_src=op_src if oi is not None else None, debt_src=debt_src if debt is not None else None)
         F[cik] = out
     return F
 
@@ -413,16 +526,58 @@ def dilution(F, cik, D, splits, years):
 
 
 # ───────────────────────── 母集団・外す・並べる・選ぶ ─────────────────────────
-def float_table():
-    FL = {}
+FLOAT_FIX = {'hi': 200.0, 'hi_unclassified': 5.0, 'lo': 0.0005}   # 浮動株÷総資産 がこの外なら 1000倍ずつ直す（最大2回）
+
+
+def fix_float(v, assets, classified=True):
+    """10-K の表紙の浮動株時価は、提出の XBRL で単位が1000倍・100万倍ずれていることがある
+    （実測: Advance Auto Parts 2012 が 4.1兆ドル・Cabot 2025 が 4,429兆ドル・Enova・Champion Homes・Novanta・CoreCivic・Fresenius が1000倍）。
+    総資産と比べて、浮動株÷総資産 が上の線を超えれば1000で割り、0.0005 を下回れば1000を掛ける（最大2回）。
+    上の線は、流動資産を出す会社（ふつうの事業会社）で 200、出さない会社（銀行・保険など＝総資産が大きく時価は総資産を超えにくい）で 5
+    （実測: German American Bancorp・Great Southern・Trustmark の1000倍の誤りは 200 の線では素通りした）。
+    直しても帯の外なら None（測れない）。総資産が無ければ確かめられないので None"""
+    if not assets or assets <= 0 or not v or v <= 0:
+        return None, None
+    hi = FLOAT_FIX['hi'] if classified else FLOAT_FIX['hi_unclassified']
+    n = 0
+    while v / assets > hi and n < 2:
+        v, n = v / 1000, n + 1
+    while v / assets < FLOAT_FIX['lo'] and n > -2:
+        v, n = v * 1000, n - 1
+    if not (FLOAT_FIX['lo'] <= v / assets <= hi):
+        return None, n
+    return v, n
+
+
+def float_table(F=None):
+    """浮動株時価の表（cik → {日付: 値}）。F（決算の表）を渡すと、総資産と比べて単位の誤りを直し、確かめられない値は捨てる"""
+    FL, fixed, dropped = {}, 0, 0
+    by_old = set()      # 番号が変わった会社: 同じ日付の値が両方にあれば、その時に出された古い番号の値を採る
     for y in FLOAT_YEARS:
         for q in (1, 2, 3, 4):
             fn = os.path.join(CACHE, 'frames', f'dei_EntityPublicFloat_USD_CY{y}Q{q}I.json')
             if not os.path.exists(fn):
                 continue
-            for cik, v, st, en, accn in json.load(open(fn)):
-                if en and v and v > 0:
-                    FL.setdefault(cik, {})[en] = v
+            for cik0, v, st, en, accn in json.load(open(fn)):
+                if not (en and v and v > 0):
+                    continue
+                cik = SUCCESSORS.get(cik0, cik0)
+                if cik0 == cik and (cik, en) in by_old:
+                    continue
+                if F is not None:
+                    ys = F.get(cik) or {}
+                    fy = [yy for yy in ys if ys[yy].get('assets') and yy <= int(en[:4])]
+                    a = ys[max(fy)]['assets'] if fy else None
+                    v2, n = fix_float(v, a, ys[max(fy)].get('classified', True) if fy else True)
+                    if v2 is None:
+                        dropped += 1
+                        continue
+                    fixed += (n != 0)
+                    v = v2
+                FL.setdefault(cik, {})[en] = v
+                if cik0 != cik:
+                    by_old.add((cik, en))
+    float_table.stats = {'単位を直した': fixed, '確かめられず捨てた': dropped}
     return FL
 
 
@@ -443,6 +598,18 @@ def universe(FL, asof, top):
         if es:
             cand[cik] = ends[max(es)]
     return sorted(cand, key=lambda c: -cand[c])[:top], cand
+
+
+def universe2(FL, asof, top):
+    """universe と同じ窓・同じ順。値に加えて浮動株の日付も返す（株価の変化で今の時価へ直すため）"""
+    lo, hi = add_months(asof, -30).isoformat(), add_months(asof, -12).isoformat()
+    cand = {}
+    for cik, ends in FL.items():
+        es = [e for e in ends if lo <= e <= hi]
+        if es:
+            e = max(es)
+            cand[cik] = (ends[e], e)
+    return sorted(cand, key=lambda c: -cand[c][0])[:top], cand
 
 
 def sic_excluded(sic, R):
@@ -497,7 +664,7 @@ def pct(vals, higher=True):
 class Ctx:
     def __init__(self, fetch=False):
         self.F = features(load_panel())
-        self.FL = float_table()
+        self.FL = float_table(self.F)
         self.c2t, self.names = tickers(fetch)
         self.SIC = {}
         self.PX = {}
@@ -598,6 +765,7 @@ def prefetch_prices(ctx, R):
                 continue
             if ctx.c2t.get(c):
                 need.add(ctx.c2t[c])
+    need |= {'VOO', 'QUAL', 'SPHQ'}
     todo = sorted(t for t in need if not os.path.exists(os.path.join(CACHE, 'px', f'{t}.json')))
     print(f'株価: {len(need)} 本（未取得 {len(todo)}）', flush=True)
     done = [0]
@@ -723,7 +891,7 @@ def mix(parts):
 def growth(series):
     """同じ月から始めた1ドルの推移（ページのグラフ用・月末の値）。全部がそろう月だけ"""
     ks = sorted(set.intersection(*[set(v) for v in series.values()]))
-    out, lv = {'months': ks}, {}
+    out = {'months': ks}
     for name, r in series.items():
         v, path = 1.0, []
         for k in ks:
@@ -807,8 +975,9 @@ def judge_slot(rCCF, rITA, q, smh, th, months):
             'dca_min_ccf15': round(min(d1), 3) if d1 else None, 'dca_min_ita': round(min(d0), 3) if d0 else None}, v
 
 
-def backtest():
-    R = rules()
+def backtest_v1():
+    """v1（テックの外・同じ重み・事前登録 out/ccf15_prereg.json）の検証を、v1 の規則書のまま作り直す（記録の再現用）"""
+    R = json.load(open(RULES_V1, encoding='utf-8'))
     PR = json.load(open(os.path.join(BASE, 'out', 'ccf15_prereg.json'), encoding='utf-8'))
     ev = PR['evaluation']
     ctx = Ctx(fetch=False)
@@ -845,14 +1014,518 @@ def backtest():
            '生き残りの偏り（消えた社の数・上位1000社のうち）': gone, 'gaps': gaps,
            'growth': growth({'CCF15': rH, 'ITA': B['ITA'], 'SPY': B['SPY'], 'RSP': B['RSP'], 'QQQ': B['QQQ']}),
            'cohorts': logs}
-    json.dump(doc, open(OUT_BT, 'w'), ensure_ascii=False, indent=1)
+    json.dump(doc, open(OUT_BT1, 'w'), ensure_ascii=False, indent=1)
     print(json.dumps({'J1': sel_v, 'J1_ex': sel_ex, 'J2': slot_v, 'dcagr': slot['dcagr'], 'dmaxdd': slot['dmaxdd'],
                       'CCF15': st['CCF15'], 'ITA': st['ITA'], 'SPY': st['SPY']}, ensure_ascii=False, indent=1))
 
 
-# ───────────────────────── 今日の中身 ─────────────────────────
+# ───────────────────────── v2: 全銘柄・時価の重み・質で傾ける・1社の上限 ─────────────────────────
+TECH_SIC = [(3570, 3579), (3661, 3679), (3559, 3559), (3825, 3825), (3827, 3827), (5065, 5065), (7370, 7379)]
+
+
+def is_fin(sic):
+    return sic is not None and 6000 <= sic <= 6799
+
+
+def is_tech(sic):
+    return sic is not None and any(lo <= sic <= hi for lo, hi in TECH_SIC)
+
+
+def fin_kills(F, c, D, R):
+    """金融（銀行・保険・不動産・証券・取引所など）は ROIC・純負債・Z'' が意味を持たない（借金や預かり金が原材料）。
+    代わりに 金融以外と同じ形で: 直近の年が赤字なら外す（金融以外の『営業赤字』）・自己資本>0（『債務超過』）・
+    直近 years 年の ROE（純利益÷自己資本）の中央値 > roe_min（『ROIC≦WACC』）。測れない（純利益が min_years 年分ない）社は外す"""
+    k = R['kills_fin']
+    f = F.get(c, {}).get(D)
+    if not f or f.get('ni') is None:
+        return ['決算が無い（測れない）']
+    why = []
+    if f['eq'] is None:
+        why.append('自己資本が測れない')
+    elif f['eq'] <= 0:
+        why.append('債務超過')
+    ys = [y for y in range(D - k['years'] + 1, D + 1) if y in F[c] and F[c][y].get('ni') is not None]
+    if len(ys) < k['min_years']:
+        why.append(f"純利益が{k['min_years']}年分ない（測れない）")
+        return why
+    if f['ni'] <= 0:
+        why.append('赤字')
+    roe = [F[c][y]['ni'] / F[c][y]['eq'] * 100 for y in ys if F[c][y].get('eq') and F[c][y]['eq'] > 0]
+    if len(roe) < k['min_years']:
+        why.append('ROEが測れない')
+    elif S.median(roe) <= k['roe_min']:
+        why.append(f"ROE中央値≤{k['roe_min']}%")
+    return why
+
+
+def cap_weights(w, cap):
+    """比で配り、1社 cap を超えた分を残りの社へ比で配り直す（超える社が無くなるまで）。
+    cap×社数<1（上限を守れない）なら上限を掛けない"""
+    tot = sum(w.values())
+    if tot <= 0:
+        return {}
+    w = {k: v / tot for k, v in w.items()}
+    if not cap or cap * len(w) < 1:
+        return w
+    fixed = set()
+    for _ in range(len(w) + 1):
+        over = [k for k, v in w.items() if k not in fixed and v > cap + 1e-12]
+        if not over:
+            break
+        fixed.update(over)
+        free = [k for k in w if k not in fixed]
+        rest = 1 - cap * len(fixed)
+        fs = sum(w[k] for k in free)
+        for k in fixed:
+            w[k] = cap
+        for k in free:
+            w[k] = w[k] / fs * rest if fs > 0 else rest / len(free)
+    return w
+
+
+FLOAT_SHARES_MAX = 2e11   # 浮動株の株数（浮動株時価÷その月の株価）の上限。どの会社もこの1/8に届いたことがない（最大は NVDA・AAPL の約250億株）
+
+
+def verify_float(ctx, c, val, end):
+    """浮動株の桁の誤りの二つ目の検問（株価のある社だけ）。どちらかに当たれば1000で割る（最大2回）:
+    (1) 浮動株÷その月の株価（分割を戻した値）＝浮動株の株数 が 2,000億株を超える。株数のタグを使わない
+        （実測: Fannie Mae・Freddie Mac は毎年1000倍で届け出ていて、総資産が大きいので総資産の検問も素通りした）。
+    (2) 浮動株が 株数（希薄化後の加重平均・その年）×株価 の50倍を超え、かつ 総資産と比べても大きすぎる
+        （流動資産を出す会社で10倍・出さない会社〔銀行・保険・REIT〕で1倍超）。
+        片方だけなら直さない——株数の側の誤り（実測: W.R. Berkley・Garmin・Repligen は株数を1000分の1で届けている）や
+        配当込みの株価の歪み（実測: SITE Centers は分社の調整で配当込みの株価が実際の約1/70）でも比は大きく出るため。
+    戻り値: (値, 直した回数)"""
+    t = ctx.c2t.get(c)
+    p = ctx.PX.get(t) if t else None
+    ys = ctx.F.get(c) or {}
+    if not p:
+        return val, 0
+    k0 = int(end[:4]) * 100 + int(end[5:7])
+    m = p.get('c') or p['m']          # 分割だけ戻した終値（配当込みの値は古い年ほど小さく出る＝SITE Centers は約1/70）
+    if k0 not in m or m[k0] <= 0:
+        return val, 0
+    split_after = math.prod(f for d8, f in (p.get('splits') or []) if d8 > k0 * 100 + 31)
+    px0 = m[k0] * split_after
+    n = 0
+    while val / px0 > FLOAT_SHARES_MAX and n < 2:
+        val, n = val / 1000, n + 1
+    y0 = int(end[:4])
+    yy = [y for y in (y0, y0 - 1, y0 + 1) if y in ys and ys[y].get('sh') and ys[y]['sh'] > 0]
+    fa = [y for y in ys if ys[y].get('assets') and y <= y0]
+    if not yy or not fa:
+        return val, n
+    implied = ys[yy[0]]['sh'] * px0
+    a = ys[max(fa)]
+    lim = 10.0 if a.get('classified', True) else 1.0
+    while implied > 0 and val / implied > 50 and val / a['assets'] > lim and n < 2:
+        val, n = val / 1000, n + 1
+    return val, n
+
+
+FILE_LAG_DAYS = 90     # 10-K は会計年度の終わりから60〜90日で出る。6月末の組は、4月1日までに終わった会計年度だけを使う
+
+
+def decision_year(F, c, asof, Y):
+    """asof（6月末）の時点で出ていた最新の年次決算の年（frames の暦年）。会計年度の終わりが asof の90日前より後の年は使わない
+    （frames は6月決算の会計年度をその前の暦年に入れることがある＝そのままだと7月に出る決算を6月末の組で使ってしまう。
+    実測: Seagate の2025年6月期は CY2024 に入る）。2年より古い年しか無ければ None（決算が止まっている）"""
+    lim = (asof - dt.timedelta(days=FILE_LAG_DAYS)).isoformat()
+    ys = F.get(c) or {}
+    for y in (Y - 1, Y - 2):
+        f = ys.get(y)
+        if f and f.get('end') and f['end'] <= lim and (f.get('oi') is not None or f.get('ni') is not None):
+            return y
+    return None
+
+
+def sh_basis_date(f):
+    """株数（frames＝最後に出された値）がいつの分割までを戻した値か: その値を出した提出の年（accn の真ん中の2桁）と
+    会計年度の終わりの月から、提出日をおよそ『会計年度の終わり＋60日』と置く。分からなければ None"""
+    try:
+        yy = 2000 + int((f.get('sh_accn') or '').split('-')[1])
+    except (IndexError, ValueError):
+        return None
+    e = f.get('sh_end') or f.get('end')
+    if not e:
+        return None
+    mo, dd = int(e[5:7]), min(int(e[8:10]), 28)
+    for cy in (yy - 1, yy):
+        d = dt.date(cy, mo, dd) + dt.timedelta(days=60)
+        if d.year == yy:
+            return d
+    return dt.date(yy, 6, 30)
+
+
+MV_RATIO = (0.15, 2.0, 50.0)   # 浮動株の時価 ÷ 全株の時価 の帯（下は親会社などが大半を持つ社・上は届け出の誤り・50超は株数の側の誤り）
+
+
+def mv_value(ctx, c, asof, key, D):
+    """時価（key の月の株価で）の推定。独立な二つの道を突き合わせる:
+    E_fl＝浮動株（10-K の表紙・asof の12〜42か月前・新しい順に最大3つ・verify_float で桁を確かめる）× その日から key までの
+         株価の変化（分割だけ戻した終値の比＝配当や分社で膨らまない）の中央値＝株価指数と同じ『浮動株の時価』。
+    E_sh＝株数（D 年の希薄化後の加重平均）× key の終値 ×（その数字が出された後の分割）＝全株の時価。
+    r＝E_fl÷E_sh が 0.15〜2 なら E_fl。2〜50 なら浮動株が全株より大きい＝届け出の誤りなので E_sh
+    （実測: Seagate は2022年と2024年の届け出が全株の1.6倍・3.5倍）。50 超は株数の側の誤り（Berkshire は A 株換算の株数・
+    株数を1000分の1で届ける社）なので E_fl。0.15 未満は親会社や政府が大半を持つ社＝買えるのは浮動株だけなので E_fl。
+    片方しか無ければその値。戻り値: (時価, 道)。どちらも無ければ (None, None)"""
+    p = ctx.PX.get(ctx.c2t.get(c)) or {}
+    cl = p.get('c') or p.get('m') or {}
+    if key not in cl or cl[key] <= 0:
+        return None, None
+    lo, hi = add_months(asof, -42).isoformat(), add_months(asof, -12).isoformat()
+    obs = sorted(((e, v) for e, v in (ctx.FL.get(c) or {}).items() if lo <= e <= hi), reverse=True)[:3]
+    fl = []
+    for e, v in obs:
+        v, _ = verify_float(ctx, c, v, e)
+        k0 = int(e[:4]) * 100 + int(e[5:7])
+        if k0 in cl and cl[k0] > 0:
+            fl.append(v * cl[key] / cl[k0])
+    e_fl = S.median(fl) if fl else None
+    f = (ctx.F.get(c) or {}).get(D) if D is not None else None
+    e_sh = None
+    if f and f.get('sh') and f['sh'] > 0:
+        b = sh_basis_date(f)
+        mult = 1.0
+        if b:
+            b8 = b.year * 10000 + b.month * 100 + b.day
+            mult = math.prod(x for d8, x in (p.get('splits') or []) if d8 > b8)
+        e_sh = f['sh'] * cl[key] * mult
+    lo_r, hi_r, broken = MV_RATIO
+    if e_fl and e_sh:
+        r = e_fl / e_sh
+        if hi_r < r <= broken:
+            return e_sh, 'sh'
+        return e_fl, 'fl'
+    if e_fl:
+        return e_fl, 'fl_only'
+    if e_sh:
+        return e_sh, 'sh_only'
+    return None, None
+
+
+def tilt_of(ctx, elig_nf, Dc, R):
+    """質で傾ける（金融を除く、検問を通った社の中で）: 粗利÷総資産・営業CF÷総資産・3年の株数の変化の順位の平均 → 三分位 → 倍率。
+    物差しが min_metrics 個そろわない社は入れない（呼び出し側で1倍＝傾けない）。Dc: 会社ごとの決算の年"""
+    k = R['rank']
+    met = {'gpa': {}, 'cfoa': {}, 'dsh': {}}
+    for c in elig_nf:
+        D = Dc.get(c)
+        f = (ctx.F.get(c) or {}).get(D) if D is not None else None
+        if f is None:
+            continue
+        if f['gpa'] is not None:
+            met['gpa'][c] = f['gpa']
+        if f['cfoa'] is not None:
+            met['cfoa'][c] = f['cfoa']
+        d = dilution(ctx.F, c, D, ((ctx.PX.get(ctx.c2t[c]) or {}).get('splits')), k['dsh_years'])
+        if d is not None:
+            met['dsh'][c] = d
+    rk = {'gpa': pct(met['gpa'], True), 'cfoa': pct(met['cfoa'], True), 'dsh': pct(met['dsh'], False)}
+    comp = {}
+    for c in elig_nf:
+        v = [rk[m][c] for m in k['metrics'] if c in rk[m]]
+        if len(v) >= k['min_metrics']:
+            comp[c] = sum(v) / len(v)
+    tl = R['tilt']
+    order = sorted(comp, key=lambda c: (comp[c], c))
+    n = len(order)
+    tilt = {}
+    for i, c in enumerate(order):
+        q = i / n
+        tilt[c] = tl['bottom'] if q < 1 / 3 else (tl['middle'] if q < 2 / 3 else tl['top'])
+    return tilt, comp, met
+
+
+def cohort_v2(ctx, Y, R, prev=None, px_key=None, fetch=False, prev_pool=None):
+    """Y 年7月の組（6月末の時点で使える決算＝会社ごとに4月1日までに終わった最新の会計年度）。
+    prev: 前の年の顔ぶれ（CIK）＝緩衝帯で残す候補。prev_pool: 比べる相手（同じ土俵の時価の重み）の前の年の顔ぶれ＝同じ緩衝帯"""
+    asof = dt.date(Y, 6, 30)
+    D = Y - 1
+    key = px_key or Y * 100 + 6
+    U, SL = R['universe'], R['select']
+    ranked, fl = universe2(ctx.FL, asof, U['float_top'])
+    ctx.need_sic(ranked, fetch)
+    log = {}
+
+    def note(k):
+        log[k] = log.get(k, 0) + 1
+    pool = []
+    for c in ranked:
+        sic = ctx.SIC.get(c)
+        if sic is None:
+            note('業種が分からない')
+            continue
+        w = sic_excluded(sic, R)
+        if w:
+            note(f'除く: {w}')
+            continue
+        t = ctx.c2t.get(c)
+        if not t:
+            note('今はティッカーが無い（買収・倒産などで消えた社＝生き残りの偏り）')
+            continue
+        p = ctx.px(t, fetch)
+        if not p or key not in p['m']:
+            note('その月の株価が無い')
+            continue
+        pool.append(c)
+    mv, scaled, Dc = {}, 0, {}
+    for c in list(pool):
+        Dc[c] = decision_year(ctx.F, c, asof, Y)
+        if SL.get('scale', True):
+            v, how = mv_value(ctx, c, asof, key, Dc[c])
+            if v is None or v <= 0:
+                pool.remove(c)
+                note('時価が測れない（浮動株も株数も無い）')
+                continue
+            mv[c] = v
+            scaled += how in ('fl', 'fl_only')
+            if how == 'sh':
+                note('時価: 浮動株の届け出が全株より大きすぎる→株数×株価')
+            elif how == 'sh_only':
+                note('時価: 浮動株が無い→株数×株価')
+        else:
+            mv[c] = fl[c][0]
+    elig, why = [], {}
+    for c in pool:
+        if R['kills'].get('off'):
+            w = []                                  # 感度『検問なし（傾きだけ）』
+        elif Dc[c] is None:
+            w = ['決算が無い（6月末に出ていた年次決算が無い・測れない）']
+        else:
+            w = fin_kills(ctx.F, c, Dc[c], R) if is_fin(ctx.SIC[c]) else kills(ctx.F, c, Dc[c], R)
+        if w:
+            why[c] = w
+            note(f'外す: {w[0]}')
+            continue
+        elig.append(c)
+    nf = [c for c in elig if not is_fin(ctx.SIC[c])]
+    tilt, comp, met = tilt_of(ctx, nf, Dc, R)
+    base = {c: mv[c] * tilt.get(c, 1.0) for c in elig}
+    order = sorted(elig, key=lambda c: (-base[c], c))
+    rank = {c: i + 1 for i, c in enumerate(order)}
+    members = order[:SL['n']]
+    kept = [c for c in (prev or []) if c in rank and rank[c] <= SL['buffer_rank'] and c not in members]
+    members = members + kept
+    if SL.get('weighting') == 'equal':
+        w = {c: 1 / len(members) for c in members}
+    else:
+        w = cap_weights({c: base[c] for c in members}, SL['cap'])
+    porder = sorted(pool, key=lambda c: (-mv[c], c))
+    prank = {c: i + 1 for i, c in enumerate(porder)}
+    pmem = porder[:SL['n']]
+    pmem += [c for c in (prev_pool or []) if c in prank and prank[c] <= SL['buffer_rank'] and c not in pmem]
+    pw = cap_weights({c: mv[c] for c in pmem}, SL['cap'])            # 同じ土俵の時価の重み（検問なし・傾けなし・同じ社数と緩衝帯と上限）
+    return dict(Y=Y, D=D, Dc=Dc, key=key, ranked=ranked, fl=fl, pool=pool, elig=elig, members=members, kept=kept, w=w, pw=pw, pmem=pmem,
+                tilt=tilt, comp=comp, met=met, mv=mv, base=base, rank=rank, why=why, log=log, scaled=scaled)
+
+
+def basket_returns_w(ctx, by_year, last):
+    """年ごとの重み {Y: {ティッカー: 重み}} で7月の頭に買い、翌年6月まで持ったまま（月の株価が欠けた社はその月 0%）。
+    戻り値: 月次リターン・各年の終わりの重み（入れ替えの売買の量を出すため）・欠けた月の数"""
+    out, ends, gaps = {}, {}, 0
+    for Y in sorted(by_year):
+        base = Y * 100 + 6
+        W = {t: w for t, w in by_year[Y].items() if ctx.PX.get(t) and base in ctx.PX[t]['m'] and w > 0}
+        tot = sum(W.values())
+        if not W or tot <= 0:
+            continue
+        val = {t: w / tot for t, w in W.items()}
+        lastp = {t: ctx.PX[t]['m'][base] for t in W}
+        for i in range(1, 13):
+            k = ym_add(base, i)
+            if k > last:
+                break
+            rs = {}
+            for t in W:
+                p = ctx.PX[t]['m'].get(k)
+                if p is None:
+                    rs[t] = 0.0
+                    gaps += 1
+                else:
+                    rs[t] = p / lastp[t] - 1
+                    lastp[t] = p
+            tv = sum(val.values())
+            out[k] = sum(val[t] * rs[t] for t in W) / tv
+            for t in W:
+                val[t] *= 1 + rs[t]
+        tv = sum(val.values())
+        ends[Y] = {t: v / tv for t, v in val.items()}
+    return out, ends, gaps
+
+
+def turnover(by_year, ends):
+    """入れ替えの売買の量（片道）＝0.5×Σ|新しい重み − 前の年の終わりの重み|。最初の年（立ち上げ）は数えない"""
+    out = {}
+    ys = sorted(by_year)
+    for a, b in zip(ys, ys[1:]):
+        if a not in ends:
+            continue
+        tot = sum(by_year[b].values())
+        new = {t: w / tot for t, w in by_year[b].items()}
+        old = ends[a]
+        out[b] = round(0.5 * sum(abs(new.get(t, 0) - old.get(t, 0)) for t in set(old) | set(new)), 4)
+    return out
+
+
+def run_backtest_v2(ctx, R, last):
+    H, P, logs, prev, prevP = {}, {}, {}, None, None
+    for Y in COHORTS:
+        if Y * 100 + 6 > last:
+            break
+        co = cohort_v2(ctx, Y, R, prev=prev, prev_pool=prevP)
+        H[Y] = {ctx.c2t[c]: w for c, w in co['w'].items()}
+        P[Y] = {ctx.c2t[c]: w for c, w in co['pw'].items()}
+        prev, prevP = co['members'], co['pmem']
+        top10 = sorted(co['w'].items(), key=lambda kv: -kv[1])[:10]
+        logs[Y] = {'母集団（上位）': len(co['ranked']), '同じ土俵（生き残り）': len(co['pool']), '検問を通った': len(co['elig']),
+                   '持つ': len(co['members']), '緩衝帯で残した': len(co['kept']),
+                   'テックの比重': round(sum(w for c, w in co['w'].items() if is_tech(ctx.SIC[c])), 3),
+                   '金融の比重': round(sum(w for c, w in co['w'].items() if is_fin(ctx.SIC[c])), 3),
+                   '上位10社の比重': round(sum(w for _, w in top10), 3),
+                   '上位10社': [ctx.c2t[c] for c, _ in top10], '内訳': co['log'], '時価を株価で直せた社': co['scaled']}
+    rH, eH, gH = basket_returns_w(ctx, H, last)
+    rP, eP, gP = basket_returns_w(ctx, P, last)
+    return rH, rP, logs, {'H': gH, 'P': gP}, turnover(H, eH), turnover(P, eP)
+
+
+def v1_returns():
+    """v1 の検証の1ドルの推移から月次リターンを戻す（v1 と並べるため）"""
+    if not os.path.exists(OUT_BT1):
+        return {}
+    g = json.load(open(OUT_BT1, encoding='utf-8')).get('growth') or {}
+    ks, v = g.get('months') or [], g.get('CCF15') or []
+    out, prev = {}, 1.0
+    for k, x in zip(ks, v):
+        out[k] = x / prev - 1
+        prev = x
+    return out
+
+
+def backtest_v2():
+    R = rules()
+    PR = json.load(open(os.path.join(BASE, 'out', 'ccf15_prereg_v2.json'), encoding='utf-8'))
+    ev = PR['evaluation']
+    ctx = Ctx(fetch=False)
+    spy = (ctx.px('SPY') or {}).get('m') or {}
+    last = max(k for k in spy if k < int(dt.date.today().strftime('%Y%m')))
+    a = COHORTS[0] * 100 + 7
+    rH, rP, logs, gaps, toH, toP = run_backtest_v2(ctx, R, last)
+    B = {t: etf_returns(ctx, t, a, last) for t in BENCH + ['VOO', 'QUAL', 'SPHQ']}
+    q = B['QQQ']
+    ser = {'CCF15': rH, '同じ土俵の時価の重み（検問なし）': rP, 'CCF15 v1（テックの外・同じ重み）': v1_returns()}
+    ser.update({t: B[t] for t in ('SPY', 'QQQ', 'RSP', 'ITA', 'SMH', 'SPXT', 'QUAL', 'SPHQ')})
+    st = {k: stats(v, q) for k, v in ser.items() if v}
+    j1 = ev['J1']
+    ex1 = MW.excess_stats(rH, rP)
+    if ex1 and ex1['ex_ann'] >= j1['ex_ann'] and ex1['t'] is not None and ex1['t'] >= j1['t']:
+        v1v = '規則に中身あり（同じ土俵の時価の重みに勝った）'
+    elif ex1 and ex1['ex_ann'] <= -j1['ex_ann'] and ex1['t'] is not None and ex1['t'] <= -j1['t']:
+        v1v = '規則で負けた（同じ土俵の時価の重みに負けた）'
+    else:
+        v1v = '差は偶然と区別できない'
+    j2 = ev['J2']
+    sH, sS = stats(rH, q), stats(B['SPY'], q)
+    dg, dd = round(sH['cagr'] - sS['cagr'], 2), round(sH['maxdd'] - sS['maxdd'], 1)
+    ex2 = MW.excess_stats(rH, B['SPY'])
+    if ex2 and ex2['ex_ann'] >= j2['win_ex'] and ex2['t'] is not None and ex2['t'] >= j2['win_t'] and dd >= -j2['ddd_bad']:
+        v2v = 'S&P500 に勝った'
+    elif dg <= -j2['lose_dcagr'] or dd <= -j2['ddd_bad']:
+        v2v = 'S&P500 より悪い'
+    else:
+        v2v = 'S&P500 並み'
+    slot, slot_v = judge_slot(rH, B['ITA'], q, B['SMH'], ev['J3_slot'], ev['J3_slot']['dca_months'])
+    vs = {t: MW.excess_stats(rH, B[t]) for t in ('SPY', 'QQQ', 'RSP', 'ITA', 'QUAL', 'SPHQ')}
+    sens = {}
+    for name, kw in ev['sensitivity'].items():
+        R2 = variant(R, **kw)
+        h2, p2, _, _, t2, _ = run_backtest_v2(ctx, R2, last)
+        e2 = MW.excess_stats(h2, rP)
+        s2 = stats(h2, q)
+        sens[name] = {'stats': s2, 'vs_same_pool': e2, 'vs_spy_cagr': round(s2['cagr'] - sS['cagr'], 2),
+                      'vs_spy_maxdd': round(s2['maxdd'] - sS['maxdd'], 1),
+                      'turnover_mean': round(S.mean(t2.values()), 3) if t2 else None}
+    gone = {Y: logs[Y]['内訳'].get('今はティッカーが無い（買収・倒産などで消えた社＝生き残りの偏り）', 0) for Y in logs}
+    doc = {'generated': dt.date.today().isoformat(), 'tool': 'night/ccf15.py backtest', 'method': 'v2',
+           'prereg': 'out/ccf15_prereg_v2.json（コミットは結果の前）', 'rules_version': R['version'],
+           'window': [a, last], 'stats': st,
+           'J1_規則の効き': {'verdict': v1v, 'vs_same_pool': ex1},
+           'J2_SP500と比べて': {'verdict': v2v, 'dcagr': dg, 'dmaxdd': dd, 'excess': vs['SPY']},
+           '参考_その他15%でITAの代わり': {'verdict': slot_v, **slot},
+           'CCF15と相手の差': vs, 'turnover': toH, 'turnover_same_pool': toP,
+           'turnover_mean': round(S.mean(toH.values()), 3) if toH else None,
+           'sensitivity': sens, '生き残りの偏り（消えた社の数・上位1000社のうち）': gone, 'gaps': gaps,
+           'growth': growth({'CCF15': rH, 'SPY': B['SPY'], 'QQQ': B['QQQ'], 'ITA': B['ITA'], 'RSP': B['RSP']}),
+           'cohorts': logs}
+    json.dump(doc, open(OUT_BT, 'w'), ensure_ascii=False, indent=1)
+    print(json.dumps({'J1': v1v, 'J1_ex': ex1, 'J2': v2v, 'dcagr': dg, 'dmaxdd': dd, 'turnover_mean': doc['turnover_mean'],
+                      'CCF15': st['CCF15'], 'SPY': st['SPY'], 'QQQ': st['QQQ']}, ensure_ascii=False, indent=1))
+
+
+def backtest():
+    if rules().get('method') == 'v2':
+        backtest_v2()
+    else:
+        backtest_v1()
+
+
 def holdings():
     R = rules()
+    if R.get('method') != 'v2':
+        return holdings_v1()
+    ctx = Ctx(fetch=True)
+    today = dt.date.today()
+    Y = today.year if today >= dt.date(today.year, 7, 1) else today.year - 1
+    spy = (ctx.px('SPY', True) or {}).get('m') or {}
+    now = max(spy)                                   # いちばん新しい月（今月の途中の足）＝今も売買されている社だけ・今の株価で時価を直す
+    old = json.load(open(OUT_HOLD, encoding='utf-8')) if os.path.exists(OUT_HOLD) else {}
+    prev = None
+    if old.get('method') == 'v2' and old.get('cohort') != f'{Y}年7月の組':
+        prev = [r['cik'] for r in old.get('holdings', [])]          # 前の年の顔ぶれ＝緩衝帯で残す候補
+    co = cohort_v2(ctx, Y, R, prev=prev, px_key=now, fetch=True)
+    rows = []
+    for c, w in sorted(co['w'].items(), key=lambda kv: -kv[1]):
+        D = co['Dc'][c]                                  # その社の、6月末に出ていた最新の年次決算の年
+        f = ctx.F[c][D]
+        fin = is_fin(ctx.SIC[c])
+        rs = [ctx.F[c][y]['roic_used'] for y in range(D - 4, D + 1) if y in ctx.F[c] and ctx.F[c][y]['roic_used'] is not None]
+        roe = [ctx.F[c][y]['ni'] / ctx.F[c][y]['eq'] * 100 for y in range(D - 4, D + 1)
+               if y in ctx.F[c] and ctx.F[c][y].get('ni') is not None and ctx.F[c][y].get('eq') and ctx.F[c][y]['eq'] > 0]
+        rows.append({'t': ctx.c2t[c], 'nm': ctx.names.get(c, ''), 'cik': c, 'sic': ctx.SIC[c], 'sector': sector_ja(ctx.SIC[c]),
+                     'w': round(w, 6), 'rank': co['rank'][c], 'kept': c in co['kept'], 'fin': fin, 'tech': is_tech(ctx.SIC[c]),
+                     'tilt': co['tilt'].get(c, 1.0), 'score': None if c not in co['comp'] else round(co['comp'][c], 4),
+                     'mv_b': round(co['mv'][c] / 1e9, 1), 'fy_end': f.get('end'),
+                     'gpa': None if f['gpa'] is None else round(f['gpa'], 3), 'cfoa': None if f['cfoa'] is None else round(f['cfoa'], 3),
+                     'dsh3': None if c not in co['met']['dsh'] else round(co['met']['dsh'][c] * 100, 1),
+                     'roic5': None if fin or not rs else round(S.median(rs), 1),
+                     'roe5': round(S.median(roe), 1) if fin and roe else None,
+                     'nde': None if fin or f['nde'] is None else round(f['nde'], 2)})
+    nxt = [{'t': ctx.c2t[c], 'nm': ctx.names.get(c, ''), 'sector': sector_ja(ctx.SIC[c]), 'rank': co['rank'][c]}
+           for c in sorted(co['elig'], key=lambda c: co['rank'][c]) if c not in co['w']][:25]
+    by_sector = {}
+    for r in rows:
+        by_sector[r['sector']] = round(by_sector.get(r['sector'], 0) + r['w'], 6)
+    big = [{'t': ctx.c2t[c], 'nm': ctx.names.get(c, ''), 'why': co['why'][c][0]}
+           for c in sorted(co['why'], key=lambda c: -co['mv'].get(c, 0))[:20]]
+    doc = {'name': R['name'], 'ja': R['ja'], 'version': R['version'], 'method': 'v2', 'rules': 'out/ccf15_rules.json',
+           'generated': today.isoformat(), 'cohort': f'{Y}年7月の組', 'data_year': co['D'], 'price_month': now,
+           'data_note': f"決算は会社ごとに、{Y}年4月1日までに終わった最新の会計年度（6月末に出ていた10-K）",
+           'counts': {'母集団（公開浮動株時価の上位）': len(co['ranked']), '株価のある社': len(co['pool']),
+                      '壊れないの検問を通った': len(co['elig']), '持つ': len(co['members']), '緩衝帯で残した': len(co['kept'])},
+           'テックの比重': round(sum(r['w'] for r in rows if r['tech']), 4), '金融の比重': round(sum(r['w'] for r in rows if r['fin']), 4),
+           '上位10社の比重': round(sum(r['w'] for r in rows[:10]), 4),
+           '外した理由': co['log'], '大きいのに外した社（時価の大きい順）': big,
+           'by_sector': dict(sorted(by_sector.items(), key=lambda kv: -kv[1])),
+           'holdings': rows, '次の候補（持たなかった上位）': nxt}
+    json.dump(doc, open(OUT_HOLD, 'w'), ensure_ascii=False, indent=1)
+    print(f"{len(rows)} 社（{doc['cohort']}）・テック {doc['テックの比重']:.1%}・金融 {doc['金融の比重']:.1%}・上位10社 {doc['上位10社の比重']:.1%}")
+    for r in rows[:30]:
+        print(f"  {r['rank']:4d} {r['t']:6s} {r['w']*100:5.2f}% 傾き{r['tilt']} {r['sector']:10s} {r['nm'][:36]}")
+    print('大きいのに外した社:', [(b['t'], b['why']) for b in big[:12]])
+
+
+# ───────────────────────── 今日の中身（v1 の作り方・記録の再現用） ─────────────────────────
+def holdings_v1():
+    R = json.load(open(RULES_V1, encoding='utf-8'))
     ctx = Ctx(fetch=True)
     today = dt.date.today()
     Y = today.year if today >= dt.date(today.year, 7, 1) else today.year - 1
@@ -883,10 +1556,10 @@ def holdings():
                       '壊れないの検問を通った': len(co['E']), '選んだ': len(co['H'])},
            '外した理由': co['log'], 'by_sector': dict(sorted(by_sector.items(), key=lambda kv: -kv[1])),
            'holdings': rows, '次の候補（選ばれなかった上位）': nxt, '今の株価が無くて外した社の数': skipped}
-    json.dump(doc, open(OUT_HOLD, 'w'), ensure_ascii=False, indent=1)
-    print(f"{len(rows)} 社（{doc['cohort']}・{D}年の決算）")
+    print(f"{len(rows)} 社（{doc['cohort']}・{D}年の決算・v1 の作り方・書き出さない）")
     for r in rows:
         print(f"  {r['rank']:3d} {r['t']:6s} {r['sector']:10s} gpa {r['gpa']} cfoa {r['cfoa']} 株数3年 {r['dsh3']}% ROIC5 {r['roic5']} {r['nm'][:40]}")
+    return doc
 
 
 # ───────────────────────── 紙の上の値動き（立ち上げ日から） ─────────────────────────
@@ -906,13 +1579,15 @@ def nav(today=None):
     H = json.load(open(OUT_HOLD, encoding='utf-8'))
     old = json.load(open(OUT_NAV, encoding='utf-8')) if os.path.exists(OUT_NAV) else {}
     periods = old.get('periods') or []
-    names_now = [r['t'] for r in H['holdings']]
+    names_now = [[r['t'], r['w']] for r in H['holdings']]          # [ティッカー, 重み]
     if not periods:
         periods = [{'from': R['launch'], 'cohort': H['cohort'], 'holdings': names_now}]
     elif periods[-1]['cohort'] != H['cohort']:
         periods.append({'from': None, 'cohort': H['cohort'], 'holdings': names_now})   # 境目の日は下で決める
     bench = ['ITA', 'SPY', 'QQQ', 'RSP']
-    allt = sorted({t for p in periods for t in p['holdings']} | set(bench))
+    for p in periods:                                            # 古い形（ティッカーだけ＝同じ重み）も読む
+        p['holdings'] = [h if isinstance(h, list) else [h, 1.0] for h in p['holdings']]
+    allt = sorted({t for p in periods for t, _ in p['holdings']} | set(bench))
     px = {t: yahoo_d(t, R['launch']) for t in allt}
     days = sorted({d for t in allt if px.get(t) for d in px[t] if d >= _d8(R['launch'])})
     if today:
@@ -926,7 +1601,7 @@ def nav(today=None):
     def base_of(p):
         d0 = _d8(p['from'])
         for d in days:
-            if d >= d0 and sum(1 for t in p['holdings'] if px.get(t) and d in px[t]) >= 0.95 * len(p['holdings']):
+            if d >= d0 and sum(w for t, w in p['holdings'] if px.get(t) and d in px[t]) >= 0.95 * sum(w for _, w in p['holdings']):
                 return d
         return None
     lastp, rows, level = {}, [], 10000.0
@@ -939,15 +1614,17 @@ def nav(today=None):
         if b is None:
             break
         nxt = bases[i + 1] if i + 1 < len(bases) and bases[i + 1] is not None else None
-        ref = {t: px[t][b] for t in p['holdings'] if px.get(t) and b in px[t]}
-        p['base_day'], p['n'], p['missing'] = _ds(b), len(ref), [t for t in p['holdings'] if t not in ref]
+        ref = {t: px[t][b] for t, _ in p['holdings'] if px.get(t) and b in px[t]}
+        wt = {t: w for t, w in p['holdings'] if t in ref}
+        wsum = sum(wt.values())
+        p['base_day'], p['n'], p['missing'] = _ds(b), len(ref), [t for t, _ in p['holdings'] if t not in ref]
         p['level_at_base'] = round(level, 2)
         start_level = level
         for d in [x for x in days if x >= b and (nxt is None or x <= nxt)]:
             for t in allt:
                 if px.get(t) and d in px[t]:
                     lastp[t] = px[t][d]
-            v = sum(lastp.get(t, ref[t]) / ref[t] for t in ref) / len(ref)
+            v = sum(wt[t] * lastp.get(t, ref[t]) / ref[t] for t in ref) / wsum
             level = start_level * v
             if rows and rows[-1]['d'] == _ds(d):
                 continue        # 境目の日は前の期の終値で閉じたので重ねない
@@ -962,7 +1639,7 @@ def nav(today=None):
                 if pv is not None:
                     row[t] = round(10000 * s[pv] / s[b0], 2)
     doc = {'name': R['name'], 'launch': R['launch'], 'base_day': _ds(b0), 'start': 10000, 'periods': periods,
-           'note': '紙の上の値動き（配当込みの終値で、期のはじめの中身を同じ重みで持ったまま）。手数料・為替・税は引いていない。7月の入れ替えで期が変わる',
+           'note': '紙の上の値動き（配当込みの終値で、期のはじめの中身をその重みのまま持ったまま）。手数料・為替・税は引いていない。7月の入れ替えで期が変わる',
            'generated': dt.date.today().isoformat(), 'series': rows}
     json.dump(doc, open(OUT_NAV, 'w'), ensure_ascii=False, indent=1)
     last = rows[-1]
@@ -985,8 +1662,12 @@ def main():
             print(Y, '上位', len(co['ranked']), '土俵', len(co['U0']), '検問を通った', len(co['E']), '選んだ', len(co['H']))
     elif cmd == 'holdings':
         holdings()
+    elif cmd == 'holdings_v1':
+        holdings_v1()
     elif cmd == 'backtest':
         backtest()
+    elif cmd == 'backtest_v1':
+        backtest_v1()
     elif cmd == 'nav':
         nav()
     else:
