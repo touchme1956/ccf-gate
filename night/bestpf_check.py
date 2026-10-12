@@ -41,25 +41,39 @@ MEGA10 = {'NVDA', 'AAPL', 'GOOGL', 'GOOG', 'MSFT', 'AMZN', 'SPCX', 'META', 'AVGO
 MEGA_PEN = 0.012
 
 
-def add_tech12(res):
-    """楽天・テック12 を TECH12 として足す（night/bestpf_tech12.py の組み直し）。2010-01 より前は NASDAQ-100（QQQ の総額＝費用を足し戻す）で埋める"""
-    j = json.load(open(TECH12_JSON))
+CASTLE_JSON = os.path.join(BASE, 'out', 'bestpf_castle.json')
+CUSTOM = {   # 名前 → (系列の JSON, 表示名, 系列が無い月を埋める本)
+    'TECH12': (TECH12_JSON, '楽天・テック12', 'QQQM'),
+    'CASTLE': (CASTLE_JSON, '個別株（今の投下可8社・後知恵）', 'VOO'),
+}
+
+
+def add_custom(res, key):
+    """自前の系列（night/bestpf_tech12.py・bestpf_castle.py）を足す。系列が無い月は埋める本の総額（費用を足し戻す）で埋める"""
+    path, ja, fill = CUSTOM[key]
+    j = json.load(open(path))
     rows, chains = res['rows'], res['chains']
-    q = rows['QQQM']
+    q = rows[fill]
     tm = {int(k): v for k, v in j['monthly_usd'].items()}
     ch = {}
-    for m, v in chains['QQQM'].items():
+    for m, v in chains[fill].items():
         ch[m] = tm[m] if m in tm else v + q['er_data'] / 12
-    chains['TECH12'] = ch
+    for m, v in tm.items():
+        ch.setdefault(m, v)
+    chains[key] = ch
     w = j['worlds']
-    rows['TECH12'] = dict(ja='楽天・テック12', A1_gross=0.0, A1=-(w['fee'] + w['tax_drag']), B=w['B'], C=w['C'], D_override=w['D'],
-                          er_vehicle=w['fee'], tax_drag=w['tax_drag'], tech12_from=min(tm), holdings=w['holdings'])
+    rows[key] = dict(ja=ja, A1_gross=0.0, A1=-(w['fee'] + w['tax_drag']), B=w['B'], C=w['C'], D_override=w['D'],
+                     er_vehicle=w['fee'], tax_drag=w['tax_drag'], custom_from=min(tm), holdings=w['holdings'])
     return j
 
 
+def add_tech12(res):
+    return add_custom(res, 'TECH12')
+
+
 def mega_share(c, rows):
-    if c == 'TECH12':
-        h = rows['TECH12']['holdings']
+    if c in CUSTOM:
+        h = rows[c]['holdings']
     else:
         prof_old = json.load(open(os.path.join(BASE, 'out', 'etf_profiles.json'))).get('etfs') or {}
         p_new = os.path.join(BASE, 'out', 'etf_forward_profiles.json')
@@ -76,8 +90,9 @@ def main():
     res = X.rank_result()
     rows, chains = res['rows'], res['chains']
     assets = sorted({a for w in ports.values() for a in w} | {'VOO'})
-    if 'TECH12' in assets:
-        add_tech12(res)
+    for key in CUSTOM:
+        if key in assets:
+            add_custom(res, key)
     k2 = R.months(*R.A2)
     G2 = np.array([[chains[c][m] for m in k2] for c in assets])
     adj = np.array([rows[c]['A1'] - rows[c]['A1_gross'] for c in assets])
