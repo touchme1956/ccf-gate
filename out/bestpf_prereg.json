@@ -1,0 +1,459 @@
+{
+ "name": "bestpf（過去・現在・未来から、株式だけで最も上がりやすいポートフォリオを組む）",
+ "date": "2026-10-12",
+ "asked": "ユーザー「未来予測をしてほしい。株価が最も上がりやすいポートフォリオの作成。過去のリターンで最高の成績を出してきた人たちのポートフォリオ参考。歴史検証も合わせて…株式限定で。もちろんETFはあり。これからの未来ももちろん検証材料に入れて過去未来現在の推測から最高のポートフォリオに仕上げて」",
+ "status": "測る前に固定（このファイルのコミットの後に計算する）。門・採点・配分（portfolio.json）は変えない＝判断の材料。採用はユーザーの明示指示の領分",
+ "scope": {
+  "stocks_only": "株の ETF・株の投資信託（iFreeNEXT 等）・個別株だけ。債券・金・暗号資産・借入・オプション・レバレッジの器は入れない（GLDM は候補から外す）",
+  "individual": "個別株15%（門の席・castle_rule）はそのまま外側に置き、最適化は ETF 側85%で行う（今までの道具と同じ）。個別株の部分は超投資家との重なりを参考に示すだけ",
+  "unit": "ドル建て・費用と NISA で戻らない配当の外国税を引いた後（etf_forward_rank と同じ）。20年の毎月の積立"
+ },
+ "modules": {
+  "R1_superinvestors_now": {
+   "q": "成績の良い投資家たちは今なにを持っているか（2026年6月末の 13F・2026年8月提出）",
+   "universe": "Dataroma の Superinvestors の一覧（2026-10-12 時点の83件・下の dataroma_list）。13F を出していない・米国株の保有が無いものは名指しして外す",
+   "out": "各人の上位保有と比重・何人が持っているか（合意）・門の投下可/次点/台帳との重なり・各人の公表された長期の成績（出典つき・確かめられないものは確かめられないと書く）"
+  },
+  "R2_elite_clone": {
+   "q": "成績の良い投資家を写すと、その後 市場に勝ったか（13F・2013Q2〜2026Q2）",
+   "universe": "R1 と同じ83件（13F のある運用者）",
+   "rules": {
+    "timing": "提出日の翌月の初めから持つ（先読みなし）",
+    "E1_all": "全員の 13F の比重（各人の上位20を正規化）を等しく足す",
+    "E2_consensus": "その時点で5人以上が持つ銘柄を等しく",
+    "E3_exante_top": "2016年から毎年末、過去3年の写しの成績の上位10人を選び、その10人の上位10銘柄を等しく持つ（翌年も同じ10人の新しい提出に合わせて四半期ごとに直す）＝ex-ante の選び方",
+    "E3b_exante_bottom": "同じ作り方で下位10人（対照）"
+   },
+   "bench": "SPY（配当込み）・QQQ・French Mkt",
+   "missing": "上場廃止など価格が取れない銘柄は O（観測できる分で按分）と P30（最初の欠けた月に −30%）の二本で囲む（0で埋めない）",
+   "cost": "片道 0.2%",
+   "pass_bar": "E3 が SPY に 費用後 +1%/年以上・Newey-West t≥2.0・前半（2016-2020）と後半（2021-2026）の両方で正。満たせば『写し』を候補の一つに入れる。満たさなければ参考どまり",
+   "R2b_persistence": "13F の全提出者（銘柄10〜500・ETF の比重≤20%・mw_best_ideas_13f と同じ線）で、毎年末の保有の翌年の成績を作り、過去3年の上位10%の運用者の保有をまとめて翌年持つ。過去と翌年の順位相関も。重い場合は年1回（各年の第4四半期）の提出だけで行う",
+   "prediction": "E3 は費用後に SPY に勝たない（−1〜+1%/年・t<2）。順位相関はほぼ0。R2b の上位10%も有意に勝たない"
+  },
+  "R3_cma_2026": {
+   "q": "これからの10年について、運用会社・研究機関は何%を予想しているか（2026年に公表された長期の予想）",
+   "houses": "J.P. Morgan・Vanguard・GMO・BlackRock・Research Affiliates・AQR・Schwab・BNY・Invesco・Morningstar・Goldman Sachs・Northern Trust・State Street・T. Rowe Price・Robeco・Amundi・Fidelity・Franklin のうち数字が取れたもの（出典の URL と公表日を必ず残す）",
+   "D_world": "資産の種類ごとに、取れた会社の 10年前後の名目ドルの複利の予想の中央値（実質だけの会社は +2.5% のインフレで名目へ）。D＝(H×中央値＋(20−H)×B)/20（H＝予想の期間の中央値・C と同じ作り）。5社以上取れた種類だけ。足りない種類は C と同じ値",
+   "accuracy": "過去の長期予想（GMO・Vanguard・JPM・CAPE）がどれだけ当たったかの公表された点検と、手で突き合わせられるもの",
+   "present": "今の値段（CAPE・予想PER・上位10社の比重・利益の伸びの予想）と出典"
+  },
+  "R4_themes": {
+   "q": "これから伸びると言われる主題（AI と半導体・電力と送電・防衛・医療・ロボット・インド・日本の改革・宇宙・サイバー・原子力）は、株主のリターンになるか",
+   "evidence": "主題 ETF の上場後の成績（Yahoo・SPY との差・上場から）・Ben-David ほか（2023）の主題 ETF の研究・新しい産業の歴史（鉄道・自動車・ラジオ・航空・インターネット・シェール）・リポジトリの industry_peak / tech_persist の基礎率",
+   "prediction": "主題 ETF は上場後に SPY に負けやすい（中央値 −3〜−6%/年）。伸びる産業でも株主が報われるとは限らない"
+  },
+  "R5_repo_digest": "このリポジトリで既に測ったこと（mw・nx・edge・etf_forward_*・industry_peak・tech_persist・gaps7・siegel・factor/jkp/cape・longonly）を、ポートフォリオの選択に効く形で数字つきで要約する（出典の行番号つき）",
+  "R6_fund_persistence": {
+   "q": "名の知れた長期の運用者・ファンドは、有名になった後の10年も勝ったか",
+   "funds": [
+    "BRK-B",
+    "FCNTX",
+    "SEQUX",
+    "DODGX",
+    "VPMCX",
+    "FMAGX",
+    "TRBCX",
+    "BPTRX",
+    "OAKMX",
+    "LLPFX",
+    "FAIRX",
+    "MPGFX",
+    "PRWCX",
+    "JENSX",
+    "FMIHX",
+    "YACKX",
+    "SGENX",
+    "TWEBX",
+    "PRBLX",
+    "AMCPX",
+    "AGTHX",
+    "AIVSX",
+    "ANWPX",
+    "VWNDX",
+    "VWUSX",
+    "FBGRX",
+    "FDGRX",
+    "FLPSX",
+    "HAINX",
+    "DODFX",
+    "CGMFX",
+    "SMT.L"
+   ],
+   "test": "2006-01〜2015-12 の SPY に対する超過で順位 → 2016-01〜2026-09 の超過の順位（順位相関・上位1/3 と下位1/3 の差）。同じことを 1996〜2005 → 2006〜2015 でも（データがあれば）。生き残りの偏りがあることを書く",
+   "literature": "SPIVA の持続性の報告（最新）・Carhart (1997)・Kosowski ほか (2006)・Fama-French (2010)・Frazzini-Kabiller-Pedersen『Buffett's Alpha』",
+   "prediction": "順位相関は0前後。上位の勝ちは続かない"
+  },
+  "R7_ext_assets": {
+   "q": "今までの21本に無い株の ETF（勢い MTUM・質 QUAL・資本財 XLI・金融 XLF・一般消費財 XLY・インド EPI・送電と電化 GRID）を同じ物差しで測れるようにする",
+   "rule": "etf_forward_rank と同じ計算（A1・A2 の実績〔設定前は事前に名指しした代理〕・B・C）。代理は重なる期間の相関≥0.90 のときだけ使う。満たせない本は候補から外して名指しする"
+  },
+  "R8_world_calibration": {
+   "q": "4つの世界（A1 直近26年の実績・A2 直近15年の実績・B 100年の平均・C/D 今の値段からの予想）は、過去に予想として使っていたら、どれがどれだけ当たったか",
+   "panels": "French 49業種（1926〜・業種の BE/ME）・French の国（1975〜・国の割安さ）・JST の国（1870〜2020・配当利回り）。米国市場（Shiller）は診断だけ",
+   "forecasters": {
+    "F_A1": "その時点までの26年の年率",
+    "F_A2": "その時点までの15年の年率",
+    "F_B": "その時点までに分かる全期間の平均（パネルの平均へ50%縮める）",
+    "F_V": "その時点の割安さ（業種は BE/ME・国は E/P か D/P）から、その時点より前のデータだけで当てはめた予想"
+   },
+   "design": "5年ごとの時点・15年先（主）・10年と20年（感度）。予想はその時点までのデータだけ（先読みの機械検査つき）",
+   "metric": "予想と実現の15年の年率の二乗誤差（パネルをまとめて）・各時点の順位相関の平均",
+   "weights": "主: π_w ∝ 1/MSE（A1→A1・A2→A2・B→B・V→C と D で半分ずつ）。感度: 順位相関の正の部分に比例・非負の最小二乗の重ね。計算できなければ等しく（各1/5）",
+   "prediction": "A2 型（15年の実績を延ばす）は誤差が最も大きく、順位相関は0以下。B 型と V 型が最も当たる"
+  }
+ },
+ "final_selection": {
+  "worlds": "A1・A2・B・C（etf_forward_rank と同じ）＋ D（R3）。重み π は R8 の主",
+  "model": "etf_p15 と同じ: 各世界の伸び m=ln(1+年率)・σ=√(w'Sw)（A1 の窓）・毎月 N(m/12, σ²/12) の20年の積立の内部収益率の表",
+  "metrics": "P10π（20年の積立の内部収益率が10%以上の確率・π で重み付け）・P15π・P5π（5%未満）・P0π（元本割れ）・π 加重の中央の内部収益率・最悪の世界・ぶれ・最大下落・過去の実際の並び（20年・15年）",
+  "primary": "P10π が最大（『最も上がりやすい』＝高い確率で長期の株の平均〔約10%〕を超える）。0.5pt 以内の同点は P15π で",
+  "constraints": "株だけ・ETF 側で1〜5本・10%刻み（グリッド）・1本 60%以下・最悪の世界 ≥ S&P500（VOO）の最悪の世界",
+  "candidates": "グリッドの全通り ＋ 設計の段（独立した設計役）が出した案 ＋ 参照（今・S&P500・全世界株・NASDAQ100 のみ・SMH60/ITA40）。R2 が合格なら『写し』の器も",
+  "robustness": "感度（世界を1つずつ外す・半導体の基礎率 K4・共分散を A2 の窓から・π を感度の重みに）で、主の1位が半分以上の感度で上位1%に残らなければ、全感度の平均順位が最良の案を採る（頑健な案）",
+  "report": "最終の案・今の形・S&P500 を並べ、π 加重の中央の内部収益率と10〜90%の幅・世界ごとの数字・確率・超投資家との重なり（個別株の部分）を出す"
+ },
+ "dataroma_list": [
+  {
+   "code": "ABI",
+   "name": "Abrams Bison Investments"
+  },
+  {
+   "code": "AKO",
+   "name": "AKO Capital"
+  },
+  {
+   "code": "AIM",
+   "name": "Alex Roepers - Atlantic Investment Management"
+  },
+  {
+   "code": "AP",
+   "name": "AltaRock Partners"
+  },
+  {
+   "code": "VAN",
+   "name": "Arnold Van Den Berg - Century Management"
+  },
+  {
+   "code": "GFT",
+   "name": "Bill & Melinda Gates Foundation Trust"
+  },
+  {
+   "code": "psc",
+   "name": "Bill Ackman - Pershing Square Capital Management"
+  },
+  {
+   "code": "LMM",
+   "name": "Bill Miller - Miller Value Partners"
+  },
+  {
+   "code": "HA",
+   "name": "Bill Nygren - Oakmark Funds"
+  },
+  {
+   "code": "fairx",
+   "name": "Bruce Berkowitz - Fairholme Capital"
+  },
+  {
+   "code": "OCL",
+   "name": "Bryan Lawrence - Oakcliff Capital"
+  },
+  {
+   "code": "ic",
+   "name": "Carl Icahn - Icahn Capital Management"
+  },
+  {
+   "code": "TGM",
+   "name": "Chase Coleman - Tiger Global Management"
+  },
+  {
+   "code": "tci",
+   "name": "Chris Hohn - TCI Fund Management"
+  },
+  {
+   "code": "SA",
+   "name": "Christopher Bloomstran - Semper Augustus"
+  },
+  {
+   "code": "DAV",
+   "name": "Christopher Davis - Davis Advisors"
+  },
+  {
+   "code": "AC",
+   "name": "Chuck Akre - Akre Capital Management"
+  },
+  {
+   "code": "CAS",
+   "name": "Clifford Sosin - CAS Investment Partners"
+  },
+  {
+   "code": "tp",
+   "name": "Daniel Loeb - Third Point"
+  },
+  {
+   "code": "abc",
+   "name": "David Abrams - Abrams Capital Management"
+  },
+  {
+   "code": "GLRE",
+   "name": "David Einhorn - Greenlight Capital"
+  },
+  {
+   "code": "MAVFX",
+   "name": "David Katz - Matrix Asset Advisors"
+  },
+  {
+   "code": "WP",
+   "name": "David Rolfe - Wedgewood Partners"
+  },
+  {
+   "code": "AM",
+   "name": "David Tepper - Appaloosa Management"
+  },
+  {
+   "code": "SP",
+   "name": "Dennis Hong - ShawSpring Partners"
+  },
+  {
+   "code": "DAC",
+   "name": "Dodge & Cox Funds"
+  },
+  {
+   "code": "HH",
+   "name": "Duan Yongping - H&H International Investment"
+  },
+  {
+   "code": "FE",
+   "name": "First Eagle Investment Management"
+  },
+  {
+   "code": "FPA",
+   "name": "First Pacific Advisors"
+  },
+  {
+   "code": "ca",
+   "name": "Francis Chou - Chou Associates"
+  },
+  {
+   "code": "GC",
+   "name": "Francois Rochon - Giverny Capital"
+  },
+  {
+   "code": "CCM",
+   "name": "Glenn Greenberg - Brave Warrior Advisors"
+  },
+  {
+   "code": "ENG",
+   "name": "Glenn Welling - Engaged Capital"
+  },
+  {
+   "code": "GA",
+   "name": "Greenhaven Associates"
+  },
+  {
+   "code": "CM",
+   "name": "Greg Alexander - Conifer Management"
+  },
+  {
+   "code": "aq",
+   "name": "Guy Spier - Aquamarine Capital"
+  },
+  {
+   "code": "SSHFX",
+   "name": "Harry Burn - Sound Shore"
+  },
+  {
+   "code": "DCP",
+   "name": "Henry Ellenbogen - Durable Capital Partners"
+  },
+  {
+   "code": "HCM",
+   "name": "Hillman Capital Management"
+  },
+  {
+   "code": "oc",
+   "name": "Howard Marks - Oaktree Capital Management"
+  },
+  {
+   "code": "JIM",
+   "name": "Jensen Investment Management"
+  },
+  {
+   "code": "EC",
+   "name": "John Armitage - Egerton Capital"
+  },
+  {
+   "code": "AI",
+   "name": "John Rogers - Ariel Investments"
+  },
+  {
+   "code": "GLC",
+   "name": "Josh Tarasoff - Greenlea Lane Capital"
+  },
+  {
+   "code": "KB",
+   "name": "Kahn Brothers Group"
+  },
+  {
+   "code": "mc",
+   "name": "Lee Ainslie - Maverick Capital"
+  },
+  {
+   "code": "oa",
+   "name": "Leon Cooperman"
+  },
+  {
+   "code": "HC",
+   "name": "Li Lu - Himalaya Capital Management"
+  },
+  {
+   "code": "LT",
+   "name": "Lindsell Train"
+  },
+  {
+   "code": "MPF",
+   "name": "Mairs & Power Funds"
+  },
+  {
+   "code": "SE",
+   "name": "Mason Hawkins - Southeastern Asset Management"
+  },
+  {
+   "code": "SAM",
+   "name": "Michael Burry - Scion Asset Management"
+  },
+  {
+   "code": "PI",
+   "name": "Mohnish Pabrai - Pabrai Investments"
+  },
+  {
+   "code": "MUHL",
+   "name": "Muhlenkamp"
+  },
+  {
+   "code": "TF",
+   "name": "Nelson Peltz - Trian Fund Management"
+  },
+  {
+   "code": "PC",
+   "name": "Norbert Lou - Punch Card Management"
+  },
+  {
+   "code": "DA",
+   "name": "Pat Dorsey - Dorsey Asset Management"
+  },
+  {
+   "code": "pcm",
+   "name": "Polen Capital Management"
+  },
+  {
+   "code": "FFH",
+   "name": "Prem Watsa - Fairfax Financial Holdings"
+  },
+  {
+   "code": "PIM",
+   "name": "Richard Pzena - Pzena Investment Management"
+  },
+  {
+   "code": "RVC",
+   "name": "Robert Vinall - RV Capital GmbH"
+  },
+  {
+   "code": "RC",
+   "name": "Ruane Cunniff LP"
+  },
+  {
+   "code": "PTNT",
+   "name": "Samantha McLemore - Patient Capital Management"
+  },
+  {
+   "code": "CAU",
+   "name": "Sarah Ketterer - Causeway Capital Management"
+  },
+  {
+   "code": "BAUPOST",
+   "name": "Seth Klarman - Baupost Group"
+  },
+  {
+   "code": "LPC",
+   "name": "Stephen Mandel - Lone Pine Capital"
+  },
+  {
+   "code": "CHE",
+   "name": "Steven Check - Check Capital Management"
+  },
+  {
+   "code": "FS",
+   "name": "Terry Smith - Fundsmith"
+  },
+  {
+   "code": "TA",
+   "name": "Third Avenue Management"
+  },
+  {
+   "code": "MKL",
+   "name": "Thomas Gayner - Markel Group"
+  },
+  {
+   "code": "GR",
+   "name": "Thomas Russo - Gardner Russo & Quinn"
+  },
+  {
+   "code": "MP",
+   "name": "Tom Bancroft - Makaira Partners"
+  },
+  {
+   "code": "T",
+   "name": "Torray Funds"
+  },
+  {
+   "code": "TFP",
+   "name": "Triple Frond Partners"
+  },
+  {
+   "code": "TB",
+   "name": "Tweedy Browne"
+  },
+  {
+   "code": "VFC",
+   "name": "Valley Forge Capital Management"
+  },
+  {
+   "code": "VA",
+   "name": "ValueAct Capital"
+  },
+  {
+   "code": "vg",
+   "name": "Viking Global Investors"
+  },
+  {
+   "code": "VVP",
+   "name": "Vulcan Value Partners"
+  },
+  {
+   "code": "WIM",
+   "name": "Wallace Weitz - Weitz Investment Management"
+  },
+  {
+   "code": "BRK",
+   "name": "Warren Buffett - Berkshire Hathaway"
+  },
+  {
+   "code": "cc",
+   "name": "William Von Mueffling - Cantillon Capital Management"
+  },
+  {
+   "code": "YAM",
+   "name": "Yacktman Asset Management"
+  }
+ ],
+ "dataroma_list_sha256_16": "839a4a9819fcc9ef",
+ "amendment_2026_10_12": {
+  "when": "2026-10-12・調べもの（R0〜R8）の途中・最終の採点（night/bestpf_eval.py）を本番で回す前",
+  "asked": "ユーザー明示指示「15％以上を、狙う。」",
+  "change": "最終の選択の主の物差しを P10π から P15π（20年の毎月の積立の内部収益率が15%以上になる確率・π 加重）へ替える。P15π の 0.5pt 以内の同点は、5%未満の確率 P5π が低いほう→ぶれが小さいほう",
+  "unchanged": "制約（ETF 側2〜5本・10%刻み・1本60%以下・最悪の世界 ≥ S&P500 の最悪の世界）・世界と π・頑健さの規則（順位は P15π で数える）・候補",
+  "also_report": "旧の主（P10π の最大）も並べて出す。1本60%の上限を外した場合の P15π の最大も参考に出す（選択には使わない）",
+  "note": "目標の15%は過去の長期の株の平均（約10%）より高い＝届く確率は5割を下回る見込みであることを結果と一緒に正直に書く"
+ }
+}
