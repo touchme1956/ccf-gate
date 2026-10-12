@@ -19193,7 +19193,7 @@ acqS5 の帯（7ビンテージの三分位の切れ目の中央値）と同じ�
 - audit_dom_blank（関門75）: dom 空欄で通過に依存しているのは MSFT だけ（空欄77.4／dom=50 なら69.2／dom=70 なら75.4）。CW 75.9・LRCX 76.2 は dom=50 でも線の上
 - 速い検査: check_frozen_dates・check_workflow_add・check_forward_frozen・validate_state・check_state_issue（48/48）・fix_ni_unit すべて通過。validate_packs の致命は251パック（FAIL 532）で変更前と同じ（out/validate_fail.json の251件＝関門・席と無関係の既存の作業リスト）
 - 席5のときに回した実ブラウザ: check_gate_parity（Ω 376/376・投下可5社一致・pageerror 0）・全パックを取り込んだ🛒買付順位で5社×3.0%・堀不足の行「堀 72／75」・採点機の「◇堀のふるい(75)不通過」・check_mobile_fit（12ページ・6幅）✓
-- 席10へ戻した後の実ブラウザ（門と端末の一致・重みの読み取り・携帯幅・区分の割り方・投資信託の記録・保有のカード・銘柄の詳細・赤い帯・Issue の道・ナビ）: 回している（結果はこの行に追記する）
+- 席10へ戻した後の実ブラウザ（最終の姿）: 全パックを取り込んだ🛒買付順位で `CCF_SEATS` 10・投下可 CW/LRCX/MSFT/ASML/GOOGL・目標ウェイト rank で5社とも3.0・堀不足の行「堀 72／75」・画面に「堀70+」「／70」なし・採点機の ADBE は「◇堀のふるい(75)不通過」・pageerror 0／check_gate_parity（Ω 376/376・投下可5社一致・pageerror 0）／check_mobile_fit（12ページ・6幅）／check_sleeve_split 全項目／check_fund_trade 全項目／check_pfc_card 67/67／check_hold_detail 82/82／check_state_banner／check_state_issue 88/88／check_navstack 108通り——すべて通過
 
 **今の注文**: 変わらない（割り方 cat で個別株の区分は目標15%を超えている＝新しいお金が入るのは2028年5月ごろの見込み・:18782・:19157）。出た5社は保有ゼロなので売りは起きない（堀不足は買わない理由であって売る理由ではない）。
 
