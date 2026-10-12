@@ -23,6 +23,10 @@
  *   ⑯ その他 ETF・投資信託（v9.9.206）: target.ami_other の buy の本（2026-10-10 から ITA・それまで XLK）の区分に、目標0%の本と目標に無い本の保有も数える・
  *      区分の名前は「その他 ETF・投資信託」・設定を消せば v9.9.203 の姿（buy の本だけの区分＋区分の外の「その他」の1行）。
  *      実データの部分は buy の本を正本（portfolio.json）から読む——買う本を替えても検査を書き換えずに済む
+ *   ⑰ 同じ扱いの本（v9.9.214・2026-10-12「XLKはQQQと同じ扱いに」）: target.ami_same_bucket の本（XLK）は QQQM と同じく目標の本（iFreeNEXT）の区分に数え、
+ *      その他には数えない・表示は「同じ指数」でなく「同じ扱い」・設定を消せば XLK はその他へ戻る
+ *   ⑱ 持っていない個別株を先に（v9.9.215・2026-10-12「個別株の持っていない銘柄を優先して」）: catIn._unownedFirst なら保有ゼロの個別株を
+ *      区分の比率より先に1株ずつ（候補の規則・並びは従来のまま・入金で買えるだけ）・残りを区分の比率で・設定が無ければ旧の姿
  *
  * playwright が要るので CI には入れていない。使い方: node night/check_sleeve_split.js
  */
@@ -699,6 +703,132 @@ const srv = http.createServer((q, r) => {
        + '%・区分の外の「その他」の行なし・表「' + w16.rowTxt.split('\n')[0].slice(0, 50) + '」・上の1行「' + w16.line.trim().slice(0, 60) + '」');
     ok(w16off.x && w16off.x.nm === BUY && !w16off.x.other && /その他（目標0%で持ち続けている本：[^）]*GRID/.test(w16off.zero),
        '   ami_other を消すと v9.9.203 の姿: ' + BUY + ' は自分だけの区分・GRID は区分の外の「その他（目標0%…）」の1行');
+  }
+
+  // ⑰ 同じ扱いの本（v9.9.214・2026-10-12 ユーザー明示指示「XLKはQQQと同じ扱いに」）: target.ami_same_bucket の本（XLK）は
+  //   QQQM（ami_same_index）と同じく目標の本（iFreeNEXT）の区分に数え、その他 ETF・投資信託には数えない。表示は「同じ指数」でなく「同じ扱い」
+  {
+    await pg.goto('http://localhost:' + PORT + '/index.html'); await pg.waitForTimeout(600);
+    const q17 = await pg.evaluate(() => {
+      localStorage.clear();
+      const mk = (sb) => ({ asof: '2026-10-12', positions: [
+          { ticker: 'IFREE-NDX', value_jpy: 300000, sleeve: '網' }, { ticker: 'QQQM', value_jpy: 100000, sleeve: '網' },
+          { ticker: 'XLK', value_jpy: 150000, sleeve: '網' }, { ticker: 'SMH', value_jpy: 150000, sleeve: '網' },
+          { ticker: 'GRID', value_jpy: 50000, sleeve: '網' }, { ticker: 'GLDM', value_jpy: 50000, sleeve: '網' },
+          { ticker: 'MSFT', value_jpy: 200000, sleeve: '城' }],
+        target: { ami_net_pct: 85, ami_names: ['IFREE-NDX', 'QQQM', 'XLK', 'SMH', 'ITA', 'GRID'],
+          ami_weights: { 'IFREE-NDX': 42.5, QQQM: 0, XLK: 0, SMH: 25.5, ITA: 17, GRID: 0 }, ami_same_index: { 'IFREE-NDX': ['QQQM'] },
+          ami_other: { buy: 'ITA', label: 'その他 ETF・投資信託' }, ...(sb ? { ami_same_bucket: sb } : {}) } });
+      const on = ccfNetRows(null, mk({ 'IFREE-NDX': ['XLK'] })), off = ccfNetRows(null, mk(null));
+      const x = (r, t) => r.rows.find(y => y.t === t);
+      const I = x(on, 'IFREE-NDX');
+      const lab = ccfCatLabel({ 'n:IFREE-NDX': { t: 42.5, nm: 'NASDAQ100', fnm: 'iFreeNEXT NASDAQ100', fund: true, alias: I.aliasNm, alParts: I.alParts } }, 'n:IFREE-NDX', { full: true });
+      const labOld = ccfCatLabel({ 'n:IFREE-NDX': { t: 42.5, nm: 'NASDAQ100', fnm: 'iFreeNEXT NASDAQ100', fund: true, alias: ['QQQM'] } }, 'n:IFREE-NDX', { full: true });
+      const sa = ccfSameAll({ ami_same_index: { 'ifree-ndx': ['QQQM'] }, ami_same_bucket: { 'IFREE-NDX': ['XLK', 'QQQM'], note: 'x' } });
+      return { onI: I, onX: x(on, 'XLK'), onT: x(on, 'ITA'), offI: x(off, 'IFREE-NDX'), offX: x(off, 'XLK'), offT: x(off, 'ITA'), onDrop: on.drop,
+        other: on.other, otherOff: off.other, note: ccfAliasNote(I), noteNw: ccfAliasNote(I, { nowrap: true }),
+        noteOld: ccfAliasNote({ alias: ['QQQM'], aliasNm: ['QQQM'], alPos: 17.4 }), lab, labOld, sa };
+    });
+    const r1 = v => Math.round(v * 10) / 10;
+    ok(r1(q17.onI.pos) === 55 && q17.onX.sameAs === 'IFREE-NDX' && q17.onX.sameKind === 'bucket' && !q17.onX.otherOf
+       && r1(q17.onT.pos) === 10 && q17.other.members.map(m => m.t).join(',') === 'GRID,GLDM'
+       && r1(q17.offI.pos) === 40 && r1(q17.offT.pos) === 25 && q17.offX.otherOf === 'ITA' && !q17.offX.sameAs
+       && q17.onI.alParts.map(p => p.t + ':' + p.kind).join(',') === 'QQQM:idx,XLK:bucket',
+       '⑰ 同じ扱いの本: NASDAQ100 の区分 40 → ' + r1(q17.onI.pos) + '%（QQQM 10＋XLK 15）・その他（ITA）25 → ' + r1(q17.onT.pos) + '%（XLK を数えない・GRID と GLDM だけ）・設定が無ければ XLK はその他');
+    ok(q17.note === '（うち QQQM 10.0%＝同じ指数・XLK 15.0%＝同じ扱い）' && /white-space:nowrap">XLK 15\.0%<\/span>＝同じ扱い/.test(q17.noteNw)
+       && q17.noteOld === '（うち QQQM 17.4%＝同じ指数）'
+       && q17.lab === '📈 NASDAQ100（iFreeNEXT NASDAQ100・同じ指数の QQQM・同じ扱いの XLK を含む）'
+       && q17.labOld === '📈 NASDAQ100（iFreeNEXT NASDAQ100・同じ指数の QQQM を含む）',
+       '   表示: 「' + q17.note + '」・区分の名前「' + q17.lab + '」・古い形（alParts なし）は従来の文');
+    ok(JSON.stringify(q17.sa.map) === '{"IFREE-NDX":["QQQM","XLK"]}' && q17.sa.kind.QQQM === 'idx' && q17.sa.kind.XLK === 'bucket',
+       '   ccfSameAll: 鍵を大文字にそろえる・同じ本を2回数えない（QQQM は同じ指数が先）・配列でない値（note）は読まない');
+    // 実データ（state.json＋全パック・正本の portfolio.json）: XLK は NASDAQ100 の区分・その他（ITA）は0%から・注文書の「目標0%」の行は「XLK（NASDAQ100 に数える）」
+    const SB = (base.target || {}).ami_same_bucket;
+    if (SB && Array.isArray(SB['IFREE-NDX']) && SB['IFREE-NDX'].includes('XLK')) {
+      const OB = (base.target.ami_other || {}).buy || 'ITA';
+      const load17 = async (over) => {
+        OVER = over;
+        await pg.goto('http://localhost:' + PORT + '/index.html'); await pg.waitForTimeout(600);
+        await pg.evaluate(stt => { localStorage.clear(); for (const k in stt.data) localStorage.setItem(k, stt.data[k]);
+          localStorage.setItem('ccf:stateSavedAt', stt.savedAt); }, ST);
+        await pg.reload(); await pg.waitForTimeout(1500);
+        await pg.evaluate(() => ccfImportAllPacks()); await pg.waitForTimeout(1800);
+        await pg.evaluate(() => { localStorage.setItem('pf:monthly_total', '170000'); showPage(5); }); await pg.waitForTimeout(3200);
+        return pg.evaluate((OB) => {
+          const C = window.__ccfCat || {};
+          const ndx = ((document.querySelector('#pg5 .catrow[data-cat="n:IFREE-NDX"]') || {}).innerText || '');
+          const txt = ((document.querySelector('#pg5') || {}).innerText || '');
+          const z = (txt.match(/[^\n]*目標0%（売らない・新規なし）[^\n]*/) || [''])[0];
+          return { ndx: C['n:IFREE-NDX'] || null, oth: C['n:' + OB] || null, ndxRow: ndx, zero: z };
+        }, OB);
+      };
+      const on = await load17(withMode('cat'));
+      const offC = withMode('cat'); delete offC.target.ami_same_bucket;
+      const off = await load17(offC);
+      ok(on.ndx && off.ndx && on.oth && off.oth
+         && Math.abs((on.ndx.now - off.ndx.now) - (off.oth.now - on.oth.now)) < 0.05 && (on.ndx.now - off.ndx.now) > 1
+         && /同じ指数の QQQM・同じ扱いの XLK を含む/.test(on.ndxRow) && /XLK（NASDAQ100 に数える）/.test(on.zero) && !/XLK（その他/.test(on.zero)
+         && /XLK（その他 ETF・投資信託に数える）/.test(off.zero),
+         '⑰ 実データ: NASDAQ100 の区分 ' + off.ndx.now.toFixed(1) + ' → ' + on.ndx.now.toFixed(1) + '%・その他（' + OB + '）' + off.oth.now.toFixed(1) + ' → ' + on.oth.now.toFixed(1)
+         + '%（XLK の分が移る）・表「' + on.ndxRow.split('\n')[0].slice(0, 70) + '」・「' + (on.zero.match(/XLK（[^）]*）/) || [''])[0] + '」');
+    } else ok(true, '   （正本に ami_same_bucket の XLK が無いので実データの部分は飛ばす）');
+  }
+
+  // ⑱ 持っていない個別株を先に（v9.9.215・2026-10-12 ユーザー明示指示「個別株の持っていない銘柄を優先して」）:
+  //   catIn._unownedFirst なら、保有ゼロの個別株を区分の比率より先に1株ずつ（従来の候補の規則・目標の大きい順→安い順・入金で買えるだけ）
+  {
+    const q18 = await pg.evaluate(() => {
+      const TOT = 2000000, mk = (uf) => Object.assign({ tot: TOT, 'n:IFREE-NDX': { t: 42.5, now: 47, nm: 'NASDAQ100', fund: true },
+        'n:SMH': { t: 25.5, now: 15, nm: 'SMH' }, 'n:ITA': { t: 17, now: 0, nm: 'ITA' }, c: { t: 15, now: 38, nm: '個別株' } }, uf ? { _unownedFirst: true } : {});
+      const items = [
+        { k: 'C0', g: 'c', tw: 2.2, pos: 20, jpy: 60000 },     // 持っている（MSFT 型）
+        { k: 'C1', g: 'c', tw: 2.2, pos: 0, jpy: 30000 },      // 持っていない・安い
+        { k: 'C2', g: 'c', tw: 2.2, pos: 0, jpy: 90000 },      // 持っていない・不足 47,740 ≥ 半株 45,000
+        { k: 'C3', g: 'c', tw: 1.3, pos: 0, jpy: 80000 },      // 持っていない・不足 28,210 < 半株 40,000 → 待つ
+        { k: 'C4', g: 'c', tw: 5, pos: 0, jpy: 200000 },       // 1株が入金より高い（不足 108,500 ≥ 半株 100,000 なので待つではなく big）
+        { k: 'C5', g: 'c', tw: 1.3, pos: 0, jpy: 20000 },      // 持っていない・目標が小さい（2.2 の社の後）
+        { k: 'N0', g: 'n:IFREE-NDX', tw: 42.5, pos: 47, jpy: 5.8, frac: true },
+        { k: 'N1', g: 'n:SMH', tw: 25.5, pos: 15, jpy: 95000 }, { k: 'N2', g: 'n:ITA', tw: 17, pos: 0, jpy: 32000 }];
+      const on = ccfCatSharePlan(items, 170000, TOT, mk(true)), off = ccfCatSharePlan(items, 170000, TOT, mk(false));
+      const low = ccfCatSharePlan(items, 100000, TOT, mk(true));
+      const sum = P => Object.keys(P.cat).reduce((a, g) => a + P.cat[g].spent, 0) + P.rest;
+      return { on, off, low, sOn: sum(on), sOff: sum(off), sLow: sum(low) };
+    });
+    const { on, off, low } = q18, ks = o => Object.keys(o || {}).sort().join(',');
+    ok(ks(on.first) === 'C1,C2,C5' && ['C1', 'C2', 'C5'].every(k => on.buy[k] && on.buy[k].sh === 1) && !on.buy.C0 && !on.buy.C3 && !on.buy.C4
+       && on.wait.some(w => w.k === 'C3') && on.big.some(w => w.k === 'C4') && on.cat.c.spent === 140000 && on.cat.c.now === 38
+       && Math.abs(on.cat.c.after - (0.38 * 2000000 + 140000) / 2170000 * 100) < 1e-9 && q18.sOn === 170000 && !on.buy.N2 && !on.buy.N1
+       && (on.frac.N0 || 0) === 30000,
+       '⑱ 持っていない個別株を先に: 入金17万 → C1・C2・C5 を1株ずつ（¥140,000・目標の大きい順→安い順）・C3 は半株に届かず待つ・C4 は1株が入金より高い・残り ¥30,000 を区分の比率で（投資信託へ）・合計 ¥' + q18.sOn.toLocaleString());
+    ok(!ks(off.first) && !Object.keys(off.buy).some(k => k[0] === 'C') && off.catfull.some(w => w.k === 'C1') && q18.sOff === 170000 && off.cat.c.spent === 0,
+       '   設定が無ければ旧の姿: 個別株の区分が目標超過で個別株は今月なし（C1 も catfull）・ETF へ ¥' + (170000 - off.cat.c.spent).toLocaleString());
+    ok(ks(low.first) === 'C1,C5' && low.firstWait.length === 1 && low.firstWait[0].k === 'C2' && q18.sLow === 100000,
+       '   入金10万: C1・C5 を買い、C2（¥90,000）は入金が先の銘柄で尽きて来月（firstWait）・合計 ¥' + q18.sLow.toLocaleString());
+    // 実データ（正本・割り方 cat）: 正本に castle_unowned_first があれば、注文書に「持っていない銘柄を先に」の行と上の1行の注記が出る
+    if ((base.target || {}).castle_unowned_first === true) {
+      const load18 = async (over) => {
+        OVER = over;
+        await pg.goto('http://localhost:' + PORT + '/index.html'); await pg.waitForTimeout(600);
+        await pg.evaluate(stt => { localStorage.clear(); for (const k in stt.data) localStorage.setItem(k, stt.data[k]);
+          localStorage.setItem('ccf:stateSavedAt', stt.savedAt); }, ST);
+        await pg.reload(); await pg.waitForTimeout(1500);
+        await pg.evaluate(() => ccfImportAllPacks()); await pg.waitForTimeout(1800);
+        await pg.evaluate(() => { localStorage.setItem('pf:monthly_total', '170000'); showPage(5); }); await pg.waitForTimeout(3200);
+        return pg.evaluate(() => {
+          const pg5 = document.querySelector('#pg5'), txt = (pg5 || {}).innerText || '';
+          const tags = [...document.querySelectorAll('#pg5 .first-tag')].map(e => (e.closest('.planrow') || {}).innerText || '').map(t => t.split('\n')[0]);
+          const line = [...document.querySelectorAll('#pg5 div')].filter(d => /区分の比率が最優先/.test(d.innerText) && /1株単位/.test(d.innerText) && d.innerText.length < 600).map(d => d.innerText).pop() || '';
+          const sum = (txt.match(/合計 約¥([\d,]+)（個別株 ¥([\d,]+)／/) || []);
+          return { tags, line, note: !!document.querySelector('#pg5 .first-note'), total: sum[1] || '', castle: sum[2] || '' };
+        });
+      };
+      const r1 = await load18(withMode('cat'));
+      const offU = withMode('cat'); offU.target.castle_unowned_first = false;
+      const r0 = await load18(offU);
+      ok(r1.tags.length >= 1 && /持っていない個別株を先に/.test(r1.line) && r1.note && r1.castle && r1.castle !== '0'
+         && !r0.tags.length && !/持っていない個別株を先に/.test(r0.line) && !r0.note && r0.castle === '0',
+         '⑱ 実データ（入金17万）: 先に買う個別株 ' + r1.tags.join('・') + '（個別株 ¥' + r1.castle + '・合計 ¥' + r1.total + '）／ false にすると個別株 ¥' + r0.castle);
+    } else ok(true, '   （正本に castle_unowned_first が無いので実データの部分は飛ばす）');
   }
 
   ok(errs.length === 0, 'pageerror 0件' + (errs.length ? '（' + errs[0].slice(0, 120) + '）' : ''));
