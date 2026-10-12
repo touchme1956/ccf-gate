@@ -1910,7 +1910,7 @@ def holdings_v3():
         if c not in co['comp']:
             return '質が測れない（物差しが2つそろわない）'
         if co['qE'] is not None and c not in co['qE']:
-            return f"質が上位{QK['enter_top']:.0%}の外（{qp[c]:.0%}の位置）"
+            return f"質が上位{QK['enter_top']:.0%}の外（上位{1 - qp[c]:.0%}）"
         if c not in co['mom']:
             return '勢いが測れない（株価が12か月分ない）'
         if co['mE'] is not None and c not in co['mE']:
