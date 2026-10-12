@@ -192,6 +192,7 @@ def main():
     # 名前のある組み合わせ
     named = {'今（NASDAQ100 50・その他15=ITA・SMH 20 の ETF 側）': NOW_ETF, 'S&P500（VOO）': {'VOO': 1.0}, '全世界株（VT）': {'VT': 1.0},
              'NASDAQ100（QQQM）': {'QQQM': 1.0}, '前回の確率最大 SMH60/ITA40': {'SMH': .6, 'ITA': .4}}
+    panel_names = set()
     panel_p = os.path.join(BASE, 'out', 'bestpf_panel.json')
     if os.path.exists(panel_p):
         for p in json.load(open(panel_p)).get('candidates', []):
@@ -201,6 +202,8 @@ def main():
                 print('設計の案で測れない本', p['name'], bad); continue
             tot = sum(w.values())
             named[p['name']] = {k: v / tot for k, v in w.items()}
+            if not p.get('posthoc'):
+                panel_names.add(p['name'])
     NW = np.array([[named[nm].get(c, 0.0) for c in assets] for nm in named])
     Rn1, Rn2 = NW @ G1, NW @ G2
     ng, nv, nd = CB.path_stats(Rn1, len(k1))
@@ -394,6 +397,22 @@ def main():
     for j, nm in enumerate(named):
         named_out[nm] = describe(NW[j], dict(a1g=float(n_bs['a1g'][j]), a2g=float(n_bs['a2g'][j]), vol=float(n_bs['vol'][j]), mdd=float(n_bs['mdd'][j]),
                                              q1=float(n_bs['q1'][j]), q2=float(n_bs['q2'][j])), nm)
+    # 設計役の案（事前登録の候補）も同じ規則に入れる: 実行可能（最悪の世界 ≥ VOO・1本 60%以下・8本まで）で、
+    # P15π が全体の最大から 0.5pt 以内なら、5%未満の確率 → ぶれ の順で比べる
+    voo_worst = results['main']['voo_worst']
+    pool = [('grid', final_i, picks['最終（事前登録の規則）'])]
+    for nm in panel_names:
+        d = named_out[nm]
+        ok = d['最悪の世界'] / 100 >= voo_worst - 1e-12 and max(d['weights'].values()) <= 60.0 + 1e-9 and len(d['weights']) <= 8
+        if ok:
+            pool.append(('panel', nm, d))
+    best15 = max(x[2]['P15π'] for x in pool)
+    near = [x for x in pool if x[2]['P15π'] >= best15 - 100 * TIE - 1e-9]
+    near.sort(key=lambda x: (x[2]['P5π（5%未満）'], x[2]['ぶれ']))
+    final_with_panel = dict(source=near[0][0], name=('グリッド' if near[0][0] == 'grid' else near[0][1]), weights=near[0][2]['weights'],
+                            P15π=near[0][2]['P15π'], P5=near[0][2]['P5π（5%未満）'],
+                            note='P15π は丸め（0.1pt）で比べる。設計役の案は5%刻み・8本まで')
+    print('設計役の案を入れた最終:', final_with_panel)
     # 上位20（主）
     keyM = np.where(main_feas, main_pr['P15'], -1.0)
     top = np.argsort(-keyM)[:20]
@@ -413,7 +432,8 @@ def main():
                            D=round(100 * Dmap[c], 2), K4_adj=round(100 * float(chips_adj[i]), 2), vol_A1=round(100 * math.sqrt(S1[i, i]), 1))
                    for i, c in enumerate(assets)},
         robustness=dict(n_sens=n_sens, main_pick_in_top1pct=n_top, rule='半分以上の感度で上位1%（P15π の順位）に残れば主の1位、残らなければ平均順位の1位', main_kept=bool(robust_ok)),
-        sens=results, picks=picks, named=named_out, top20_main=top20,
+        sens=results, picks=picks, named=named_out, top20_main=top20, final_with_panel=final_with_panel,
+        panel_candidates=sorted(panel_names),
         single_assets={c: {k: single[c][k] for k in ('P15π', 'P10π', 'π加重の年率', '最悪の世界', 'ぶれ', '最大下落')} for c in single},
         best_single_uncapped=dict(asset=best_single, **{k: single[best_single][k] for k in ('P15π', 'P10π', 'π加重の年率', '最悪の世界', 'ぶれ', '最大下落')}),
         objective='P15π（ユーザー明示指示「15％以上を、狙う。」・事前登録の amendment_2026_10_12）',
