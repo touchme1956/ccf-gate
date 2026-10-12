@@ -153,7 +153,7 @@ Promise.all(['out/ccf15_rules.json','out/ccf15.json','out/ccf15_backtest.json','
     ul.appendChild(el('li',{text:'中身と入れ替えの決まりは私（Claude）が決め、この規則書のとおりに運営します。会話をまたいで記憶を持たないので、判断はすべて規則書に書いてあります。'}));
     ul.appendChild(el('li',{text:'今はお金を入れず、紙の上で運用しています（立ち上げ日の中身を持ったまま、毎営業日の終値で値をつける）。どの15%に置くか・お金を入れるかは未定です。'}));
     if(j2)ul.appendChild(el('li',{text:`過去（${String(B.window[0]).slice(0,4)}年7月〜${String(B.window[1]).slice(0,4)}年${+String(B.window[1]).slice(4)}月）の検証では、「その他」の15%で ITA の代わりにすると、資産全体の年率が ${fmt(Math.abs(j2.dcagr),2)}pt ${j2.dcagr<0?'低く':'高く'}、最大の下落が ${fmt(Math.abs(j2.dmaxdd),1)}pt ${j2.dmaxdd<0?'深く':'浅く'}なった＝事前に決めた判定は「${j2.verdict}」。`}));
-    if(j1)ul.appendChild(el('li',{text:`選び方の上乗せ（同じ土俵の平均との差）は年 ${pct(j1.vs_same_pool.ex_ann,2)}・t ${fmt(j1.vs_same_pool.t,2)}＝「${j1.verdict}」。中身は「S&P500 からテックを除き、同じ重みにしたもの」とほぼ同じ動きでした。`}));
+    if(j1)ul.appendChild(el('li',{text:`選び方の上乗せ（同じ土俵の平均との差）は年 ${pct(j1.vs_same_pool.ex_ann,2)}・t ${fmt(j1.vs_same_pool.t,2)}＝「${j1.verdict}」。動きは、同じ重みの S&P500（RSP）やテックを除いた S&P500（SPXT）とほぼ同じでした（差は偶然の範囲）。`}));
     c.appendChild(ul);}
   // 規則
   {const c=$('rules');c.textContent='';c.appendChild(el('h2',{text:'決まり（規則書 '+R.version+'）'}));
