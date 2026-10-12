@@ -1,0 +1,9287 @@
+{
+ "module": "R6",
+ "prereg": "out/bestpf_prereg.json",
+ "prereg_commit": "7c4b672",
+ "tool": "night/bestpf_fund_persistence.py",
+ "generated": "2026-10-12T11:40:09Z",
+ "question": "名の知れた長期の運用者・ファンドは、有名になった後の10年も勝ったか",
+ "prediction": "順位相関は0前後。上位の勝ちは続かない",
+ "funds_prereg": [
+  "BRK-B",
+  "FCNTX",
+  "SEQUX",
+  "DODGX",
+  "VPMCX",
+  "FMAGX",
+  "TRBCX",
+  "BPTRX",
+  "OAKMX",
+  "LLPFX",
+  "FAIRX",
+  "MPGFX",
+  "PRWCX",
+  "JENSX",
+  "FMIHX",
+  "YACKX",
+  "SGENX",
+  "TWEBX",
+  "PRBLX",
+  "AMCPX",
+  "AGTHX",
+  "AIVSX",
+  "ANWPX",
+  "VWNDX",
+  "VWUSX",
+  "FBGRX",
+  "FDGRX",
+  "FLPSX",
+  "HAINX",
+  "DODFX",
+  "CGMFX",
+  "SMT.L"
+ ],
+ "data_sources": {
+  "funds": "Yahoo Finance chart API の調整後終値（配当・分配金込み）の月次（mw_common.yahoo）。ただし実際には無い分配の調整が入っていた2か月（VWUSX 2019-04・FCNTX 2002-06）は日足の点検で見つけて直した（fixes_applied）。SMT.L は日足の終値＋配当の事件（ペンス）から自分で作った配当込み（Yahoo の調整後終値は配当がほぼ入っていないため）。BRK-A は日足の調整後終値の月末値（配当なし）",
+  "spy": "Yahoo SPY の調整後終値（配当込み）",
+  "fx": "Yahoo GBPUSD=X 日足の月末（2003-12〜）＋ FRED DEXUSUK 日次の月末（それより前）",
+  "rf": "FRED TB3MS（CAPM の感度だけ）",
+  "french": "Ken French F-F_Research_Data_Factors（Mkt-RF+RF・Berkshire の1980年代の比較だけ）",
+  "berkshire_letter": "https://www.berkshirehathaway.com/letters/2025ltr.pdf",
+  "cgm_sec": {
+   "485BPOS_2022_xbrl": "https://www.sec.gov/Archives/edgar/data/60335/000006033522000031/ck0000060335-20211231.htm（rr:AnnualReturn2012〜2021・系列 S000000876）",
+   "497K_2016": "https://www.sec.gov/Archives/edgar/data/60335/000006033516000076/a2016_focussummarypros.htm（10年平均 2006〜2015）",
+   "N-CSRS_2022-06-30": "https://www.sec.gov/Archives/edgar/data/60335/000006033522000043/cgmncsr06302022.htm（2022年上半期 −10.9%・S&P 500 −20.0%）",
+   "497_2022-09-30": "https://www.sec.gov/Archives/edgar/data/60335/000092963822001509/form497.htm（清算の決定・2022-11-30 ごろ運用停止）",
+   "N-CSR_2009-12-31": "https://www.sec.gov/Archives/edgar/data/60335/000095015610000031/d73427_ncsr.htm（10年の累計 +418.2%＝2000〜2009）"
+  }
+ },
+ "names": {
+  "BRK-B": "Berkshire Hathaway Inc.",
+  "FCNTX": "Fidelity Contrafund",
+  "SEQUX": "Sequoia",
+  "DODGX": "Dodge & Cox Stock I",
+  "VPMCX": "Vanguard PRIMECAP Inv",
+  "FMAGX": "Fidelity Magellan",
+  "TRBCX": "T. Rowe Price Blue Chip Growth",
+  "BPTRX": "Baron Partners Retail",
+  "OAKMX": "Oakmark Investor",
+  "LLPFX": "Longleaf Partners",
+  "FAIRX": "Fairholme",
+  "MPGFX": "Mairs & Power Fund",
+  "PRWCX": "T. Rowe Price Capital Appreciation",
+  "JENSX": "Jensen Quality Growth J",
+  "FMIHX": "FMI Large Cap Investor",
+  "YACKX": "AMG Yacktman I",
+  "SGENX": "First Eagle Global A",
+  "TWEBX": "Tweedy, Browne Value",
+  "PRBLX": "Parnassus Core Equity Investor",
+  "AMCPX": "American Funds AMCAP A",
+  "AGTHX": "American Funds Growth Fd of Amer A",
+  "AIVSX": "American Funds Invmt Co of Amer A",
+  "ANWPX": "American Funds New Perspective A",
+  "VWNDX": "Vanguard Windsor Investor Shares",
+  "VWUSX": "Vanguard US Growth Investor",
+  "FBGRX": "Fidelity Blue Chip Growth",
+  "FDGRX": "Fidelity Growth Company Fund",
+  "FLPSX": "Fidelity Low-Priced Stock",
+  "HAINX": "Harbor International Institutional",
+  "DODFX": "Dodge & Cox International Stock I",
+  "SMT.L": "Scottish Mortgage Investment Trust（Yahoo: Scottish Mortgage Ord）",
+  "SPY": "State Street SPDR S&P 500 ETF Trust"
+ },
+ "notes": {
+  "CGMFX": {
+   "error": "Yahoo に時系列が無い（KeyError: 'timestamp'）"
+  },
+  "SMT.L": {
+   "how": "Yahoo SMT.L の日足の終値（ペンス）に配当の事件（ペンス）を足して作った配当込みの月末値 → GBP の月次リターン × 為替（GBPUSD=X 日足の月末・2003-12 より前は FRED DEXUSUK 月末）でドルへ（2026-10-12 に直した）",
+   "why_not_monthly_bars": "Yahoo の月足は 2012-10 以前で 5対1 分割の調整が月ごとに揺れ +300%/−80% が交互に出る（実測 1985-03 +376%・1985-04 −80% など）",
+   "why_not_adjclose": "Yahoo の SMT.L の調整後終値は配当（ペンス）を約100分の1しか調整していない＝実質は株価だけ（検証役の指摘・sample_2016 の adjust と div_pct を比べよ）",
+   "dividend_check": {
+    "dividend_events": 110,
+    "unmatched_dividend_dates": [],
+    "window_check": {
+     "1996-2005": {
+      "div_contrib_ann_pct（配当込み−終値だけ）": 1.95,
+      "yahoo_adjclose_contrib_ann_pct（旧の調整後終値−終値だけ）": 0.019
+     },
+     "2006-2015": {
+      "div_contrib_ann_pct（配当込み−終値だけ）": 2.05,
+      "yahoo_adjclose_contrib_ann_pct（旧の調整後終値−終値だけ）": 0.02
+     },
+     "2016-2026-09": {
+      "div_contrib_ann_pct（配当込み−終値だけ）": 0.63,
+      "yahoo_adjclose_contrib_ann_pct（旧の調整後終値−終値だけ）": 0.006
+     }
+    },
+    "sample_2016": [
+     {
+      "ex_date": "2016-06-09",
+      "div_pence": 1.58,
+      "prev_close_pence": 260.79998779296875,
+      "div_pct_of_price": 0.606,
+      "yahoo_adjclose_adjust_pct": 0.0061
+     },
+     {
+      "ex_date": "2016-11-17",
+      "div_pence": 1.39,
+      "prev_close_pence": 312.70001220703125,
+      "div_pct_of_price": 0.445,
+      "yahoo_adjclose_adjust_pct": 0.0044
+     }
+    ]
+   },
+   "fx_splice_check": {
+    "overlap_months": 273,
+    "corr": 0.9756,
+    "mean_abs_diff_pct": 0.401,
+    "yahoo_fx_first_month": 200312
+   },
+   "gbp_outliers_over_35pct": [
+    [
+     197501,
+     0.614
+    ]
+   ],
+   "gbp_cagr_2016_2026_09": 18.25
+  },
+  "FCNTX": {
+   "fix": "Yahoo の調整後終値に実際には無い分配の調整が入っていた月を直した: 2002-06-07（分配 0.23＝基準価額の 5.3%・その月 1.23%→-4.14%）"
+  },
+  "VWUSX": {
+   "fix": "Yahoo の調整後終値に実際には無い分配の調整が入っていた月を直した: 2019-04-03（分配 3.306＝基準価額の 8.36%・その月 14.33%→4.77%）"
+  },
+  "BRK-B": {
+   "test_B_fill": "検定 B では BRK-B の上場前（199001〜199605）を BRK-A の月次で埋めた",
+   "brka_brkb_check": {
+    "overlap_months": 364,
+    "corr": 0.9891,
+    "mean_abs_diff_pct": 0.494,
+    "brkb_first_month": 199606
+   }
+  },
+  "BPTRX": {
+   "caveat": "Baron Partners は 2003-04-30 に投資信託へ転換。それより前の系列は前身のパートナーシップ（成功報酬20%つき・未登録）の成績の可能性が高い（Baron の開示: https://www.baroncapitalgroup.com/sites/default/files/2025-10/fact-sheet-baron-partners-fund-9.30.2025.pdf ）＝検定 B の前半は器が違う"
+  },
+  "FAIRX": {
+   "test_B": "設定 1999-12＝検定 B の前半（1996〜2005）がそろわない"
+  },
+  "FMIHX": {
+   "test_B": "設定 2001-12＝検定 B の前半（1996〜2005）がそろわない"
+  },
+  "DODFX": {
+   "test_B": "設定 2001-05＝検定 B の前半（1996〜2005）がそろわない"
+  }
+ },
+ "unavailable": {
+  "CGMFX": "Yahoo に時系列が無い（清算・SEC 497 2022-09-30）"
+ },
+ "monthly_moves_over_30pct_since_1990": {
+  "BPTRX": [
+   [
+    199808,
+    -0.341
+   ],
+   [
+    202008,
+    0.328
+   ],
+   [
+    202011,
+    0.309
+   ]
+  ],
+  "LLPFX": [
+   [
+    200810,
+    -0.305
+   ]
+  ],
+  "SMT.L": [
+   [
+    200810,
+    -0.352
+   ]
+  ]
+ },
+ "test_A": {
+  "label": "A: 2006-01〜2015-12 → 2016-01〜2026-09（主）",
+  "n": 31,
+  "tercile_size": 10,
+  "top_third_ex1_mean": 2.34,
+  "bottom_third_ex1_mean": -1.88,
+  "spearman": 0.596,
+  "perm_p_two_sided": 0.0007,
+  "null_sd_approx": 0.183,
+  "top_third_ex2_mean": 0.75,
+  "top_third_ex2_median": 0.73,
+  "mid_third_ex2_mean": -1.75,
+  "bottom_third_ex2_mean": -4.74,
+  "bottom_third_ex2_median": -5.23,
+  "top_minus_bottom_ex2": 5.49,
+  "top_minus_bottom_perm_p": 0.0006,
+  "top_third_beat_spy2_share": 0.5,
+  "top_third_beat_spy2_count": "5/10",
+  "bottom_third_beat_spy2_count": "0/10",
+  "all_beat_spy2_count": "7/31",
+  "all_beat_spy1_count": "20/31",
+  "winners1_winners2": "6/20",
+  "losers1_winners2": "1/11",
+  "ex1_median": 0.39,
+  "ex2_median": -2.48,
+  "ex2_mean": -1.91,
+  "rows": [
+   {
+    "fund": "SMT.L",
+    "ex1": 4.45,
+    "rank1": 1.0,
+    "ex2": 2.12,
+    "rank2": 4.0,
+    "third1": "上位",
+    "beat_spy2": true
+   },
+   {
+    "fund": "FDGRX",
+    "ex1": 3.13,
+    "rank1": 2.0,
+    "ex2": 6.83,
+    "rank2": 2.0,
+    "third1": "上位",
+    "beat_spy2": true
+   },
+   {
+    "fund": "PRBLX",
+    "ex1": 2.67,
+    "rank1": 3.0,
+    "ex2": -1.64,
+    "rank2": 12.0,
+    "third1": "上位",
+    "beat_spy2": false
+   },
+   {
+    "fund": "YACKX",
+    "ex1": 2.57,
+    "rank1": 4.0,
+    "ex2": -2.82,
+    "rank2": 19.0,
+    "third1": "上位",
+    "beat_spy2": false
+   },
+   {
+    "fund": "VPMCX",
+    "ex1": 2.3,
+    "rank1": 5.0,
+    "ex2": 1.5,
+    "rank2": 6.0,
+    "third1": "上位",
+    "beat_spy2": true
+   },
+   {
+    "fund": "FBGRX",
+    "ex1": 2.13,
+    "rank1": 6.0,
+    "ex2": 5.1,
+    "rank2": 3.0,
+    "third1": "上位",
+    "beat_spy2": true
+   },
+   {
+    "fund": "TRBCX",
+    "ex1": 2.11,
+    "rank1": 7.0,
+    "ex2": -0.04,
+    "rank2": 8.0,
+    "third1": "上位",
+    "beat_spy2": false
+   },
+   {
+    "fund": "FCNTX",
+    "ex1": 1.46,
+    "rank1": 8.0,
+    "ex2": 2.05,
+    "rank2": 5.0,
+    "third1": "上位",
+    "beat_spy2": true
+   },
+   {
+    "fund": "PRWCX",
+    "ex1": 1.31,
+    "rank1": 9.0,
+    "ex2": -3.73,
+    "rank2": 22.0,
+    "third1": "上位",
+    "beat_spy2": false
+   },
+   {
+    "fund": "OAKMX",
+    "ex1": 1.26,
+    "rank1": 10.0,
+    "ex2": -1.84,
+    "rank2": 15.0,
+    "third1": "上位",
+    "beat_spy2": false
+   },
+   {
+    "fund": "BRK-B",
+    "ex1": 1.21,
+    "rank1": 11.0,
+    "ex2": -1.75,
+    "rank2": 13.0,
+    "third1": "中位",
+    "beat_spy2": false
+   },
+   {
+    "fund": "FLPSX",
+    "ex1": 1.04,
+    "rank1": 12.0,
+    "ex2": -4.38,
+    "rank2": 23.0,
+    "third1": "中位",
+    "beat_spy2": false
+   },
+   {
+    "fund": "FMIHX",
+    "ex1": 0.74,
+    "rank1": 13.0,
+    "ex2": -5.68,
+    "rank2": 27.0,
+    "third1": "中位",
+    "beat_spy2": false
+   },
+   {
+    "fund": "JENSX",
+    "ex1": 0.56,
+    "rank1": 14.0,
+    "ex2": -3.53,
+    "rank2": 21.0,
+    "third1": "中位",
+    "beat_spy2": false
+   },
+   {
+    "fund": "BPTRX",
+    "ex1": 0.55,
+    "rank1": 15.0,
+    "ex2": 7.92,
+    "rank2": 1.0,
+    "third1": "中位",
+    "beat_spy2": true
+   },
+   {
+    "fund": "SEQUX",
+    "ex1": 0.39,
+    "rank1": 16.0,
+    "ex2": -4.72,
+    "rank2": 24.0,
+    "third1": "中位",
+    "beat_spy2": false
+   },
+   {
+    "fund": "AMCPX",
+    "ex1": 0.35,
+    "rank1": 17.0,
+    "ex2": -2.61,
+    "rank2": 18.0,
+    "third1": "中位",
+    "beat_spy2": false
+   },
+   {
+    "fund": "MPGFX",
+    "ex1": 0.31,
+    "rank1": 18.0,
+    "ex2": -1.81,
+    "rank2": 14.0,
+    "third1": "中位",
+    "beat_spy2": false
+   },
+   {
+    "fund": "ANWPX",
+    "ex1": 0.29,
+    "rank1": 19.0,
+    "ex2": -2.48,
+    "rank2": 16.0,
+    "third1": "中位",
+    "beat_spy2": false
+   },
+   {
+    "fund": "VWUSX",
+    "ex1": 0.23,
+    "rank1": 20.0,
+    "ex2": -0.27,
+    "rank2": 9.0,
+    "third1": "中位",
+    "beat_spy2": false
+   },
+   {
+    "fund": "AGTHX",
+    "ex1": -0.01,
+    "rank1": 21.0,
+    "ex2": 0.04,
+    "rank2": 7.0,
+    "third1": "中位",
+    "beat_spy2": true
+   },
+   {
+    "fund": "SGENX",
+    "ex1": -0.08,
+    "rank1": 22.0,
+    "ex2": -4.91,
+    "rank2": 25.0,
+    "third1": "下位",
+    "beat_spy2": false
+   },
+   {
+    "fund": "AIVSX",
+    "ex1": -0.74,
+    "rank1": 23.0,
+    "ex2": -0.86,
+    "rank2": 10.0,
+    "third1": "下位",
+    "beat_spy2": false
+   },
+   {
+    "fund": "VWNDX",
+    "ex1": -1.22,
+    "rank1": 24.0,
+    "ex2": -3.48,
+    "rank2": 20.0,
+    "third1": "下位",
+    "beat_spy2": false
+   },
+   {
+    "fund": "DODGX",
+    "ex1": -1.54,
+    "rank1": 25.0,
+    "ex2": -2.53,
+    "rank2": 17.0,
+    "third1": "下位",
+    "beat_spy2": false
+   },
+   {
+    "fund": "FMAGX",
+    "ex1": -1.65,
+    "rank1": 26.0,
+    "ex2": -1.55,
+    "rank2": 11.0,
+    "third1": "下位",
+    "beat_spy2": false
+   },
+   {
+    "fund": "FAIRX",
+    "ex1": -1.73,
+    "rank1": 27.0,
+    "ex2": -5.74,
+    "rank2": 28.0,
+    "third1": "下位",
+    "beat_spy2": false
+   },
+   {
+    "fund": "TWEBX",
+    "ex1": -2.13,
+    "rank1": 28.0,
+    "ex2": -6.5,
+    "rank2": 29.0,
+    "third1": "下位",
+    "beat_spy2": false
+   },
+   {
+    "fund": "HAINX",
+    "ex1": -2.31,
+    "rank1": 29.0,
+    "ex2": -7.27,
+    "rank2": 30.0,
+    "third1": "下位",
+    "beat_spy2": false
+   },
+   {
+    "fund": "DODFX",
+    "ex1": -3.4,
+    "rank1": 30.0,
+    "ex2": -5.56,
+    "rank2": 26.0,
+    "third1": "下位",
+    "beat_spy2": false
+   },
+   {
+    "fund": "LLPFX",
+    "ex1": -4.01,
+    "rank1": 31.0,
+    "ex2": -8.98,
+    "rank2": 31.0,
+    "third1": "下位",
+    "beat_spy2": false
+   }
+  ],
+  "windows": {
+   "first": [
+    200601,
+    201512
+   ],
+   "second": [
+    201601,
+    202609
+   ]
+  },
+  "measure": "幾何（複利の年率の差）",
+  "excluded": []
+ },
+ "test_B": {
+  "label": "B: 1996-01〜2005-12 → 2006-01〜2015-12（主）",
+  "n": 28,
+  "tercile_size": 9,
+  "top_third_ex1_mean": 4.76,
+  "bottom_third_ex1_mean": -0.73,
+  "spearman": -0.209,
+  "perm_p_two_sided": 0.2843,
+  "null_sd_approx": 0.192,
+  "top_third_ex2_mean": -0.12,
+  "top_third_ex2_median": 0.31,
+  "mid_third_ex2_mean": 0.6,
+  "bottom_third_ex2_mean": 1.07,
+  "bottom_third_ex2_median": 1.26,
+  "top_minus_bottom_ex2": -1.19,
+  "top_minus_bottom_perm_p": 0.1784,
+  "top_third_beat_spy2_share": 0.556,
+  "top_third_beat_spy2_count": "5/9",
+  "bottom_third_beat_spy2_count": "7/9",
+  "all_beat_spy2_count": "19/28",
+  "all_beat_spy1_count": "24/28",
+  "winners1_winners2": "16/24",
+  "losers1_winners2": "3/4",
+  "ex1_median": 2.07,
+  "ex2_median": 0.47,
+  "ex2_mean": 0.52,
+  "rows": [
+   {
+    "fund": "FLPSX",
+    "ex1": 7.2,
+    "rank1": 1.0,
+    "ex2": 1.04,
+    "rank2": 12.0,
+    "third1": "上位",
+    "beat_spy2": true
+   },
+   {
+    "fund": "DODGX",
+    "ex1": 5.69,
+    "rank1": 2.0,
+    "ex2": -1.54,
+    "rank2": 24.0,
+    "third1": "上位",
+    "beat_spy2": false
+   },
+   {
+    "fund": "BPTRX",
+    "ex1": 4.95,
+    "rank1": 3.0,
+    "ex2": 0.55,
+    "rank2": 14.0,
+    "third1": "上位",
+    "beat_spy2": true
+   },
+   {
+    "fund": "SGENX",
+    "ex1": 4.95,
+    "rank1": 4.0,
+    "ex2": -0.08,
+    "rank2": 21.0,
+    "third1": "上位",
+    "beat_spy2": false
+   },
+   {
+    "fund": "AGTHX",
+    "ex1": 4.42,
+    "rank1": 5.0,
+    "ex2": -0.01,
+    "rank2": 20.0,
+    "third1": "上位",
+    "beat_spy2": false
+   },
+   {
+    "fund": "VPMCX",
+    "ex1": 4.34,
+    "rank1": 6.0,
+    "ex2": 2.3,
+    "rank2": 5.0,
+    "third1": "上位",
+    "beat_spy2": true
+   },
+   {
+    "fund": "SEQUX",
+    "ex1": 3.94,
+    "rank1": 7.0,
+    "ex2": 0.39,
+    "rank2": 15.0,
+    "third1": "上位",
+    "beat_spy2": true
+   },
+   {
+    "fund": "LLPFX",
+    "ex1": 3.82,
+    "rank1": 8.0,
+    "ex2": -4.01,
+    "rank2": 28.0,
+    "third1": "上位",
+    "beat_spy2": false
+   },
+   {
+    "fund": "MPGFX",
+    "ex1": 3.58,
+    "rank1": 9.0,
+    "ex2": 0.31,
+    "rank2": 17.0,
+    "third1": "上位",
+    "beat_spy2": true
+   },
+   {
+    "fund": "PRWCX",
+    "ex1": 3.49,
+    "rank1": 10.0,
+    "ex2": 1.31,
+    "rank2": 9.0,
+    "third1": "中位",
+    "beat_spy2": true
+   },
+   {
+    "fund": "FCNTX",
+    "ex1": 3.09,
+    "rank1": 11.0,
+    "ex2": 1.46,
+    "rank2": 8.0,
+    "third1": "中位",
+    "beat_spy2": true
+   },
+   {
+    "fund": "ANWPX",
+    "ex1": 2.72,
+    "rank1": 12.0,
+    "ex2": 0.29,
+    "rank2": 18.0,
+    "third1": "中位",
+    "beat_spy2": true
+   },
+   {
+    "fund": "HAINX",
+    "ex1": 2.63,
+    "rank1": 13.0,
+    "ex2": -2.31,
+    "rank2": 27.0,
+    "third1": "中位",
+    "beat_spy2": false
+   },
+   {
+    "fund": "AMCPX",
+    "ex1": 2.23,
+    "rank1": 14.0,
+    "ex2": 0.35,
+    "rank2": 16.0,
+    "third1": "中位",
+    "beat_spy2": true
+   },
+   {
+    "fund": "AIVSX",
+    "ex1": 1.91,
+    "rank1": 15.0,
+    "ex2": -0.74,
+    "rank2": 22.0,
+    "third1": "中位",
+    "beat_spy2": false
+   },
+   {
+    "fund": "YACKX",
+    "ex1": 1.66,
+    "rank1": 16.0,
+    "ex2": 2.57,
+    "rank2": 4.0,
+    "third1": "中位",
+    "beat_spy2": true
+   },
+   {
+    "fund": "BRK-B",
+    "ex1": 1.65,
+    "rank1": 17.0,
+    "ex2": 1.21,
+    "rank2": 11.0,
+    "third1": "中位",
+    "beat_spy2": true
+   },
+   {
+    "fund": "VWNDX",
+    "ex1": 1.44,
+    "rank1": 18.0,
+    "ex2": -1.22,
+    "rank2": 23.0,
+    "third1": "中位",
+    "beat_spy2": false
+   },
+   {
+    "fund": "FDGRX",
+    "ex1": 1.41,
+    "rank1": 19.0,
+    "ex2": 3.13,
+    "rank2": 2.0,
+    "third1": "中位",
+    "beat_spy2": true
+   },
+   {
+    "fund": "JENSX",
+    "ex1": 0.99,
+    "rank1": 20.0,
+    "ex2": 0.56,
+    "rank2": 13.0,
+    "third1": "下位",
+    "beat_spy2": true
+   },
+   {
+    "fund": "PRBLX",
+    "ex1": 0.98,
+    "rank1": 21.0,
+    "ex2": 2.67,
+    "rank2": 3.0,
+    "third1": "下位",
+    "beat_spy2": true
+   },
+   {
+    "fund": "SMT.L",
+    "ex1": 0.59,
+    "rank1": 22.0,
+    "ex2": 4.45,
+    "rank2": 1.0,
+    "third1": "下位",
+    "beat_spy2": true
+   },
+   {
+    "fund": "TWEBX",
+    "ex1": 0.45,
+    "rank1": 23.0,
+    "ex2": -2.13,
+    "rank2": 26.0,
+    "third1": "下位",
+    "beat_spy2": false
+   },
+   {
+    "fund": "TRBCX",
+    "ex1": 0.17,
+    "rank1": 24.0,
+    "ex2": 2.11,
+    "rank2": 7.0,
+    "third1": "下位",
+    "beat_spy2": true
+   },
+   {
+    "fund": "OAKMX",
+    "ex1": -0.55,
+    "rank1": 25.0,
+    "ex2": 1.26,
+    "rank2": 10.0,
+    "third1": "下位",
+    "beat_spy2": true
+   },
+   {
+    "fund": "FMAGX",
+    "ex1": -1.47,
+    "rank1": 26.0,
+    "ex2": -1.65,
+    "rank2": 25.0,
+    "third1": "下位",
+    "beat_spy2": false
+   },
+   {
+    "fund": "FBGRX",
+    "ex1": -2.33,
+    "rank1": 27.0,
+    "ex2": 2.13,
+    "rank2": 6.0,
+    "third1": "下位",
+    "beat_spy2": true
+   },
+   {
+    "fund": "VWUSX",
+    "ex1": -5.36,
+    "rank1": 28.0,
+    "ex2": 0.23,
+    "rank2": 19.0,
+    "third1": "下位",
+    "beat_spy2": true
+   }
+  ],
+  "windows": {
+   "first": [
+    199601,
+    200512
+   ],
+   "second": [
+    200601,
+    201512
+   ]
+  },
+  "measure": "幾何（複利の年率の差）",
+  "excluded": [
+   {
+    "fund": "FAIRX",
+    "first_month": 200001,
+    "missing_months_in_windows": 48
+   },
+   {
+    "fund": "FMIHX",
+    "first_month": 200201,
+    "missing_months_in_windows": 72
+   },
+   {
+    "fund": "DODFX",
+    "first_month": 200105,
+    "missing_months_in_windows": 64
+   }
+  ]
+ },
+ "sensitivity": {
+  "A_before_fix": {
+   "label": "A・直す前のデータ（旧の報告の再現）",
+   "n": 31,
+   "tercile_size": 10,
+   "top_third_ex1_mean": 2.14,
+   "bottom_third_ex1_mean": -1.88,
+   "spearman": 0.581,
+   "perm_p_two_sided": 0.001,
+   "null_sd_approx": 0.183,
+   "top_third_ex2_mean": 0.69,
+   "top_third_ex2_median": 0.73,
+   "mid_third_ex2_mean": -1.67,
+   "bottom_third_ex2_mean": -4.74,
+   "bottom_third_ex2_median": -5.23,
+   "top_minus_bottom_ex2": 5.43,
+   "top_minus_bottom_perm_p": 0.0007,
+   "top_third_beat_spy2_share": 0.5,
+   "top_third_beat_spy2_count": "5/10",
+   "bottom_third_beat_spy2_count": "0/10",
+   "all_beat_spy2_count": "8/31",
+   "all_beat_spy1_count": "20/31",
+   "winners1_winners2": "7/20",
+   "losers1_winners2": "1/11",
+   "ex1_median": 0.39,
+   "ex2_median": -2.48,
+   "ex2_mean": -1.9,
+   "rows": [
+    {
+     "fund": "FDGRX",
+     "ex1": 3.13,
+     "rank1": 1.0,
+     "ex2": 6.83,
+     "rank2": 2.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "PRBLX",
+     "ex1": 2.67,
+     "rank1": 2.0,
+     "ex2": -1.64,
+     "rank2": 12.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "YACKX",
+     "ex1": 2.57,
+     "rank1": 3.0,
+     "ex2": -2.82,
+     "rank2": 19.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "SMT.L",
+     "ex1": 2.44,
+     "rank1": 4.0,
+     "ex2": 1.5,
+     "rank2": 6.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "VPMCX",
+     "ex1": 2.3,
+     "rank1": 5.0,
+     "ex2": 1.5,
+     "rank2": 5.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "FBGRX",
+     "ex1": 2.13,
+     "rank1": 6.0,
+     "ex2": 5.1,
+     "rank2": 3.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "TRBCX",
+     "ex1": 2.11,
+     "rank1": 7.0,
+     "ex2": -0.04,
+     "rank2": 9.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FCNTX",
+     "ex1": 1.46,
+     "rank1": 8.0,
+     "ex2": 2.05,
+     "rank2": 4.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "PRWCX",
+     "ex1": 1.31,
+     "rank1": 9.0,
+     "ex2": -3.73,
+     "rank2": 22.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "OAKMX",
+     "ex1": 1.26,
+     "rank1": 10.0,
+     "ex2": -1.84,
+     "rank2": 15.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "BRK-B",
+     "ex1": 1.21,
+     "rank1": 11.0,
+     "ex2": -1.75,
+     "rank2": 13.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FLPSX",
+     "ex1": 1.04,
+     "rank1": 12.0,
+     "ex2": -4.38,
+     "rank2": 23.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FMIHX",
+     "ex1": 0.74,
+     "rank1": 13.0,
+     "ex2": -5.68,
+     "rank2": 27.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "JENSX",
+     "ex1": 0.56,
+     "rank1": 14.0,
+     "ex2": -3.53,
+     "rank2": 21.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "BPTRX",
+     "ex1": 0.55,
+     "rank1": 15.0,
+     "ex2": 7.92,
+     "rank2": 1.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "SEQUX",
+     "ex1": 0.39,
+     "rank1": 16.0,
+     "ex2": -4.72,
+     "rank2": 24.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "AMCPX",
+     "ex1": 0.35,
+     "rank1": 17.0,
+     "ex2": -2.61,
+     "rank2": 18.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "MPGFX",
+     "ex1": 0.31,
+     "rank1": 18.0,
+     "ex2": -1.81,
+     "rank2": 14.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "ANWPX",
+     "ex1": 0.29,
+     "rank1": 19.0,
+     "ex2": -2.48,
+     "rank2": 16.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "VWUSX",
+     "ex1": 0.23,
+     "rank1": 20.0,
+     "ex2": 0.67,
+     "rank2": 7.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "AGTHX",
+     "ex1": -0.01,
+     "rank1": 21.0,
+     "ex2": 0.04,
+     "rank2": 8.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "SGENX",
+     "ex1": -0.08,
+     "rank1": 22.0,
+     "ex2": -4.91,
+     "rank2": 25.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "AIVSX",
+     "ex1": -0.74,
+     "rank1": 23.0,
+     "ex2": -0.86,
+     "rank2": 10.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "VWNDX",
+     "ex1": -1.22,
+     "rank1": 24.0,
+     "ex2": -3.48,
+     "rank2": 20.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "DODGX",
+     "ex1": -1.54,
+     "rank1": 25.0,
+     "ex2": -2.53,
+     "rank2": 17.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FMAGX",
+     "ex1": -1.65,
+     "rank1": 26.0,
+     "ex2": -1.55,
+     "rank2": 11.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FAIRX",
+     "ex1": -1.73,
+     "rank1": 27.0,
+     "ex2": -5.74,
+     "rank2": 28.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "TWEBX",
+     "ex1": -2.13,
+     "rank1": 28.0,
+     "ex2": -6.5,
+     "rank2": 29.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "HAINX",
+     "ex1": -2.31,
+     "rank1": 29.0,
+     "ex2": -7.27,
+     "rank2": 30.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "DODFX",
+     "ex1": -3.4,
+     "rank1": 30.0,
+     "ex2": -5.56,
+     "rank2": 26.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "LLPFX",
+     "ex1": -4.01,
+     "rank1": 31.0,
+     "ex2": -8.98,
+     "rank2": 31.0,
+     "third1": "下位",
+     "beat_spy2": false
+    }
+   ],
+   "windows": {
+    "first": [
+     200601,
+     201512
+    ],
+    "second": [
+     201601,
+     202609
+    ]
+   },
+   "measure": "幾何（複利の年率の差）",
+   "excluded": []
+  },
+  "B_before_fix": {
+   "label": "B・直す前のデータ（旧の報告の再現）",
+   "n": 28,
+   "tercile_size": 9,
+   "top_third_ex1_mean": 4.78,
+   "bottom_third_ex1_mean": -0.94,
+   "spearman": -0.215,
+   "perm_p_two_sided": 0.27,
+   "null_sd_approx": 0.192,
+   "top_third_ex2_mean": 0.01,
+   "top_third_ex2_median": 0.39,
+   "mid_third_ex2_mean": 0.49,
+   "bottom_third_ex2_mean": 0.85,
+   "bottom_third_ex2_median": 1.26,
+   "top_minus_bottom_ex2": -0.84,
+   "top_minus_bottom_perm_p": 0.3124,
+   "top_third_beat_spy2_share": 0.556,
+   "top_third_beat_spy2_count": "5/9",
+   "bottom_third_beat_spy2_count": "7/9",
+   "all_beat_spy2_count": "19/28",
+   "all_beat_spy1_count": "23/28",
+   "winners1_winners2": "15/23",
+   "losers1_winners2": "4/5",
+   "ex1_median": 2.07,
+   "ex2_median": 0.47,
+   "ex2_mean": 0.45,
+   "rows": [
+    {
+     "fund": "FLPSX",
+     "ex1": 7.2,
+     "rank1": 1.0,
+     "ex2": 1.04,
+     "rank2": 12.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "DODGX",
+     "ex1": 5.69,
+     "rank1": 2.0,
+     "ex2": -1.54,
+     "rank2": 24.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "BPTRX",
+     "ex1": 4.95,
+     "rank1": 3.0,
+     "ex2": 0.55,
+     "rank2": 14.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "SGENX",
+     "ex1": 4.95,
+     "rank1": 4.0,
+     "ex2": -0.08,
+     "rank2": 21.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "AGTHX",
+     "ex1": 4.42,
+     "rank1": 5.0,
+     "ex2": -0.01,
+     "rank2": 20.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "VPMCX",
+     "ex1": 4.34,
+     "rank1": 6.0,
+     "ex2": 2.3,
+     "rank2": 5.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "SEQUX",
+     "ex1": 3.94,
+     "rank1": 7.0,
+     "ex2": 0.39,
+     "rank2": 15.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "LLPFX",
+     "ex1": 3.82,
+     "rank1": 8.0,
+     "ex2": -4.01,
+     "rank2": 28.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FCNTX",
+     "ex1": 3.7,
+     "rank1": 9.0,
+     "ex2": 1.46,
+     "rank2": 8.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "MPGFX",
+     "ex1": 3.58,
+     "rank1": 10.0,
+     "ex2": 0.31,
+     "rank2": 17.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "PRWCX",
+     "ex1": 3.49,
+     "rank1": 11.0,
+     "ex2": 1.31,
+     "rank2": 9.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "ANWPX",
+     "ex1": 2.72,
+     "rank1": 12.0,
+     "ex2": 0.29,
+     "rank2": 18.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "HAINX",
+     "ex1": 2.63,
+     "rank1": 13.0,
+     "ex2": -2.31,
+     "rank2": 27.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "AMCPX",
+     "ex1": 2.23,
+     "rank1": 14.0,
+     "ex2": 0.35,
+     "rank2": 16.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "AIVSX",
+     "ex1": 1.91,
+     "rank1": 15.0,
+     "ex2": -0.74,
+     "rank2": 22.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "YACKX",
+     "ex1": 1.66,
+     "rank1": 16.0,
+     "ex2": 2.57,
+     "rank2": 3.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "BRK-B",
+     "ex1": 1.65,
+     "rank1": 17.0,
+     "ex2": 1.21,
+     "rank2": 11.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "VWNDX",
+     "ex1": 1.44,
+     "rank1": 18.0,
+     "ex2": -1.22,
+     "rank2": 23.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FDGRX",
+     "ex1": 1.41,
+     "rank1": 19.0,
+     "ex2": 3.13,
+     "rank2": 1.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "JENSX",
+     "ex1": 0.99,
+     "rank1": 20.0,
+     "ex2": 0.56,
+     "rank2": 13.0,
+     "third1": "下位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "PRBLX",
+     "ex1": 0.98,
+     "rank1": 21.0,
+     "ex2": 2.67,
+     "rank2": 2.0,
+     "third1": "下位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "TWEBX",
+     "ex1": 0.45,
+     "rank1": 22.0,
+     "ex2": -2.13,
+     "rank2": 26.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "TRBCX",
+     "ex1": 0.17,
+     "rank1": 23.0,
+     "ex2": 2.11,
+     "rank2": 7.0,
+     "third1": "下位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "OAKMX",
+     "ex1": -0.55,
+     "rank1": 24.0,
+     "ex2": 1.26,
+     "rank2": 10.0,
+     "third1": "下位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "SMT.L",
+     "ex1": -1.36,
+     "rank1": 25.0,
+     "ex2": 2.44,
+     "rank2": 4.0,
+     "third1": "下位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "FMAGX",
+     "ex1": -1.47,
+     "rank1": 26.0,
+     "ex2": -1.65,
+     "rank2": 25.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FBGRX",
+     "ex1": -2.33,
+     "rank1": 27.0,
+     "ex2": 2.13,
+     "rank2": 6.0,
+     "third1": "下位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "VWUSX",
+     "ex1": -5.36,
+     "rank1": 28.0,
+     "ex2": 0.23,
+     "rank2": 19.0,
+     "third1": "下位",
+     "beat_spy2": true
+    }
+   ],
+   "windows": {
+    "first": [
+     199601,
+     200512
+    ],
+    "second": [
+     200601,
+     201512
+    ]
+   },
+   "measure": "幾何（複利の年率の差）",
+   "excluded": [
+    {
+     "fund": "FAIRX",
+     "first_month": 200001,
+     "missing_months_in_windows": 48
+    },
+    {
+     "fund": "FMIHX",
+     "first_month": 200201,
+     "missing_months_in_windows": 72
+    },
+    {
+     "fund": "DODFX",
+     "first_month": 200105,
+     "missing_months_in_windows": 64
+    }
+   ]
+  },
+  "A_phantom_fix_only": {
+   "label": "A・分配の誤りだけ直す（SMT.L は旧のまま）",
+   "n": 31,
+   "tercile_size": 10,
+   "top_third_ex1_mean": 2.14,
+   "bottom_third_ex1_mean": -1.88,
+   "spearman": 0.585,
+   "perm_p_two_sided": 0.0009,
+   "null_sd_approx": 0.183,
+   "top_third_ex2_mean": 0.69,
+   "top_third_ex2_median": 0.73,
+   "mid_third_ex2_mean": -1.75,
+   "bottom_third_ex2_mean": -4.74,
+   "bottom_third_ex2_median": -5.23,
+   "top_minus_bottom_ex2": 5.43,
+   "top_minus_bottom_perm_p": 0.0008,
+   "top_third_beat_spy2_share": 0.5,
+   "top_third_beat_spy2_count": "5/10",
+   "bottom_third_beat_spy2_count": "0/10",
+   "all_beat_spy2_count": "7/31",
+   "all_beat_spy1_count": "20/31",
+   "winners1_winners2": "6/20",
+   "losers1_winners2": "1/11",
+   "ex1_median": 0.39,
+   "ex2_median": -2.48,
+   "ex2_mean": -1.93,
+   "rows": [
+    {
+     "fund": "FDGRX",
+     "ex1": 3.13,
+     "rank1": 1.0,
+     "ex2": 6.83,
+     "rank2": 2.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "PRBLX",
+     "ex1": 2.67,
+     "rank1": 2.0,
+     "ex2": -1.64,
+     "rank2": 12.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "YACKX",
+     "ex1": 2.57,
+     "rank1": 3.0,
+     "ex2": -2.82,
+     "rank2": 19.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "SMT.L",
+     "ex1": 2.44,
+     "rank1": 4.0,
+     "ex2": 1.5,
+     "rank2": 6.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "VPMCX",
+     "ex1": 2.3,
+     "rank1": 5.0,
+     "ex2": 1.5,
+     "rank2": 5.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "FBGRX",
+     "ex1": 2.13,
+     "rank1": 6.0,
+     "ex2": 5.1,
+     "rank2": 3.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "TRBCX",
+     "ex1": 2.11,
+     "rank1": 7.0,
+     "ex2": -0.04,
+     "rank2": 8.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FCNTX",
+     "ex1": 1.46,
+     "rank1": 8.0,
+     "ex2": 2.05,
+     "rank2": 4.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "PRWCX",
+     "ex1": 1.31,
+     "rank1": 9.0,
+     "ex2": -3.73,
+     "rank2": 22.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "OAKMX",
+     "ex1": 1.26,
+     "rank1": 10.0,
+     "ex2": -1.84,
+     "rank2": 15.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "BRK-B",
+     "ex1": 1.21,
+     "rank1": 11.0,
+     "ex2": -1.75,
+     "rank2": 13.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FLPSX",
+     "ex1": 1.04,
+     "rank1": 12.0,
+     "ex2": -4.38,
+     "rank2": 23.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FMIHX",
+     "ex1": 0.74,
+     "rank1": 13.0,
+     "ex2": -5.68,
+     "rank2": 27.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "JENSX",
+     "ex1": 0.56,
+     "rank1": 14.0,
+     "ex2": -3.53,
+     "rank2": 21.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "BPTRX",
+     "ex1": 0.55,
+     "rank1": 15.0,
+     "ex2": 7.92,
+     "rank2": 1.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "SEQUX",
+     "ex1": 0.39,
+     "rank1": 16.0,
+     "ex2": -4.72,
+     "rank2": 24.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "AMCPX",
+     "ex1": 0.35,
+     "rank1": 17.0,
+     "ex2": -2.61,
+     "rank2": 18.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "MPGFX",
+     "ex1": 0.31,
+     "rank1": 18.0,
+     "ex2": -1.81,
+     "rank2": 14.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "ANWPX",
+     "ex1": 0.29,
+     "rank1": 19.0,
+     "ex2": -2.48,
+     "rank2": 16.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "VWUSX",
+     "ex1": 0.23,
+     "rank1": 20.0,
+     "ex2": -0.27,
+     "rank2": 9.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "AGTHX",
+     "ex1": -0.01,
+     "rank1": 21.0,
+     "ex2": 0.04,
+     "rank2": 7.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "SGENX",
+     "ex1": -0.08,
+     "rank1": 22.0,
+     "ex2": -4.91,
+     "rank2": 25.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "AIVSX",
+     "ex1": -0.74,
+     "rank1": 23.0,
+     "ex2": -0.86,
+     "rank2": 10.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "VWNDX",
+     "ex1": -1.22,
+     "rank1": 24.0,
+     "ex2": -3.48,
+     "rank2": 20.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "DODGX",
+     "ex1": -1.54,
+     "rank1": 25.0,
+     "ex2": -2.53,
+     "rank2": 17.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FMAGX",
+     "ex1": -1.65,
+     "rank1": 26.0,
+     "ex2": -1.55,
+     "rank2": 11.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FAIRX",
+     "ex1": -1.73,
+     "rank1": 27.0,
+     "ex2": -5.74,
+     "rank2": 28.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "TWEBX",
+     "ex1": -2.13,
+     "rank1": 28.0,
+     "ex2": -6.5,
+     "rank2": 29.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "HAINX",
+     "ex1": -2.31,
+     "rank1": 29.0,
+     "ex2": -7.27,
+     "rank2": 30.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "DODFX",
+     "ex1": -3.4,
+     "rank1": 30.0,
+     "ex2": -5.56,
+     "rank2": 26.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "LLPFX",
+     "ex1": -4.01,
+     "rank1": 31.0,
+     "ex2": -8.98,
+     "rank2": 31.0,
+     "third1": "下位",
+     "beat_spy2": false
+    }
+   ],
+   "windows": {
+    "first": [
+     200601,
+     201512
+    ],
+    "second": [
+     201601,
+     202609
+    ]
+   },
+   "measure": "幾何（複利の年率の差）",
+   "excluded": []
+  },
+  "B_phantom_fix_only": {
+   "label": "B・分配の誤りだけ直す（SMT.L は旧のまま）",
+   "n": 28,
+   "tercile_size": 9,
+   "top_third_ex1_mean": 4.76,
+   "bottom_third_ex1_mean": -0.94,
+   "spearman": -0.221,
+   "perm_p_two_sided": 0.2535,
+   "null_sd_approx": 0.192,
+   "top_third_ex2_mean": -0.12,
+   "top_third_ex2_median": 0.31,
+   "mid_third_ex2_mean": 0.6,
+   "bottom_third_ex2_mean": 0.85,
+   "bottom_third_ex2_median": 1.26,
+   "top_minus_bottom_ex2": -0.96,
+   "top_minus_bottom_perm_p": 0.2381,
+   "top_third_beat_spy2_share": 0.556,
+   "top_third_beat_spy2_count": "5/9",
+   "bottom_third_beat_spy2_count": "7/9",
+   "all_beat_spy2_count": "19/28",
+   "all_beat_spy1_count": "23/28",
+   "winners1_winners2": "15/23",
+   "losers1_winners2": "4/5",
+   "ex1_median": 2.07,
+   "ex2_median": 0.47,
+   "ex2_mean": 0.45,
+   "rows": [
+    {
+     "fund": "FLPSX",
+     "ex1": 7.2,
+     "rank1": 1.0,
+     "ex2": 1.04,
+     "rank2": 12.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "DODGX",
+     "ex1": 5.69,
+     "rank1": 2.0,
+     "ex2": -1.54,
+     "rank2": 24.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "BPTRX",
+     "ex1": 4.95,
+     "rank1": 3.0,
+     "ex2": 0.55,
+     "rank2": 14.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "SGENX",
+     "ex1": 4.95,
+     "rank1": 4.0,
+     "ex2": -0.08,
+     "rank2": 21.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "AGTHX",
+     "ex1": 4.42,
+     "rank1": 5.0,
+     "ex2": -0.01,
+     "rank2": 20.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "VPMCX",
+     "ex1": 4.34,
+     "rank1": 6.0,
+     "ex2": 2.3,
+     "rank2": 5.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "SEQUX",
+     "ex1": 3.94,
+     "rank1": 7.0,
+     "ex2": 0.39,
+     "rank2": 15.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "LLPFX",
+     "ex1": 3.82,
+     "rank1": 8.0,
+     "ex2": -4.01,
+     "rank2": 28.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "MPGFX",
+     "ex1": 3.58,
+     "rank1": 9.0,
+     "ex2": 0.31,
+     "rank2": 17.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "PRWCX",
+     "ex1": 3.49,
+     "rank1": 10.0,
+     "ex2": 1.31,
+     "rank2": 9.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "FCNTX",
+     "ex1": 3.09,
+     "rank1": 11.0,
+     "ex2": 1.46,
+     "rank2": 8.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "ANWPX",
+     "ex1": 2.72,
+     "rank1": 12.0,
+     "ex2": 0.29,
+     "rank2": 18.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "HAINX",
+     "ex1": 2.63,
+     "rank1": 13.0,
+     "ex2": -2.31,
+     "rank2": 27.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "AMCPX",
+     "ex1": 2.23,
+     "rank1": 14.0,
+     "ex2": 0.35,
+     "rank2": 16.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "AIVSX",
+     "ex1": 1.91,
+     "rank1": 15.0,
+     "ex2": -0.74,
+     "rank2": 22.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "YACKX",
+     "ex1": 1.66,
+     "rank1": 16.0,
+     "ex2": 2.57,
+     "rank2": 3.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "BRK-B",
+     "ex1": 1.65,
+     "rank1": 17.0,
+     "ex2": 1.21,
+     "rank2": 11.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "VWNDX",
+     "ex1": 1.44,
+     "rank1": 18.0,
+     "ex2": -1.22,
+     "rank2": 23.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FDGRX",
+     "ex1": 1.41,
+     "rank1": 19.0,
+     "ex2": 3.13,
+     "rank2": 1.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "JENSX",
+     "ex1": 0.99,
+     "rank1": 20.0,
+     "ex2": 0.56,
+     "rank2": 13.0,
+     "third1": "下位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "PRBLX",
+     "ex1": 0.98,
+     "rank1": 21.0,
+     "ex2": 2.67,
+     "rank2": 2.0,
+     "third1": "下位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "TWEBX",
+     "ex1": 0.45,
+     "rank1": 22.0,
+     "ex2": -2.13,
+     "rank2": 26.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "TRBCX",
+     "ex1": 0.17,
+     "rank1": 23.0,
+     "ex2": 2.11,
+     "rank2": 7.0,
+     "third1": "下位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "OAKMX",
+     "ex1": -0.55,
+     "rank1": 24.0,
+     "ex2": 1.26,
+     "rank2": 10.0,
+     "third1": "下位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "SMT.L",
+     "ex1": -1.36,
+     "rank1": 25.0,
+     "ex2": 2.44,
+     "rank2": 4.0,
+     "third1": "下位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "FMAGX",
+     "ex1": -1.47,
+     "rank1": 26.0,
+     "ex2": -1.65,
+     "rank2": 25.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FBGRX",
+     "ex1": -2.33,
+     "rank1": 27.0,
+     "ex2": 2.13,
+     "rank2": 6.0,
+     "third1": "下位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "VWUSX",
+     "ex1": -5.36,
+     "rank1": 28.0,
+     "ex2": 0.23,
+     "rank2": 19.0,
+     "third1": "下位",
+     "beat_spy2": true
+    }
+   ],
+   "windows": {
+    "first": [
+     199601,
+     200512
+    ],
+    "second": [
+     200601,
+     201512
+    ]
+   },
+   "measure": "幾何（複利の年率の差）",
+   "excluded": [
+    {
+     "fund": "FAIRX",
+     "first_month": 200001,
+     "missing_months_in_windows": 48
+    },
+    {
+     "fund": "FMIHX",
+     "first_month": 200201,
+     "missing_months_in_windows": 72
+    },
+    {
+     "fund": "DODFX",
+     "first_month": 200105,
+     "missing_months_in_windows": 64
+    }
+   ]
+  },
+  "A_all_small_candidates_fixed": {
+   "label": "A・0.5〜2% の候補まで全部直した上限",
+   "n": 31,
+   "tercile_size": 10,
+   "top_third_ex1_mean": 2.34,
+   "bottom_third_ex1_mean": -1.88,
+   "spearman": 0.596,
+   "perm_p_two_sided": 0.0007,
+   "null_sd_approx": 0.183,
+   "top_third_ex2_mean": 0.74,
+   "top_third_ex2_median": 0.73,
+   "mid_third_ex2_mean": -1.75,
+   "bottom_third_ex2_mean": -4.75,
+   "bottom_third_ex2_median": -5.23,
+   "top_minus_bottom_ex2": 5.49,
+   "top_minus_bottom_perm_p": 0.0008,
+   "top_third_beat_spy2_share": 0.5,
+   "top_third_beat_spy2_count": "5/10",
+   "bottom_third_beat_spy2_count": "0/10",
+   "all_beat_spy2_count": "7/31",
+   "all_beat_spy1_count": "20/31",
+   "winners1_winners2": "6/20",
+   "losers1_winners2": "1/11",
+   "ex1_median": 0.39,
+   "ex2_median": -2.48,
+   "ex2_mean": -1.91,
+   "rows": [
+    {
+     "fund": "SMT.L",
+     "ex1": 4.45,
+     "rank1": 1.0,
+     "ex2": 2.12,
+     "rank2": 4.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "FDGRX",
+     "ex1": 3.13,
+     "rank1": 2.0,
+     "ex2": 6.83,
+     "rank2": 2.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "PRBLX",
+     "ex1": 2.67,
+     "rank1": 3.0,
+     "ex2": -1.64,
+     "rank2": 12.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "YACKX",
+     "ex1": 2.57,
+     "rank1": 4.0,
+     "ex2": -2.82,
+     "rank2": 19.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "VPMCX",
+     "ex1": 2.3,
+     "rank1": 5.0,
+     "ex2": 1.5,
+     "rank2": 6.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "FBGRX",
+     "ex1": 2.13,
+     "rank1": 6.0,
+     "ex2": 5.1,
+     "rank2": 3.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "TRBCX",
+     "ex1": 2.11,
+     "rank1": 7.0,
+     "ex2": -0.04,
+     "rank2": 8.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FCNTX",
+     "ex1": 1.46,
+     "rank1": 8.0,
+     "ex2": 2.05,
+     "rank2": 5.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "PRWCX",
+     "ex1": 1.31,
+     "rank1": 9.0,
+     "ex2": -3.73,
+     "rank2": 22.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "OAKMX",
+     "ex1": 1.26,
+     "rank1": 10.0,
+     "ex2": -1.95,
+     "rank2": 15.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "BRK-B",
+     "ex1": 1.21,
+     "rank1": 11.0,
+     "ex2": -1.75,
+     "rank2": 13.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FLPSX",
+     "ex1": 1.04,
+     "rank1": 12.0,
+     "ex2": -4.38,
+     "rank2": 23.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FMIHX",
+     "ex1": 0.74,
+     "rank1": 13.0,
+     "ex2": -5.68,
+     "rank2": 27.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "JENSX",
+     "ex1": 0.56,
+     "rank1": 14.0,
+     "ex2": -3.53,
+     "rank2": 21.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "BPTRX",
+     "ex1": 0.55,
+     "rank1": 15.0,
+     "ex2": 7.92,
+     "rank2": 1.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "SEQUX",
+     "ex1": 0.39,
+     "rank1": 16.0,
+     "ex2": -4.72,
+     "rank2": 24.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "AMCPX",
+     "ex1": 0.35,
+     "rank1": 17.0,
+     "ex2": -2.61,
+     "rank2": 18.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "MPGFX",
+     "ex1": 0.31,
+     "rank1": 18.0,
+     "ex2": -1.81,
+     "rank2": 14.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "ANWPX",
+     "ex1": 0.29,
+     "rank1": 19.0,
+     "ex2": -2.48,
+     "rank2": 16.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "VWUSX",
+     "ex1": 0.17,
+     "rank1": 20.0,
+     "ex2": -0.27,
+     "rank2": 9.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "AGTHX",
+     "ex1": -0.01,
+     "rank1": 21.0,
+     "ex2": 0.04,
+     "rank2": 7.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "SGENX",
+     "ex1": -0.08,
+     "rank1": 22.0,
+     "ex2": -4.91,
+     "rank2": 25.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "AIVSX",
+     "ex1": -0.74,
+     "rank1": 23.0,
+     "ex2": -0.86,
+     "rank2": 10.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "VWNDX",
+     "ex1": -1.22,
+     "rank1": 24.0,
+     "ex2": -3.48,
+     "rank2": 20.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "DODGX",
+     "ex1": -1.54,
+     "rank1": 25.0,
+     "ex2": -2.53,
+     "rank2": 17.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FMAGX",
+     "ex1": -1.65,
+     "rank1": 26.0,
+     "ex2": -1.55,
+     "rank2": 11.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FAIRX",
+     "ex1": -1.73,
+     "rank1": 27.0,
+     "ex2": -5.87,
+     "rank2": 28.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "TWEBX",
+     "ex1": -2.13,
+     "rank1": 28.0,
+     "ex2": -6.5,
+     "rank2": 29.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "HAINX",
+     "ex1": -2.31,
+     "rank1": 29.0,
+     "ex2": -7.27,
+     "rank2": 30.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "DODFX",
+     "ex1": -3.4,
+     "rank1": 30.0,
+     "ex2": -5.56,
+     "rank2": 26.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "LLPFX",
+     "ex1": -4.01,
+     "rank1": 31.0,
+     "ex2": -8.98,
+     "rank2": 31.0,
+     "third1": "下位",
+     "beat_spy2": false
+    }
+   ],
+   "windows": {
+    "first": [
+     200601,
+     201512
+    ],
+    "second": [
+     201601,
+     202609
+    ]
+   },
+   "measure": "幾何（複利の年率の差）",
+   "excluded": []
+  },
+  "B_all_small_candidates_fixed": {
+   "label": "B・0.5〜2% の候補まで全部直した上限",
+   "n": 28,
+   "tercile_size": 9,
+   "top_third_ex1_mean": 4.76,
+   "bottom_third_ex1_mean": -0.73,
+   "spearman": -0.209,
+   "perm_p_two_sided": 0.2789,
+   "null_sd_approx": 0.192,
+   "top_third_ex2_mean": -0.12,
+   "top_third_ex2_median": 0.31,
+   "mid_third_ex2_mean": 0.6,
+   "bottom_third_ex2_mean": 1.06,
+   "bottom_third_ex2_median": 1.26,
+   "top_minus_bottom_ex2": -1.18,
+   "top_minus_bottom_perm_p": 0.1794,
+   "top_third_beat_spy2_share": 0.556,
+   "top_third_beat_spy2_count": "5/9",
+   "bottom_third_beat_spy2_count": "7/9",
+   "all_beat_spy2_count": "19/28",
+   "all_beat_spy1_count": "24/28",
+   "winners1_winners2": "16/24",
+   "losers1_winners2": "3/4",
+   "ex1_median": 2.07,
+   "ex2_median": 0.47,
+   "ex2_mean": 0.52,
+   "rows": [
+    {
+     "fund": "FLPSX",
+     "ex1": 7.2,
+     "rank1": 1.0,
+     "ex2": 1.04,
+     "rank2": 12.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "DODGX",
+     "ex1": 5.62,
+     "rank1": 2.0,
+     "ex2": -1.54,
+     "rank2": 24.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "BPTRX",
+     "ex1": 4.95,
+     "rank1": 3.0,
+     "ex2": 0.55,
+     "rank2": 14.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "SGENX",
+     "ex1": 4.95,
+     "rank1": 4.0,
+     "ex2": -0.08,
+     "rank2": 21.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "AGTHX",
+     "ex1": 4.42,
+     "rank1": 5.0,
+     "ex2": -0.01,
+     "rank2": 20.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "VPMCX",
+     "ex1": 4.34,
+     "rank1": 6.0,
+     "ex2": 2.3,
+     "rank2": 5.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "SEQUX",
+     "ex1": 3.94,
+     "rank1": 7.0,
+     "ex2": 0.39,
+     "rank2": 15.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "LLPFX",
+     "ex1": 3.82,
+     "rank1": 8.0,
+     "ex2": -4.01,
+     "rank2": 28.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "MPGFX",
+     "ex1": 3.58,
+     "rank1": 9.0,
+     "ex2": 0.31,
+     "rank2": 17.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "PRWCX",
+     "ex1": 3.49,
+     "rank1": 10.0,
+     "ex2": 1.31,
+     "rank2": 9.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "FCNTX",
+     "ex1": 3.09,
+     "rank1": 11.0,
+     "ex2": 1.46,
+     "rank2": 8.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "ANWPX",
+     "ex1": 2.72,
+     "rank1": 12.0,
+     "ex2": 0.29,
+     "rank2": 18.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "HAINX",
+     "ex1": 2.63,
+     "rank1": 13.0,
+     "ex2": -2.31,
+     "rank2": 27.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "AMCPX",
+     "ex1": 2.23,
+     "rank1": 14.0,
+     "ex2": 0.35,
+     "rank2": 16.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "AIVSX",
+     "ex1": 1.91,
+     "rank1": 15.0,
+     "ex2": -0.74,
+     "rank2": 22.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "YACKX",
+     "ex1": 1.66,
+     "rank1": 16.0,
+     "ex2": 2.57,
+     "rank2": 4.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "BRK-B",
+     "ex1": 1.65,
+     "rank1": 17.0,
+     "ex2": 1.21,
+     "rank2": 11.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "VWNDX",
+     "ex1": 1.44,
+     "rank1": 18.0,
+     "ex2": -1.22,
+     "rank2": 23.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FDGRX",
+     "ex1": 1.41,
+     "rank1": 19.0,
+     "ex2": 3.13,
+     "rank2": 2.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "JENSX",
+     "ex1": 0.99,
+     "rank1": 20.0,
+     "ex2": 0.56,
+     "rank2": 13.0,
+     "third1": "下位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "PRBLX",
+     "ex1": 0.98,
+     "rank1": 21.0,
+     "ex2": 2.67,
+     "rank2": 3.0,
+     "third1": "下位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "SMT.L",
+     "ex1": 0.59,
+     "rank1": 22.0,
+     "ex2": 4.45,
+     "rank2": 1.0,
+     "third1": "下位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "TWEBX",
+     "ex1": 0.45,
+     "rank1": 23.0,
+     "ex2": -2.13,
+     "rank2": 26.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "TRBCX",
+     "ex1": 0.17,
+     "rank1": 24.0,
+     "ex2": 2.11,
+     "rank2": 7.0,
+     "third1": "下位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "OAKMX",
+     "ex1": -0.55,
+     "rank1": 25.0,
+     "ex2": 1.26,
+     "rank2": 10.0,
+     "third1": "下位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "FMAGX",
+     "ex1": -1.47,
+     "rank1": 26.0,
+     "ex2": -1.65,
+     "rank2": 25.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FBGRX",
+     "ex1": -2.33,
+     "rank1": 27.0,
+     "ex2": 2.13,
+     "rank2": 6.0,
+     "third1": "下位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "VWUSX",
+     "ex1": -5.36,
+     "rank1": 28.0,
+     "ex2": 0.17,
+     "rank2": 19.0,
+     "third1": "下位",
+     "beat_spy2": true
+    }
+   ],
+   "windows": {
+    "first": [
+     199601,
+     200512
+    ],
+    "second": [
+     200601,
+     201512
+    ]
+   },
+   "measure": "幾何（複利の年率の差）",
+   "excluded": [
+    {
+     "fund": "FAIRX",
+     "first_month": 200001,
+     "missing_months_in_windows": 48
+    },
+    {
+     "fund": "FMIHX",
+     "first_month": 200201,
+     "missing_months_in_windows": 72
+    },
+    {
+     "fund": "DODFX",
+     "first_month": 200105,
+     "missing_months_in_windows": 64
+    }
+   ]
+  },
+  "A_arith": {
+   "label": "A・算術の超過",
+   "n": 31,
+   "tercile_size": 10,
+   "top_third_ex1_mean": 2.57,
+   "bottom_third_ex1_mean": -1.32,
+   "spearman": 0.645,
+   "perm_p_two_sided": 0.0001,
+   "null_sd_approx": 0.183,
+   "top_third_ex2_mean": 2.24,
+   "top_third_ex2_median": 1.01,
+   "mid_third_ex2_mean": -2.12,
+   "bottom_third_ex2_mean": -3.96,
+   "bottom_third_ex2_median": -3.88,
+   "top_minus_bottom_ex2": 6.2,
+   "top_minus_bottom_perm_p": 0.0,
+   "top_third_beat_spy2_share": 0.6,
+   "top_third_beat_spy2_count": "6/10",
+   "bottom_third_beat_spy2_count": "0/10",
+   "all_beat_spy2_count": "9/31",
+   "all_beat_spy1_count": "21/31",
+   "winners1_winners2": "9/21",
+   "losers1_winners2": "0/10",
+   "ex1_median": 0.36,
+   "ex2_median": -1.91,
+   "ex2_mean": -1.31,
+   "rows": [
+    {
+     "fund": "SMT.L",
+     "ex1": 6.65,
+     "rank1": 1.0,
+     "ex2": 4.05,
+     "rank2": 4.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "FDGRX",
+     "ex1": 3.27,
+     "rank1": 2.0,
+     "ex2": 6.79,
+     "rank2": 2.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "YACKX",
+     "ex1": 2.36,
+     "rank1": 3.0,
+     "ex2": -2.79,
+     "rank2": 19.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FBGRX",
+     "ex1": 2.28,
+     "rank1": 4.0,
+     "ex2": 5.31,
+     "rank2": 3.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "TRBCX",
+     "ex1": 2.24,
+     "rank1": 5.0,
+     "ex2": 0.5,
+     "rank2": 8.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "PRBLX",
+     "ex1": 2.23,
+     "rank1": 6.0,
+     "ex2": -1.59,
+     "rank2": 14.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "VPMCX",
+     "ex1": 2.17,
+     "rank1": 7.0,
+     "ex2": 1.52,
+     "rank2": 6.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "BRK-B",
+     "ex1": 1.53,
+     "rank1": 8.0,
+     "ex2": -1.15,
+     "rank2": 13.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "BPTRX",
+     "ex1": 1.49,
+     "rank1": 9.0,
+     "ex2": 10.71,
+     "rank2": 1.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "OAKMX",
+     "ex1": 1.47,
+     "rank1": 10.0,
+     "ex2": -0.96,
+     "rank2": 11.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FCNTX",
+     "ex1": 1.25,
+     "rank1": 11.0,
+     "ex2": 1.98,
+     "rank2": 5.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "FLPSX",
+     "ex1": 1.21,
+     "rank1": 12.0,
+     "ex2": -3.88,
+     "rank2": 23.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "PRWCX",
+     "ex1": 0.78,
+     "rank1": 13.0,
+     "ex2": -3.93,
+     "rank2": 24.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FMIHX",
+     "ex1": 0.49,
+     "rank1": 14.0,
+     "ex2": -5.15,
+     "rank2": 28.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "ANWPX",
+     "ex1": 0.4,
+     "rank1": 15.0,
+     "ex2": -2.1,
+     "rank2": 17.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "VWUSX",
+     "ex1": 0.36,
+     "rank1": 16.0,
+     "ex2": 0.54,
+     "rank2": 7.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "MPGFX",
+     "ex1": 0.35,
+     "rank1": 17.0,
+     "ex2": -1.61,
+     "rank2": 15.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "AMCPX",
+     "ex1": 0.35,
+     "rank1": 18.0,
+     "ex2": -2.19,
+     "rank2": 18.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "JENSX",
+     "ex1": 0.33,
+     "rank1": 19.0,
+     "ex2": -3.33,
+     "rank2": 22.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "SEQUX",
+     "ex1": 0.2,
+     "rank1": 20.0,
+     "ex2": -3.97,
+     "rank2": 25.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "AGTHX",
+     "ex1": 0.03,
+     "rank1": 21.0,
+     "ex2": 0.34,
+     "rank2": 9.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "FAIRX",
+     "ex1": -0.54,
+     "rank1": 22.0,
+     "ex2": -3.18,
+     "rank2": 21.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "SGENX",
+     "ex1": -0.57,
+     "rank1": 23.0,
+     "ex2": -4.79,
+     "rank2": 27.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "VWNDX",
+     "ex1": -0.81,
+     "rank1": 24.0,
+     "ex2": -2.86,
+     "rank2": 20.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "AIVSX",
+     "ex1": -0.84,
+     "rank1": 25.0,
+     "ex2": -0.88,
+     "rank2": 10.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FMAGX",
+     "ex1": -0.9,
+     "rank1": 26.0,
+     "ex2": -1.14,
+     "rank2": 12.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "DODGX",
+     "ex1": -1.02,
+     "rank1": 27.0,
+     "ex2": -1.91,
+     "rank2": 16.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "HAINX",
+     "ex1": -1.22,
+     "rank1": 28.0,
+     "ex2": -6.54,
+     "rank2": 30.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "DODFX",
+     "ex1": -2.15,
+     "rank1": 29.0,
+     "ex2": -4.59,
+     "rank2": 26.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "TWEBX",
+     "ex1": -2.39,
+     "rank1": 30.0,
+     "ex2": -6.23,
+     "rank2": 29.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "LLPFX",
+     "ex1": -2.8,
+     "rank1": 31.0,
+     "ex2": -7.51,
+     "rank2": 31.0,
+     "third1": "下位",
+     "beat_spy2": false
+    }
+   ],
+   "windows": {
+    "first": [
+     200601,
+     201512
+    ],
+    "second": [
+     201601,
+     202609
+    ]
+   },
+   "measure": "算術（月次の差の平均×12）",
+   "excluded": []
+  },
+  "B_arith": {
+   "label": "B・算術の超過",
+   "n": 28,
+   "tercile_size": 9,
+   "top_third_ex1_mean": 4.67,
+   "bottom_third_ex1_mean": -0.61,
+   "spearman": -0.114,
+   "perm_p_two_sided": 0.5575,
+   "null_sd_approx": 0.192,
+   "top_third_ex2_mean": 0.44,
+   "top_third_ex2_median": 0.2,
+   "mid_third_ex2_mean": 0.41,
+   "bottom_third_ex2_mean": 1.36,
+   "bottom_third_ex2_median": 1.47,
+   "top_minus_bottom_ex2": -0.92,
+   "top_minus_bottom_perm_p": 0.313,
+   "top_third_beat_spy2_share": 0.667,
+   "top_third_beat_spy2_count": "6/9",
+   "bottom_third_beat_spy2_count": "7/9",
+   "all_beat_spy2_count": "20/28",
+   "all_beat_spy1_count": "23/28",
+   "winners1_winners2": "17/23",
+   "losers1_winners2": "3/5",
+   "ex1_median": 2.36,
+   "ex2_median": 0.38,
+   "ex2_mean": 0.73,
+   "rows": [
+    {
+     "fund": "BPTRX",
+     "ex1": 8.26,
+     "rank1": 1.0,
+     "ex2": 1.49,
+     "rank2": 9.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "FLPSX",
+     "ex1": 6.17,
+     "rank1": 2.0,
+     "ex2": 1.21,
+     "rank2": 12.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "DODGX",
+     "ex1": 4.97,
+     "rank1": 3.0,
+     "ex2": -1.02,
+     "rank2": 25.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "VPMCX",
+     "ex1": 4.52,
+     "rank1": 4.0,
+     "ex2": 2.17,
+     "rank2": 7.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "AGTHX",
+     "ex1": 4.43,
+     "rank1": 5.0,
+     "ex2": 0.03,
+     "rank2": 20.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "SGENX",
+     "ex1": 3.7,
+     "rank1": 6.0,
+     "ex2": -0.57,
+     "rank2": 21.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "SEQUX",
+     "ex1": 3.56,
+     "rank1": 7.0,
+     "ex2": 0.2,
+     "rank2": 19.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "LLPFX",
+     "ex1": 3.37,
+     "rank1": 8.0,
+     "ex2": -2.8,
+     "rank2": 28.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FDGRX",
+     "ex1": 3.07,
+     "rank1": 9.0,
+     "ex2": 3.27,
+     "rank2": 2.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "MPGFX",
+     "ex1": 2.92,
+     "rank1": 10.0,
+     "ex2": 0.35,
+     "rank2": 16.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "BRK-B",
+     "ex1": 2.55,
+     "rank1": 11.0,
+     "ex2": 1.53,
+     "rank2": 8.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "FCNTX",
+     "ex1": 2.53,
+     "rank1": 12.0,
+     "ex2": 1.25,
+     "rank2": 11.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "HAINX",
+     "ex1": 2.47,
+     "rank1": 13.0,
+     "ex2": -1.22,
+     "rank2": 26.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "ANWPX",
+     "ex1": 2.39,
+     "rank1": 14.0,
+     "ex2": 0.4,
+     "rank2": 14.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "PRWCX",
+     "ex1": 2.32,
+     "rank1": 15.0,
+     "ex2": 0.78,
+     "rank2": 13.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "AMCPX",
+     "ex1": 1.95,
+     "rank1": 16.0,
+     "ex2": 0.35,
+     "rank2": 17.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "VWNDX",
+     "ex1": 1.56,
+     "rank1": 17.0,
+     "ex2": -0.81,
+     "rank2": 22.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "YACKX",
+     "ex1": 1.43,
+     "rank1": 18.0,
+     "ex2": 2.36,
+     "rank2": 3.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "AIVSX",
+     "ex1": 1.35,
+     "rank1": 19.0,
+     "ex2": -0.84,
+     "rank2": 23.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "SMT.L",
+     "ex1": 0.94,
+     "rank1": 20.0,
+     "ex2": 6.65,
+     "rank2": 1.0,
+     "third1": "下位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "JENSX",
+     "ex1": 0.63,
+     "rank1": 21.0,
+     "ex2": 0.33,
+     "rank2": 18.0,
+     "third1": "下位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "PRBLX",
+     "ex1": 0.45,
+     "rank1": 22.0,
+     "ex2": 2.23,
+     "rank2": 6.0,
+     "third1": "下位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "TRBCX",
+     "ex1": 0.32,
+     "rank1": 23.0,
+     "ex2": 2.24,
+     "rank2": 5.0,
+     "third1": "下位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "TWEBX",
+     "ex1": -0.03,
+     "rank1": 24.0,
+     "ex2": -2.39,
+     "rank2": 27.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "OAKMX",
+     "ex1": -0.59,
+     "rank1": 25.0,
+     "ex2": 1.47,
+     "rank2": 10.0,
+     "third1": "下位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "FMAGX",
+     "ex1": -1.29,
+     "rank1": 26.0,
+     "ex2": -0.9,
+     "rank2": 24.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FBGRX",
+     "ex1": -1.98,
+     "rank1": 27.0,
+     "ex2": 2.28,
+     "rank2": 4.0,
+     "third1": "下位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "VWUSX",
+     "ex1": -3.94,
+     "rank1": 28.0,
+     "ex2": 0.36,
+     "rank2": 15.0,
+     "third1": "下位",
+     "beat_spy2": true
+    }
+   ],
+   "windows": {
+    "first": [
+     199601,
+     200512
+    ],
+    "second": [
+     200601,
+     201512
+    ]
+   },
+   "measure": "算術（月次の差の平均×12）",
+   "excluded": [
+    {
+     "fund": "FAIRX",
+     "first_month": 200001,
+     "missing_months_in_windows": 48
+    },
+    {
+     "fund": "FMIHX",
+     "first_month": 200201,
+     "missing_months_in_windows": 72
+    },
+    {
+     "fund": "DODFX",
+     "first_month": 200105,
+     "missing_months_in_windows": 64
+    }
+   ]
+  },
+  "A_us_only": {
+   "label": "A・米国株の本だけ（世界株・米国外・混合を外す）",
+   "n": 24,
+   "tercile_size": 8,
+   "top_third_ex1_mean": 2.2,
+   "bottom_third_ex1_mean": -1.33,
+   "spearman": 0.426,
+   "perm_p_two_sided": 0.0374,
+   "null_sd_approx": 0.209,
+   "top_third_ex2_mean": 1.14,
+   "top_third_ex2_median": 0.73,
+   "mid_third_ex2_mean": -2.07,
+   "bottom_third_ex2_mean": -2.92,
+   "bottom_third_ex2_median": -2.04,
+   "top_minus_bottom_ex2": 4.06,
+   "top_minus_bottom_perm_p": 0.0313,
+   "top_third_beat_spy2_share": 0.5,
+   "top_third_beat_spy2_count": "4/8",
+   "bottom_third_beat_spy2_count": "1/8",
+   "all_beat_spy2_count": "6/24",
+   "all_beat_spy1_count": "17/24",
+   "winners1_winners2": "5/17",
+   "losers1_winners2": "1/7",
+   "ex1_median": 0.56,
+   "ex2_median": -1.78,
+   "ex2_mean": -1.28,
+   "rows": [
+    {
+     "fund": "FDGRX",
+     "ex1": 3.13,
+     "rank1": 1.0,
+     "ex2": 6.83,
+     "rank2": 2.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "PRBLX",
+     "ex1": 2.67,
+     "rank1": 2.0,
+     "ex2": -1.64,
+     "rank2": 11.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "YACKX",
+     "ex1": 2.57,
+     "rank1": 3.0,
+     "ex2": -2.82,
+     "rank2": 17.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "VPMCX",
+     "ex1": 2.3,
+     "rank1": 4.0,
+     "ex2": 1.5,
+     "rank2": 5.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "FBGRX",
+     "ex1": 2.13,
+     "rank1": 5.0,
+     "ex2": 5.1,
+     "rank2": 3.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "TRBCX",
+     "ex1": 2.11,
+     "rank1": 6.0,
+     "ex2": -0.04,
+     "rank2": 7.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FCNTX",
+     "ex1": 1.46,
+     "rank1": 7.0,
+     "ex2": 2.05,
+     "rank2": 4.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "OAKMX",
+     "ex1": 1.26,
+     "rank1": 8.0,
+     "ex2": -1.84,
+     "rank2": 14.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "BRK-B",
+     "ex1": 1.21,
+     "rank1": 9.0,
+     "ex2": -1.75,
+     "rank2": 12.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FLPSX",
+     "ex1": 1.04,
+     "rank1": 10.0,
+     "ex2": -4.38,
+     "rank2": 20.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FMIHX",
+     "ex1": 0.74,
+     "rank1": 11.0,
+     "ex2": -5.68,
+     "rank2": 22.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "JENSX",
+     "ex1": 0.56,
+     "rank1": 12.0,
+     "ex2": -3.53,
+     "rank2": 19.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "BPTRX",
+     "ex1": 0.55,
+     "rank1": 13.0,
+     "ex2": 7.92,
+     "rank2": 1.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "SEQUX",
+     "ex1": 0.39,
+     "rank1": 14.0,
+     "ex2": -4.72,
+     "rank2": 21.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "AMCPX",
+     "ex1": 0.35,
+     "rank1": 15.0,
+     "ex2": -2.61,
+     "rank2": 16.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "MPGFX",
+     "ex1": 0.31,
+     "rank1": 16.0,
+     "ex2": -1.81,
+     "rank2": 13.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "VWUSX",
+     "ex1": 0.23,
+     "rank1": 17.0,
+     "ex2": -0.27,
+     "rank2": 8.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "AGTHX",
+     "ex1": -0.01,
+     "rank1": 18.0,
+     "ex2": 0.04,
+     "rank2": 6.0,
+     "third1": "下位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "AIVSX",
+     "ex1": -0.74,
+     "rank1": 19.0,
+     "ex2": -0.86,
+     "rank2": 9.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "VWNDX",
+     "ex1": -1.22,
+     "rank1": 20.0,
+     "ex2": -3.48,
+     "rank2": 18.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "DODGX",
+     "ex1": -1.54,
+     "rank1": 21.0,
+     "ex2": -2.53,
+     "rank2": 15.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FMAGX",
+     "ex1": -1.65,
+     "rank1": 22.0,
+     "ex2": -1.55,
+     "rank2": 10.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FAIRX",
+     "ex1": -1.73,
+     "rank1": 23.0,
+     "ex2": -5.74,
+     "rank2": 23.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "LLPFX",
+     "ex1": -4.01,
+     "rank1": 24.0,
+     "ex2": -8.98,
+     "rank2": 24.0,
+     "third1": "下位",
+     "beat_spy2": false
+    }
+   ],
+   "windows": {
+    "first": [
+     200601,
+     201512
+    ],
+    "second": [
+     201601,
+     202609
+    ]
+   },
+   "measure": "幾何（複利の年率の差）",
+   "excluded": []
+  },
+  "B_us_only": {
+   "label": "B・米国株の本だけ",
+   "n": 22,
+   "tercile_size": 7,
+   "top_third_ex1_mean": 4.91,
+   "bottom_third_ex1_mean": -1.08,
+   "spearman": -0.228,
+   "perm_p_two_sided": 0.3035,
+   "null_sd_approx": 0.218,
+   "top_third_ex2_mean": -0.18,
+   "top_third_ex2_median": 0.39,
+   "mid_third_ex2_mean": 0.88,
+   "bottom_third_ex2_mean": 1.04,
+   "bottom_third_ex2_median": 1.26,
+   "top_minus_bottom_ex2": -1.23,
+   "top_minus_bottom_perm_p": 0.1822,
+   "top_third_beat_spy2_share": 0.571,
+   "top_third_beat_spy2_count": "4/7",
+   "bottom_third_beat_spy2_count": "6/7",
+   "all_beat_spy2_count": "16/22",
+   "all_beat_spy1_count": "18/22",
+   "winners1_winners2": "13/18",
+   "losers1_winners2": "3/4",
+   "ex1_median": 1.79,
+   "ex2_median": 0.56,
+   "ex2_mean": 0.6,
+   "rows": [
+    {
+     "fund": "FLPSX",
+     "ex1": 7.2,
+     "rank1": 1.0,
+     "ex2": 1.04,
+     "rank2": 10.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "DODGX",
+     "ex1": 5.69,
+     "rank1": 2.0,
+     "ex2": -1.54,
+     "rank2": 20.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "BPTRX",
+     "ex1": 4.95,
+     "rank1": 3.0,
+     "ex2": 0.55,
+     "rank2": 12.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "AGTHX",
+     "ex1": 4.42,
+     "rank1": 4.0,
+     "ex2": -0.01,
+     "rank2": 17.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "VPMCX",
+     "ex1": 4.34,
+     "rank1": 5.0,
+     "ex2": 2.3,
+     "rank2": 4.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "SEQUX",
+     "ex1": 3.94,
+     "rank1": 6.0,
+     "ex2": 0.39,
+     "rank2": 13.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "LLPFX",
+     "ex1": 3.82,
+     "rank1": 7.0,
+     "ex2": -4.01,
+     "rank2": 22.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "MPGFX",
+     "ex1": 3.58,
+     "rank1": 8.0,
+     "ex2": 0.31,
+     "rank2": 15.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "FCNTX",
+     "ex1": 3.09,
+     "rank1": 9.0,
+     "ex2": 1.46,
+     "rank2": 7.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "AMCPX",
+     "ex1": 2.23,
+     "rank1": 10.0,
+     "ex2": 0.35,
+     "rank2": 14.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "AIVSX",
+     "ex1": 1.91,
+     "rank1": 11.0,
+     "ex2": -0.74,
+     "rank2": 18.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "YACKX",
+     "ex1": 1.66,
+     "rank1": 12.0,
+     "ex2": 2.57,
+     "rank2": 3.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "BRK-B",
+     "ex1": 1.65,
+     "rank1": 13.0,
+     "ex2": 1.21,
+     "rank2": 9.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "VWNDX",
+     "ex1": 1.44,
+     "rank1": 14.0,
+     "ex2": -1.22,
+     "rank2": 19.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FDGRX",
+     "ex1": 1.41,
+     "rank1": 15.0,
+     "ex2": 3.13,
+     "rank2": 1.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "JENSX",
+     "ex1": 0.99,
+     "rank1": 16.0,
+     "ex2": 0.56,
+     "rank2": 11.0,
+     "third1": "下位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "PRBLX",
+     "ex1": 0.98,
+     "rank1": 17.0,
+     "ex2": 2.67,
+     "rank2": 2.0,
+     "third1": "下位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "TRBCX",
+     "ex1": 0.17,
+     "rank1": 18.0,
+     "ex2": 2.11,
+     "rank2": 6.0,
+     "third1": "下位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "OAKMX",
+     "ex1": -0.55,
+     "rank1": 19.0,
+     "ex2": 1.26,
+     "rank2": 8.0,
+     "third1": "下位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "FMAGX",
+     "ex1": -1.47,
+     "rank1": 20.0,
+     "ex2": -1.65,
+     "rank2": 21.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FBGRX",
+     "ex1": -2.33,
+     "rank1": 21.0,
+     "ex2": 2.13,
+     "rank2": 5.0,
+     "third1": "下位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "VWUSX",
+     "ex1": -5.36,
+     "rank1": 22.0,
+     "ex2": 0.23,
+     "rank2": 16.0,
+     "third1": "下位",
+     "beat_spy2": true
+    }
+   ],
+   "windows": {
+    "first": [
+     199601,
+     200512
+    ],
+    "second": [
+     200601,
+     201512
+    ]
+   },
+   "measure": "幾何（複利の年率の差）",
+   "excluded": [
+    {
+     "fund": "FAIRX",
+     "first_month": 200001,
+     "missing_months_in_windows": 48
+    },
+    {
+     "fund": "FMIHX",
+     "first_month": 200201,
+     "missing_months_in_windows": 72
+    }
+   ]
+  },
+  "A_capm_alpha": {
+   "label": "A・ベータを調整したアルファ",
+   "n": 31,
+   "tercile_size": 10,
+   "top_third_ex1_mean": 2.74,
+   "bottom_third_ex1_mean": -1.98,
+   "spearman": 0.606,
+   "perm_p_two_sided": 0.0004,
+   "null_sd_approx": 0.183,
+   "top_third_ex2_mean": 0.63,
+   "top_third_ex2_median": 0.78,
+   "mid_third_ex2_mean": -1.46,
+   "bottom_third_ex2_mean": -2.24,
+   "bottom_third_ex2_median": -2.25,
+   "top_minus_bottom_ex2": 2.87,
+   "top_minus_bottom_perm_p": 0.0082,
+   "top_third_beat_spy2_share": 0.7,
+   "top_third_beat_spy2_count": "7/10",
+   "bottom_third_beat_spy2_count": "2/10",
+   "all_beat_spy2_count": "10/31",
+   "all_beat_spy1_count": "21/31",
+   "winners1_winners2": "8/21",
+   "losers1_winners2": "2/10",
+   "ex1_median": 0.86,
+   "ex2_median": -1.64,
+   "ex2_mean": -1.04,
+   "rows": [
+    {
+     "fund": "BRK-B",
+     "ex1": 4.52,
+     "rank1": 1.0,
+     "ex2": 2.29,
+     "rank2": 4.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "PRBLX",
+     "ex1": 3.28,
+     "rank1": 2.0,
+     "ex2": -0.44,
+     "rank2": 11.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "SMT.L",
+     "ex1": 3.05,
+     "rank1": 3.0,
+     "ex2": 1.05,
+     "rank2": 7.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "YACKX",
+     "ex1": 3.03,
+     "rank1": 4.0,
+     "ex2": 0.51,
+     "rank2": 8.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "FDGRX",
+     "ex1": 2.82,
+     "rank1": 5.0,
+     "ex2": 3.93,
+     "rank2": 1.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "PRWCX",
+     "ex1": 2.53,
+     "rank1": 6.0,
+     "ex2": 0.45,
+     "rank2": 9.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "VPMCX",
+     "ex1": 2.29,
+     "rank1": 7.0,
+     "ex2": 1.47,
+     "rank2": 6.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "SEQUX",
+     "ex1": 2.11,
+     "rank1": 8.0,
+     "ex2": -3.95,
+     "rank2": 29.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FCNTX",
+     "ex1": 1.98,
+     "rank1": 9.0,
+     "ex2": 1.81,
+     "rank2": 5.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "TRBCX",
+     "ex1": 1.83,
+     "rank1": 10.0,
+     "ex2": -0.84,
+     "rank2": 14.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FBGRX",
+     "ex1": 1.75,
+     "rank1": 11.0,
+     "ex2": 2.5,
+     "rank2": 3.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "SGENX",
+     "ex1": 1.6,
+     "rank1": 12.0,
+     "ex2": -0.7,
+     "rank2": 13.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FMIHX",
+     "ex1": 1.35,
+     "rank1": 13.0,
+     "ex2": -3.51,
+     "rank2": 28.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "JENSX",
+     "ex1": 1.26,
+     "rank1": 14.0,
+     "ex2": -1.64,
+     "rank2": 16.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FLPSX",
+     "ex1": 0.92,
+     "rank1": 15.0,
+     "ex2": -2.46,
+     "rank2": 25.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "OAKMX",
+     "ex1": 0.86,
+     "rank1": 16.0,
+     "ex2": -2.26,
+     "rank2": 22.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "MPGFX",
+     "ex1": 0.56,
+     "rank1": 17.0,
+     "ex2": -1.19,
+     "rank2": 15.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "AMCPX",
+     "ex1": 0.44,
+     "rank1": 18.0,
+     "ex2": -2.42,
+     "rank2": 24.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "ANWPX",
+     "ex1": 0.44,
+     "rank1": 19.0,
+     "ex2": -1.99,
+     "rank2": 20.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "VWUSX",
+     "ex1": 0.26,
+     "rank1": 20.0,
+     "ex2": -1.73,
+     "rank2": 18.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "AGTHX",
+     "ex1": 0.17,
+     "rank1": 21.0,
+     "ex2": -0.66,
+     "rank2": 12.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "BPTRX",
+     "ex1": -0.18,
+     "rank1": 22.0,
+     "ex2": 3.83,
+     "rank2": 2.0,
+     "third1": "下位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "AIVSX",
+     "ex1": -0.33,
+     "rank1": 23.0,
+     "ex2": 0.08,
+     "rank2": 10.0,
+     "third1": "下位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "TWEBX",
+     "ex1": -0.78,
+     "rank1": 24.0,
+     "ex2": -2.15,
+     "rank2": 21.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FAIRX",
+     "ex1": -1.58,
+     "rank1": 25.0,
+     "ex2": -2.34,
+     "rank2": 23.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "VWNDX",
+     "ex1": -1.62,
+     "rank1": 26.0,
+     "ex2": -2.6,
+     "rank2": 26.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "DODGX",
+     "ex1": -2.05,
+     "rank1": 27.0,
+     "ex2": -1.81,
+     "rank2": 19.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FMAGX",
+     "ex1": -2.22,
+     "rank1": 28.0,
+     "ex2": -1.71,
+     "rank2": 17.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "HAINX",
+     "ex1": -2.66,
+     "rank1": 29.0,
+     "ex2": -4.2,
+     "rank2": 30.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "DODFX",
+     "ex1": -4.03,
+     "rank1": 30.0,
+     "ex2": -3.21,
+     "rank2": 27.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "LLPFX",
+     "ex1": -4.34,
+     "rank1": 31.0,
+     "ex2": -8.28,
+     "rank2": 31.0,
+     "third1": "下位",
+     "beat_spy2": false
+    }
+   ],
+   "measure": "SPY に対する CAPM のアルファ（年率・無リスク金利は FRED TB3MS）",
+   "note_beat": "この感度では *_beat_spy* の欄は『アルファが正』の数（SPY に勝ったかではない）",
+   "betas": {
+    "BRK-B": [
+     0.58,
+     0.73
+    ],
+    "FCNTX": [
+     0.9,
+     1.01
+    ],
+    "SEQUX": [
+     0.73,
+     1.0
+    ],
+    "DODGX": [
+     1.15,
+     0.99
+    ],
+    "VPMCX": [
+     0.98,
+     1.0
+    ],
+    "FMAGX": [
+     1.19,
+     1.04
+    ],
+    "TRBCX": [
+     1.06,
+     1.1
+    ],
+    "BPTRX": [
+     1.24,
+     1.54
+    ],
+    "OAKMX": [
+     1.09,
+     1.1
+    ],
+    "LLPFX": [
+     1.22,
+     1.06
+    ],
+    "FAIRX": [
+     1.15,
+     0.93
+    ],
+    "MPGFX": [
+     0.97,
+     0.97
+    ],
+    "PRWCX": [
+     0.75,
+     0.66
+    ],
+    "JENSX": [
+     0.87,
+     0.87
+    ],
+    "FMIHX": [
+     0.88,
+     0.87
+    ],
+    "YACKX": [
+     0.9,
+     0.74
+    ],
+    "SGENX": [
+     0.69,
+     0.68
+    ],
+    "TWEBX": [
+     0.77,
+     0.68
+    ],
+    "PRBLX": [
+     0.85,
+     0.91
+    ],
+    "AMCPX": [
+     0.99,
+     1.02
+    ],
+    "AGTHX": [
+     0.98,
+     1.08
+    ],
+    "AIVSX": [
+     0.93,
+     0.93
+    ],
+    "ANWPX": [
+     0.99,
+     0.99
+    ],
+    "VWNDX": [
+     1.11,
+     0.98
+    ],
+    "VWUSX": [
+     1.01,
+     1.18
+    ],
+    "FBGRX": [
+     1.07,
+     1.22
+    ],
+    "FDGRX": [
+     1.06,
+     1.22
+    ],
+    "FLPSX": [
+     1.04,
+     0.89
+    ],
+    "HAINX": [
+     1.2,
+     0.82
+    ],
+    "DODFX": [
+     1.27,
+     0.89
+    ],
+    "SMT.L": [
+     1.51,
+     1.23
+    ]
+   }
+  },
+  "B_capm_alpha": {
+   "label": "B・ベータを調整したアルファ",
+   "n": 28,
+   "tercile_size": 9,
+   "top_third_ex1_mean": 6.1,
+   "bottom_third_ex1_mean": 0.05,
+   "spearman": 0.028,
+   "perm_p_two_sided": 0.887,
+   "null_sd_approx": 0.192,
+   "top_third_ex2_mean": 0.63,
+   "top_third_ex2_median": 0.92,
+   "mid_third_ex2_mean": 0.99,
+   "bottom_third_ex2_mean": 0.66,
+   "bottom_third_ex2_median": 0.86,
+   "top_minus_bottom_ex2": -0.03,
+   "top_minus_bottom_perm_p": 0.9714,
+   "top_third_beat_spy2_share": 0.667,
+   "top_third_beat_spy2_count": "6/9",
+   "bottom_third_beat_spy2_count": "6/9",
+   "all_beat_spy2_count": "20/28",
+   "all_beat_spy1_count": "25/28",
+   "winners1_winners2": "18/25",
+   "losers1_winners2": "2/3",
+   "ex1_median": 3.43,
+   "ex2_median": 0.89,
+   "ex2_mean": 0.77,
+   "rows": [
+    {
+     "fund": "FLPSX",
+     "ex1": 8.34,
+     "rank1": 1.0,
+     "ex2": 0.92,
+     "rank2": 14.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "SGENX",
+     "ex1": 7.36,
+     "rank1": 2.0,
+     "ex2": 1.6,
+     "rank2": 12.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "DODGX",
+     "ex1": 6.48,
+     "rank1": 3.0,
+     "ex2": -2.05,
+     "rank2": 25.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "PRWCX",
+     "ex1": 6.27,
+     "rank1": 4.0,
+     "ex2": 2.53,
+     "rank2": 6.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "SEQUX",
+     "ex1": 5.91,
+     "rank1": 5.0,
+     "ex2": 2.11,
+     "rank2": 8.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "BRK-B",
+     "ex1": 5.47,
+     "rank1": 6.0,
+     "ex2": 4.52,
+     "rank2": 1.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "LLPFX",
+     "ex1": 5.34,
+     "rank1": 7.0,
+     "ex2": -4.34,
+     "rank2": 28.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "MPGFX",
+     "ex1": 5.12,
+     "rank1": 8.0,
+     "ex2": 0.56,
+     "rank2": 16.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "BPTRX",
+     "ex1": 4.66,
+     "rank1": 9.0,
+     "ex2": -0.18,
+     "rank2": 21.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "AGTHX",
+     "ex1": 4.28,
+     "rank1": 10.0,
+     "ex2": 0.17,
+     "rank2": 20.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "FCNTX",
+     "ex1": 4.19,
+     "rank1": 11.0,
+     "ex2": 1.98,
+     "rank2": 9.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "VPMCX",
+     "ex1": 4.13,
+     "rank1": 12.0,
+     "ex2": 2.29,
+     "rank2": 7.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "HAINX",
+     "ex1": 3.7,
+     "rank1": 13.0,
+     "ex2": -2.66,
+     "rank2": 27.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "YACKX",
+     "ex1": 3.65,
+     "rank1": 14.0,
+     "ex2": 3.03,
+     "rank2": 4.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "ANWPX",
+     "ex1": 3.21,
+     "rank1": 15.0,
+     "ex2": 0.44,
+     "rank2": 18.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "AIVSX",
+     "ex1": 2.67,
+     "rank1": 16.0,
+     "ex2": -0.33,
+     "rank2": 22.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "AMCPX",
+     "ex1": 2.63,
+     "rank1": 17.0,
+     "ex2": 0.44,
+     "rank2": 17.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "PRBLX",
+     "ex1": 2.44,
+     "rank1": 18.0,
+     "ex2": 3.28,
+     "rank2": 2.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "JENSX",
+     "ex1": 2.33,
+     "rank1": 19.0,
+     "ex2": 1.26,
+     "rank2": 13.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "TWEBX",
+     "ex1": 2.32,
+     "rank1": 20.0,
+     "ex2": -0.78,
+     "rank2": 23.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "VWNDX",
+     "ex1": 2.0,
+     "rank1": 21.0,
+     "ex2": -1.62,
+     "rank2": 24.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FDGRX",
+     "ex1": 1.95,
+     "rank1": 22.0,
+     "ex2": 2.82,
+     "rank2": 5.0,
+     "third1": "下位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "SMT.L",
+     "ex1": 1.91,
+     "rank1": 23.0,
+     "ex2": 3.05,
+     "rank2": 3.0,
+     "third1": "下位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "OAKMX",
+     "ex1": 1.19,
+     "rank1": 24.0,
+     "ex2": 0.86,
+     "rank2": 15.0,
+     "third1": "下位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "TRBCX",
+     "ex1": 0.13,
+     "rank1": 25.0,
+     "ex2": 1.83,
+     "rank2": 10.0,
+     "third1": "下位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "FMAGX",
+     "ex1": -1.34,
+     "rank1": 26.0,
+     "ex2": -2.22,
+     "rank2": 26.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FBGRX",
+     "ex1": -2.21,
+     "rank1": 27.0,
+     "ex2": 1.75,
+     "rank2": 11.0,
+     "third1": "下位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "VWUSX",
+     "ex1": -5.54,
+     "rank1": 28.0,
+     "ex2": 0.26,
+     "rank2": 19.0,
+     "third1": "下位",
+     "beat_spy2": true
+    }
+   ],
+   "measure": "SPY に対する CAPM のアルファ（年率・無リスク金利は FRED TB3MS）",
+   "note_beat": "この感度では *_beat_spy* の欄は『アルファが正』の数（SPY に勝ったかではない）",
+   "betas": {
+    "BRK-B": [
+     0.53,
+     0.58
+    ],
+    "FCNTX": [
+     0.73,
+     0.9
+    ],
+    "SEQUX": [
+     0.62,
+     0.73
+    ],
+    "DODGX": [
+     0.76,
+     1.15
+    ],
+    "VPMCX": [
+     1.06,
+     0.98
+    ],
+    "FMAGX": [
+     1.01,
+     1.19
+    ],
+    "TRBCX": [
+     1.03,
+     1.06
+    ],
+    "BPTRX": [
+     1.58,
+     1.24
+    ],
+    "OAKMX": [
+     0.71,
+     1.09
+    ],
+    "LLPFX": [
+     0.68,
+     1.22
+    ],
+    "MPGFX": [
+     0.65,
+     0.97
+    ],
+    "PRWCX": [
+     0.36,
+     0.75
+    ],
+    "JENSX": [
+     0.73,
+     0.87
+    ],
+    "YACKX": [
+     0.64,
+     0.9
+    ],
+    "SGENX": [
+     0.41,
+     0.69
+    ],
+    "TWEBX": [
+     0.62,
+     0.77
+    ],
+    "PRBLX": [
+     0.68,
+     0.85
+    ],
+    "AMCPX": [
+     0.89,
+     0.99
+    ],
+    "AGTHX": [
+     1.02,
+     0.98
+    ],
+    "AIVSX": [
+     0.79,
+     0.93
+    ],
+    "ANWPX": [
+     0.87,
+     0.99
+    ],
+    "VWNDX": [
+     0.93,
+     1.11
+    ],
+    "VWUSX": [
+     1.26,
+     1.01
+    ],
+    "FBGRX": [
+     1.04,
+     1.07
+    ],
+    "FDGRX": [
+     1.18,
+     1.06
+    ],
+    "FLPSX": [
+     0.65,
+     1.04
+    ],
+    "HAINX": [
+     0.8,
+     1.2
+    ],
+    "SMT.L": [
+     0.84,
+     1.51
+    ]
+   }
+  },
+  "A_style_alpha": {
+   "label": "A・型で調整したアルファ（事後）",
+   "n": 31,
+   "tercile_size": 10,
+   "top_third_ex1_mean": 2.78,
+   "bottom_third_ex1_mean": -0.81,
+   "spearman": 0.515,
+   "perm_p_two_sided": 0.0037,
+   "null_sd_approx": 0.183,
+   "top_third_ex2_mean": 2.19,
+   "top_third_ex2_median": 1.92,
+   "mid_third_ex2_mean": -0.16,
+   "bottom_third_ex2_mean": -0.33,
+   "bottom_third_ex2_median": -0.58,
+   "top_minus_bottom_ex2": 2.51,
+   "top_minus_bottom_perm_p": 0.0193,
+   "top_third_beat_spy2_share": 0.8,
+   "top_third_beat_spy2_count": "8/10",
+   "bottom_third_beat_spy2_count": "1/10",
+   "all_beat_spy2_count": "14/31",
+   "all_beat_spy1_count": "25/31",
+   "winners1_winners2": "13/25",
+   "losers1_winners2": "1/6",
+   "ex1_median": 1.01,
+   "ex2_median": -0.05,
+   "ex2_mean": 0.54,
+   "rows": [
+    {
+     "fund": "BRK-B",
+     "ex1": 3.97,
+     "rank1": 1.0,
+     "ex2": 1.68,
+     "rank2": 8.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "SMT.L",
+     "ex1": 3.84,
+     "rank1": 2.0,
+     "ex2": 4.79,
+     "rank2": 2.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "PRBLX",
+     "ex1": 3.13,
+     "rank1": 3.0,
+     "ex2": -0.04,
+     "rank2": 15.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "YACKX",
+     "ex1": 2.81,
+     "rank1": 4.0,
+     "ex2": 2.28,
+     "rank2": 6.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "SGENX",
+     "ex1": 2.63,
+     "rank1": 5.0,
+     "ex2": 1.35,
+     "rank2": 11.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "FDGRX",
+     "ex1": 2.45,
+     "rank1": 6.0,
+     "ex2": 4.35,
+     "rank2": 3.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "VPMCX",
+     "ex1": 2.35,
+     "rank1": 7.0,
+     "ex2": 2.15,
+     "rank2": 7.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "ANWPX",
+     "ex1": 2.33,
+     "rank1": 8.0,
+     "ex2": -0.37,
+     "rank2": 19.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FAIRX",
+     "ex1": 2.28,
+     "rank1": 9.0,
+     "ex2": 4.22,
+     "rank2": 4.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "FCNTX",
+     "ex1": 1.97,
+     "rank1": 10.0,
+     "ex2": 1.45,
+     "rank2": 10.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "HAINX",
+     "ex1": 1.92,
+     "rank1": 11.0,
+     "ex2": -0.82,
+     "rank2": 23.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FLPSX",
+     "ex1": 1.88,
+     "rank1": 12.0,
+     "ex2": -0.05,
+     "rank2": 16.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "PRWCX",
+     "ex1": 1.37,
+     "rank1": 13.0,
+     "ex2": 1.55,
+     "rank2": 9.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "FMIHX",
+     "ex1": 1.26,
+     "rank1": 14.0,
+     "ex2": -1.15,
+     "rank2": 25.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "SEQUX",
+     "ex1": 1.06,
+     "rank1": 15.0,
+     "ex2": -1.8,
+     "rank2": 28.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "OAKMX",
+     "ex1": 1.01,
+     "rank1": 16.0,
+     "ex2": 0.3,
+     "rank2": 14.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "TRBCX",
+     "ex1": 0.95,
+     "rank1": 17.0,
+     "ex2": -1.48,
+     "rank2": 27.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FBGRX",
+     "ex1": 0.91,
+     "rank1": 18.0,
+     "ex2": 2.98,
+     "rank2": 5.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "JENSX",
+     "ex1": 0.87,
+     "rank1": 19.0,
+     "ex2": -1.98,
+     "rank2": 30.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "AGTHX",
+     "ex1": 0.82,
+     "rank1": 20.0,
+     "ex2": 0.35,
+     "rank2": 12.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "AIVSX",
+     "ex1": 0.29,
+     "rank1": 21.0,
+     "ex2": 0.32,
+     "rank2": 13.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "VWUSX",
+     "ex1": 0.16,
+     "rank1": 22.0,
+     "ex2": -1.04,
+     "rank2": 24.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "MPGFX",
+     "ex1": 0.15,
+     "rank1": 23.0,
+     "ex2": -0.62,
+     "rank2": 22.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "AMCPX",
+     "ex1": 0.04,
+     "rank1": 24.0,
+     "ex2": -1.26,
+     "rank2": 26.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "DODFX",
+     "ex1": 0.01,
+     "rank1": 25.0,
+     "ex2": -0.27,
+     "rank2": 18.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "TWEBX",
+     "ex1": -0.17,
+     "rank1": 26.0,
+     "ex2": -0.54,
+     "rank2": 21.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "DODGX",
+     "ex1": -0.52,
+     "rank1": 27.0,
+     "ex2": -0.16,
+     "rank2": 17.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "VWNDX",
+     "ex1": -0.86,
+     "rank1": 28.0,
+     "ex2": -0.42,
+     "rank2": 20.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "BPTRX",
+     "ex1": -0.94,
+     "rank1": 29.0,
+     "ex2": 7.8,
+     "rank2": 1.0,
+     "third1": "下位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "FMAGX",
+     "ex1": -2.36,
+     "rank1": 30.0,
+     "ex2": -1.81,
+     "rank2": 29.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "LLPFX",
+     "ex1": -3.57,
+     "rank1": 31.0,
+     "ex2": -4.95,
+     "rank2": 31.0,
+     "third1": "下位",
+     "beat_spy2": false
+    }
+   ],
+   "measure": "型で調整したアルファ（年率%）: r−rf を SPY−rf・成長−割安（VIGRX−VIVAX）・小型−大型（NAESX−SPY）・米国外−米国（0.6 VEURX＋0.4 VPACX−SPY）・債券（VBMFX−rf）に回帰した切片×12",
+   "loadings": {
+    "BRK-B": {
+     "first": {
+      "mkt": 0.6,
+      "growth_minus_value": -0.47,
+      "small_minus_large": -0.01,
+      "intl_minus_us": -0.22,
+      "bonds": 0.17
+     },
+     "second": {
+      "mkt": 0.96,
+      "growth_minus_value": -0.77,
+      "small_minus_large": -0.44,
+      "intl_minus_us": -0.06,
+      "bonds": 0.23
+     }
+    },
+    "FCNTX": {
+     "first": {
+      "mkt": 0.88,
+      "growth_minus_value": 0.5,
+      "small_minus_large": 0.03,
+      "intl_minus_us": 0.15,
+      "bonds": -0.09
+     },
+     "second": {
+      "mkt": 0.96,
+      "growth_minus_value": 0.31,
+      "small_minus_large": -0.01,
+      "intl_minus_us": 0.13,
+      "bonds": -0.12
+     }
+    },
+    "SEQUX": {
+     "first": {
+      "mkt": 0.64,
+      "growth_minus_value": -0.09,
+      "small_minus_large": 0.46,
+      "intl_minus_us": -0.1,
+      "bonds": 0.27
+     },
+     "second": {
+      "mkt": 0.94,
+      "growth_minus_value": 0.07,
+      "small_minus_large": 0.23,
+      "intl_minus_us": 0.18,
+      "bonds": 0.22
+     }
+    },
+    "DODGX": {
+     "first": {
+      "mkt": 1.1,
+      "growth_minus_value": -0.18,
+      "small_minus_large": 0.13,
+      "intl_minus_us": 0.15,
+      "bonds": -0.17
+     },
+     "second": {
+      "mkt": 1.12,
+      "growth_minus_value": -0.4,
+      "small_minus_large": 0.24,
+      "intl_minus_us": 0.14,
+      "bonds": -0.27
+     }
+    },
+    "VPMCX": {
+     "first": {
+      "mkt": 0.95,
+      "growth_minus_value": 0.26,
+      "small_minus_large": 0.12,
+      "intl_minus_us": 0.08,
+      "bonds": -0.07
+     },
+     "second": {
+      "mkt": 1.04,
+      "growth_minus_value": 0.07,
+      "small_minus_large": 0.09,
+      "intl_minus_us": 0.29,
+      "bonds": -0.26
+     }
+    },
+    "FMAGX": {
+     "first": {
+      "mkt": 1.12,
+      "growth_minus_value": 0.44,
+      "small_minus_large": 0.25,
+      "intl_minus_us": 0.15,
+      "bonds": -0.01
+     },
+     "second": {
+      "mkt": 0.96,
+      "growth_minus_value": 0.27,
+      "small_minus_large": 0.03,
+      "intl_minus_us": 0.0,
+      "bonds": 0.08
+     }
+    },
+    "TRBCX": {
+     "first": {
+      "mkt": 1.05,
+      "growth_minus_value": 0.67,
+      "small_minus_large": 0.02,
+      "intl_minus_us": 0.05,
+      "bonds": -0.05
+     },
+     "second": {
+      "mkt": 0.97,
+      "growth_minus_value": 0.57,
+      "small_minus_large": 0.05,
+      "intl_minus_us": 0.08,
+      "bonds": -0.12
+     }
+    },
+    "BPTRX": {
+     "first": {
+      "mkt": 1.1,
+      "growth_minus_value": 0.16,
+      "small_minus_large": 0.71,
+      "intl_minus_us": -0.11,
+      "bonds": 0.04
+     },
+     "second": {
+      "mkt": 1.19,
+      "growth_minus_value": 0.93,
+      "small_minus_large": 1.28,
+      "intl_minus_us": 0.12,
+      "bonds": -0.55
+     }
+    },
+    "OAKMX": {
+     "first": {
+      "mkt": 1.04,
+      "growth_minus_value": -0.19,
+      "small_minus_large": 0.25,
+      "intl_minus_us": -0.04,
+      "bonds": 0.04
+     },
+     "second": {
+      "mkt": 1.16,
+      "growth_minus_value": -0.26,
+      "small_minus_large": 0.44,
+      "intl_minus_us": 0.14,
+      "bonds": -0.21
+     }
+    },
+    "LLPFX": {
+     "first": {
+      "mkt": 1.09,
+      "growth_minus_value": 0.18,
+      "small_minus_large": 0.47,
+      "intl_minus_us": 0.24,
+      "bonds": -0.02
+     },
+     "second": {
+      "mkt": 1.1,
+      "growth_minus_value": -0.2,
+      "small_minus_large": 0.47,
+      "intl_minus_us": 0.28,
+      "bonds": -0.1
+     }
+    },
+    "FAIRX": {
+     "first": {
+      "mkt": 1.0,
+      "growth_minus_value": -0.14,
+      "small_minus_large": 0.53,
+      "intl_minus_us": 0.36,
+      "bonds": -0.63
+     },
+     "second": {
+      "mkt": 0.77,
+      "growth_minus_value": -0.08,
+      "small_minus_large": 1.02,
+      "intl_minus_us": 0.12,
+      "bonds": 0.43
+     }
+    },
+    "MPGFX": {
+     "first": {
+      "mkt": 0.91,
+      "growth_minus_value": -0.2,
+      "small_minus_large": 0.38,
+      "intl_minus_us": -0.21,
+      "bonds": -0.0
+     },
+     "second": {
+      "mkt": 0.94,
+      "growth_minus_value": -0.07,
+      "small_minus_large": 0.11,
+      "intl_minus_us": -0.09,
+      "bonds": 0.11
+     }
+    },
+    "PRWCX": {
+     "first": {
+      "mkt": 0.71,
+      "growth_minus_value": 0.06,
+      "small_minus_large": 0.18,
+      "intl_minus_us": 0.02,
+      "bonds": 0.36
+     },
+     "second": {
+      "mkt": 0.61,
+      "growth_minus_value": 0.0,
+      "small_minus_large": 0.07,
+      "intl_minus_us": 0.01,
+      "bonds": 0.31
+     }
+    },
+    "JENSX": {
+     "first": {
+      "mkt": 0.88,
+      "growth_minus_value": 0.01,
+      "small_minus_large": 0.03,
+      "intl_minus_us": -0.13,
+      "bonds": -0.05
+     },
+     "second": {
+      "mkt": 0.89,
+      "growth_minus_value": -0.15,
+      "small_minus_large": -0.22,
+      "intl_minus_us": -0.06,
+      "bonds": 0.29
+     }
+    },
+    "FMIHX": {
+     "first": {
+      "mkt": 0.86,
+      "growth_minus_value": -0.11,
+      "small_minus_large": 0.09,
+      "intl_minus_us": -0.04,
+      "bonds": 0.05
+     },
+     "second": {
+      "mkt": 0.91,
+      "growth_minus_value": -0.3,
+      "small_minus_large": 0.19,
+      "intl_minus_us": 0.12,
+      "bonds": 0.23
+     }
+    },
+    "YACKX": {
+     "first": {
+      "mkt": 0.86,
+      "growth_minus_value": -0.38,
+      "small_minus_large": 0.22,
+      "intl_minus_us": -0.01,
+      "bonds": 0.29
+     },
+     "second": {
+      "mkt": 0.83,
+      "growth_minus_value": -0.23,
+      "small_minus_large": 0.1,
+      "intl_minus_us": 0.27,
+      "bonds": 0.0
+     }
+    },
+    "SGENX": {
+     "first": {
+      "mkt": 0.62,
+      "growth_minus_value": 0.0,
+      "small_minus_large": 0.14,
+      "intl_minus_us": 0.38,
+      "bonds": 0.18
+     },
+     "second": {
+      "mkt": 0.78,
+      "growth_minus_value": -0.22,
+      "small_minus_large": -0.06,
+      "intl_minus_us": 0.43,
+      "bonds": 0.23
+     }
+    },
+    "TWEBX": {
+     "first": {
+      "mkt": 0.75,
+      "growth_minus_value": -0.25,
+      "small_minus_large": 0.05,
+      "intl_minus_us": 0.1,
+      "bonds": 0.08
+     },
+     "second": {
+      "mkt": 0.84,
+      "growth_minus_value": -0.29,
+      "small_minus_large": -0.05,
+      "intl_minus_us": 0.48,
+      "bonds": -0.11
+     }
+    },
+    "PRBLX": {
+     "first": {
+      "mkt": 0.82,
+      "growth_minus_value": 0.07,
+      "small_minus_large": 0.12,
+      "intl_minus_us": 0.01,
+      "bonds": 0.02
+     },
+     "second": {
+      "mkt": 0.9,
+      "growth_minus_value": -0.06,
+      "small_minus_large": -0.02,
+      "intl_minus_us": -0.03,
+      "bonds": 0.22
+     }
+    },
+    "AMCPX": {
+     "first": {
+      "mkt": 0.93,
+      "growth_minus_value": 0.17,
+      "small_minus_large": 0.25,
+      "intl_minus_us": 0.01,
+      "bonds": 0.05
+     },
+     "second": {
+      "mkt": 0.93,
+      "growth_minus_value": 0.25,
+      "small_minus_large": 0.22,
+      "intl_minus_us": 0.11,
+      "bonds": 0.03
+     }
+    },
+    "AGTHX": {
+     "first": {
+      "mkt": 0.94,
+      "growth_minus_value": 0.37,
+      "small_minus_large": 0.11,
+      "intl_minus_us": 0.21,
+      "bonds": -0.15
+     },
+     "second": {
+      "mkt": 0.97,
+      "growth_minus_value": 0.39,
+      "small_minus_large": 0.27,
+      "intl_minus_us": 0.17,
+      "bonds": -0.13
+     }
+    },
+    "AIVSX": {
+     "first": {
+      "mkt": 0.92,
+      "growth_minus_value": 0.04,
+      "small_minus_large": -0.05,
+      "intl_minus_us": 0.14,
+      "bonds": -0.04
+     },
+     "second": {
+      "mkt": 0.96,
+      "growth_minus_value": -0.02,
+      "small_minus_large": -0.01,
+      "intl_minus_us": 0.13,
+      "bonds": -0.08
+     }
+    },
+    "ANWPX": {
+     "first": {
+      "mkt": 0.93,
+      "growth_minus_value": 0.21,
+      "small_minus_large": 0.02,
+      "intl_minus_us": 0.53,
+      "bonds": -0.04
+     },
+     "second": {
+      "mkt": 0.97,
+      "growth_minus_value": 0.25,
+      "small_minus_large": 0.09,
+      "intl_minus_us": 0.46,
+      "bonds": -0.0
+     }
+    },
+    "VWNDX": {
+     "first": {
+      "mkt": 1.06,
+      "growth_minus_value": -0.16,
+      "small_minus_large": 0.22,
+      "intl_minus_us": 0.06,
+      "bonds": -0.05
+     },
+     "second": {
+      "mkt": 1.09,
+      "growth_minus_value": -0.34,
+      "small_minus_large": 0.3,
+      "intl_minus_us": 0.22,
+      "bonds": -0.23
+     }
+    },
+    "VWUSX": {
+     "first": {
+      "mkt": 1.0,
+      "growth_minus_value": 0.58,
+      "small_minus_large": 0.04,
+      "intl_minus_us": 0.07,
+      "bonds": -0.22
+     },
+     "second": {
+      "mkt": 0.95,
+      "growth_minus_value": 0.67,
+      "small_minus_large": 0.31,
+      "intl_minus_us": 0.05,
+      "bonds": 0.03
+     }
+    },
+    "FBGRX": {
+     "first": {
+      "mkt": 1.03,
+      "growth_minus_value": 0.48,
+      "small_minus_large": 0.22,
+      "intl_minus_us": -0.0,
+      "bonds": -0.01
+     },
+     "second": {
+      "mkt": 1.03,
+      "growth_minus_value": 0.75,
+      "small_minus_large": 0.33,
+      "intl_minus_us": 0.2,
+      "bonds": -0.27
+     }
+    },
+    "FDGRX": {
+     "first": {
+      "mkt": 1.01,
+      "growth_minus_value": 0.72,
+      "small_minus_large": 0.22,
+      "intl_minus_us": 0.12,
+      "bonds": -0.15
+     },
+     "second": {
+      "mkt": 1.04,
+      "growth_minus_value": 0.69,
+      "small_minus_large": 0.35,
+      "intl_minus_us": 0.13,
+      "bonds": -0.27
+     }
+    },
+    "FLPSX": {
+     "first": {
+      "mkt": 0.91,
+      "growth_minus_value": 0.04,
+      "small_minus_large": 0.48,
+      "intl_minus_us": 0.27,
+      "bonds": 0.05
+     },
+     "second": {
+      "mkt": 0.99,
+      "growth_minus_value": -0.27,
+      "small_minus_large": 0.31,
+      "intl_minus_us": 0.29,
+      "bonds": -0.23
+     }
+    },
+    "HAINX": {
+     "first": {
+      "mkt": 1.1,
+      "growth_minus_value": 0.15,
+      "small_minus_large": -0.03,
+      "intl_minus_us": 1.04,
+      "bonds": -0.19
+     },
+     "second": {
+      "mkt": 0.96,
+      "growth_minus_value": -0.05,
+      "small_minus_large": 0.05,
+      "intl_minus_us": 0.93,
+      "bonds": -0.04
+     }
+    },
+    "DODFX": {
+     "first": {
+      "mkt": 1.13,
+      "growth_minus_value": -0.04,
+      "small_minus_large": 0.15,
+      "intl_minus_us": 0.92,
+      "bonds": -0.04
+     },
+     "second": {
+      "mkt": 1.14,
+      "growth_minus_value": -0.17,
+      "small_minus_large": 0.03,
+      "intl_minus_us": 1.06,
+      "bonds": -0.46
+     }
+    },
+    "SMT.L": {
+     "first": {
+      "mkt": 1.39,
+      "growth_minus_value": 0.61,
+      "small_minus_large": 0.16,
+      "intl_minus_us": 0.78,
+      "bonds": 0.41
+     },
+     "second": {
+      "mkt": 0.96,
+      "growth_minus_value": 1.02,
+      "small_minus_large": 0.64,
+      "intl_minus_us": 0.66,
+      "bonds": -0.04
+     }
+    }
+   },
+   "note": "事後の追加（事前登録に無い）。米国外の合成の 0.6/0.4 は私の置き値",
+   "note_beat": "この感度では *_beat_spy* の欄は『アルファが正』の数（SPY に勝ったかではない）"
+  },
+  "B_style_alpha": {
+   "label": "B・型で調整したアルファ（事後）",
+   "n": 28,
+   "tercile_size": 9,
+   "top_third_ex1_mean": 5.35,
+   "bottom_third_ex1_mean": -0.09,
+   "spearman": 0.297,
+   "perm_p_two_sided": 0.1256,
+   "null_sd_approx": 0.192,
+   "top_third_ex2_mean": 1.03,
+   "top_third_ex2_median": 1.37,
+   "mid_third_ex2_mean": 1.8,
+   "bottom_third_ex2_mean": 0.13,
+   "bottom_third_ex2_median": 0.16,
+   "top_minus_bottom_ex2": 0.91,
+   "top_minus_bottom_perm_p": 0.2773,
+   "top_third_beat_spy2_share": 0.778,
+   "top_third_beat_spy2_count": "7/9",
+   "bottom_third_beat_spy2_count": "5/9",
+   "all_beat_spy2_count": "22/28",
+   "all_beat_spy1_count": "25/28",
+   "winners1_winners2": "20/25",
+   "losers1_winners2": "2/3",
+   "ex1_median": 2.79,
+   "ex2_median": 0.98,
+   "ex2_mean": 1.02,
+   "rows": [
+    {
+     "fund": "FLPSX",
+     "ex1": 6.73,
+     "rank1": 1.0,
+     "ex2": 1.88,
+     "rank2": 11.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "SGENX",
+     "ex1": 6.32,
+     "rank1": 2.0,
+     "ex2": 2.63,
+     "rank2": 5.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "DODGX",
+     "ex1": 5.85,
+     "rank1": 3.0,
+     "ex2": -0.52,
+     "rank2": 24.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "BRK-B",
+     "ex1": 5.27,
+     "rank1": 4.0,
+     "ex2": 3.97,
+     "rank2": 1.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "PRWCX",
+     "ex1": 5.13,
+     "rank1": 5.0,
+     "ex2": 1.37,
+     "rank2": 12.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "SEQUX",
+     "ex1": 5.11,
+     "rank1": 6.0,
+     "ex2": 1.06,
+     "rank2": 13.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "LLPFX",
+     "ex1": 4.97,
+     "rank1": 7.0,
+     "ex2": -3.57,
+     "rank2": 28.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "MPGFX",
+     "ex1": 4.73,
+     "rank1": 8.0,
+     "ex2": 0.15,
+     "rank2": 21.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "VPMCX",
+     "ex1": 4.08,
+     "rank1": 9.0,
+     "ex2": 2.35,
+     "rank2": 7.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "HAINX",
+     "ex1": 3.95,
+     "rank1": 10.0,
+     "ex2": 1.92,
+     "rank2": 10.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "AGTHX",
+     "ex1": 3.79,
+     "rank1": 11.0,
+     "ex2": 0.82,
+     "rank2": 18.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "FCNTX",
+     "ex1": 3.42,
+     "rank1": 12.0,
+     "ex2": 1.97,
+     "rank2": 9.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "ANWPX",
+     "ex1": 3.33,
+     "rank1": 13.0,
+     "ex2": 2.33,
+     "rank2": 8.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "JENSX",
+     "ex1": 2.79,
+     "rank1": 14.0,
+     "ex2": 0.87,
+     "rank2": 17.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "SMT.L",
+     "ex1": 2.79,
+     "rank1": 15.0,
+     "ex2": 3.84,
+     "rank2": 2.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "PRBLX",
+     "ex1": 2.18,
+     "rank1": 16.0,
+     "ex2": 3.13,
+     "rank2": 3.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "YACKX",
+     "ex1": 2.17,
+     "rank1": 17.0,
+     "ex2": 2.81,
+     "rank2": 4.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "AIVSX",
+     "ex1": 2.11,
+     "rank1": 18.0,
+     "ex2": 0.29,
+     "rank2": 19.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "AMCPX",
+     "ex1": 2.07,
+     "rank1": 19.0,
+     "ex2": 0.04,
+     "rank2": 22.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "BPTRX",
+     "ex1": 1.84,
+     "rank1": 20.0,
+     "ex2": -0.94,
+     "rank2": 26.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "TWEBX",
+     "ex1": 1.63,
+     "rank1": 21.0,
+     "ex2": -0.17,
+     "rank2": 23.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FDGRX",
+     "ex1": 1.55,
+     "rank1": 22.0,
+     "ex2": 2.45,
+     "rank2": 6.0,
+     "third1": "下位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "VWNDX",
+     "ex1": 1.21,
+     "rank1": 23.0,
+     "ex2": -0.86,
+     "rank2": 25.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "TRBCX",
+     "ex1": 0.43,
+     "rank1": 24.0,
+     "ex2": 0.95,
+     "rank2": 15.0,
+     "third1": "下位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "OAKMX",
+     "ex1": 0.4,
+     "rank1": 25.0,
+     "ex2": 1.01,
+     "rank2": 14.0,
+     "third1": "下位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "FMAGX",
+     "ex1": -1.37,
+     "rank1": 26.0,
+     "ex2": -2.36,
+     "rank2": 27.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FBGRX",
+     "ex1": -2.18,
+     "rank1": 27.0,
+     "ex2": 0.91,
+     "rank2": 16.0,
+     "third1": "下位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "VWUSX",
+     "ex1": -4.35,
+     "rank1": 28.0,
+     "ex2": 0.16,
+     "rank2": 20.0,
+     "third1": "下位",
+     "beat_spy2": true
+    }
+   ],
+   "measure": "型で調整したアルファ（年率%）: r−rf を SPY−rf・成長−割安（VIGRX−VIVAX）・小型−大型（NAESX−SPY）・米国外−米国（0.6 VEURX＋0.4 VPACX−SPY）・債券（VBMFX−rf）に回帰した切片×12",
+   "loadings": {
+    "BRK-B": {
+     "first": {
+      "mkt": 0.62,
+      "growth_minus_value": -0.53,
+      "small_minus_large": -0.4,
+      "intl_minus_us": 0.16,
+      "bonds": 0.24
+     },
+     "second": {
+      "mkt": 0.6,
+      "growth_minus_value": -0.47,
+      "small_minus_large": -0.01,
+      "intl_minus_us": -0.22,
+      "bonds": 0.17
+     }
+    },
+    "FCNTX": {
+     "first": {
+      "mkt": 0.77,
+      "growth_minus_value": 0.12,
+      "small_minus_large": 0.25,
+      "intl_minus_us": 0.15,
+      "bonds": 0.19
+     },
+     "second": {
+      "mkt": 0.88,
+      "growth_minus_value": 0.5,
+      "small_minus_large": 0.03,
+      "intl_minus_us": 0.15,
+      "bonds": -0.09
+     }
+    },
+    "SEQUX": {
+     "first": {
+      "mkt": 0.64,
+      "growth_minus_value": -0.5,
+      "small_minus_large": -0.21,
+      "intl_minus_us": -0.12,
+      "bonds": 0.24
+     },
+     "second": {
+      "mkt": 0.64,
+      "growth_minus_value": -0.09,
+      "small_minus_large": 0.46,
+      "intl_minus_us": -0.1,
+      "bonds": 0.27
+     }
+    },
+    "DODGX": {
+     "first": {
+      "mkt": 0.85,
+      "growth_minus_value": -0.59,
+      "small_minus_large": 0.08,
+      "intl_minus_us": 0.05,
+      "bonds": -0.14
+     },
+     "second": {
+      "mkt": 1.1,
+      "growth_minus_value": -0.18,
+      "small_minus_large": 0.13,
+      "intl_minus_us": 0.15,
+      "bonds": -0.17
+     }
+    },
+    "VPMCX": {
+     "first": {
+      "mkt": 1.08,
+      "growth_minus_value": 0.2,
+      "small_minus_large": 0.39,
+      "intl_minus_us": 0.07,
+      "bonds": -0.24
+     },
+     "second": {
+      "mkt": 0.95,
+      "growth_minus_value": 0.26,
+      "small_minus_large": 0.12,
+      "intl_minus_us": 0.08,
+      "bonds": -0.07
+     }
+    },
+    "FMAGX": {
+     "first": {
+      "mkt": 1.02,
+      "growth_minus_value": 0.08,
+      "small_minus_large": 0.06,
+      "intl_minus_us": 0.08,
+      "bonds": 0.02
+     },
+     "second": {
+      "mkt": 1.12,
+      "growth_minus_value": 0.44,
+      "small_minus_large": 0.25,
+      "intl_minus_us": 0.15,
+      "bonds": -0.01
+     }
+    },
+    "TRBCX": {
+     "first": {
+      "mkt": 1.03,
+      "growth_minus_value": 0.11,
+      "small_minus_large": 0.1,
+      "intl_minus_us": 0.03,
+      "bonds": -0.16
+     },
+     "second": {
+      "mkt": 1.05,
+      "growth_minus_value": 0.67,
+      "small_minus_large": 0.02,
+      "intl_minus_us": 0.05,
+      "bonds": -0.05
+     }
+    },
+    "BPTRX": {
+     "first": {
+      "mkt": 1.58,
+      "growth_minus_value": -0.06,
+      "small_minus_large": 0.76,
+      "intl_minus_us": -0.28,
+      "bonds": 0.3
+     },
+     "second": {
+      "mkt": 1.1,
+      "growth_minus_value": 0.16,
+      "small_minus_large": 0.71,
+      "intl_minus_us": -0.11,
+      "bonds": 0.04
+     }
+    },
+    "OAKMX": {
+     "first": {
+      "mkt": 0.77,
+      "growth_minus_value": -0.61,
+      "small_minus_large": -0.04,
+      "intl_minus_us": -0.07,
+      "bonds": 0.0
+     },
+     "second": {
+      "mkt": 1.04,
+      "growth_minus_value": -0.19,
+      "small_minus_large": 0.25,
+      "intl_minus_us": -0.04,
+      "bonds": 0.04
+     }
+    },
+    "LLPFX": {
+     "first": {
+      "mkt": 0.76,
+      "growth_minus_value": -0.51,
+      "small_minus_large": 0.03,
+      "intl_minus_us": 0.02,
+      "bonds": -0.17
+     },
+     "second": {
+      "mkt": 1.09,
+      "growth_minus_value": 0.18,
+      "small_minus_large": 0.47,
+      "intl_minus_us": 0.24,
+      "bonds": -0.02
+     }
+    },
+    "MPGFX": {
+     "first": {
+      "mkt": 0.67,
+      "growth_minus_value": -0.38,
+      "small_minus_large": 0.05,
+      "intl_minus_us": -0.11,
+      "bonds": -0.13
+     },
+     "second": {
+      "mkt": 0.91,
+      "growth_minus_value": -0.2,
+      "small_minus_large": 0.38,
+      "intl_minus_us": -0.21,
+      "bonds": -0.0
+     }
+    },
+    "PRWCX": {
+     "first": {
+      "mkt": 0.43,
+      "growth_minus_value": -0.38,
+      "small_minus_large": 0.07,
+      "intl_minus_us": 0.04,
+      "bonds": 0.2
+     },
+     "second": {
+      "mkt": 0.71,
+      "growth_minus_value": 0.06,
+      "small_minus_large": 0.18,
+      "intl_minus_us": 0.02,
+      "bonds": 0.36
+     }
+    },
+    "JENSX": {
+     "first": {
+      "mkt": 0.73,
+      "growth_minus_value": -0.02,
+      "small_minus_large": -0.06,
+      "intl_minus_us": 0.03,
+      "bonds": -0.14
+     },
+     "second": {
+      "mkt": 0.88,
+      "growth_minus_value": 0.01,
+      "small_minus_large": 0.03,
+      "intl_minus_us": -0.13,
+      "bonds": -0.05
+     }
+    },
+    "YACKX": {
+     "first": {
+      "mkt": 0.72,
+      "growth_minus_value": -0.41,
+      "small_minus_large": 0.13,
+      "intl_minus_us": 0.03,
+      "bonds": 0.27
+     },
+     "second": {
+      "mkt": 0.86,
+      "growth_minus_value": -0.38,
+      "small_minus_large": 0.22,
+      "intl_minus_us": -0.01,
+      "bonds": 0.29
+     }
+    },
+    "SGENX": {
+     "first": {
+      "mkt": 0.55,
+      "growth_minus_value": -0.25,
+      "small_minus_large": 0.17,
+      "intl_minus_us": 0.34,
+      "bonds": 0.23
+     },
+     "second": {
+      "mkt": 0.62,
+      "growth_minus_value": 0.0,
+      "small_minus_large": 0.14,
+      "intl_minus_us": 0.38,
+      "bonds": 0.18
+     }
+    },
+    "TWEBX": {
+     "first": {
+      "mkt": 0.69,
+      "growth_minus_value": -0.44,
+      "small_minus_large": 0.02,
+      "intl_minus_us": 0.03,
+      "bonds": 0.02
+     },
+     "second": {
+      "mkt": 0.75,
+      "growth_minus_value": -0.25,
+      "small_minus_large": 0.05,
+      "intl_minus_us": 0.1,
+      "bonds": 0.08
+     }
+    },
+    "PRBLX": {
+     "first": {
+      "mkt": 0.68,
+      "growth_minus_value": -0.1,
+      "small_minus_large": 0.12,
+      "intl_minus_us": -0.08,
+      "bonds": -0.09
+     },
+     "second": {
+      "mkt": 0.82,
+      "growth_minus_value": 0.07,
+      "small_minus_large": 0.12,
+      "intl_minus_us": 0.01,
+      "bonds": 0.02
+     }
+    },
+    "AMCPX": {
+     "first": {
+      "mkt": 0.88,
+      "growth_minus_value": -0.01,
+      "small_minus_large": 0.24,
+      "intl_minus_us": -0.1,
+      "bonds": -0.04
+     },
+     "second": {
+      "mkt": 0.93,
+      "growth_minus_value": 0.17,
+      "small_minus_large": 0.25,
+      "intl_minus_us": 0.01,
+      "bonds": 0.05
+     }
+    },
+    "AGTHX": {
+     "first": {
+      "mkt": 1.02,
+      "growth_minus_value": 0.22,
+      "small_minus_large": 0.43,
+      "intl_minus_us": -0.01,
+      "bonds": -0.11
+     },
+     "second": {
+      "mkt": 0.94,
+      "growth_minus_value": 0.37,
+      "small_minus_large": 0.11,
+      "intl_minus_us": 0.21,
+      "bonds": -0.15
+     }
+    },
+    "AIVSX": {
+     "first": {
+      "mkt": 0.83,
+      "growth_minus_value": -0.19,
+      "small_minus_large": 0.05,
+      "intl_minus_us": 0.03,
+      "bonds": 0.08
+     },
+     "second": {
+      "mkt": 0.92,
+      "growth_minus_value": 0.04,
+      "small_minus_large": -0.05,
+      "intl_minus_us": 0.14,
+      "bonds": -0.04
+     }
+    },
+    "ANWPX": {
+     "first": {
+      "mkt": 0.98,
+      "growth_minus_value": 0.02,
+      "small_minus_large": 0.15,
+      "intl_minus_us": 0.42,
+      "bonds": -0.07
+     },
+     "second": {
+      "mkt": 0.93,
+      "growth_minus_value": 0.21,
+      "small_minus_large": 0.02,
+      "intl_minus_us": 0.53,
+      "bonds": -0.04
+     }
+    },
+    "VWNDX": {
+     "first": {
+      "mkt": 1.01,
+      "growth_minus_value": -0.64,
+      "small_minus_large": 0.07,
+      "intl_minus_us": -0.04,
+      "bonds": -0.11
+     },
+     "second": {
+      "mkt": 1.06,
+      "growth_minus_value": -0.16,
+      "small_minus_large": 0.22,
+      "intl_minus_us": 0.06,
+      "bonds": -0.05
+     }
+    },
+    "VWUSX": {
+     "first": {
+      "mkt": 1.2,
+      "growth_minus_value": 0.48,
+      "small_minus_large": 0.08,
+      "intl_minus_us": 0.03,
+      "bonds": -0.3
+     },
+     "second": {
+      "mkt": 1.0,
+      "growth_minus_value": 0.58,
+      "small_minus_large": 0.04,
+      "intl_minus_us": 0.07,
+      "bonds": -0.22
+     }
+    },
+    "FBGRX": {
+     "first": {
+      "mkt": 1.01,
+      "growth_minus_value": 0.28,
+      "small_minus_large": 0.13,
+      "intl_minus_us": 0.01,
+      "bonds": 0.02
+     },
+     "second": {
+      "mkt": 1.03,
+      "growth_minus_value": 0.48,
+      "small_minus_large": 0.22,
+      "intl_minus_us": -0.0,
+      "bonds": -0.01
+     }
+    },
+    "FDGRX": {
+     "first": {
+      "mkt": 1.18,
+      "growth_minus_value": 0.64,
+      "small_minus_large": 0.77,
+      "intl_minus_us": 0.11,
+      "bonds": -0.23
+     },
+     "second": {
+      "mkt": 1.01,
+      "growth_minus_value": 0.72,
+      "small_minus_large": 0.22,
+      "intl_minus_us": 0.12,
+      "bonds": -0.15
+     }
+    },
+    "FLPSX": {
+     "first": {
+      "mkt": 0.74,
+      "growth_minus_value": -0.32,
+      "small_minus_large": 0.49,
+      "intl_minus_us": 0.02,
+      "bonds": -0.0
+     },
+     "second": {
+      "mkt": 0.91,
+      "growth_minus_value": 0.04,
+      "small_minus_large": 0.48,
+      "intl_minus_us": 0.27,
+      "bonds": 0.05
+     }
+    },
+    "HAINX": {
+     "first": {
+      "mkt": 1.03,
+      "growth_minus_value": -0.13,
+      "small_minus_large": 0.11,
+      "intl_minus_us": 0.77,
+      "bonds": -0.06
+     },
+     "second": {
+      "mkt": 1.1,
+      "growth_minus_value": 0.15,
+      "small_minus_large": -0.03,
+      "intl_minus_us": 1.04,
+      "bonds": -0.19
+     }
+    },
+    "SMT.L": {
+     "first": {
+      "mkt": 1.07,
+      "growth_minus_value": -0.03,
+      "small_minus_large": 0.12,
+      "intl_minus_us": 0.86,
+      "bonds": -0.25
+     },
+     "second": {
+      "mkt": 1.39,
+      "growth_minus_value": 0.61,
+      "small_minus_large": 0.16,
+      "intl_minus_us": 0.78,
+      "bonds": 0.41
+     }
+    }
+   },
+   "note": "事後の追加（事前登録に無い）。米国外の合成の 0.6/0.4 は私の置き値",
+   "note_beat": "この感度では *_beat_spy* の欄は『アルファが正』の数（SPY に勝ったかではない）"
+  },
+  "A_style_decomposition": {
+   "label": "A: 後半（2016-01〜2026-09）の超過を型とアルファに分ける",
+   "n": 31,
+   "note": "事後の追加（検証役の指摘・2026-10-12）。前半は複利の超過、後半は算術の超過（月次の差の平均×12）を、私の型の物差しの回帰で分けた",
+   "identity_max_abs_err": 0.0,
+   "slope_total": 1.203,
+   "slope_style_part": 0.572,
+   "slope_alpha_part": 0.631,
+   "spearman_ex1_vs_arith2": 0.565,
+   "spearman_ex1_vs_style_part": 0.412,
+   "perm_p_style_part": 0.0243,
+   "spearman_ex1_vs_alpha_part": 0.475,
+   "perm_p_alpha_part": 0.0083,
+   "var_arith2": 15.28,
+   "var_style_part": 7.26,
+   "var_alpha_part": 5.88,
+   "rows": [
+    {
+     "fund": "SMT.L",
+     "ex1": 4.45,
+     "arith2": 4.05,
+     "style_part2": -0.74,
+     "alpha_part2": 4.79
+    },
+    {
+     "fund": "FDGRX",
+     "ex1": 3.13,
+     "arith2": 6.79,
+     "style_part2": 2.44,
+     "alpha_part2": 4.35
+    },
+    {
+     "fund": "PRBLX",
+     "ex1": 2.67,
+     "arith2": -1.59,
+     "style_part2": -1.55,
+     "alpha_part2": -0.04
+    },
+    {
+     "fund": "YACKX",
+     "ex1": 2.57,
+     "arith2": -2.79,
+     "style_part2": -5.07,
+     "alpha_part2": 2.28
+    },
+    {
+     "fund": "VPMCX",
+     "ex1": 2.3,
+     "arith2": 1.52,
+     "style_part2": -0.63,
+     "alpha_part2": 2.15
+    },
+    {
+     "fund": "FBGRX",
+     "ex1": 2.13,
+     "arith2": 5.31,
+     "style_part2": 2.33,
+     "alpha_part2": 2.98
+    },
+    {
+     "fund": "TRBCX",
+     "ex1": 2.11,
+     "arith2": 0.5,
+     "style_part2": 1.99,
+     "alpha_part2": -1.48
+    },
+    {
+     "fund": "FCNTX",
+     "ex1": 1.46,
+     "arith2": 1.98,
+     "style_part2": 0.53,
+     "alpha_part2": 1.45
+    },
+    {
+     "fund": "PRWCX",
+     "ex1": 1.31,
+     "arith2": -3.93,
+     "style_part2": -5.48,
+     "alpha_part2": 1.55
+    },
+    {
+     "fund": "OAKMX",
+     "ex1": 1.26,
+     "arith2": -0.96,
+     "style_part2": -1.26,
+     "alpha_part2": 0.3
+    },
+    {
+     "fund": "BRK-B",
+     "ex1": 1.21,
+     "arith2": -1.15,
+     "style_part2": -2.83,
+     "alpha_part2": 1.68
+    },
+    {
+     "fund": "FLPSX",
+     "ex1": 1.04,
+     "arith2": -3.88,
+     "style_part2": -3.83,
+     "alpha_part2": -0.05
+    },
+    {
+     "fund": "FMIHX",
+     "ex1": 0.74,
+     "arith2": -5.15,
+     "style_part2": -4.0,
+     "alpha_part2": -1.15
+    },
+    {
+     "fund": "JENSX",
+     "ex1": 0.56,
+     "arith2": -3.33,
+     "style_part2": -1.35,
+     "alpha_part2": -1.98
+    },
+    {
+     "fund": "BPTRX",
+     "ex1": 0.55,
+     "arith2": 10.71,
+     "style_part2": 2.92,
+     "alpha_part2": 7.8
+    },
+    {
+     "fund": "SEQUX",
+     "ex1": 0.39,
+     "arith2": -3.97,
+     "style_part2": -2.17,
+     "alpha_part2": -1.8
+    },
+    {
+     "fund": "AMCPX",
+     "ex1": 0.35,
+     "arith2": -2.19,
+     "style_part2": -0.93,
+     "alpha_part2": -1.26
+    },
+    {
+     "fund": "MPGFX",
+     "ex1": 0.31,
+     "arith2": -1.61,
+     "style_part2": -0.99,
+     "alpha_part2": -0.62
+    },
+    {
+     "fund": "ANWPX",
+     "ex1": 0.29,
+     "arith2": -2.1,
+     "style_part2": -1.73,
+     "alpha_part2": -0.37
+    },
+    {
+     "fund": "VWUSX",
+     "ex1": 0.23,
+     "arith2": 0.54,
+     "style_part2": 1.58,
+     "alpha_part2": -1.04
+    },
+    {
+     "fund": "AGTHX",
+     "ex1": -0.01,
+     "arith2": 0.34,
+     "style_part2": -0.01,
+     "alpha_part2": 0.35
+    },
+    {
+     "fund": "SGENX",
+     "ex1": -0.08,
+     "arith2": -4.79,
+     "style_part2": -6.13,
+     "alpha_part2": 1.35
+    },
+    {
+     "fund": "AIVSX",
+     "ex1": -0.74,
+     "arith2": -0.88,
+     "style_part2": -1.19,
+     "alpha_part2": 0.32
+    },
+    {
+     "fund": "VWNDX",
+     "ex1": -1.22,
+     "arith2": -2.86,
+     "style_part2": -2.44,
+     "alpha_part2": -0.42
+    },
+    {
+     "fund": "DODGX",
+     "ex1": -1.54,
+     "arith2": -1.91,
+     "style_part2": -1.75,
+     "alpha_part2": -0.16
+    },
+    {
+     "fund": "FMAGX",
+     "ex1": -1.65,
+     "arith2": -1.14,
+     "style_part2": 0.67,
+     "alpha_part2": -1.81
+    },
+    {
+     "fund": "FAIRX",
+     "ex1": -1.73,
+     "arith2": -3.18,
+     "style_part2": -7.4,
+     "alpha_part2": 4.22
+    },
+    {
+     "fund": "TWEBX",
+     "ex1": -2.13,
+     "arith2": -6.23,
+     "style_part2": -5.69,
+     "alpha_part2": -0.54
+    },
+    {
+     "fund": "HAINX",
+     "ex1": -2.31,
+     "arith2": -6.54,
+     "style_part2": -5.73,
+     "alpha_part2": -0.82
+    },
+    {
+     "fund": "DODFX",
+     "ex1": -3.4,
+     "arith2": -4.59,
+     "style_part2": -4.32,
+     "alpha_part2": -0.27
+    },
+    {
+     "fund": "LLPFX",
+     "ex1": -4.01,
+     "arith2": -7.51,
+     "style_part2": -2.56,
+     "alpha_part2": -4.95
+    }
+   ]
+  },
+  "B_style_decomposition": {
+   "label": "B: 後半（2006-01〜2015-12）の超過を型とアルファに分ける",
+   "n": 28,
+   "note": "事後の追加（検証役の指摘・2026-10-12）。前半は複利の超過、後半は算術の超過（月次の差の平均×12）を、私の型の物差しの回帰で分けた",
+   "identity_max_abs_err": 0.0,
+   "slope_total": -0.118,
+   "slope_style_part": -0.154,
+   "slope_alpha_part": 0.037,
+   "spearman_ex1_vs_arith2": -0.253,
+   "spearman_ex1_vs_style_part": -0.313,
+   "perm_p_style_part": 0.1075,
+   "spearman_ex1_vs_alpha_part": -0.017,
+   "perm_p_alpha_part": 0.9295,
+   "var_arith2": 3.4,
+   "var_style_part": 2.11,
+   "var_alpha_part": 2.92,
+   "rows": [
+    {
+     "fund": "FLPSX",
+     "ex1": 7.2,
+     "arith2": 1.21,
+     "style_part2": -0.66,
+     "alpha_part2": 1.88
+    },
+    {
+     "fund": "DODGX",
+     "ex1": 5.69,
+     "arith2": -1.02,
+     "style_part2": -0.5,
+     "alpha_part2": -0.52
+    },
+    {
+     "fund": "BPTRX",
+     "ex1": 4.95,
+     "arith2": 1.49,
+     "style_part2": 2.43,
+     "alpha_part2": -0.94
+    },
+    {
+     "fund": "SGENX",
+     "ex1": 4.95,
+     "arith2": -0.57,
+     "style_part2": -3.2,
+     "alpha_part2": 2.63
+    },
+    {
+     "fund": "AGTHX",
+     "ex1": 4.42,
+     "arith2": 0.03,
+     "style_part2": -0.8,
+     "alpha_part2": 0.82
+    },
+    {
+     "fund": "VPMCX",
+     "ex1": 4.34,
+     "arith2": 2.17,
+     "style_part2": -0.18,
+     "alpha_part2": 2.35
+    },
+    {
+     "fund": "SEQUX",
+     "ex1": 3.94,
+     "arith2": 0.2,
+     "style_part2": -0.85,
+     "alpha_part2": 1.06
+    },
+    {
+     "fund": "LLPFX",
+     "ex1": 3.82,
+     "arith2": -2.8,
+     "style_part2": 0.77,
+     "alpha_part2": -3.57
+    },
+    {
+     "fund": "MPGFX",
+     "ex1": 3.58,
+     "arith2": 0.35,
+     "style_part2": 0.2,
+     "alpha_part2": 0.15
+    },
+    {
+     "fund": "PRWCX",
+     "ex1": 3.49,
+     "arith2": 0.78,
+     "style_part2": -0.6,
+     "alpha_part2": 1.37
+    },
+    {
+     "fund": "FCNTX",
+     "ex1": 3.09,
+     "arith2": 1.25,
+     "style_part2": -0.72,
+     "alpha_part2": 1.97
+    },
+    {
+     "fund": "ANWPX",
+     "ex1": 2.72,
+     "arith2": 0.4,
+     "style_part2": -1.94,
+     "alpha_part2": 2.33
+    },
+    {
+     "fund": "HAINX",
+     "ex1": 2.63,
+     "arith2": -1.22,
+     "style_part2": -3.14,
+     "alpha_part2": 1.92
+    },
+    {
+     "fund": "AMCPX",
+     "ex1": 2.23,
+     "arith2": 0.35,
+     "style_part2": 0.31,
+     "alpha_part2": 0.04
+    },
+    {
+     "fund": "AIVSX",
+     "ex1": 1.91,
+     "arith2": -0.84,
+     "style_part2": -1.13,
+     "alpha_part2": 0.29
+    },
+    {
+     "fund": "YACKX",
+     "ex1": 1.66,
+     "arith2": 2.36,
+     "style_part2": -0.45,
+     "alpha_part2": 2.81
+    },
+    {
+     "fund": "BRK-B",
+     "ex1": 1.65,
+     "arith2": 1.53,
+     "style_part2": -2.44,
+     "alpha_part2": 3.97
+    },
+    {
+     "fund": "VWNDX",
+     "ex1": 1.44,
+     "arith2": -0.81,
+     "style_part2": 0.05,
+     "alpha_part2": -0.86
+    },
+    {
+     "fund": "FDGRX",
+     "ex1": 1.41,
+     "arith2": 3.27,
+     "style_part2": 0.82,
+     "alpha_part2": 2.45
+    },
+    {
+     "fund": "JENSX",
+     "ex1": 0.99,
+     "arith2": 0.33,
+     "style_part2": -0.53,
+     "alpha_part2": 0.87
+    },
+    {
+     "fund": "PRBLX",
+     "ex1": 0.98,
+     "arith2": 2.23,
+     "style_part2": -0.9,
+     "alpha_part2": 3.13
+    },
+    {
+     "fund": "SMT.L",
+     "ex1": 0.59,
+     "arith2": 6.65,
+     "style_part2": 2.81,
+     "alpha_part2": 3.84
+    },
+    {
+     "fund": "TWEBX",
+     "ex1": 0.45,
+     "arith2": -2.39,
+     "style_part2": -2.22,
+     "alpha_part2": -0.17
+    },
+    {
+     "fund": "TRBCX",
+     "ex1": 0.17,
+     "arith2": 2.24,
+     "style_part2": 1.28,
+     "alpha_part2": 0.95
+    },
+    {
+     "fund": "OAKMX",
+     "ex1": -0.55,
+     "arith2": 1.47,
+     "style_part2": 0.46,
+     "alpha_part2": 1.01
+    },
+    {
+     "fund": "FMAGX",
+     "ex1": -1.47,
+     "arith2": -0.9,
+     "style_part2": 1.47,
+     "alpha_part2": -2.36
+    },
+    {
+     "fund": "FBGRX",
+     "ex1": -2.33,
+     "arith2": 2.28,
+     "style_part2": 1.37,
+     "alpha_part2": 0.91
+    },
+    {
+     "fund": "VWUSX",
+     "ex1": -5.36,
+     "arith2": 0.36,
+     "style_part2": 0.2,
+     "alpha_part2": 0.16
+    }
+   ]
+  },
+  "style_regime": {
+   "growth_minus_value_ann_pct": {
+    "1996-2005": -0.53,
+    "2006-2015": 1.86,
+    "2016-2026-09": 5.01
+   },
+   "intl_minus_us_ann_pct": {
+    "1996-2005": -2.31,
+    "2006-2015": -3.35,
+    "2016-2026-09": -5.15
+   },
+   "note": "算術の年率（月次の差の平均×12）。Vanguard の指数ファンド（費用込み）で作った近似"
+  },
+  "five_year_chain": {
+   "note": "事後の追加（事前登録に無い・参考）。重ならない5年の組を順に",
+   "pairs": [
+    {
+     "label": "199601〜200012 → 200101〜200512",
+     "n": 28,
+     "spearman": -0.534,
+     "perm_p_two_sided": 0.0046,
+     "top_minus_bottom_ex2": -7.02,
+     "top_minus_bottom_perm_p": 0.0088,
+     "top_third_beat_spy2_count": "7/9",
+     "all_beat_spy2_count": "23/28"
+    },
+    {
+     "label": "200101〜200512 → 200601〜201012",
+     "n": 29,
+     "spearman": 0.429,
+     "perm_p_two_sided": 0.0202,
+     "top_minus_bottom_ex2": 2.57,
+     "top_minus_bottom_perm_p": 0.037,
+     "top_third_beat_spy2_count": "8/9",
+     "all_beat_spy2_count": "24/29"
+    },
+    {
+     "label": "200601〜201012 → 201101〜201512",
+     "n": 31,
+     "spearman": -0.219,
+     "perm_p_two_sided": 0.2353,
+     "top_minus_bottom_ex2": -2.26,
+     "top_minus_bottom_perm_p": 0.1908,
+     "top_third_beat_spy2_count": "3/10",
+     "all_beat_spy2_count": "10/31"
+    },
+    {
+     "label": "201101〜201512 → 201601〜202012",
+     "n": 31,
+     "spearman": 0.738,
+     "perm_p_two_sided": 0.0001,
+     "top_minus_bottom_ex2": 10.16,
+     "top_minus_bottom_perm_p": 0.0003,
+     "top_third_beat_spy2_count": "8/10",
+     "all_beat_spy2_count": "13/31"
+    },
+    {
+     "label": "201601〜202012 → 202101〜202609",
+     "n": 31,
+     "spearman": 0.173,
+     "perm_p_two_sided": 0.3488,
+     "top_minus_bottom_ex2": 1.32,
+     "top_minus_bottom_perm_p": 0.3786,
+     "top_third_beat_spy2_count": "3/10",
+     "all_beat_spy2_count": "5/31"
+    }
+   ],
+   "mean_spearman": 0.117
+  },
+  "A_with_dead_CGMFX": {
+   "label": "A・清算された CGMFX を入れる",
+   "n": 32,
+   "tercile_size": 10,
+   "top_third_ex1_mean": 2.34,
+   "bottom_third_ex1_mean": -2.14,
+   "spearman": 0.631,
+   "perm_p_two_sided": 0.0003,
+   "null_sd_approx": 0.18,
+   "top_third_ex2_mean": 0.75,
+   "top_third_ex2_median": 0.73,
+   "mid_third_ex2_mean": -2.01,
+   "bottom_third_ex2_mean": -4.99,
+   "bottom_third_ex2_median": -5.65,
+   "top_minus_bottom_ex2": 5.74,
+   "top_minus_bottom_perm_p": 0.0006,
+   "top_third_beat_spy2_share": 0.5,
+   "top_third_beat_spy2_count": "5/10",
+   "bottom_third_beat_spy2_count": "0/10",
+   "all_beat_spy2_count": "7/32",
+   "all_beat_spy1_count": "20/32",
+   "winners1_winners2": "6/20",
+   "losers1_winners2": "1/12",
+   "ex1_median": 0.37,
+   "ex2_median": -2.5,
+   "ex2_mean": -2.08,
+   "rows": [
+    {
+     "fund": "SMT.L",
+     "ex1": 4.45,
+     "rank1": 1.0,
+     "ex2": 2.12,
+     "rank2": 4.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "FDGRX",
+     "ex1": 3.13,
+     "rank1": 2.0,
+     "ex2": 6.83,
+     "rank2": 2.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "PRBLX",
+     "ex1": 2.67,
+     "rank1": 3.0,
+     "ex2": -1.64,
+     "rank2": 12.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "YACKX",
+     "ex1": 2.57,
+     "rank1": 4.0,
+     "ex2": -2.82,
+     "rank2": 19.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "VPMCX",
+     "ex1": 2.3,
+     "rank1": 5.0,
+     "ex2": 1.5,
+     "rank2": 6.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "FBGRX",
+     "ex1": 2.13,
+     "rank1": 6.0,
+     "ex2": 5.1,
+     "rank2": 3.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "TRBCX",
+     "ex1": 2.11,
+     "rank1": 7.0,
+     "ex2": -0.04,
+     "rank2": 8.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FCNTX",
+     "ex1": 1.46,
+     "rank1": 8.0,
+     "ex2": 2.05,
+     "rank2": 5.0,
+     "third1": "上位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "PRWCX",
+     "ex1": 1.31,
+     "rank1": 9.0,
+     "ex2": -3.73,
+     "rank2": 22.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "OAKMX",
+     "ex1": 1.26,
+     "rank1": 10.0,
+     "ex2": -1.84,
+     "rank2": 15.0,
+     "third1": "上位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "BRK-B",
+     "ex1": 1.21,
+     "rank1": 11.0,
+     "ex2": -1.75,
+     "rank2": 13.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FLPSX",
+     "ex1": 1.04,
+     "rank1": 12.0,
+     "ex2": -4.38,
+     "rank2": 23.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FMIHX",
+     "ex1": 0.74,
+     "rank1": 13.0,
+     "ex2": -5.68,
+     "rank2": 27.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "JENSX",
+     "ex1": 0.56,
+     "rank1": 14.0,
+     "ex2": -3.53,
+     "rank2": 21.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "BPTRX",
+     "ex1": 0.55,
+     "rank1": 15.0,
+     "ex2": 7.92,
+     "rank2": 1.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "SEQUX",
+     "ex1": 0.39,
+     "rank1": 16.0,
+     "ex2": -4.72,
+     "rank2": 24.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "AMCPX",
+     "ex1": 0.35,
+     "rank1": 17.0,
+     "ex2": -2.61,
+     "rank2": 18.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "MPGFX",
+     "ex1": 0.31,
+     "rank1": 18.0,
+     "ex2": -1.81,
+     "rank2": 14.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "ANWPX",
+     "ex1": 0.29,
+     "rank1": 19.0,
+     "ex2": -2.48,
+     "rank2": 16.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "VWUSX",
+     "ex1": 0.23,
+     "rank1": 20.0,
+     "ex2": -0.27,
+     "rank2": 9.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "AGTHX",
+     "ex1": -0.01,
+     "rank1": 21.0,
+     "ex2": 0.04,
+     "rank2": 7.0,
+     "third1": "中位",
+     "beat_spy2": true
+    },
+    {
+     "fund": "SGENX",
+     "ex1": -0.08,
+     "rank1": 22.0,
+     "ex2": -4.91,
+     "rank2": 25.0,
+     "third1": "中位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "AIVSX",
+     "ex1": -0.74,
+     "rank1": 23.0,
+     "ex2": -0.86,
+     "rank2": 10.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "VWNDX",
+     "ex1": -1.22,
+     "rank1": 24.0,
+     "ex2": -3.48,
+     "rank2": 20.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "DODGX",
+     "ex1": -1.54,
+     "rank1": 25.0,
+     "ex2": -2.53,
+     "rank2": 17.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FMAGX",
+     "ex1": -1.65,
+     "rank1": 26.0,
+     "ex2": -1.55,
+     "rank2": 11.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "FAIRX",
+     "ex1": -1.73,
+     "rank1": 27.0,
+     "ex2": -5.74,
+     "rank2": 28.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "TWEBX",
+     "ex1": -2.13,
+     "rank1": 28.0,
+     "ex2": -6.5,
+     "rank2": 29.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "HAINX",
+     "ex1": -2.31,
+     "rank1": 29.0,
+     "ex2": -7.27,
+     "rank2": 30.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "CGMFX",
+     "ex1": -2.69,
+     "rank1": 30.0,
+     "ex2": -7.44,
+     "rank2": 31.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "DODFX",
+     "ex1": -3.4,
+     "rank1": 31.0,
+     "ex2": -5.56,
+     "rank2": 26.0,
+     "third1": "下位",
+     "beat_spy2": false
+    },
+    {
+     "fund": "LLPFX",
+     "ex1": -4.01,
+     "rank1": 32.0,
+     "ex2": -8.98,
+     "rank2": 32.0,
+     "third1": "下位",
+     "beat_spy2": false
+    }
+   ],
+   "windows": {
+    "first": [
+     200601,
+     201512
+    ],
+    "second": [
+     201601,
+     202609
+    ]
+   },
+   "measure": "幾何（複利の年率の差）",
+   "excluded": []
+  }
+ },
+ "cgm_focus_dead_fund": {
+  "annual_pct": {
+   "2012": 14.23,
+   "2013": 37.58,
+   "2014": 1.41,
+   "2015": -4.11,
+   "2016": 9.03,
+   "2017": 24.82,
+   "2018": -24.73,
+   "2019": -13.07,
+   "2020": -4.34,
+   "2021": 33.52
+  },
+  "avg_pct": {
+   "fund_01y_to_2021": 33.52,
+   "fund_05y_to_2021": 0.85,
+   "fund_10y_to_2021": 5.68,
+   "sp500_01y_to_2021": 28.71,
+   "sp500_05y_to_2021": 18.47,
+   "sp500_10y_to_2021": 16.55
+  },
+  "ten_2006_2015": {
+   "fund_10y_2006_2015": 4.54,
+   "sp500_10y_2006_2015": 7.3,
+   "fund_1y_2015": -4.11
+  },
+  "h1_2022_pct": -10.9,
+  "liquidation_date": "November 30, 2022",
+  "ten_2000_2009": {
+   "cum_pct_2000_2009": 418.2,
+   "ann_pct_2000_2009": 17.88
+  },
+  "sources": {
+   "485BPOS_2022_xbrl": "https://www.sec.gov/Archives/edgar/data/60335/000006033522000031/ck0000060335-20211231.htm（rr:AnnualReturn2012〜2021・系列 S000000876）",
+   "497K_2016": "https://www.sec.gov/Archives/edgar/data/60335/000006033516000076/a2016_focussummarypros.htm（10年平均 2006〜2015）",
+   "N-CSRS_2022-06-30": "https://www.sec.gov/Archives/edgar/data/60335/000006033522000043/cgmncsr06302022.htm（2022年上半期 −10.9%・S&P 500 −20.0%）",
+   "497_2022-09-30": "https://www.sec.gov/Archives/edgar/data/60335/000092963822001509/form497.htm（清算の決定・2022-11-30 ごろ運用停止）",
+   "N-CSR_2009-12-31": "https://www.sec.gov/Archives/edgar/data/60335/000095015610000031/d73427_ncsr.htm（10年の累計 +418.2%＝2000〜2009）"
+  },
+  "test_A_inputs": {
+   "ex1_pct": -2.69,
+   "ex2_pct": -7.44,
+   "assumption": "2006〜2015 は目論見書の10年平均 4.54%（S&P 500 7.30%）と SPY の年率の差。2016-01〜2026-09 は 2016〜2021 の年次・2022 上半期 −10.9%・2022-07 以降は SPY（清算の手取りを SPY へ）"
+  }
+ },
+ "full_period_excess_vs_spy": [
+  {
+   "fund": "BPTRX",
+   "name": "Baron Partners Retail",
+   "first_month": 199202,
+   "ex_2006_2026": 4.19,
+   "ex_1996_2026": 4.44,
+   "ex_2016_2026": 7.92,
+   "ex_2006_2015": 0.55
+  },
+  {
+   "fund": "FDGRX",
+   "name": "Fidelity Growth Company Fund",
+   "first_month": 198502,
+   "ex_2006_2026": 4.97,
+   "ex_1996_2026": 3.79,
+   "ex_2016_2026": 6.83,
+   "ex_2006_2015": 3.13
+  },
+  {
+   "fund": "FBGRX",
+   "name": "Fidelity Blue Chip Growth",
+   "first_month": 198801,
+   "ex_2006_2026": 3.61,
+   "ex_1996_2026": 1.62,
+   "ex_2016_2026": 5.1,
+   "ex_2006_2015": 2.13
+  },
+  {
+   "fund": "SMT.L",
+   "name": "Scottish Mortgage Investment Trust（Yahoo: Scottish Mortgage Ord）",
+   "first_month": 197102,
+   "ex_2006_2026": 3.28,
+   "ex_1996_2026": 2.38,
+   "ex_2016_2026": 2.12,
+   "ex_2006_2015": 4.45
+  },
+  {
+   "fund": "FCNTX",
+   "name": "Fidelity Contrafund",
+   "first_month": 198502,
+   "ex_2006_2026": 1.76,
+   "ex_1996_2026": 2.19,
+   "ex_2016_2026": 2.05,
+   "ex_2006_2015": 1.46
+  },
+  {
+   "fund": "VPMCX",
+   "name": "Vanguard PRIMECAP Inv",
+   "first_month": 198502,
+   "ex_2006_2026": 1.9,
+   "ex_1996_2026": 2.7,
+   "ex_2016_2026": 1.5,
+   "ex_2006_2015": 2.3
+  },
+  {
+   "fund": "AGTHX",
+   "name": "American Funds Growth Fd of Amer A",
+   "first_month": 198502,
+   "ex_2006_2026": 0.01,
+   "ex_1996_2026": 1.45,
+   "ex_2016_2026": 0.04,
+   "ex_2006_2015": -0.01
+  },
+  {
+   "fund": "TRBCX",
+   "name": "T. Rowe Price Blue Chip Growth",
+   "first_month": 199307,
+   "ex_2006_2026": 1.03,
+   "ex_1996_2026": 0.75,
+   "ex_2016_2026": -0.04,
+   "ex_2006_2015": 2.11
+  },
+  {
+   "fund": "VWUSX",
+   "name": "Vanguard US Growth Investor",
+   "first_month": 198502,
+   "ex_2006_2026": -0.02,
+   "ex_1996_2026": -1.81,
+   "ex_2016_2026": -0.27,
+   "ex_2006_2015": 0.23
+  },
+  {
+   "fund": "AIVSX",
+   "name": "American Funds Invmt Co of Amer A",
+   "first_month": 198602,
+   "ex_2006_2026": -0.8,
+   "ex_1996_2026": 0.09,
+   "ex_2016_2026": -0.86,
+   "ex_2006_2015": -0.74
+  },
+  {
+   "fund": "FMAGX",
+   "name": "Fidelity Magellan",
+   "first_month": 198502,
+   "ex_2006_2026": -1.6,
+   "ex_1996_2026": -1.56,
+   "ex_2016_2026": -1.55,
+   "ex_2006_2015": -1.65
+  },
+  {
+   "fund": "PRBLX",
+   "name": "Parnassus Core Equity Investor",
+   "first_month": 199209,
+   "ex_2006_2026": 0.49,
+   "ex_1996_2026": 0.65,
+   "ex_2016_2026": -1.64,
+   "ex_2006_2015": 2.67
+  },
+  {
+   "fund": "BRK-B",
+   "name": "Berkshire Hathaway Inc.",
+   "first_month": 199606,
+   "ex_2006_2026": -0.28,
+   "ex_1996_2026": null,
+   "ex_2016_2026": -1.75,
+   "ex_2006_2015": 1.21
+  },
+  {
+   "fund": "MPGFX",
+   "name": "Mairs & Power Fund",
+   "first_month": 198502,
+   "ex_2006_2026": -0.76,
+   "ex_1996_2026": 0.65,
+   "ex_2016_2026": -1.81,
+   "ex_2006_2015": 0.31
+  },
+  {
+   "fund": "OAKMX",
+   "name": "Oakmark Investor",
+   "first_month": 199109,
+   "ex_2006_2026": -0.31,
+   "ex_1996_2026": -0.39,
+   "ex_2016_2026": -1.84,
+   "ex_2006_2015": 1.26
+  },
+  {
+   "fund": "ANWPX",
+   "name": "American Funds New Perspective A",
+   "first_month": 198502,
+   "ex_2006_2026": -1.1,
+   "ex_1996_2026": 0.14,
+   "ex_2016_2026": -2.48,
+   "ex_2006_2015": 0.29
+  },
+  {
+   "fund": "DODGX",
+   "name": "Dodge & Cox Stock I",
+   "first_month": 198502,
+   "ex_2006_2026": -2.04,
+   "ex_1996_2026": 0.45,
+   "ex_2016_2026": -2.53,
+   "ex_2006_2015": -1.54
+  },
+  {
+   "fund": "AMCPX",
+   "name": "American Funds AMCAP A",
+   "first_month": 198602,
+   "ex_2006_2026": -1.14,
+   "ex_1996_2026": -0.04,
+   "ex_2016_2026": -2.61,
+   "ex_2006_2015": 0.35
+  },
+  {
+   "fund": "YACKX",
+   "name": "AMG Yacktman I",
+   "first_month": 199208,
+   "ex_2006_2026": -0.16,
+   "ex_1996_2026": 0.44,
+   "ex_2016_2026": -2.82,
+   "ex_2006_2015": 2.57
+  },
+  {
+   "fund": "VWNDX",
+   "name": "Vanguard Windsor Investor Shares",
+   "first_month": 198502,
+   "ex_2006_2026": -2.36,
+   "ex_1996_2026": -1.12,
+   "ex_2016_2026": -3.48,
+   "ex_2006_2015": -1.22
+  },
+  {
+   "fund": "JENSX",
+   "name": "Jensen Quality Growth J",
+   "first_month": 199208,
+   "ex_2006_2026": -1.51,
+   "ex_1996_2026": -0.69,
+   "ex_2016_2026": -3.53,
+   "ex_2006_2015": 0.56
+  },
+  {
+   "fund": "PRWCX",
+   "name": "T. Rowe Price Capital Appreciation",
+   "first_month": 198607,
+   "ex_2006_2026": -1.24,
+   "ex_1996_2026": 0.29,
+   "ex_2016_2026": -3.73,
+   "ex_2006_2015": 1.31
+  },
+  {
+   "fund": "FLPSX",
+   "name": "Fidelity Low-Priced Stock",
+   "first_month": 199001,
+   "ex_2006_2026": -1.71,
+   "ex_1996_2026": 1.15,
+   "ex_2016_2026": -4.38,
+   "ex_2006_2015": 1.04
+  },
+  {
+   "fund": "SEQUX",
+   "name": "Sequoia",
+   "first_month": 198502,
+   "ex_2006_2026": -2.2,
+   "ex_1996_2026": -0.22,
+   "ex_2016_2026": -4.72,
+   "ex_2006_2015": 0.39
+  },
+  {
+   "fund": "SGENX",
+   "name": "First Eagle Global A",
+   "first_month": 198502,
+   "ex_2006_2026": -2.52,
+   "ex_1996_2026": -0.12,
+   "ex_2016_2026": -4.91,
+   "ex_2006_2015": -0.08
+  },
+  {
+   "fund": "DODFX",
+   "name": "Dodge & Cox International Stock I",
+   "first_month": 200105,
+   "ex_2006_2026": -4.49,
+   "ex_1996_2026": null,
+   "ex_2016_2026": -5.56,
+   "ex_2006_2015": -3.4
+  },
+  {
+   "fund": "FMIHX",
+   "name": "FMI Large Cap Investor",
+   "first_month": 200201,
+   "ex_2006_2026": -2.52,
+   "ex_1996_2026": null,
+   "ex_2016_2026": -5.68,
+   "ex_2006_2015": 0.74
+  },
+  {
+   "fund": "FAIRX",
+   "name": "Fairholme",
+   "first_month": 200001,
+   "ex_2006_2026": -3.75,
+   "ex_1996_2026": null,
+   "ex_2016_2026": -5.74,
+   "ex_2006_2015": -1.73
+  },
+  {
+   "fund": "TWEBX",
+   "name": "Tweedy, Browne Value",
+   "first_month": 199401,
+   "ex_2006_2026": -4.34,
+   "ex_1996_2026": -2.78,
+   "ex_2016_2026": -6.5,
+   "ex_2006_2015": -2.13
+  },
+  {
+   "fund": "HAINX",
+   "name": "Harbor International Institutional",
+   "first_month": 198801,
+   "ex_2006_2026": -4.82,
+   "ex_1996_2026": -2.42,
+   "ex_2016_2026": -7.27,
+   "ex_2006_2015": -2.31
+  },
+  {
+   "fund": "LLPFX",
+   "name": "Longleaf Partners",
+   "first_month": 198705,
+   "ex_2006_2026": -6.53,
+   "ex_1996_2026": -3.22,
+   "ex_2016_2026": -8.98,
+   "ex_2006_2015": -4.01
+  }
+ ],
+ "berkshire": {
+  "letter_url": "https://www.berkshirehathaway.com/letters/2025ltr.pdf",
+  "letter_note": "2025年の株主への手紙（2026-02-28）末尾の表『Berkshire’s Performance vs. the S&P 500』（1株あたりの時価の変化と S&P 500 配当込み）",
+  "letter_compounded_1965_2025": {
+   "brk": 19.7,
+   "sp500": 10.5
+  },
+  "letter_decades": [
+   {
+    "period": "1965〜1969（1965・1966 は9月決算・1967 は15か月）",
+    "years": "1965-1969",
+    "brk_cagr": 28.28,
+    "sp500tr_cagr": 5.27,
+    "diff": 23.01,
+    "brk_beat_years": "4/5"
+   },
+   {
+    "period": "1970年代",
+    "years": "1970-1979",
+    "brk_cagr": 22.24,
+    "sp500tr_cagr": 5.78,
+    "diff": 16.46,
+    "brk_beat_years": "6/10"
+   },
+   {
+    "period": "1980年代",
+    "years": "1980-1989",
+    "brk_cagr": 39.09,
+    "sp500tr_cagr": 17.44,
+    "diff": 21.65,
+    "brk_beat_years": "7/10"
+   },
+   {
+    "period": "1990年代",
+    "years": "1990-1999",
+    "brk_cagr": 20.51,
+    "sp500tr_cagr": 18.22,
+    "diff": 2.29,
+    "brk_beat_years": "7/10"
+   },
+   {
+    "period": "2000年代",
+    "years": "2000-2009",
+    "brk_cagr": 5.86,
+    "sp500tr_cagr": -0.95,
+    "diff": 6.8,
+    "brk_beat_years": "6/10"
+   },
+   {
+    "period": "2010年代",
+    "years": "2010-2019",
+    "brk_cagr": 13.09,
+    "sp500tr_cagr": 13.57,
+    "diff": -0.48,
+    "brk_beat_years": "7/10"
+   },
+   {
+    "period": "2016〜2025",
+    "years": "2016-2025",
+    "brk_cagr": 14.34,
+    "sp500tr_cagr": 14.82,
+    "diff": -0.49,
+    "brk_beat_years": "6/10"
+   },
+   {
+    "period": "2020〜2025",
+    "years": "2020-2025",
+    "brk_cagr": 14.25,
+    "sp500tr_cagr": 15.08,
+    "diff": -0.83,
+    "brk_beat_years": "3/6"
+   },
+   {
+    "period": "1965〜2025 全期間",
+    "years": "1965-2025",
+    "brk_cagr": 19.79,
+    "sp500tr_cagr": 10.55,
+    "diff": 9.24,
+    "brk_beat_years": "40/61"
+   }
+  ],
+  "letter_rolling_10y": [
+   {
+    "from": 1965,
+    "to": 1974,
+    "diff": 11.07
+   },
+   {
+    "from": 1966,
+    "to": 1975,
+    "diff": 4.64
+   },
+   {
+    "from": 1967,
+    "to": 1976,
+    "diff": 10.87
+   },
+   {
+    "from": 1968,
+    "to": 1977,
+    "diff": 17.61
+   },
+   {
+    "from": 1969,
+    "to": 1978,
+    "diff": 12.84
+   },
+   {
+    "from": 1970,
+    "to": 1979,
+    "diff": 16.46
+   },
+   {
+    "from": 1971,
+    "to": 1980,
+    "diff": 17.99
+   },
+   {
+    "from": 1972,
+    "to": 1981,
+    "diff": 16.09
+   },
+   {
+    "from": 1973,
+    "to": 1982,
+    "diff": 18.93
+   },
+   {
+    "from": 1974,
+    "to": 1983,
+    "diff": 22.09
+   },
+   {
+    "from": 1975,
+    "to": 1984,
+    "diff": 26.74
+   },
+   {
+    "from": 1976,
+    "to": 1985,
+    "diff": 36.51
+   },
+   {
+    "from": 1977,
+    "to": 1986,
+    "diff": 26.84
+   },
+   {
+    "from": 1978,
+    "to": 1987,
+    "diff": 20.71
+   },
+   {
+    "from": 1979,
+    "to": 1988,
+    "diff": 24.21
+   },
+   {
+    "from": 1980,
+    "to": 1989,
+    "diff": 21.65
+   },
+   {
+    "from": 1981,
+    "to": 1990,
+    "diff": 17.86
+   },
+   {
+    "from": 1982,
+    "to": 1991,
+    "diff": 14.56
+   },
+   {
+    "from": 1983,
+    "to": 1992,
+    "diff": 15.12
+   },
+   {
+    "from": 1984,
+    "to": 1993,
+    "diff": 13.8
+   },
+   {
+    "from": 1985,
+    "to": 1994,
+    "diff": 17.59
+   },
+   {
+    "from": 1986,
+    "to": 1995,
+    "diff": 14.37
+   },
+   {
+    "from": 1987,
+    "to": 1996,
+    "diff": 13.02
+   },
+   {
+    "from": 1988,
+    "to": 1997,
+    "diff": 13.54
+   },
+   {
+    "from": 1989,
+    "to": 1998,
+    "diff": 11.78
+   },
+   {
+    "from": 1990,
+    "to": 1999,
+    "diff": 2.29
+   },
+   {
+    "from": 1991,
+    "to": 2000,
+    "diff": 9.21
+   },
+   {
+    "from": 1992,
+    "to": 2001,
+    "diff": 10.71
+   },
+   {
+    "from": 1993,
+    "to": 2002,
+    "diff": 10.65
+   },
+   {
+    "from": 1994,
+    "to": 2003,
+    "diff": 6.77
+   },
+   {
+    "from": 1995,
+    "to": 2004,
+    "diff": 3.64
+   },
+   {
+    "from": 1996,
+    "to": 2005,
+    "diff": 1.6
+   },
+   {
+    "from": 1997,
+    "to": 2006,
+    "diff": 3.99
+   },
+   {
+    "from": 1998,
+    "to": 2007,
+    "diff": 5.98
+   },
+   {
+    "from": 1999,
+    "to": 2008,
+    "diff": 4.64
+   },
+   {
+    "from": 2000,
+    "to": 2009,
+    "diff": 6.8
+   },
+   {
+    "from": 2001,
+    "to": 2010,
+    "diff": 3.99
+   },
+   {
+    "from": 2002,
+    "to": 2011,
+    "diff": 1.32
+   },
+   {
+    "from": 2003,
+    "to": 2012,
+    "diff": -0.82
+   },
+   {
+    "from": 2004,
+    "to": 2013,
+    "diff": 0.34
+   },
+   {
+    "from": 2005,
+    "to": 2014,
+    "diff": 2.21
+   },
+   {
+    "from": 2006,
+    "to": 2015,
+    "diff": 1.03
+   },
+   {
+    "from": 2007,
+    "to": 2016,
+    "diff": 1.33
+   },
+   {
+    "from": 2008,
+    "to": 2017,
+    "diff": -0.81
+   },
+   {
+    "from": 2009,
+    "to": 2018,
+    "diff": -0.92
+   },
+   {
+    "from": 2010,
+    "to": 2019,
+    "diff": -0.48
+   },
+   {
+    "from": 2011,
+    "to": 2020,
+    "diff": -2.71
+   },
+   {
+    "from": 2012,
+    "to": 2021,
+    "diff": -1.91
+   },
+   {
+    "from": 2013,
+    "to": 2022,
+    "diff": 0.76
+   },
+   {
+    "from": 2014,
+    "to": 2023,
+    "diff": -0.25
+   },
+   {
+    "from": 2015,
+    "to": 2024,
+    "diff": -1.45
+   },
+   {
+    "from": 2016,
+    "to": 2025,
+    "diff": -0.49
+   }
+  ],
+  "yahoo_decades": [
+   {
+    "period": "1980年代（1980-04〜1989-12）",
+    "series": "BRK-A",
+    "bench": "French の米国市場（CRSP 時価加重・配当込み）※SPY も S&P500 配当込み指数も Yahoo に無い",
+    "months": 117,
+    "brk_cagr": 43.3,
+    "bench_cagr": 18.15,
+    "diff": 25.15,
+    "nw_t_of_monthly_diff": 4.35,
+    "beta": 0.83,
+    "vol_brk": 26.9,
+    "vol_bench": 16.3
+   },
+   {
+    "period": "1988-02〜1989-12",
+    "series": "BRK-A",
+    "bench": "^SP500TR",
+    "months": 23,
+    "brk_cagr": 73.12,
+    "bench_cagr": 22.42,
+    "diff": 50.7,
+    "nw_t_of_monthly_diff": null,
+    "beta": null,
+    "vol_brk": null,
+    "vol_bench": null
+   },
+   {
+    "period": "1990年代",
+    "series": "BRK-A",
+    "bench": "^SP500TR",
+    "months": 120,
+    "brk_cagr": 20.52,
+    "bench_cagr": 18.21,
+    "diff": 2.31,
+    "nw_t_of_monthly_diff": 0.56,
+    "beta": 0.9,
+    "vol_brk": 23.8,
+    "vol_bench": 13.4
+   },
+   {
+    "period": "2000年代",
+    "series": "BRK-B",
+    "bench": "SPY",
+    "months": 120,
+    "brk_cagr": 6.03,
+    "bench_cagr": -1.01,
+    "diff": 7.04,
+    "nw_t_of_monthly_diff": 1.3,
+    "beta": 0.49,
+    "vol_brk": 19.4,
+    "vol_bench": 16.1
+   },
+   {
+    "period": "2010年代",
+    "series": "BRK-B",
+    "bench": "SPY",
+    "months": 120,
+    "brk_cagr": 13.17,
+    "bench_cagr": 13.44,
+    "diff": -0.26,
+    "nw_t_of_monthly_diff": 0.02,
+    "beta": 0.61,
+    "vol_brk": 14.8,
+    "vol_bench": 12.4
+   },
+   {
+    "period": "2016-01〜2026-09",
+    "series": "BRK-B",
+    "bench": "SPY",
+    "months": 129,
+    "brk_cagr": 13.14,
+    "bench_cagr": 14.89,
+    "diff": -1.75,
+    "nw_t_of_monthly_diff": -0.34,
+    "beta": 0.73,
+    "vol_brk": 17.6,
+    "vol_bench": 15.0
+   },
+   {
+    "period": "2020-01〜2026-09",
+    "series": "BRK-B",
+    "bench": "SPY",
+    "months": 81,
+    "brk_cagr": 12.38,
+    "bench_cagr": 15.25,
+    "diff": -2.87,
+    "nw_t_of_monthly_diff": -0.41,
+    "beta": 0.7,
+    "vol_brk": 19.6,
+    "vol_bench": 16.8
+   },
+   {
+    "period": "2026-01〜2026-09",
+    "series": "BRK-B",
+    "bench": "SPY",
+    "months": 9,
+    "brk_cum": -0.94,
+    "bench_cum": 12.71,
+    "diff_cum": -13.64,
+    "note": "1年未満なので年率にしない（累計）"
+   }
+  ],
+  "yahoo_vs_letter_annual_check": {
+   "years": 45,
+   "max_abs_diff_pt": 0.0,
+   "median_abs_diff_pt": 0.0
+  }
+ },
+ "literature": [
+  {
+   "id": "SPIVA_US_Persistence_YE2025",
+   "what": "S&P Dow Jones Indices『U.S. Persistence Scorecard Year-End 2025』（2026年公表・最新の米国版）",
+   "url_primary": "https://www.spglobal.com/spdji/en/documents/spiva/persistence-scorecard-year-end-2025.pdf",
+   "access": "2026-10-12 に本体は HTTP 403（S&P の防御）で読めなかった。数字は二次資料の要約から＝本体で確かめられていない",
+   "url_secondary": "https://genuineimpact.substack.com/p/what-persists-is-failure（2026-08-04）",
+   "numbers": [
+    "大型株ファンドで 2021年に上半分だった334本のうち、上半分に残ったのは 1年後 58.7%・2年後 6.9%・3年後 5.1%・4年後 4.5%（偶然なら 6.25%）",
+    "大型株ファンドで 2021年に上位1/4 だった164本のうち、2022年まで上位1/4 は 20.1%・2023〜2025年まで続けたのは 0%",
+    "小型株ファンドで 2021年に上位1/4 だった124本のうち、2025年まで続けたのは 2.4%",
+    "逆の例: 大型株で 2023年に上位1/4 だった173本の 28.9%・上半分だった338本の 49.4%（偶然なら 25%）が2年続けた（2024〜2025年の巨大株の流れ）",
+    "2020年12月までの5年で下位1/4 だった国内株ファンド459本の 23.1% が2025年末までに合併・清算（上位1/4 の458本は 9.8%）＝負けたファンドほど消える",
+    "2025年に大型株ファンドの 79% が S&P 500 に負けた（同じ二次資料・SPIVA の本表）"
+   ]
+  },
+  {
+   "id": "SPIVA_US_Persistence_YE2024",
+   "what": "S&P『U.S. Persistence Scorecard Year-End 2024』（二次資料）",
+   "url_secondary": "https://www.evidenceinvestor.com/post/the-persistence-of-fund-performance-what-the-evidence-shows（2025-05-26）",
+   "numbers": [
+    "2020年12月に上位1/4 だった国内株ファンドのうち、その後4年続けて上位1/4 に残ったのは 0本",
+    "大型株で 2020年に上半分 → 4年続けて上半分は 2.4%（偶然なら約6.25%）"
+   ]
+  },
+  {
+   "id": "Carhart1997",
+   "what": "Carhart (1997) On Persistence in Mutual Fund Performance, Journal of Finance 52(1):57-82",
+   "url": "https://doi.org/10.1111/j.1540-6261.1997.tb03808.x（抄録 https://www.afajof.org/page/Top50Cited）",
+   "numbers": [
+    "生き残りの偏りの無い標本（1962〜1993）で、成績の持続は株の共通の要因（1年の勢い）と費用でほぼ説明できる。説明できずに残る持続は『最悪のファンドが負け続ける』側に集中（抄録）",
+    "前年の上位10% の翌年の1因子アルファ +0.22%/月（t 2.10）・下位10% −0.45%/月（t −4.58）・素のリターンの差 0.67%/月（年およそ8%＝私の掛け算）。4因子では差が 0.29%/月（t 2.13）に縮み、上位10% の4因子アルファは −0.12%/月（t −1.60）＝残る差は下位10% の負け（−0.40%/月・t −4.33）の側（Choi & Zhao 2020 の Table 1 の『Carhart (1997) results』の列で確かめた・2026-10-12。旧版の『4因子では差が消える』は不正確だったので直した）"
+   ]
+  },
+  {
+   "id": "ChoiZhao2020",
+   "what": "Choi & Zhao (2020) Did Mutual Fund Return Persistence Persist? NBER WP 26707",
+   "url": "https://www.nber.org/papers/w26707（本文 https://www.nber.org/system/files/working_papers/w26707/w26707.pdf ）",
+   "access": "2026-10-12 の直し役の作業で本文の PDF を読めた（検証役の点検の時点では HTTP 504）。下の数字は本文4〜5ページと Table 1 で確かめた",
+   "numbers": [
+    "Carhart の 1963〜1993 は再現できたが、1994〜2018 では有意な持続が無い（抄録）",
+    "1994〜2018: 上位10%−下位10% の1因子アルファの差 0.23%/月（p=0.306）・上位10% の4因子アルファ −0.19%/月（p=0.034＝有意に負）・下位10% の4因子アルファ −0.16%/月（p=0.101）・4因子の差 −0.03%/月（p=0.845）（本文4ページ・Table 1）"
+   ]
+  },
+  {
+   "id": "KTWW2006",
+   "what": "Kosowski, Timmermann, Wermers & White (2006) Can Mutual Fund “Stars” Really Pick Stocks? Journal of Finance 61(6):2551-2595",
+   "url": "https://doi.org/10.1111/j.1540-6261.2006.01015.x（読んだのは作業論文 2005-05 版 https://www.cfr-cologne.de/download/workingpaper/cfr-05-14.pdf ）",
+   "numbers": [
+    "1975〜2002 の米国株ファンド。5年以上ある1,788本のうち、運だけなら年+10%超のアルファ（費用後）は 9本のはずが実際は 29本",
+    "年−6%未満は運だけなら 63本のはずが実際は 128本＝負けの腕も本物",
+    "年+7%超のアルファの群のうち、ほぼ半分は本物の銘柄選びの腕・残り半分は運",
+    "前3年のアルファで並べた上位10% は翌年も有意（ブートストラップ）だが、通常の t 検定では有意でない（Carhart と同じ）"
+   ]
+  },
+  {
+   "id": "FamaFrench2010",
+   "what": "Fama & French (2010) Luck versus Skill in the Cross-Section of Mutual Fund Returns, Journal of Finance 65(5):1915-1947",
+   "url": "https://doi.org/10.1111/j.1540-6261.2010.01598.x（本文 https://mba.tuck.dartmouth.edu/bespeneckbo/default/AFA611-Eckbo%20web%20site/AFA611-S8C-FamaFrench-LuckvSkill-JF10.pdf ）",
+   "numbers": [
+    "1984-01〜2006-09（平均1,308本）。運用中の米国株ファンド全体の費用後アルファは −0.81〜−1.00%/年（t −2.05〜−3.02）＝等加重と時価加重・3因子と4因子の4通りの幅（1921ページ）・費用前はほぼ0（+0.13%・−0.05%）＝全体では市場とほぼ同じで、費用の分だけ負ける",
+    "真のアルファのばらつきの推定は 1.25%/年 → 費用前でも年+1.25%超のファンドは16%未満・年+2.5%超は約2.3%",
+    "費用を払った後に十分なアルファを出すファンドはごく少ない（ブートストラップ）"
+   ]
+  },
+  {
+   "id": "FKP2018_BuffettsAlpha",
+   "what": "Frazzini, Kabiller & Pedersen (2018) Buffett’s Alpha, Financial Analysts Journal 74(4)",
+   "url": "https://gwern.net/doc/economics/2018-frazzini.pdf（CFA 協会 https://rpc.cfainstitute.org/en/research/financial-analysts-journal/2018/faj-v74-n4-3 ・NBER 2013版 https://www.nber.org/papers/w19681 ）",
+   "numbers": [
+    "1976-10〜2017-03: Berkshire の無リスク金利を超えるリターン 年18.6%（市場 7.5%）・ぶれ 23.5%（15.3%）・シャープ比 0.79（市場 0.49）・市場ベータ 0.69",
+    "借入（保険の預かり金など）は平均 約1.7倍（NBER 2013版は約1.6倍・シャープ比 0.76）",
+    "アルファ: 市場だけ 13.4%/年（t 4.01）→ 規模・割安・勢いを足して 11.0%（t 3.30）→ 低ベータ（BAB）を足して 8.5%（t 2.55）→ 品質（QMJ）を足して 5.4%（t 1.55＝有意でない）",
+    "13F の上場株の部分は 5.8%（t 3.09）→ 0.3%（t 0.16）＝安全で質の高い割安株を借入で持つことでほぼ説明できる"
+   ]
+  },
+  {
+   "id": "Morningstar_CGM_secondary",
+   "what": "CGM Focus は2000年代の米国株ファンドで1位・年約18%、だが平均的な投資家は年約−11%（Morningstar の調べ・二次資料）",
+   "url_secondary": "https://www.aktienwelt360.de/2016/11/10/warum-dieser-fonds-18-pro-jahr-gemacht-hat-aber-die-anleger-11-verloren-haben/",
+   "numbers": [
+    "『年約18%』は SEC の年次報告書で確かめた（2000〜2009 の累計 +418.2%＝年17.9%）。『2000年代1位』と『投資家は年−11%』は二次資料（Morningstar の調べの紹介）だけが出典で、Morningstar の原本では確かめられていない"
+   ]
+  }
+ ],
+ "survivorship": {
+  "what": "生き残りの偏り（消えたファンドが入っていない）",
+  "points": [
+   "32本は 2026年の今『名の知れた長期のファンド』として選ばれた＝今まで生き残り、名が残った本だけ。2006年や1996年の時点で有名だったが、その後に消えた・名を失ったファンドは入っていない",
+   "32本のうち清算で系列が無いのは CGMFX の1本だけ（3%・November 30, 2022 ごろ運用停止・SEC 497）。SPIVA では下位1/4 の国内株ファンドの 23.1%・上位1/4 でも 9.8% が5年で合併・清算される（二次資料）＝この一覧は普通の母集団よりはるかに生き残りに偏っている",
+   "偏りの向き: 全体の成績は良く見える（選ばれた理由が過去の成績だから）。SPY に勝った本の割合は 1996〜2005 が 24/28・2006〜2015 が 20/31・2016〜2026-09 が 7/31 と、今に近い窓ほど下がる。これは選ばれ方の偏り（昔の勝ちで名が残った）と合う。ただし 2016年以降は巨大株の相場で能動のファンド全体が SPY に負けやすかった期間（SPIVA の二次資料で 2025年に大型株ファンドの 79% が S&P 500 に負けた）とも重なり、どちらが効いたかは区別できない",
+   "順位相関への影響（推測）: ①負けたファンドほど消える（SPIVA）ので、消えた負け組を入れれば『下位は下位に残る』持続は強まる向き（CGMFX を入れた感度で A の順位相関が 0.596→0.631 に上がったのと同じ向き） ②一方『今まで通算で良かった本』を選ぶと、片方の窓で負けた本はもう片方で勝っていないと選ばれないので、順位相関は下へゆがむ向き。どちらが大きいかはこの32本では確かめられない",
+   "上場廃止のある CRSP の全ファンドで測った文献（Carhart 1997・Fama-French 2010・SPIVA）はこの偏りが無い"
+  ]
+ },
+ "data_check_vs_prospectus": {
+  "source": "https://www.sec.gov/Archives/edgar/data/29440/000119312526169303/d21586d485bpos.htm",
+  "rows": [
+   {
+    "fund": "DODGX",
+    "official_1y_5y_10y_to_2025": [
+     13.66,
+     13.31,
+     12.79
+    ],
+    "yahoo_1y_5y_10y_to_2025": [
+     13.66,
+     13.28,
+     12.78
+    ]
+   },
+   {
+    "fund": "DODFX",
+    "official_1y_5y_10y_to_2025": [
+     38.71,
+     11.7,
+     9.14
+    ],
+    "yahoo_1y_5y_10y_to_2025": [
+     38.77,
+     11.69,
+     9.14
+    ]
+   },
+   {
+    "fund": "SPY（相手）",
+    "sp500_index_official_1y_5y_10y_to_2025": [
+     17.88,
+     14.42,
+     14.82
+    ],
+    "spy_yahoo_1y_5y_10y_to_2025": [
+     17.72,
+     14.34,
+     14.72
+    ],
+    "note": "SPY は指数より経費（年0.09%前後）と配当の再投資の時差の分だけ低い"
+   }
+  ],
+  "fixed_funds": [
+   {
+    "fund": "VWUSX",
+    "source": "https://www.sec.gov/Archives/edgar/data/52848/000168386320015429/f7676d1.htm",
+    "periods": "1年・5年・10年（2019-12 まで・年率%）",
+    "official": [
+     33.41,
+     13.72,
+     14.35
+    ],
+    "yahoo_before_fix": [
+     45.61,
+     15.74,
+     15.38
+    ],
+    "yahoo_after_fix": [
+     33.44,
+     13.73,
+     14.38
+    ]
+   },
+   {
+    "fund": "VWUSX",
+    "source": "https://www.sec.gov/Archives/edgar/data/52848/000005284826000643/f45461d1.htm",
+    "periods": "1年・5年・10年（2024-12 まで・年率%）",
+    "official": [
+     31.89,
+     15.54,
+     14.62
+    ],
+    "yahoo_before_fix": [
+     31.65,
+     15.57,
+     15.65
+    ],
+    "yahoo_after_fix": [
+     31.65,
+     15.57,
+     14.65
+    ]
+   },
+   {
+    "fund": "FCNTX",
+    "source": "https://www.sec.gov/Archives/edgar/data/24238/000002423808000006/main.htm",
+    "periods": "暦年のリターン（%）1998〜2007",
+    "rows": [
+     {
+      "year": 1998,
+      "official": 31.57,
+      "yahoo_before_fix": 31.33,
+      "yahoo_after_fix": 31.33
+     },
+     {
+      "year": 1999,
+      "official": 25.03,
+      "yahoo_before_fix": 25.45,
+      "yahoo_after_fix": 25.45
+     },
+     {
+      "year": 2000,
+      "official": -6.8,
+      "yahoo_before_fix": -6.91,
+      "yahoo_after_fix": -6.91
+     },
+     {
+      "year": 2001,
+      "official": -12.59,
+      "yahoo_before_fix": -12.57,
+      "yahoo_after_fix": -12.57
+     },
+     {
+      "year": 2002,
+      "official": -9.63,
+      "yahoo_before_fix": -4.58,
+      "yahoo_after_fix": -9.63
+     },
+     {
+      "year": 2003,
+      "official": 27.95,
+      "yahoo_before_fix": 27.96,
+      "yahoo_after_fix": 27.96
+     },
+     {
+      "year": 2004,
+      "official": 15.07,
+      "yahoo_before_fix": 15.07,
+      "yahoo_after_fix": 15.07
+     },
+     {
+      "year": 2005,
+      "official": 16.23,
+      "yahoo_before_fix": 16.23,
+      "yahoo_after_fix": 16.23
+     },
+     {
+      "year": 2006,
+      "official": 11.54,
+      "yahoo_before_fix": 11.46,
+      "yahoo_after_fix": 11.46
+     },
+     {
+      "year": 2007,
+      "official": 19.78,
+      "yahoo_before_fix": 19.84,
+      "yahoo_after_fix": 19.84
+     }
+    ],
+    "max_abs_diff_before_fix": 5.05,
+    "max_abs_diff_after_fix": 0.42
+   }
+  ]
+ },
+ "phantom_distribution_scan": {
+  "rule": {
+   "range": [
+    19951201,
+    20260930
+   ],
+   "material_dist_pct_of_nav": 2.0,
+   "small_dist_pct_of_nav": 0.5,
+   "drop_share_threshold": 0.4,
+   "window_trading_days": 2
+  },
+  "per_fund": {
+   "BRK-B": {
+    "events_checked": 0,
+    "material": 0,
+    "small_unconfirmed": 0,
+    "role": "fund"
+   },
+   "FCNTX": {
+    "events_checked": 60,
+    "material": 1,
+    "small_unconfirmed": 0,
+    "role": "fund"
+   },
+   "SEQUX": {
+    "events_checked": 52,
+    "material": 0,
+    "small_unconfirmed": 0,
+    "role": "fund"
+   },
+   "DODGX": {
+    "events_checked": 124,
+    "material": 0,
+    "small_unconfirmed": 1,
+    "role": "fund"
+   },
+   "VPMCX": {
+    "events_checked": 42,
+    "material": 0,
+    "small_unconfirmed": 0,
+    "role": "fund"
+   },
+   "FMAGX": {
+    "events_checked": 65,
+    "material": 0,
+    "small_unconfirmed": 0,
+    "role": "fund"
+   },
+   "TRBCX": {
+    "events_checked": 31,
+    "material": 0,
+    "small_unconfirmed": 0,
+    "role": "fund"
+   },
+   "BPTRX": {
+    "events_checked": 20,
+    "material": 0,
+    "small_unconfirmed": 0,
+    "role": "fund"
+   },
+   "OAKMX": {
+    "events_checked": 32,
+    "material": 0,
+    "small_unconfirmed": 1,
+    "role": "fund"
+   },
+   "LLPFX": {
+    "events_checked": 52,
+    "material": 0,
+    "small_unconfirmed": 0,
+    "role": "fund"
+   },
+   "FAIRX": {
+    "events_checked": 20,
+    "material": 0,
+    "small_unconfirmed": 1,
+    "role": "fund"
+   },
+   "MPGFX": {
+    "events_checked": 64,
+    "material": 0,
+    "small_unconfirmed": 0,
+    "role": "fund"
+   },
+   "PRWCX": {
+    "events_checked": 31,
+    "material": 0,
+    "small_unconfirmed": 0,
+    "role": "fund"
+   },
+   "JENSX": {
+    "events_checked": 125,
+    "material": 0,
+    "small_unconfirmed": 0,
+    "role": "fund"
+   },
+   "FMIHX": {
+    "events_checked": 32,
+    "material": 0,
+    "small_unconfirmed": 0,
+    "role": "fund"
+   },
+   "YACKX": {
+    "events_checked": 45,
+    "material": 0,
+    "small_unconfirmed": 0,
+    "role": "fund"
+   },
+   "SGENX": {
+    "events_checked": 32,
+    "material": 0,
+    "small_unconfirmed": 0,
+    "role": "fund"
+   },
+   "TWEBX": {
+    "events_checked": 30,
+    "material": 0,
+    "small_unconfirmed": 0,
+    "role": "fund"
+   },
+   "PRBLX": {
+    "events_checked": 145,
+    "material": 0,
+    "small_unconfirmed": 0,
+    "role": "fund"
+   },
+   "AMCPX": {
+    "events_checked": 54,
+    "material": 0,
+    "small_unconfirmed": 0,
+    "role": "fund"
+   },
+   "AGTHX": {
+    "events_checked": 31,
+    "material": 0,
+    "small_unconfirmed": 0,
+    "role": "fund"
+   },
+   "AIVSX": {
+    "events_checked": 125,
+    "material": 0,
+    "small_unconfirmed": 0,
+    "role": "fund"
+   },
+   "ANWPX": {
+    "events_checked": 36,
+    "material": 0,
+    "small_unconfirmed": 0,
+    "role": "fund"
+   },
+   "VWNDX": {
+    "events_checked": 62,
+    "material": 0,
+    "small_unconfirmed": 0,
+    "role": "fund"
+   },
+   "VWUSX": {
+    "events_checked": 32,
+    "material": 1,
+    "small_unconfirmed": 1,
+    "role": "fund"
+   },
+   "FBGRX": {
+    "events_checked": 60,
+    "material": 0,
+    "small_unconfirmed": 0,
+    "role": "fund"
+   },
+   "FDGRX": {
+    "events_checked": 40,
+    "material": 0,
+    "small_unconfirmed": 0,
+    "role": "fund"
+   },
+   "FLPSX": {
+    "events_checked": 61,
+    "material": 0,
+    "small_unconfirmed": 0,
+    "role": "fund"
+   },
+   "HAINX": {
+    "events_checked": 32,
+    "material": 0,
+    "small_unconfirmed": 0,
+    "role": "fund"
+   },
+   "DODFX": {
+    "events_checked": 23,
+    "material": 0,
+    "small_unconfirmed": 0,
+    "role": "fund"
+   },
+   "VIGRX": {
+    "events_checked": 124,
+    "material": 0,
+    "small_unconfirmed": 0,
+    "role": "style_factor"
+   },
+   "VIVAX": {
+    "events_checked": 124,
+    "material": 0,
+    "small_unconfirmed": 2,
+    "role": "style_factor"
+   },
+   "NAESX": {
+    "events_checked": 81,
+    "material": 0,
+    "small_unconfirmed": 1,
+    "role": "style_factor"
+   },
+   "VEURX": {
+    "events_checked": 79,
+    "material": 0,
+    "small_unconfirmed": 0,
+    "role": "style_factor"
+   },
+   "VPACX": {
+    "events_checked": 75,
+    "material": 0,
+    "small_unconfirmed": 0,
+    "role": "style_factor"
+   },
+   "VBMFX": {
+    "events_checked": 378,
+    "material": 0,
+    "small_unconfirmed": 1,
+    "role": "style_factor"
+   }
+  },
+  "fixed_events": 2,
+  "small_unconfirmed": 8
+ },
+ "summary_ja": "名の知れた長期のファンド32本（Berkshire・Fidelity Contrafund・Sequoia・Dodge & Cox など）を、前の10年の成績（SPY との差）で並べ、次の10年も同じ順に並ぶかを見た。①2006〜2015 → 2016〜2026-09（31本）: 順位相関は 0.596（並べ替えの p=0.0007）で、予想した0前後ではなく、はっきり続いた。前半の上位1/3 は後半に SPY を年 +0.75% 上回り（平均・前半は +2.34%）、下位1/3 は -4.74%、差 5.49 点。ただし前半の上位1/3 でも後半に SPY に勝ったのは 5/10 本だけで、全体では 7/31 本（中央値 -2.48%/年）。続いた理由の一部は『型』: 成長株が割安株に勝ち（Vanguard の指数で年 +1.86%→+5.01%）、米国外が米国に負け続けた（-3.35%→-5.15%）ので、成長株の本が上・割安株と米国外の本が下に並びやすかった。ただし後半の超過を、私の型の物差し（成長−割安・小型−大型・米国外−米国・債券）で説明できる部分と説明できない残りに分けると、前半の成績に対する傾き 1.203 のうち 型 0.572・残り 0.631 でほぼ半々。型で調整したアルファでも順位相関 0.515（p=0.0037）が残る。残りの半分が運用者の腕なのか、物差しに無い型（品質・低ベータ・勢い）なのかは見分けられない。②1996〜2005 → 2006〜2015（28本）: 順位相関は -0.209（p=0.2843）で、むしろ逆向き。前半の上位1/3 の後半の超過は -0.12%（前半 +4.76%）・下位1/3 は +1.07%。型で調整したアルファの順位相関は 0.297（p=0.1256）。5年ずつの組（事後の参考）でも順位相関は -0.534, 0.429, -0.219, 0.738, 0.173 と符号が入れ替わり、平均 0.117。Berkshire は手紙の表で、S&P 500（配当込み）との差が 1970年代 +16.46・1980年代 +21.65・1990年代 +2.29・2000年代 +6.8・2010年代 -0.48・2016〜2025 -0.49 点/年と、大きくなるほど縮んだ。Yahoo の月次では 2016-01〜2026-09 が -1.75 点/年、2026年1〜9月は累計 -13.64 点。2000年代の米国株ファンドで1位とされた CGM Focus（『1位』は Morningstar の調べの紹介＝二次資料。2000〜2009 の10年で +418.2%＝年 17.88% は SEC の年次報告書）は、重ならない後の10年（2012〜2021）に年 5.68%（S&P 500 は 16.55%）しか上げず、2022年に清算された（2006〜2015 の10年でも年 4.54% 対 7.3% で負けたが、この窓は 2000年代と4年重なり2008年の大きな負けを両方に含む）。文献も同じ向き: SPIVA では大型株の上半分が4年続けて上半分に残るのは 4.5%（偶然なら 6.25%）、Carhart の持続は1994年以降に消え（Choi & Zhao）、Buffett の超過も品質・低ベータ・約1.7倍の借入でほぼ説明される。結論: 『有名な運用者の後を追えば勝てる』は支持されない（後半の10年に SPY に勝ったのは 7/31 本・1996〜2005→2006〜2015 では順位が逆向き・5年ずつの組では符号が入れ替わる）。2006〜2026 で続いて見えた分の約半分は型（成長株・米国株）の流れで、その流れがいつ変わるかは当てられない。残りの半分の正体は見分けられない。",
+ "prediction_check": "予想『順位相関は0前後。上位の勝ちは続かない』。検定 B（1996〜2005→2006〜2015）は順位相関 -0.209（p=0.2843）で当たった。主の検定 A（2006〜2015→2016〜2026-09）は順位相関 0.596（p=0.0007）で外れた（0前後ではない）。『上位の勝ちは続かない』は半分当たり: A の上位1/3 の超過は前半 +2.34%/年 → 後半 +0.75%/年に縮み、SPY に勝ったのは 5/10。B の上位1/3 は +4.76% → -0.12%。A の持続のうち型（成長株・米国株）の流れで説明できるのは約半分で、型を調整しても順位相関 0.515（p=0.0037）が残る（B は 0.297・p=0.1256）。この残りが腕か、私の物差しに無い型（品質・低ベータ・勢い）かは見分けられない（型の調整は事後の追加）。",
+ "deviations": [
+  "CGMFX（CGM Focus）は 2022-11-30 ごろ清算され Yahoo に系列が無い→主の検定から外し、SEC の提出書類の年次リターンで感度の一本（清算の後は SPY に乗り換えたと置く）にだけ入れた",
+  "SMT.L は Yahoo の月足が分割の前で壊れている（+300%/−80% が交互）ので、M.yahoo の月足ではなく日足から作った。さらに Yahoo の調整後終値は配当（ペンス）を約100分の1しか調整していない（実質は株価だけ）と検証役が見つけたので、日足の終値に配当の事件（ペンス）を足して配当込みの系列を自分で作り直した（2026-10-12）。ドルへの換算は GBPUSD=X の日足の月末（2003-12〜）で、それより前（1996〜2003）は FRED DEXUSUK の月末でつないだ（重なる273か月の為替の月次の相関 0.976）",
+  "Yahoo の調整後終値に『実際には無い分配の調整』（分配の事件はあるのに基準価額が下がっていない）が入っている月を、日足で機械的に探して直した（2026-10-12・検証役の指摘）。直したのは分配率2%以上の2件（VWUSX 2019-04・FCNTX 2002-06）だけで、どちらも運用会社の公表値（SEC）と突き合わせて確かめた。0.5〜2% の候補は日々の値動きに紛れて見分けられないので直さず、全部を直した場合を感度に出した",
+  "検定 B では BRK-B の上場前の 1996-01〜05 を BRK-A の月次で埋めた（重なる364か月の相関 0.989）",
+  "BRK-A の1980年代は M.yahoo の月足が直近500か月（1985-02〜）しか返さないので日足の月末値から作った。1980年代の比べる相手は SPY も S&P 500 配当込み指数（^SP500TR は 1988-01〜）も Yahoo に無いので、French の米国市場（CRSP の時価加重・配当込み）を使い、Berkshire の手紙の表（S&P 500 配当込みの暦年）も並べた",
+  "事前登録に無い追加（事後・参考）: 算術の超過・米国株の本だけ・ベータ調整のアルファ・型で調整したアルファ（A の結果を見た後に、上位と下位が型で並んでいると見えたので足した）・後半の超過を型の部分とアルファの部分に分ける分解（検証役の指摘で足した）・5年ずつの組・清算された CGMFX を入れる感度・直す前のデータでの結果",
+  "SPIVA の本体（S&P の PDF・ページ）は 2026-10-12 に HTTP 403 で読めず、数字は二次資料（Genuine Impact 2026-08-04・Evidence Investor 2025-05-26）の要約から取った＝本体で確かめられていない",
+  "Carhart (1997) と Kosowski ほか (2006) と Fama-French (2010) の雑誌の版は出版社のページが 403 で、Carhart の数字は Choi & Zhao (2020) の再現論文の Table 1（本文の PDF で確かめた）、Kosowski ほかは 2005年の作業論文、Fama-French は公開の本文の写しから取った"
+ ],
+ "caveats": [
+  "32本は今の時点で有名な本＝生き残りの偏りがある（消えたファンドは入らない）。全体の成績は良く見え、順位の持続もゆがむ",
+  "比べる相手は SPY だけ。世界株・米国外・株と債券の混合の本も SPY と比べたので、順位は腕よりも型（米国株か・成長株か）で決まりやすい。米国株の本だけ・型で調整したアルファの感度も見た",
+  "ファンドは Yahoo の調整後終値（分配金込み・費用は引かれた後・税は引いていない）。米国の投資信託の A 株（AGTHX・AIVSX・AMCPX・ANWPX）の販売手数料は引いていない。SMT.L は英国の投資信託会社の株価（純資産との差の割安・割高を含む）に配当を足したもの",
+  "Yahoo のデータの点検は『分配の事件があるのに基準価額が下がっていない』向きだけを機械で探した。逆向き（分配があったのに Yahoo に事件が無い＝実際には無い損）は機械では探せておらず、運用会社の公表値との突き合わせ（DODGX・DODFX・VWUSX・FCNTX）で合うことを見ただけ。分配率0.5〜2% の候補は直していない（全部直しても結論は変わらないことは感度で確かめた）",
+  "BPTRX の 2003-04 より前は前身のパートナーシップの成績の可能性が高い（成功報酬つき）＝検定 B の前半は器が違う",
+  "本の数が少ない（28〜31本）。順位相関の偶然のぶれは ±0.18〜0.19 程度（1/√(n−1)）。10年の窓は2組しかなく、独立な試行は実質2回",
+  "Berkshire の1980年代の Yahoo の比較は French の米国市場（S&P 500 ではない）で、手紙の S&P 500 の数字と少し違う",
+  "CGMFX の感度は 2022-07 以降（清算まで含む）を SPY と同じと置いた。清算の前の2022年7〜11月の成績は確かめられない",
+  "型で調整したアルファの物差し（成長−割安・小型−大型・米国外−米国・債券）には品質・低ベータ・勢いが入っていない。米国外は 0.6 VEURX＋0.4 VPACX の私の置き値。型で説明できない残りが腕なのか、物差しに無い型なのかは見分けられない"
+ ],
+ "for_final_selection": [
+  "超投資家・有名ファンドの成績は『次の10年』にほとんど引き継がれない: 有名な32本のうち 2016〜2026-09 に SPY に勝ったのは 7/31 本（中央値 -2.48%/年）。過去の成績で運用者を選ぶ根拠は弱い（1996〜2005→2006〜2015 では順位が逆向き・5年ずつの組では符号が入れ替わる）＝R1・R2 の『写し』を採るなら R2 の事前登録の合格線（費用後 +1%/年・t≥2・前半後半とも正）を厳しく当てる",
+  "2006〜2015→2016〜2026 で順位が続いた分のうち、型（成長株・米国株）の流れで説明できるのは約半分（後半の超過の前半の成績への傾き 1.203 のうち 型 0.572・型で説明できない残り 0.631）。残りの半分（型で調整したアルファの順位相関 0.515・p=0.0037）は、腕なのか、私の物差しに無い型（品質・低ベータ・勢い）なのかは見分けられない。1996〜2005→2006〜2015 では型で調整しても持続は弱く（順位相関 0.297）、素の順位は逆向きだった＝最終の選択で過去の勝ち組の型（成長株・テック）に重く賭けるなら、それは主に型の賭けで、型の流れがいつ反転するかは当てられないと分かったうえで",
+  "Berkshire の超過は 1970〜1980年代の年+16〜22点から 2010年代以降の 0〜−2点へ縮んだ。品質・低ベータ・借入で説明される（Buffett’s Alpha）＝個別株15%の部分で『超投資家と重なる銘柄』を示すのは参考どまりにする",
+  "持続が残るのは負けの側（SPIVA・Carhart: 下位は下位に残りやすく消えやすい）＝費用が高く型の偏った能動の器を避けること自体には根拠がある"
+ ],
+ "fixes_applied": [
+  {
+   "issue": "順位が続いた理由を「主に型」と書いていた（medium）",
+   "verdict": "指摘は正しい・直した",
+   "what_changed": "summary_ja・prediction_check・for_final_selection(2) を「型で説明できるのは約半分・残り半分は型の物差しでは説明できず、腕か物差しに無い型（品質・低ベータ・勢い）かは見分けられない」に直した。後半の超過を型の部分とアルファの部分に分ける分解（sensitivity.A_style_decomposition / B_style_decomposition）を足し、数字は本文から自動で引く",
+   "effect": {
+    "A_decomposition": {
+     "n": 31,
+     "slope_total": 1.203,
+     "slope_style_part": 0.572,
+     "slope_alpha_part": 0.631,
+     "spearman_ex1_vs_style_part": 0.412,
+     "perm_p_style_part": 0.0243,
+     "spearman_ex1_vs_alpha_part": 0.475,
+     "perm_p_alpha_part": 0.0083,
+     "identity_max_abs_err": 0.0
+    },
+    "A_style_alpha_spearman": 0.515,
+    "A_style_alpha_p": 0.0037,
+    "A_capm_alpha_spearman": 0.606,
+    "A_us_only_spearman": 0.426,
+    "A_us_only_p": 0.0374,
+    "note": "検証役の再計算（日足の月末値・numpy の最小二乗）では 傾き 1.236＝型 0.622＋アルファ 0.615・型で調整したアルファの順位相関 0.496。この道具（Yahoo の月足）では上の数字。データの経路が違うので小数は少しずれるが、どちらも「ほぼ半々」で同じ結論"
+   }
+  },
+  {
+   "issue": "Yahoo の調整後終値に実際には無い分配の調整が入っている月（VWUSX 2019-04・FCNTX 2002-06）（medium）",
+   "verdict": "指摘は正しい・直した",
+   "what_changed": "日足で全31本（と型の物差しの指数ファンド6本）の 1995-12〜2026-09 の分配の事件を機械で点検する phantom_scan を足した（規則は本体の PH_* の頭注）。分配率2%以上で基準価額の下げが見えない事件（material）だけ、その月の月次リターンを調整後終値の跳ねの倍率で割り戻した。0.5〜2% の候補（small_unconfirmed）は日々の値動きに紛れて見分けられないので直さず名指しし、全部直した場合を sensitivity.*_all_small_candidates_fixed に出した。直した2本は運用会社の公表値（SEC）と直す前・直した後で突き合わせた（data_check_vs_prospectus.fixed_funds）",
+   "events_fixed": [
+    {
+     "fund": "FCNTX",
+     "ex_date": "2002-06-07",
+     "month": 200206,
+     "amount": 0.23,
+     "nav_before": 4.339,
+     "dist_pct_of_nav": 5.3,
+     "adjclose_jump_pct": 5.6,
+     "jump_factor": 1.055974418731627,
+     "nav_drop_as_share_of_dist": [
+      {
+       "date": "2002-06-05",
+       "drop_raw": -0.17,
+       "drop_spy_adj": 0.01
+      },
+      {
+       "date": "2002-06-06",
+       "drop_raw": 0.16,
+       "drop_spy_adj": -0.23
+      },
+      {
+       "date": "2002-06-07",
+       "drop_raw": -0.03,
+       "drop_spy_adj": -0.06
+      },
+      {
+       "date": "2002-06-10",
+       "drop_raw": -0.02,
+       "drop_spy_adj": 0.05
+      },
+      {
+       "date": "2002-06-11",
+       "drop_raw": 0.14,
+       "drop_spy_adj": -0.19
+      }
+     ],
+     "role": "fund",
+     "monthly_return_before_pct": 1.23,
+     "monthly_return_after_pct": -4.14
+    },
+    {
+     "fund": "VWUSX",
+     "ex_date": "2019-04-03",
+     "month": 201904,
+     "amount": 3.306,
+     "nav_before": 39.54,
+     "dist_pct_of_nav": 8.36,
+     "adjclose_jump_pct": 9.12,
+     "jump_factor": 1.0912401794794198,
+     "nav_drop_as_share_of_dist": [
+      {
+       "date": "2019-04-01",
+       "drop_raw": -0.14,
+       "drop_spy_adj": 0.0
+      },
+      {
+       "date": "2019-04-02",
+       "drop_raw": -0.03,
+       "drop_spy_adj": -0.02
+      },
+      {
+       "date": "2019-04-03",
+       "drop_raw": -0.07,
+       "drop_spy_adj": -0.05
+      },
+      {
+       "date": "2019-04-04",
+       "drop_raw": 0.04,
+       "drop_spy_adj": 0.07
+      },
+      {
+       "date": "2019-04-05",
+       "drop_raw": -0.07,
+       "drop_spy_adj": -0.01
+      }
+     ],
+     "role": "fund",
+     "monthly_return_before_pct": 14.33,
+     "monthly_return_after_pct": 4.77
+    }
+   ],
+   "scan_summary": {
+    "BRK-B": {
+     "events_checked": 0,
+     "material": 0,
+     "small_unconfirmed": 0,
+     "role": "fund"
+    },
+    "FCNTX": {
+     "events_checked": 60,
+     "material": 1,
+     "small_unconfirmed": 0,
+     "role": "fund"
+    },
+    "SEQUX": {
+     "events_checked": 52,
+     "material": 0,
+     "small_unconfirmed": 0,
+     "role": "fund"
+    },
+    "DODGX": {
+     "events_checked": 124,
+     "material": 0,
+     "small_unconfirmed": 1,
+     "role": "fund"
+    },
+    "VPMCX": {
+     "events_checked": 42,
+     "material": 0,
+     "small_unconfirmed": 0,
+     "role": "fund"
+    },
+    "FMAGX": {
+     "events_checked": 65,
+     "material": 0,
+     "small_unconfirmed": 0,
+     "role": "fund"
+    },
+    "TRBCX": {
+     "events_checked": 31,
+     "material": 0,
+     "small_unconfirmed": 0,
+     "role": "fund"
+    },
+    "BPTRX": {
+     "events_checked": 20,
+     "material": 0,
+     "small_unconfirmed": 0,
+     "role": "fund"
+    },
+    "OAKMX": {
+     "events_checked": 32,
+     "material": 0,
+     "small_unconfirmed": 1,
+     "role": "fund"
+    },
+    "LLPFX": {
+     "events_checked": 52,
+     "material": 0,
+     "small_unconfirmed": 0,
+     "role": "fund"
+    },
+    "FAIRX": {
+     "events_checked": 20,
+     "material": 0,
+     "small_unconfirmed": 1,
+     "role": "fund"
+    },
+    "MPGFX": {
+     "events_checked": 64,
+     "material": 0,
+     "small_unconfirmed": 0,
+     "role": "fund"
+    },
+    "PRWCX": {
+     "events_checked": 31,
+     "material": 0,
+     "small_unconfirmed": 0,
+     "role": "fund"
+    },
+    "JENSX": {
+     "events_checked": 125,
+     "material": 0,
+     "small_unconfirmed": 0,
+     "role": "fund"
+    },
+    "FMIHX": {
+     "events_checked": 32,
+     "material": 0,
+     "small_unconfirmed": 0,
+     "role": "fund"
+    },
+    "YACKX": {
+     "events_checked": 45,
+     "material": 0,
+     "small_unconfirmed": 0,
+     "role": "fund"
+    },
+    "SGENX": {
+     "events_checked": 32,
+     "material": 0,
+     "small_unconfirmed": 0,
+     "role": "fund"
+    },
+    "TWEBX": {
+     "events_checked": 30,
+     "material": 0,
+     "small_unconfirmed": 0,
+     "role": "fund"
+    },
+    "PRBLX": {
+     "events_checked": 145,
+     "material": 0,
+     "small_unconfirmed": 0,
+     "role": "fund"
+    },
+    "AMCPX": {
+     "events_checked": 54,
+     "material": 0,
+     "small_unconfirmed": 0,
+     "role": "fund"
+    },
+    "AGTHX": {
+     "events_checked": 31,
+     "material": 0,
+     "small_unconfirmed": 0,
+     "role": "fund"
+    },
+    "AIVSX": {
+     "events_checked": 125,
+     "material": 0,
+     "small_unconfirmed": 0,
+     "role": "fund"
+    },
+    "ANWPX": {
+     "events_checked": 36,
+     "material": 0,
+     "small_unconfirmed": 0,
+     "role": "fund"
+    },
+    "VWNDX": {
+     "events_checked": 62,
+     "material": 0,
+     "small_unconfirmed": 0,
+     "role": "fund"
+    },
+    "VWUSX": {
+     "events_checked": 32,
+     "material": 1,
+     "small_unconfirmed": 1,
+     "role": "fund"
+    },
+    "FBGRX": {
+     "events_checked": 60,
+     "material": 0,
+     "small_unconfirmed": 0,
+     "role": "fund"
+    },
+    "FDGRX": {
+     "events_checked": 40,
+     "material": 0,
+     "small_unconfirmed": 0,
+     "role": "fund"
+    },
+    "FLPSX": {
+     "events_checked": 61,
+     "material": 0,
+     "small_unconfirmed": 0,
+     "role": "fund"
+    },
+    "HAINX": {
+     "events_checked": 32,
+     "material": 0,
+     "small_unconfirmed": 0,
+     "role": "fund"
+    },
+    "DODFX": {
+     "events_checked": 23,
+     "material": 0,
+     "small_unconfirmed": 0,
+     "role": "fund"
+    },
+    "VIGRX": {
+     "events_checked": 124,
+     "material": 0,
+     "small_unconfirmed": 0,
+     "role": "style_factor"
+    },
+    "VIVAX": {
+     "events_checked": 124,
+     "material": 0,
+     "small_unconfirmed": 2,
+     "role": "style_factor"
+    },
+    "NAESX": {
+     "events_checked": 81,
+     "material": 0,
+     "small_unconfirmed": 1,
+     "role": "style_factor"
+    },
+    "VEURX": {
+     "events_checked": 79,
+     "material": 0,
+     "small_unconfirmed": 0,
+     "role": "style_factor"
+    },
+    "VPACX": {
+     "events_checked": 75,
+     "material": 0,
+     "small_unconfirmed": 0,
+     "role": "style_factor"
+    },
+    "VBMFX": {
+     "events_checked": 378,
+     "material": 0,
+     "small_unconfirmed": 1,
+     "role": "style_factor"
+    }
+   },
+   "small_unconfirmed_candidates": [
+    {
+     "fund": "DODGX",
+     "ex_date": "1996-03-15",
+     "month": 199603,
+     "amount": 0.028125,
+     "nav_before": 4.5019,
+     "dist_pct_of_nav": 0.62,
+     "adjclose_jump_pct": 0.63,
+     "jump_factor": 1.0062865781361232,
+     "nav_drop_as_share_of_dist": [
+      {
+       "date": "1996-03-13",
+       "drop_raw": -0.69,
+       "drop_spy_adj": 0.39
+      },
+      {
+       "date": "1996-03-14",
+       "drop_raw": -1.67,
+       "drop_spy_adj": -0.97
+      },
+      {
+       "date": "1996-03-15",
+       "drop_raw": 0.31,
+       "drop_spy_adj": -0.5
+      },
+      {
+       "date": "1996-03-18",
+       "drop_raw": -3.0,
+       "drop_spy_adj": 0.07
+      },
+      {
+       "date": "1996-03-19",
+       "drop_raw": 0.27,
+       "drop_spy_adj": -0.08
+      }
+     ],
+     "role": "fund"
+    },
+    {
+     "fund": "OAKMX",
+     "ex_date": "2023-12-14",
+     "month": 202312,
+     "amount": 1.349,
+     "nav_before": 130.38,
+     "dist_pct_of_nav": 1.03,
+     "adjclose_jump_pct": 1.05,
+     "jump_factor": 1.010454869625894,
+     "nav_drop_as_share_of_dist": [
+      {
+       "date": "2023-12-12",
+       "drop_raw": -0.04,
+       "drop_spy_adj": 0.39
+      },
+      {
+       "date": "2023-12-13",
+       "drop_raw": -2.02,
+       "drop_spy_adj": -0.72
+      },
+      {
+       "date": "2023-12-14",
+       "drop_raw": -1.07,
+       "drop_spy_adj": -0.76
+      },
+      {
+       "date": "2023-12-15",
+       "drop_raw": 0.34,
+       "drop_spy_adj": -0.21
+      },
+      {
+       "date": "2023-12-18",
+       "drop_raw": -0.17,
+       "drop_spy_adj": 0.38
+      }
+     ],
+     "role": "fund"
+    },
+    {
+     "fund": "FAIRX",
+     "ex_date": "2017-12-15",
+     "month": 201712,
+     "amount": 0.26,
+     "nav_before": 19.58,
+     "dist_pct_of_nav": 1.33,
+     "adjclose_jump_pct": 1.35,
+     "jump_factor": 1.0134575964280887,
+     "nav_drop_as_share_of_dist": [
+      {
+       "date": "2017-12-13",
+       "drop_raw": 0.04,
+       "drop_spy_adj": 0.03
+      },
+      {
+       "date": "2017-12-14",
+       "drop_raw": -0.12,
+       "drop_spy_adj": -0.42
+      },
+      {
+       "date": "2017-12-15",
+       "drop_raw": 0.04,
+       "drop_spy_adj": 0.28
+      },
+      {
+       "date": "2017-12-18",
+       "drop_raw": -1.62,
+       "drop_spy_adj": -1.14
+      },
+      {
+       "date": "2017-12-19",
+       "drop_raw": 0.23,
+       "drop_spy_adj": -0.06
+      }
+     ],
+     "role": "fund"
+    },
+    {
+     "fund": "VWUSX",
+     "ex_date": "2007-12-21",
+     "month": 200712,
+     "amount": 0.116,
+     "nav_before": 19.82,
+     "dist_pct_of_nav": 0.59,
+     "adjclose_jump_pct": 0.59,
+     "jump_factor": 1.0058875461916716,
+     "nav_drop_as_share_of_dist": [
+      {
+       "date": "2007-12-19",
+       "drop_raw": -0.43,
+       "drop_spy_adj": -0.43
+      },
+      {
+       "date": "2007-12-20",
+       "drop_raw": -1.64,
+       "drop_spy_adj": -0.57
+      },
+      {
+       "date": "2007-12-21",
+       "drop_raw": -1.9,
+       "drop_spy_adj": -0.35
+      },
+      {
+       "date": "2007-12-24",
+       "drop_raw": -1.55,
+       "drop_spy_adj": -0.27
+      },
+      {
+       "date": "2007-12-26",
+       "drop_raw": -0.6,
+       "drop_spy_adj": -0.23
+      }
+     ],
+     "role": "fund"
+    },
+    {
+     "fund": "VIVAX",
+     "ex_date": "2014-12-22",
+     "month": 201412,
+     "amount": 0.189,
+     "nav_before": 33.07,
+     "dist_pct_of_nav": 0.57,
+     "adjclose_jump_pct": 0.57,
+     "jump_factor": 1.005748165016202,
+     "nav_drop_as_share_of_dist": [
+      {
+       "date": "2014-12-18",
+       "drop_raw": -4.29,
+       "drop_spy_adj": -0.06
+      },
+      {
+       "date": "2014-12-19",
+       "drop_raw": 0.21,
+       "drop_spy_adj": -0.01
+      },
+      {
+       "date": "2014-12-22",
+       "drop_raw": -0.79,
+       "drop_spy_adj": 0.01
+      },
+      {
+       "date": "2014-12-23",
+       "drop_raw": -0.74,
+       "drop_spy_adj": -0.5
+      },
+      {
+       "date": "2014-12-24",
+       "drop_raw": 0.05,
+       "drop_spy_adj": 0.07
+      }
+     ],
+     "role": "style_factor"
+    },
+    {
+     "fund": "VIVAX",
+     "ex_date": "2016-03-18",
+     "month": 201603,
+     "amount": 0.198,
+     "nav_before": 32.18,
+     "dist_pct_of_nav": 0.62,
+     "adjclose_jump_pct": 0.62,
+     "jump_factor": 1.006191013482843,
+     "nav_drop_as_share_of_dist": [
+      {
+       "date": "2016-03-16",
+       "drop_raw": -0.76,
+       "drop_spy_adj": 0.17
+      },
+      {
+       "date": "2016-03-17",
+       "drop_raw": -1.31,
+       "drop_spy_adj": -0.29
+      },
+      {
+       "date": "2016-03-18",
+       "drop_raw": 0.25,
+       "drop_spy_adj": 0.05
+      },
+      {
+       "date": "2016-03-21",
+       "drop_raw": -0.1,
+       "drop_spy_adj": 0.13
+      },
+      {
+       "date": "2016-03-22",
+       "drop_raw": 0.25,
+       "drop_spy_adj": 0.17
+      }
+     ],
+     "role": "style_factor"
+    },
+    {
+     "fund": "NAESX",
+     "ex_date": "2009-12-23",
+     "month": 200912,
+     "amount": 0.269,
+     "nav_before": 27.75,
+     "dist_pct_of_nav": 0.97,
+     "adjclose_jump_pct": 0.98,
+     "jump_factor": 1.0097885687808636,
+     "nav_drop_as_share_of_dist": [
+      {
+       "date": "2009-12-21",
+       "drop_raw": -1.26,
+       "drop_spy_adj": -0.24
+      },
+      {
+       "date": "2009-12-22",
+       "drop_raw": -0.93,
+       "drop_spy_adj": -0.56
+      },
+      {
+       "date": "2009-12-23",
+       "drop_raw": 0.0,
+       "drop_spy_adj": 0.2
+      },
+      {
+       "date": "2009-12-24",
+       "drop_raw": -0.56,
+       "drop_spy_adj": -0.07
+      },
+      {
+       "date": "2009-12-28",
+       "drop_raw": 0.07,
+       "drop_spy_adj": 0.3
+      }
+     ],
+     "role": "style_factor"
+    },
+    {
+     "fund": "VBMFX",
+     "ex_date": "1996-11-29",
+     "month": 199611,
+     "amount": 0.053,
+     "nav_before": 9.95,
+     "dist_pct_of_nav": 0.53,
+     "adjclose_jump_pct": 0.54,
+     "jump_factor": 1.005354862775803,
+     "nav_drop_as_share_of_dist": [
+      {
+       "date": "1996-11-26",
+       "drop_raw": 0.0,
+       "drop_spy_adj": -0.62
+      },
+      {
+       "date": "1996-11-27",
+       "drop_raw": 0.0,
+       "drop_spy_adj": -0.35
+      },
+      {
+       "date": "1996-11-29",
+       "drop_raw": -0.57,
+       "drop_spy_adj": 0.13
+      },
+      {
+       "date": "1996-12-02",
+       "drop_raw": 0.0,
+       "drop_spy_adj": 0.08
+      },
+      {
+       "date": "1996-12-03",
+       "drop_raw": 0.0,
+       "drop_spy_adj": -3.21
+      }
+     ],
+     "role": "style_factor"
+    }
+   ],
+   "effect": {
+    "VWUSX_and_FCNTX_rows": {
+     "VWUSX_A_before": {
+      "ex1": 0.23,
+      "ex2": 0.67,
+      "third1": "中位",
+      "rank1": 20.0
+     },
+     "VWUSX_A_after": {
+      "ex1": 0.23,
+      "ex2": -0.27,
+      "third1": "中位",
+      "rank1": 20.0
+     },
+     "FCNTX_B_before": {
+      "ex1": 3.7,
+      "ex2": 1.46,
+      "third1": "上位",
+      "rank1": 9.0
+     },
+     "FCNTX_B_after": {
+      "ex1": 3.09,
+      "ex2": 1.46,
+      "third1": "中位",
+      "rank1": 11.0
+     }
+    },
+    "tests_before_vs_phantom_fix_only": {
+     "A": {
+      "before": {
+       "n": 31,
+       "spearman": 0.581,
+       "perm_p_two_sided": 0.001,
+       "top_third_ex1_mean": 2.14,
+       "top_third_ex2_mean": 0.69,
+       "bottom_third_ex2_mean": -4.74,
+       "top_minus_bottom_ex2": 5.43,
+       "top_third_beat_spy2_count": "5/10",
+       "all_beat_spy2_count": "8/31",
+       "all_beat_spy1_count": "20/31",
+       "ex2_median": -2.48
+      },
+      "phantom_fix_only": {
+       "n": 31,
+       "spearman": 0.585,
+       "perm_p_two_sided": 0.0009,
+       "top_third_ex1_mean": 2.14,
+       "top_third_ex2_mean": 0.69,
+       "bottom_third_ex2_mean": -4.74,
+       "top_minus_bottom_ex2": 5.43,
+       "top_third_beat_spy2_count": "5/10",
+       "all_beat_spy2_count": "7/31",
+       "all_beat_spy1_count": "20/31",
+       "ex2_median": -2.48
+      }
+     },
+     "B": {
+      "before": {
+       "n": 28,
+       "spearman": -0.215,
+       "perm_p_two_sided": 0.27,
+       "top_third_ex1_mean": 4.78,
+       "top_third_ex2_mean": 0.01,
+       "bottom_third_ex2_mean": 0.85,
+       "top_minus_bottom_ex2": -0.84,
+       "top_third_beat_spy2_count": "5/9",
+       "all_beat_spy2_count": "19/28",
+       "all_beat_spy1_count": "23/28",
+       "ex2_median": 0.47
+      },
+      "phantom_fix_only": {
+       "n": 28,
+       "spearman": -0.221,
+       "perm_p_two_sided": 0.2535,
+       "top_third_ex1_mean": 4.76,
+       "top_third_ex2_mean": -0.12,
+       "bottom_third_ex2_mean": 0.85,
+       "top_minus_bottom_ex2": -0.96,
+       "top_third_beat_spy2_count": "5/9",
+       "all_beat_spy2_count": "19/28",
+       "all_beat_spy1_count": "23/28",
+       "ex2_median": 0.47
+      }
+     }
+    },
+    "all_small_candidates_fixed": {
+     "A": {
+      "n": 31,
+      "spearman": 0.596,
+      "perm_p_two_sided": 0.0007,
+      "top_third_ex1_mean": 2.34,
+      "top_third_ex2_mean": 0.74,
+      "bottom_third_ex2_mean": -4.75,
+      "top_minus_bottom_ex2": 5.49,
+      "top_third_beat_spy2_count": "5/10",
+      "all_beat_spy2_count": "7/31",
+      "all_beat_spy1_count": "20/31",
+      "ex2_median": -2.48
+     },
+     "B": {
+      "n": 28,
+      "spearman": -0.209,
+      "perm_p_two_sided": 0.2789,
+      "top_third_ex1_mean": 4.76,
+      "top_third_ex2_mean": -0.12,
+      "bottom_third_ex2_mean": 1.06,
+      "top_minus_bottom_ex2": -1.18,
+      "top_third_beat_spy2_count": "5/9",
+      "all_beat_spy2_count": "19/28",
+      "all_beat_spy1_count": "24/28",
+      "ex2_median": 0.47
+     },
+     "note": "31本の候補（role=fund）だけを直した上限。型の物差しの指数ファンドの候補（role=style_factor）は検定 A・B には効かず、型で調整したアルファの感度にだけ効く（そちらは直していない）"
+    },
+    "published_check": [
+     {
+      "fund": "VWUSX",
+      "source": "https://www.sec.gov/Archives/edgar/data/52848/000168386320015429/f7676d1.htm",
+      "periods": "1年・5年・10年（2019-12 まで・年率%）",
+      "official": [
+       33.41,
+       13.72,
+       14.35
+      ],
+      "yahoo_before_fix": [
+       45.61,
+       15.74,
+       15.38
+      ],
+      "yahoo_after_fix": [
+       33.44,
+       13.73,
+       14.38
+      ]
+     },
+     {
+      "fund": "VWUSX",
+      "source": "https://www.sec.gov/Archives/edgar/data/52848/000005284826000643/f45461d1.htm",
+      "periods": "1年・5年・10年（2024-12 まで・年率%）",
+      "official": [
+       31.89,
+       15.54,
+       14.62
+      ],
+      "yahoo_before_fix": [
+       31.65,
+       15.57,
+       15.65
+      ],
+      "yahoo_after_fix": [
+       31.65,
+       15.57,
+       14.65
+      ]
+     },
+     {
+      "fund": "FCNTX",
+      "source": "https://www.sec.gov/Archives/edgar/data/24238/000002423808000006/main.htm",
+      "periods": "暦年のリターン（%）1998〜2007",
+      "rows": [
+       {
+        "year": 1998,
+        "official": 31.57,
+        "yahoo_before_fix": 31.33,
+        "yahoo_after_fix": 31.33
+       },
+       {
+        "year": 1999,
+        "official": 25.03,
+        "yahoo_before_fix": 25.45,
+        "yahoo_after_fix": 25.45
+       },
+       {
+        "year": 2000,
+        "official": -6.8,
+        "yahoo_before_fix": -6.91,
+        "yahoo_after_fix": -6.91
+       },
+       {
+        "year": 2001,
+        "official": -12.59,
+        "yahoo_before_fix": -12.57,
+        "yahoo_after_fix": -12.57
+       },
+       {
+        "year": 2002,
+        "official": -9.63,
+        "yahoo_before_fix": -4.58,
+        "yahoo_after_fix": -9.63
+       },
+       {
+        "year": 2003,
+        "official": 27.95,
+        "yahoo_before_fix": 27.96,
+        "yahoo_after_fix": 27.96
+       },
+       {
+        "year": 2004,
+        "official": 15.07,
+        "yahoo_before_fix": 15.07,
+        "yahoo_after_fix": 15.07
+       },
+       {
+        "year": 2005,
+        "official": 16.23,
+        "yahoo_before_fix": 16.23,
+        "yahoo_after_fix": 16.23
+       },
+       {
+        "year": 2006,
+        "official": 11.54,
+        "yahoo_before_fix": 11.46,
+        "yahoo_after_fix": 11.46
+       },
+       {
+        "year": 2007,
+        "official": 19.78,
+        "yahoo_before_fix": 19.84,
+        "yahoo_after_fix": 19.84
+       }
+      ],
+      "max_abs_diff_before_fix": 5.05,
+      "max_abs_diff_after_fix": 0.42
+     }
+    ]
+   }
+  },
+  {
+   "issue": "SMT.L の調整後終値に配当がほぼ入っていない（実質は株価だけ）のに「配当込み」と書いていた（medium）",
+   "verdict": "指摘は正しい・直した",
+   "what_changed": "日足の終値（ペンス）に Yahoo の配当の事件（ペンス）を足して配当込みの指数を自分で作り直した（smt_gbp_total_return）。data_sources の書き方も直した。取引の無い日の配当は次の取引日に付け、落とさない。窓ごとの配当の上乗せは notes.SMT.L.dividend_check",
+   "effect": {
+    "SMT.L_rows": {
+     "A_before": {
+      "ex1": 2.44,
+      "ex2": 1.5,
+      "third1": "上位",
+      "rank1": 4.0
+     },
+     "A_after": {
+      "ex1": 4.45,
+      "ex2": 2.12,
+      "third1": "上位",
+      "rank1": 1.0
+     },
+     "B_before": {
+      "ex1": -1.36,
+      "ex2": 2.44,
+      "third1": "下位",
+      "rank1": 25.0
+     },
+     "B_after": {
+      "ex1": 0.59,
+      "ex2": 4.45,
+      "third1": "下位",
+      "rank1": 22.0
+     }
+    }
+   }
+  },
+  {
+   "issue": "CGM Focus の「2000年代1位 → 次の10年（2006〜2015）」は窓が4年重なる・「1位」は二次資料だけ（low）",
+   "verdict": "指摘は正しい・直した",
+   "what_changed": "本文の「次の10年」を重ならない 2012〜2021（年 5.68% 対 S&P 500 16.55%・SEC 485BPOS 2022 の XBRL）にし、2006〜2015 は「2000年代と4年重なる」と明記。「1位」は Morningstar の調べの紹介（二次資料）と本文と文献欄に添えた"
+  },
+  {
+   "issue": "「今に近い期間ほど SPY に勝てなくなった（選ばれ方の偏りを示す）」は言い過ぎ（low）",
+   "verdict": "指摘は正しい・直した",
+   "what_changed": "survivorship.points を「選ばれ方の偏りと合う。ただし 2016年以降の巨大株の相場で能動のファンド全体が SPY に負けやすかった期間とも重なり、区別できない」に直した"
+  },
+  {
+   "issue": "文献の小さな不正確さ（Fama-French の「時価加重」・Choi & Zhao の本文の数字が未確認）（low）",
+   "verdict": "直した",
+   "what_changed": "Fama-French の −0.81〜−1.00%/年 を「等加重と時価加重・3因子と4因子の4通りの幅」に直した。Choi & Zhao は本文の PDF（NBER）が今回は読めたので、0.23%/月（p=0.306）・−0.19%/月（p=0.034）を本文4ページと Table 1 で確かめたと記録した。あわせて同じ Table 1 で、Carhart の欄の旧記述「4因子では差が消える」が不正確（実際は 0.29%/月・t 2.13 に縮み、残る差は下位10% の負けの側）と分かったので直した（私が見つけたもの）"
+  }
+ ]
+}

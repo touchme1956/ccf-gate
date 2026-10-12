@@ -252,10 +252,13 @@ HOUSES = [
     dict(id='FIDI', name='Fidelity International', edition='Capital market assumptions update H1 2026（10年）',
          urls=['https://www.fidelity.com.au/sites/fidelity/assets/capital-market-assumptions-update-h1-2026-fidelity-international.pdf'],
          published='2026-04-30', published_src='原本 "Source: Fidelity International, April 2026"（PDF 作成 2026-05-07）', asof='2026-03-31', H=10,
-         horizon='10年（20年も併記）', basis='名目・"Average expected returns" p.a.（幾何か算術かは明記なし）', currency='USD',
+         horizon='10年（20年も併記）',
+         basis='名目・"Average expected returns" p.a.（幾何か算術かは明記なし → 主は原本の数字のまま・感度 S_fidi_arith で算術と見て 算術−σ²/2 へ。'
+               'σ は同じ報告 p.11 の "Volatility assumptions (average)"（USD・2003-09〜2025-09 の月次の実績から）: DM equities 15.3%・EM equities 20.2%。'
+               '米国株の σ は表に無いので DM equities（MSCI World）で代える）', currency='USD',
          main=True, main_why='2026年に公表', file='fidelity_intl_h1_2026.pdf',
-         v={'USL': dict(x=6.4, label='US Equities', cur='USD'),
-            'EM': dict(x=8.0, label='Emerging Markets Equities', cur='USD')},
+         v={'USL': dict(x=6.4, sd=15.3, sd_src='p.11 Volatility assumptions の DM equities（米国株の σ は無い → 代用）', label='US Equities', cur='USD'),
+            'EM': dict(x=8.0, sd=20.2, sd_src='p.11 Volatility assumptions の EM equities', label='Emerging Markets Equities', cur='USD')},
          extra={'Developed Markets Equities（MSCI World）10年': 6.7, 'Global Small Cap 10年': 7.1, 'US Equities 20年': 7.4, 'EM 20年': 8.9,
                 'Fidelity（米国・Fidelity Institutional）の20年 US 5.8% は2025年版（Morningstar の記事）＝使わない': None}),
     dict(id='ROBECO', name='Robeco', edition='Expected Returns 2027-2031: The Great Rewiring（16th）',
@@ -297,12 +300,13 @@ CROSS_CHECK = dict(
     note='事前登録の名簿にない Callan・Meketa・PGIM・Verus を含む。版・期間・通貨がそろっていない二次資料なので D には使わない（照合だけ）')
 
 # 候補（etf_forward_rank の C ＋ R7 の拡張）→ D の種類。JPM_MAP と同じ考え方（業種・テーマの ETF は米国大型）。
-D_MAP = {'VT': 'ACWI', 'VOO': 'USL', 'VEA': 'EAFE', 'VWO': 'EM', 'TOPIX': 'JP', 'EPI': 'IND', 'QQQM': 'USL', 'VUG': 'USL',
+D_MAP = {'VT': 'ACWI', 'VOO': 'USL', 'VEA': 'EAFE', 'VWO': 'EM', 'TOPIX': 'JP', 'EPI': 'IND', 'EPI_LONG': 'IND', 'QQQM': 'USL', 'VUG': 'USL',
          'XLK': 'USL', 'SMH': 'USL', 'XLV': 'USL', 'XLP': 'USL', 'XLU': 'USL', 'XLE': 'USL', 'ITA': 'USL', 'RSP': 'USL',
          'VTV': 'USV', 'VBR': 'USS', 'IJR': 'USS', 'VIG': 'QUALITY', 'MOAT': 'QUALITY', 'VYM': 'DIV', 'PXF': 'EAFE', 'DEM': 'EM',
          'GLDM': None,
          'MTUM': 'MOM', 'QUAL': 'QUALITY', 'XLI': 'USL', 'XLF': 'USL', 'XLY': 'USL', 'GRID': 'ACWI'}
 D_MAP_NOTE = {'EPI': 'JPM_MAP はアジア（日本除く）。D ではインドの種類（2社しかない → C と同じ）',
+              'EPI_LONG': 'R7 の EPI の代理つなぎ版（night/bestpf_ext.py）。EPI と同じくインド（2社しかない → C と同じ）',
               'QQQM': '米国グロースの種類は3社（Vanguard 4.6・RA 1.78・BNY 8.0）で5社に届かない → JPM_MAP と同じく米国大型',
               'VUG': '同上（米国グロース 3社）', 'XLK': '業種の予想は見つからない → 米国大型（JPM_MAP と同じ）',
               'SMH': '業種の予想は見つからない → 米国大型（JPM_MAP と同じ）', 'VTV': 'JPM_MAP は JPM のバリュー因子。D では米国バリュー（5社）',
@@ -333,8 +337,9 @@ def to_nominal_geo(e):
     raise ValueError(k)
 
 
-def collect(houses, *, usd_only=False, drop=(), approx_ok=True, ssga_arith_raw=False, aqr_real25=False):
-    """種類ごとに [(会社, 名目の複利, H, 通貨)]"""
+def collect(houses, *, usd_only=False, drop=(), approx_ok=True, ssga_arith_raw=False, aqr_real25=False, fidi_arith=False):
+    """種類ごとに [(会社, 名目の複利, H, 通貨)]
+    fidi_arith: Fidelity International の "Average expected returns"（幾何か算術か明記なし）を算術と見て 算術−σ²/2 へ（σ は同じ報告の表）"""
     out = {k: [] for k in KEYS}
     for h in houses:
         if h['id'] in drop:
@@ -348,6 +353,10 @@ def collect(houses, *, usd_only=False, drop=(), approx_ok=True, ssga_arith_raw=F
                 g = e['x'] / 100
             elif aqr_real25 and h['id'] == 'AQR':
                 g = (1 + e['real'] / 100) * (1 + INFL) - 1
+            elif fidi_arith and h['id'] == 'FIDI':
+                if e.get('sd') is None:
+                    raise ValueError(f'FIDI {k} の σ が無い（0 と読まない）')
+                g = e['x'] / 100 - (e['sd'] / 100) ** 2 / 2
             else:
                 g = to_nominal_geo(e)[0]
             out[k].append((h['id'], g, h['H'], e.get('cur'), bool(e.get('approx'))))
@@ -355,17 +364,21 @@ def collect(houses, *, usd_only=False, drop=(), approx_ok=True, ssga_arith_raw=F
 
 
 def d_table(coll, usd_priority=True):
-    """種類ごとの中央値。usd_priority: ドル建ての値が5社以上あればドル建てだけで（事前登録『ドル建てのものを優先』）、
-    足りなければ現地通貨の値も入れる（その旨を basis に書く）"""
+    """種類ごとの中央値。
+    usd_priority=True（主・事前登録「名目ドル」）: ドル建ての値だけで中央値を作る。ドル建てが5社未満の種類は D を作らない（D＝C）。
+      現地通貨の値も混ぜた中央値は ref_with_local に参考として残すだけ（D には使わない）。
+      ※ 2026-10-12 の直し: 以前はドル建てが5社未満の種類で現地通貨を混ぜて D を作れる形だった（主の計算では起きなかった）。
+    usd_priority=False（参考の感度 S_all_currency だけ・事前登録の外）: 通貨を問わず全部混ぜる"""
     t = {}
     for k in KEYS:
         xs_all = coll[k]
         usd = [x for x in xs_all if x[3] == 'USD']
-        if usd_priority and len(usd) >= MIN_HOUSES:
-            xs, basis = usd, 'ドル建てだけ（5社以上ある）'
+        if usd_priority:
+            xs = usd
+            basis = 'ドル建てだけ（5社以上）' if len(usd) >= MIN_HOUSES else 'ドル建てだけ（5社未満 → D＝C）'
         else:
             xs = xs_all
-            basis = 'ドル建て＋現地通貨（ドル建てが5社未満）' if usd_priority and len(xs_all) > len(usd) else 'すべて'
+            basis = 'すべての通貨を混ぜる（参考・事前登録の外）'
         n = len(xs)
         e = dict(n=n, houses=[x[0] for x in xs], values=[round(100 * x[1], 3) for x in xs], basis=basis,
                  n_all=len(xs_all), n_usd=len(usd),
@@ -375,6 +388,9 @@ def d_table(coll, usd_priority=True):
             e['H_median'] = S.median(x[2] for x in xs)
             e['min'] = min(x[1] for x in xs); e['max'] = max(x[1] for x in xs)
             e['n_local_currency'] = sum(1 for x in xs if x[3] != 'USD')
+        if usd_priority and len(xs_all) > len(usd):
+            e['ref_with_local'] = dict(n=len(xs_all), median=S.median(x[1] for x in xs_all),
+                                       note='現地通貨の値も混ぜた参考（名目ドルではない値を含む → D には使わない）')
         e['made'] = n >= MIN_HOUSES
         t[k] = e
     return t
@@ -551,6 +567,21 @@ def verify():
     seg = t[t.find('USD capital market assumptions'):][:3000]
     ok('FIDI', 'USL', _num_in_line(seg, r'US Equities', '6.4%'), "USD 表 'US Equities 6.4%'")
     ok('FIDI', 'EM', _num_in_line(seg, r'Emerging Markets Equities', '8.0%'), "USD 表 'Emerging Markets Equities 8.0%'")
+    # Fidelity International の σ（p.11 の棒グラフ。数字の x 座標が軸の名前 DM / EM の x 座標に最も近いか）
+    try:
+        bb = subprocess.run(['pdftotext', '-f', '11', '-l', '11', '-bbox', os.path.join(CACHE, 'fidelity_intl_h1_2026.pdf'), '-'],
+                            capture_output=True, text=True).stdout
+        ws = [(float(a), float(b), w) for a, b, w in re.findall(r'xMin="([\d.]+)" yMin="([\d.]+)"[^>]*>([^<]+)</word>', bb)]
+        good_hdr = 'Volatility assumptions' in subprocess.run(['pdftotext', '-f', '11', '-l', '11', os.path.join(CACHE, 'fidelity_intl_h1_2026.pdf'), '-'],
+                                                              capture_output=True, text=True).stdout
+        axis = {w: x for x, y, w in ws if x > 700 and 360 < y < 380 and w in ('DM', 'EM', 'Global')}
+        bars = [(x, w) for x, y, w in ws if x > 700 and y < 300 and w.endswith('%')]
+        near = {lab: min(bars, key=lambda b: abs(b[0] - axis[lab]))[1] for lab in ('DM', 'EM') if lab in axis and bars}
+        fv = next(h for h in HOUSES if h['id'] == 'FIDI')['v']
+        ok('FIDI', 'σ(USL←DM)', good_hdr and near.get('DM') == f"{fv['USL']['sd']:.1f}%", f"p.11 Volatility assumptions の DM equities の棒 = {near.get('DM')}")
+        ok('FIDI', 'σ(EM)', good_hdr and near.get('EM') == f"{fv['EM']['sd']:.1f}%", f"p.11 Volatility assumptions の EM equities の棒 = {near.get('EM')}")
+    except Exception as ex:   # noqa
+        ok('FIDI', 'σ', False, f'p.11 が読めない: {ex}')
     # Robeco
     t = _pdftext('robeco_er_2027_2031_summary.pdf')
     ok('ROBECO', 'EM', _num_in_line(t, r'Emerging market equities', '8.75%'), "表 'Emerging market equities … 8.75%（USD 列）'")
@@ -706,7 +737,8 @@ def accuracy(cpi):
         dict(who='Edward Tower（Duke 大学・2008-11）', what='GMO の予想（2000-07〜）と Vanguard の投信の実績（〜2008-10）',
              src='https://public.econ.duke.edu/Papers/PDF/GMO_Predictions1.pdf（Exhibit 1）',
              rows={'株の5種類の順位の相関': 0.939, '全資産の相関': 0.781, '1位の組 予想/実際': '5.51 / 5.99', '5位の組 予想/実際': '-1.29 / -4.92'},
-             note='順位はよく当たった（5種類のうち4つの順位が一致）。水準は5つ中4つで予想が高すぎた（2000〜2008は下落相場）'),
+             note='順位はよく当たった（5種類のうち4つの順位が一致）。水準は5つ中4つで予想が高すぎた（2000〜2008は下落相場）。'
+                  'ただし 2000〜2008年の1回の窓・株5種類（n=5）だけの例で、順位が当たりやすいことの一般の証拠にはならない'),
         dict(who='Research Affiliates（自社の点検 "Asset Allocation Interactive at 10 Years: The Good, the Not Too Bad, and the Ugly"・2025-01）',
              what='AAI の10年予想（2014年〜）と実績', src='https://www.researchaffiliates.com/publications/articles/1069-asset-allocation-interactive-good-bad-ugly',
              rows={}, note='数字は取れなかった（ページが JavaScript で描かれる）。要旨（検索の要約・二次）: 平均の水準はおおむね実績の分布の中ほど・資産の並び順はおおむね当たった・為替とインフレの予想が弱い。確かめられない'),
@@ -736,12 +768,13 @@ def accuracy(cpi):
          [('米国株（名目 3〜5% の中点）', 4.0, 'VTI'), ('米国外株（名目 5.5〜7.5% の中点）', 6.5, 'VXUS')], 10, partial=True,
          note='途中経過（2026-09 までの8.75年）。予想は名目なので実際も名目で比べる')
     hand('J.P. Morgan 2021 LTCMA（名目・10〜15年・2020-09-30時点）', 202009, 'CFA Institute Enterprising Investor 2021-04-12（Anson J. Glacy Jr.・JPM の "fall from 5.6% last year to 4.1%" を引用・二次）: https://rpc.cfainstitute.org/blogs/enterprising-investor/2021/building-optimized-portfolios-with-jpmorgans-2021-forecasts',
-         [('米国大型（名目・複利 4.1%）', 4.1, 'SPY')], 12.5, partial=True, note='途中経過（2026-09 までの6年）。名目で比べる')
+         [('米国株（記事の表現 "equity market returns"・名目。大型か・幾何か算術かは記事に書かれていない）', 4.1, 'SPY')], 12.5, partial=True,
+         note='途中経過（2026-09 までの6年）。名目で比べる。比べる相手を SPY（米国大型）に置いたのはこちらの読み替え')
     acc['cape'] = cape_accuracy()
     # 要点
-    acc['summary'] = ('どの会社も2010年代〜2020年代前半の米国大型株を大きく低く見積もった（BNY 2016: 7.1→実際13.4・NT 2020: 4.7→15.9・GMO 2014: −1.5実質→実際+10%台）。'
+    acc['summary'] = ('どの会社も2010年代〜2020年代前半の米国大型株を大きく低く見積もった（BNY 2016: 7.1→実際13.4・NT 2020: 4.7→15.9・GMO 2014: 実質−1.5→実際+11.9%〔2014-06〜2021-05・SPY・CPI で実質〕）。'
                       '理由は PER の上昇（BNY: 18.8→26.5）と AI の熱狂（NT）。逆に新興国は高く見積もりがち（BNY 2016: 8.9→5.2）。'
-                      '順位（どれが相対的に良いか）は水準より当たりやすい（Tower 2008 の GMO: 相関0.94）が、2010年代の米国 vs 米国外は外れた。'
+                      '順位（どれが相対的に良いか）は水準より当たったという例がある（Tower 2008 の GMO: 相関0.94・ただし 2000〜2008年の1回の窓・株5種類だけ）が、2010年代の米国 vs 米国外は外れた。'
                       'CAPE の10年予想は長い目では負の関係が効くが誤差が大きい（下の cape.stats）')
     return acc
 
@@ -783,25 +816,38 @@ def sec_capex():
                 c = [f for f in facts if f.get('end') == end and 'start' in f and lo <= dur(f) <= hi]
                 c.sort(key=lambda f: f.get('filed', ''))
                 return c[-1] if c else None
-            if t == 'MSFT':     # 会計年度は6月末
+            if t == 'MSFT':     # 会計年度は6月末＝会計年度そのものが「6月末までの12か月」
                 fy = pick('2026-06-30', 350, 380); prev = pick('2025-06-30', 350, 380)
                 if fy:
                     rec = dict(tag=tag, ttm_to_2026_06=fy['val'] / 1e9, ttm_src=f"FY2026（{fy['start']}〜{fy['end']}・{fy.get('form')} {fy.get('filed')}）",
-                               prev_year=prev['val'] / 1e9 if prev else None, prev_src='FY2025' if prev else None)
+                               ttm_to_2025_06=prev['val'] / 1e9 if prev else None,
+                               ttm_prev_src=f"FY2025（{prev['start']}〜{prev['end']}・{prev.get('form')} {prev.get('filed')}）" if prev else None,
+                               ref_fy_or_cal2025=prev['val'] / 1e9 if prev else None, ref_src='FY2025（2024-07〜2025-06）' if prev else None)
             else:
                 fy25 = pick('2025-12-31', 350, 380); h125 = pick('2025-06-30', 170, 190); h126 = pick('2026-06-30', 170, 190)
+                fy24 = pick('2024-12-31', 350, 380); h124 = pick('2024-06-30', 170, 190)
                 if fy25 and h125 and h126:
                     ttm = (fy25['val'] - h125['val'] + h126['val']) / 1e9
                     rec = dict(tag=tag, ttm_to_2026_06=ttm, ttm_src=f"2025暦年 {fy25['val'] / 1e9:.1f} − 2025年上期 {h125['val'] / 1e9:.1f} + 2026年上期 {h126['val'] / 1e9:.1f}（{h126.get('form')} {h126.get('filed')}）",
-                               prev_year=fy25['val'] / 1e9, prev_src='2025暦年')
+                               ttm_to_2025_06=((fy24['val'] - h124['val'] + h125['val']) / 1e9) if (fy24 and h124) else None,
+                               ttm_prev_src=(f"2024暦年 {fy24['val'] / 1e9:.1f} − 2024年上期 {h124['val'] / 1e9:.1f} + 2025年上期 {h125['val'] / 1e9:.1f}（{h125.get('form')} {h125.get('filed')}）"
+                                             if (fy24 and h124) else '2024暦年か2024年上期が XBRL に無い（欠測＝0 と読まない）'),
+                               ref_fy_or_cal2025=fy25['val'] / 1e9, ref_src='2025暦年')
             if rec:
                 break
         out[t] = rec or dict(note='XBRL のタグが見つからない（欠測＝0 と読まない）')
     got = [v['ttm_to_2026_06'] for v in out.values() if isinstance(v, dict) and v.get('ttm_to_2026_06')]
-    prev = [v['prev_year'] for v in out.values() if isinstance(v, dict) and v.get('prev_year')]
+    prev = [v['ttm_to_2025_06'] for v in out.values() if isinstance(v, dict) and v.get('ttm_to_2025_06')]
+    ref = [v['ref_fy_or_cal2025'] for v in out.values() if isinstance(v, dict) and v.get('ref_fy_or_cal2025')]
+    tot, totp = (sum(got) if len(got) == 4 else None), (sum(prev) if len(prev) == 4 else None)
     return dict(companies={k: ({kk: (round(vv, 2) if isinstance(vv, float) else vv) for kk, vv in v.items()}) for k, v in out.items()},
-                total_ttm_bn=round(sum(got), 1) if len(got) == 4 else None,
-                total_prev_bn=round(sum(prev), 1) if len(prev) == 4 else None,
+                total_ttm_bn=round(tot, 1) if tot is not None else None,
+                total_prev_bn=round(totp, 1) if totp is not None else None,
+                prev_def='前年＝1年前の同じ12か月（2024-07〜2025-06。MSFT は FY2025・他3社は 2024暦年−2024年上期＋2025年上期）',
+                growth_pct=round(100 * (tot / totp - 1), 1) if (tot and totp) else None,
+                ref_msft_fy25_plus_cal2025_bn=round(sum(ref), 1) if len(ref) == 4 else None,
+                ref_note='参考: MSFT FY2025＋他3社の2025暦年。直近12か月（2025-07〜2026-06）と他3社の分が6か月重なるので、「前年」として伸びの計算には使わない'
+                         '（2026-10-12 の直し: 以前はこの値を「前年」と書いていた）',
                 src='SEC data.sec.gov companyconcept（us-gaap PaymentsToAcquirePropertyPlantAndEquipment／PaymentsToAcquireProductiveAssets）・単位 十億ドル・現金の購入（ファイナンスリースは含まない）')
 
 
@@ -877,43 +923,65 @@ def main():
     coll = collect(main_h)
     table = d_table(coll)
     # 感度
+    # cls: 'reading'＝事前登録の中で読み方が分かれる所を振る ／ 'reference'＝事前登録の外の値を混ぜる参考（幅の主な数字には入れない）
     sens_defs = {
-        'S_all_currency': dict(houses=main_h, kw={}, prio=False, why='ドル建てを優先せず、現地通貨の値（米国外を現地通貨で出す NT・Amundi・AQR・SSGA・GMO）も混ぜる'),
-        'S_with_GS': dict(houses=HOUSES, kw={}, why='Goldman Sachs（2025-11-12）を足す'),
-        'S_no_GMO': dict(houses=main_h, kw=dict(drop=('GMO',)), why='いちばん低い GMO を外す'),
-        'S_strict_2026_pub': dict(houses=main_h, kw=dict(drop=('JPM',)), why='2026年に公表された版だけ（JPM 2026 LTCMA は2025-10公表 → 外す）'),
-        'S_no_approx': dict(houses=main_h, kw=dict(approx_ok=False), why='近い読み替え（GMO の Deep Value＝バリュー・SSGA の世界の質/勢い）を外す'),
-        'S_ssga_arith_raw': dict(houses=main_h, kw=dict(ssga_arith_raw=True), why='State Street の算術平均を複利へ直さずそのまま'),
-        'S_aqr_real_plus25': dict(houses=main_h, kw=dict(aqr_real25=True), why='AQR を実質＋2.5%（事前登録の換算）で'),
+        'S_all_currency': dict(houses=main_h, kw={}, prio=False, cls='reference',
+                               why='参考（事前登録の外）: ドル建てに限らず、現地通貨の値（米国外を現地通貨で出す NT・Amundi・AQR・SSGA・GMO）も混ぜる'),
+        'S_ssga_arith_raw': dict(houses=main_h, kw=dict(ssga_arith_raw=True), cls='reference',
+                                 why='参考（事前登録の外＝複利でない）: State Street の算術平均を複利へ直さずそのまま'),
+        'S_with_GS': dict(houses=HOUSES, kw={}, cls='reading', why='Goldman Sachs（2025-11-12）を足す'),
+        'S_no_GMO': dict(houses=main_h, kw=dict(drop=('GMO',)), cls='reading', why='いちばん低い GMO を外す'),
+        'S_strict_2026_pub': dict(houses=main_h, kw=dict(drop=('JPM', 'NT')), cls='reading',
+                                  why='2026年に公表された版だけ（JPM 2026 LTCMA は2025-10-20 公表・Northern Trust 2026 Edition は表紙に "RELEASED DECEMBER 2025" → 2社とも外す）'),
+        'S_no_JPM': dict(houses=main_h, kw=dict(drop=('JPM',)), cls='reading', why='JPM だけ外す（2026-10-12 より前の S_strict_2026_pub と同じ）'),
+        'S_no_approx': dict(houses=main_h, kw=dict(approx_ok=False), cls='reading', why='近い読み替え（GMO の Deep Value＝バリュー・SSGA の世界の質/勢い）を外す'),
+        'S_aqr_real_plus25': dict(houses=main_h, kw=dict(aqr_real25=True), cls='reading', why='AQR を実質＋2.5%（事前登録の換算）で'),
+        'S_no_5y': dict(houses=main_h, kw=dict(drop=('TROWE', 'ROBECO')), cls='reading',
+                        why='5年の予想（T. Rowe Price "Five-Year Geometric Average"・Robeco "5-year annualized"）を外す（事前登録は「10年前後」）'),
+        'S_fidi_arith': dict(houses=main_h, kw=dict(fidi_arith=True), cls='reading',
+                             why='Fidelity International の "Average expected returns"（幾何か算術か明記なし）を算術と見て 算術−σ²/2（σ は同じ報告 p.11: DM 15.3%〔米国株の代用〕・EM 20.2%）'),
+        'S_no5y_fidi_arith': dict(houses=main_h, kw=dict(drop=('TROWE', 'ROBECO'), fidi_arith=True), cls='reading',
+                                  why='S_no_5y と S_fidi_arith を両方'),
     }
     sens = {}
     for nm, d in sens_defs.items():
         t = d_table(collect(d['houses'], **d['kw']), usd_priority=d.get('prio', True))
-        sens[nm] = dict(why=d['why'], by_key={k: dict(n=t[k]['n'], made=t[k]['made'],
-                                                      median=round(100 * t[k]['median'], 3) if t[k]['n'] else None,
-                                                      H=t[k].get('H_median')) for k in KEYS if t[k]['n']})
+        sens[nm] = dict(why=d['why'], cls=d['cls'],
+                        by_key={k: dict(n=t[k]['n'], made=t[k]['made'],
+                                        median=round(100 * t[k]['median'], 3) if t[k]['n'] else None,
+                                        H=t[k].get('H_median'),
+                                        ref_with_local=(dict(n=t[k]['ref_with_local']['n'], median=round(100 * t[k]['ref_with_local']['median'], 3))
+                                                        if t[k].get('ref_with_local') else None)) for k in KEYS if t[k]['n']})
         sens[nm]['_table'] = t
     # 行（B・経費率・外国税）
-    rows, rows_src = {}, None
+    rows, rows_src, r7_problem = {}, None, None
     try:
         import etf_forward_rank as R
         rows = R.main(write=False)['rows']
         rows_src = 'night/etf_forward_rank.py の main(write=False)["rows"]'
     except Exception as ex:   # noqa
         rows_src = f'etf_forward_rank が読めない: {ex}'
+    r7_added = []
     try:
         import bestpf_ext as X   # R7（あれば）
-        if hasattr(X, 'rank_result'):
+        if not hasattr(X, 'rank_result'):
+            r7_problem = 'night/bestpf_ext.py に rank_result() が無い'
+        else:
             rx = X.rank_result()
             rx = rx.get('rows', rx) if isinstance(rx, dict) else rx
-            if isinstance(rx, dict):
+            if not isinstance(rx, dict):
+                r7_problem = f'bestpf_ext.rank_result() の形が想定と違う（{type(rx).__name__}）'
+            else:
                 for k, v in rx.items():
                     if k not in rows and isinstance(v, dict) and 'B_gross' in v:
-                        rows[k] = v
-                rows_src += ' ＋ night/bestpf_ext.py の rank_result()'
-    except Exception:   # noqa
-        pass
+                        rows[k] = v; r7_added.append(k)
+                rows_src += f" ＋ night/bestpf_ext.py の rank_result()（足した本: {'・'.join(r7_added) or 'なし'}）"
+    except Exception as ex:   # noqa  黙って抜けない（2026-10-12 の直し）
+        r7_problem = f'night/bestpf_ext.py が読めない: {type(ex).__name__}: {ex}'
+    if r7_problem:
+        rows_src += f'（R7 の行は読めなかった: {r7_problem}）'
     dnet, detail = d_net_rows(table, rows)
+    unmapped_rows = sorted(c for c in rows if c not in D_MAP)
     sens_dnet = {nm: {c: round(v, 5) for c, v in d_net_rows(s['_table'], rows)[0].items()} for nm, s in sens.items()}
     for s in sens.values():
         s.pop('_table')
@@ -939,7 +1007,10 @@ def main():
                            median_pct=round(100 * e['median'], 3) if e['n'] else None,
                            H_median=e.get('H_median'), min_pct=round(100 * e['min'], 2) if e['n'] else None,
                            max_pct=round(100 * e['max'], 2) if e['n'] else None, n_local_currency=e.get('n_local_currency', 0),
-                           note=None if e['made'] else ('5社に届かない → この種類に割り当てた本は D＝C（事前登録）' if e['n'] else '数字を出す会社が見つからない'))
+                           ref_with_local_pct=(dict(n=e['ref_with_local']['n'], median=round(100 * e['ref_with_local']['median'], 3), note=e['ref_with_local']['note'])
+                                               if e.get('ref_with_local') else None),
+                           note=None if e['made'] else ('ドル建ての値が5社に届かない → この種類に割り当てた本は D＝C（事前登録）' if e['n'] or e['n_all']
+                                                        else '数字を出す会社が見つからない'))
     # JPM との照合（C の世界）
     jpm_check = []
     try:
@@ -963,9 +1034,9 @@ def main():
         rule=dict(D='D_gross=(H×中央値＋(20−H)×B_gross)/20・D_net=D_gross−経費率−外国税（etf_forward_rank の C と同じ作り）',
                   min_houses=MIN_HOUSES, infl_for_real=INFL, main_editions='2026年版と名乗る版、または2026年に公表された版（Goldman Sachs は感度だけ）',
                   conversions='実質だけ→(1+r)(1.025)−1（GMO・2つの金利の中点）／算術→算術−σ²/2（State Street）／幅→中点（Vanguard）／他通貨は換算しない',
-                  currency_priority='ドル建ての値が5社以上ある種類はドル建てだけ。足りない種類だけ現地通貨も入れる。'
-                                    + ('今回 D を作った種類はすべてドル建てだけで5社以上あった' if all(table[k]['basis'].startswith('ドル建てだけ') for k in KEYS if table[k]['made'])
-                                       else '現地通貨を入れた種類: ' + '・'.join(k for k in KEYS if table[k]['made'] and not table[k]['basis'].startswith('ドル建てだけ')))),
+                  currency_priority='中央値はドル建ての値だけで作る（事前登録「名目ドル」）。ドル建てが5社に届かない種類は D＝C。'
+                                    '現地通貨の値も混ぜた中央値は D_by_key[].ref_with_local_pct に参考として残す（D には使わない）。'
+                                    '2026-10-12 の直し: 以前の版は「ドル建てが5社未満なら現地通貨も混ぜて D を作る」形だった（主の計算ではどの種類にも起きず、感度でだけ起きていた）'),
         houses=houses_out, houses_not_obtained=NOT_OBTAINED, cross_check_secondary=CROSS_CHECK,
         D_by_key=d_by_key, D_map=D_MAP, D_map_note=D_MAP_NOTE, asset_table=asset_table,
         D_net_by_asset={c: round(v, 6) for c, v in dnet.items()},
@@ -981,7 +1052,7 @@ def main():
     usl_vals = sorted(coll['USL'], key=lambda x: x[1])
     out['observations'] = [
         dict(what='米国大型の予想のばらつき', detail=f"最も低い {usl_vals[0][0]} {100 * usl_vals[0][1]:.1f}% 〜 最も高い {usl_vals[-1][0]} {100 * usl_vals[-1][1]:.1f}%（中央値 {usl['median_pct']:.1f}%）。"
-             '低い側は「今の値段（CAPE 40）が平均へ戻る」を強く入れる会社（GMO・Research Affiliates・Invesco）、高い側は「AI で利益が伸びる」を入れる会社（BlackRock の Starting point）'),
+             '低い側は「今の値段（CAPE 40）が平均へ戻る」を強く入れる会社（GMO・Research Affiliates・Invesco）。高い側は BlackRock の Starting point（同社の2025-09-30 時点の10年予想は 5.2%＝Morningstar 2026-01-12 の記事。上がった理由は原本の表に書かれておらず確かめられない。同じ表に別の場合として AI productivity boom 15.9%・Global risk premia rise 2.0% もある）'),
         dict(what='グロース（成長株）は米国大型より低く見られがち', detail=f"米国グロースを出す{len(gv)}社のうち{sum(1 for a, b in gv.values() if a < b)}社が米国大型より低い: " +
              '・'.join(f"{k} グロース {100 * a:.1f}% vs 大型 {100 * b:.1f}%" for k, (a, b) in gv.items()) +
              '。D では5社に届かないので、NASDAQ100・XLK・SMH などは JPM_MAP と同じく米国大型の数字を使った＝会社の見方より甘い側に置いている'),
@@ -993,24 +1064,91 @@ def main():
         dict(what='今の値段', detail=f"CAPE（米国大型）{pres['cape']['us_large']}（1880年からの上位 {100 * (1 - pres['cape']['percentile_since_1880']):.1f}%）・"
              f"12か月先の PER {pres['factset']['forward_pe']}（10年平均と同じ）・上位10社 {pres['spy_top10']['top10_companies_pct']}%・"
              f"2026年の利益の伸びの予想 +{pres['factset']['eps_growth_cy2026']}%・2027年 +{pres['factset']['eps_growth_cy2027']}%・"
-             f"大手4社の設備投資 直近12か月 {pres['ai_capex']['total_ttm_bn']} 十億ドル（前年 {pres['ai_capex']['total_prev_bn']}）。"
+             f"大手4社の設備投資 直近12か月（2025-07〜2026-06）{pres['ai_capex']['total_ttm_bn']} 十億ドル（1年前の同じ12か月 {pres['ai_capex']['total_prev_bn']}・"
+             f"{pres['ai_capex']['growth_pct']:+.0f}%）。"
              '利益が急に伸びているので、過去10年の利益で測る CAPE は「とても高い」、来年の利益で測る PER は「ふつう」と、物差しで答えが割れている'),
     ]
+    # ── 感度の幅（候補ごと）: reading＝事前登録の中の読み方の揺れ ／ reference＝事前登録の外の参考 ──
+    rd_names = [nm for nm, sv in sens.items() if sv['cls'] == 'reading']
+    rf_names = [nm for nm, sv in sens.items() if sv['cls'] == 'reference']
+
+    def _rng(c, names):
+        vs = [(sens_dnet[nm][c], nm) for nm in names if c in sens_dnet[nm]]
+        if not vs:
+            return None
+        lo, hi = min(vs), max(vs)
+        return dict(min=round(lo[0], 5), min_by=lo[1], max=round(hi[0], 5), max_by=hi[1])
+    sens_range = {}
+    for c in dnet:
+        sens_range[c] = dict(main=round(dnet[c], 5), C=round(rows[c]['C'], 5) if c in rows else None,
+                             D_made=bool(detail.get(c, {}).get('D_made')),
+                             reading=_rng(c, rd_names), with_reference=_rng(c, rd_names + rf_names))
+    made_c = [c for c in dnet if detail.get(c, {}).get('D_made')]
+    max_dc = max(made_c, key=lambda c: abs(detail[c]['D_minus_C'])) if made_c else None
+    sens_dc = [(abs(sens_dnet[nm][c] - rows[c]['C']), c, nm) for nm in rd_names for c in sens_dnet[nm] if c in rows]
+    sens_dc_max = max(sens_dc) if sens_dc else None
+    out['sensitivity_range_by_asset'] = sens_range
+    show = [c for c in ('VOO', 'QQQM', 'SMH', 'VT', 'VEA', 'VWO', 'TOPIX', 'VTV', 'VBR', 'XLI', 'XLF', 'XLY', 'GRID') if c in sens_range]
+    pend_txt = []
+    if r7_problem:
+        pend_txt.append(f'R7 の行が読めなかった（{r7_problem}）→ R7 だけの本（MTUM・QUAL・XLI・XLF・XLY・GRID・EPI_LONG）は D_net が無く、load_D() が C で代える。直してから python3 night/bestpf_cma.py を回し直す')
+    pend_txt += [f"{c}: {detail[c].get('note')}" for c in detail if detail[c].get('pending')]
+    if unmapped_rows:
+        pend_txt.append('D_MAP に無い行（D を作らず load_D() が C で代える）: ' + '・'.join(unmapped_rows))
     out['for_final'] = dict(
-        how='night/bestpf_eval.py の load_D() は D_net_by_asset を読む（無い本は C で代える）。',
-        pending='R7（night/bestpf_ext.py）の行がまだ無い本（MTUM・QUAL・XLI・XLF・XLY・GRID）は D_net を出していない。R7 の後に python3 night/bestpf_cma.py を回し直すと埋まる（bestpf_ext.rank_result() を読む）。'
-                '手で埋めるなら D_inputs_by_key の cma と H で D_net=(H×cma+(20−H)×B_gross)/20−経費率−外国税。MTUM・QUAL は5社未満の種類なので D＝C のまま',
-        sensitivity='感度は sensitivity_D_net_by_asset（' + '・'.join(sens) + '）。候補ごとの最大の動き: ' +
-                    '・'.join(f"{c} {100 * dnet[c]:.2f}%→{min(100 * v[c] for v in sens_dnet.values() if c in v):.2f}〜{max(100 * v[c] for v in sens_dnet.values() if c in v):.2f}%"
-                              for c in ('VOO', 'QQQM', 'SMH', 'VT', 'VEA', 'VWO', 'TOPIX', 'VTV', 'VBR') if c in dnet) +
-                    '。日本は現地通貨の予想を混ぜると下がり、VTV は GMO の Deep Value を外すと米国バリューが4社になり D＝C',
+        how='night/bestpf_eval.py の load_D() は D_net_by_asset を読む（無い本は C で代える）。最終の採点の直前に python3 night/bestpf_cma.py を回し直す（R7 の行を読み直すため）。',
+        pending=('・'.join(pend_txt) if pend_txt else 'なし（R7 の行も読めた: ' + '・'.join(r7_added) + '。MTUM・QUAL・EPI・EPI_LONG は5社未満の種類なので D＝C）'),
+        sensitivity=('感度の幅は sensitivity_range_by_asset。reading（事前登録の中で読み方が分かれる所: ' + '・'.join(rd_names) + '）と、'
+                     'with_reference（さらに事前登録の外の参考 ' + '・'.join(rf_names) + ' を入れた幅）を分けた。主と reading の最小〜最大: ' +
+                     '・'.join(f"{c} {100 * sens_range[c]['main']:.2f}%（{100 * sens_range[c]['reading']['min']:.2f}〜{100 * sens_range[c]['reading']['max']:.2f}）"
+                               for c in show if sens_range[c]['reading']) +
+                     (f"。主の D と C の差の最大は {max_dc} の {100 * detail[max_dc]['D_minus_C']:+.2f}pt" if max_dc else '') +
+                     (f"・reading の感度の中での最大は {sens_dc_max[1]}（{sens_dc_max[2]}）の C との差 {100 * sens_dc_max[0]:.2f}pt" if sens_dc_max else '') +
+                     '。日本は5年の予想を外すとドル建てが4社になり D＝C、VTV は GMO の Deep Value を外すと米国バリューが4社になり D＝C'),
     )
+    # ── 検証役の指摘への直し（2026-10-12） ──
+    voo = sens_range.get('VOO', {}); usl_s = {nm: sens[nm]['by_key'].get('USL', {}).get('median') for nm in sens}
+    jp_s = {nm: sens[nm]['by_key'].get('JP', {}) for nm in ('S_no_5y', 'S_no5y_fidi_arith')}
+    em_s = {nm: sens[nm]['by_key'].get('EM', {}).get('median') for nm in ('S_no_5y', 'S_fidi_arith', 'S_no5y_fidi_arith')}
+    cap = pres['ai_capex']
+    out['fixes_applied'] = [
+        dict(severity='medium', issue='感度に「5年の予想を外す」と「Fidelity International を算術と見る」が無く、米国大型の中央値と VOO の D_net の幅が狭く見えていた',
+             fix='感度 S_no_5y（T. Rowe Price・Robeco を外す）・S_fidi_arith（FIDI を 算術−σ²/2。σ は同じ報告 p.11 の Volatility assumptions: DM equities 15.3%〔米国株の σ は無いので代用〕・EM 20.2%・--verify で棒の位置を確認）・S_no5y_fidi_arith（両方）を足した。for_final.sensitivity と summary_ja の幅をこの結果に合わせた',
+             after=dict(USL_median_pct={k: usl_s.get(k) for k in ('S_no_5y', 'S_fidi_arith', 'S_no5y_fidi_arith')}, EM_median_pct=em_s,
+                        JP=jp_s, VOO_D_net_reading_range_pct=([round(100 * voo['reading']['min'], 2), round(100 * voo['reading']['max'], 2)] if voo.get('reading') else None)),
+             before='VOO の D_net の幅は 6.96〜7.11%（以前の7本の感度・現地通貨を混ぜる参考も含む）'),
+        dict(severity='low', issue='設備投資の「前年 3,575億ドル」は1年前の12か月ではなかった（MSFT FY2025＋他3社の2025暦年＝直近12か月と6か月重なる）',
+             fix='前年＝1年前の同じ12か月（2024-07〜2025-06）に替えた（SEC companyconcept の 2024暦年−2024年上期＋2025年上期・MSFT は FY2025）。357.5 は ref_msft_fy25_plus_cal2025_bn として「前年」と呼ばずに残した',
+             before=dict(prev_bn=357.5, growth_pct=round(100 * (510.7 / 357.5 - 1), 1)),
+             after=dict(prev_bn=cap['total_prev_bn'], growth_pct=cap['growth_pct'], ref_bn=cap['ref_msft_fy25_plus_cal2025_bn'])),
+        dict(severity='low', issue='出力が R7（night/bestpf_ext.py）より前に作られ、XLI・XLF・XLY・GRID の D_net が無かった。R7 を読む所が例外を黙って捨てていた',
+             fix='回し直して R7 の行を読んだ（足した本: ' + ('・'.join(r7_added) or 'なし') + '）。R7 が読めないときは rows_source と for_final.pending に理由を書く形にした。EPI_LONG（R7 の行）を D_MAP に足した（インド＝5社未満 → D＝C）',
+             after={c: dict(D_net=round(100 * dnet[c], 3), C=round(100 * rows[c]['C'], 3)) for c in ('XLI', 'XLF', 'XLY', 'GRID', 'MTUM', 'QUAL', 'EPI_LONG') if c in dnet},
+             r7_problem=r7_problem),
+        dict(severity='low', issue='(a) ドル建てが5社未満の種類で、感度が現地通貨の値を「名目ドル」の中央値に混ぜていた（事前登録は D＝C）。(b) S_strict_2026_pub が Northern Trust（表紙 "RELEASED DECEMBER 2025"）を残していた',
+             fix='(a) d_table を「ドル建てだけで中央値・5社未満なら D＝C」に直し、現地通貨を混ぜた値は ref_with_local に参考として別名で残した。S_all_currency と S_ssga_arith_raw は「参考（事前登録の外）」の印を付け、幅の主な数字（reading）から外した。'
+                 '(b) S_strict_2026_pub は JPM と NT の両方を外す形にし、以前の JPM だけの版は S_no_JPM として残した',
+             before=dict(S_strict_USL_pct=6.1, S_strict_VOO_D_net_pct=6.96, S_strict_JP_pct='6.7（7社・現地通貨込み）'),
+             after=dict(S_strict_USL_pct=usl_s.get('S_strict_2026_pub'), S_strict_VOO_D_net_pct=round(100 * sens_dnet['S_strict_2026_pub'].get('VOO', float('nan')), 3),
+                        S_strict_JP=sens['S_strict_2026_pub']['by_key'].get('JP'))),
+        dict(severity='low', issue='説明の一部が出典より強く言い切っていた',
+             fix='(1) BlackRock の米国大型 5.2%→9.0% の理由（「AI による利益の上方修正」）は原本に書かれていない → 「理由は確かめられない」に。'
+                 '(2) Tower 2008 の順位の相関0.94 に「2000〜2008年の1回の窓・株5種類だけの例」を書き添えた。'
+                 '(3) JPM 2021 の 4.1% を「米国株（記事の表現 "equity market returns"・大型か・幾何か算術かは不明）」に書き直した'),
+    ]
     # 要約（やさしい日本語）
     out['summary_ja'] = (
         f"2026年に出た長期（5〜15年）の株の予想を {sum(1 for h in HOUSES if h['main'])} 社から集めた（Goldman Sachs は2025年11月なので感度だけ・Franklin は数字が取れなかった）。"
         f"中央値は 米国大型 {usl['median_pct']:.1f}%（{usl['n']}社・幅 {usl['min_pct']:.1f}〜{usl['max_pct']:.1f}）・米国小型 {uss['median_pct']:.1f}%・"
         f"先進国（米国除く）{eafe['median_pct']:.1f}%・日本 {jp['median_pct']:.1f}%・新興国 {em['median_pct']:.1f}%・全世界 {acwi['median_pct']:.1f}%（いずれも名目のドル建て・年率・ドル建ての値だけの中央値）。"
-        f"米国大型は過去100年の平均（約10%）よりかなり低く、米国外のほうを高く見る会社が多い。ただし同じ方法の予想は2010年代の米国株を大きく低く見積もってきた（BNY 2016: 7.1%→実際13.4%）。")
+        f"米国大型は過去100年の平均（約10%）よりかなり低く、米国外のほうを高く見る会社が多い。"
+        + (f"D（20年へ伸ばして費用と税を引いた後）と C の差は主の計算で最大 {abs(100 * detail[max_dc]['D_minus_C']):.2f}pt（{max_dc}）。"
+           if max_dc else '')
+        + (f"ただし読み方を変えると（5年の予想を外す・Fidelity を算術と見る・2026年公表だけ など）、米国大型の中央値は "
+           f"{min([usl['median_pct']] + [usl_s[nm] for nm in rd_names if usl_s.get(nm) is not None]):.1f}〜"
+           f"{max([usl['median_pct']] + [usl_s[nm] for nm in rd_names if usl_s.get(nm) is not None]):.1f}% まで動き、"
+           f"VOO の D は {100 * voo['reading']['min']:.2f}〜{100 * voo['reading']['max']:.2f}% になる。" if voo.get('reading') else '')
+        + "同じ方法の予想は2010年代の米国株を大きく低く見積もってきた（BNY 2016: 7.1%→実際13.4%）。")
     json.dump(out, open(OUT, 'w'), ensure_ascii=False, indent=1)
     print(json.dumps({k: out[k] for k in ('summary_ja',)}, ensure_ascii=False, indent=1))
     for k in KEYS:

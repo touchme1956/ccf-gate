@@ -10,7 +10,7 @@
   "infl_for_real": 0.025,
   "main_editions": "2026年版と名乗る版、または2026年に公表された版（Goldman Sachs は感度だけ）",
   "conversions": "実質だけ→(1+r)(1.025)−1（GMO・2つの金利の中点）／算術→算術−σ²/2（State Street）／幅→中点（Vanguard）／他通貨は換算しない",
-  "currency_priority": "ドル建ての値が5社以上ある種類はドル建てだけ。足りない種類だけ現地通貨も入れる。今回 D を作った種類はすべてドル建てだけで5社以上あった"
+  "currency_priority": "中央値はドル建ての値だけで作る（事前登録「名目ドル」）。ドル建てが5社に届かない種類は D＝C。現地通貨の値も混ぜた中央値は D_by_key[].ref_with_local_pct に参考として残す（D には使わない）。2026-10-12 の直し: 以前の版は「ドル建てが5社未満なら現地通貨も混ぜて D を作る」形だった（主の計算ではどの種類にも起きず、感度でだけ起きていた）"
  },
  "houses": [
   {
@@ -1472,7 +1472,7 @@
    "data_asof": "2026-03-31",
    "horizon": "10年（20年も併記）",
    "H_years": 10,
-   "basis": "名目・\"Average expected returns\" p.a.（幾何か算術かは明記なし）",
+   "basis": "名目・\"Average expected returns\" p.a.（幾何か算術かは明記なし → 主は原本の数字のまま・感度 S_fidi_arith で算術と見て 算術−σ²/2 へ。σ は同じ報告 p.11 の \"Volatility assumptions (average)\"（USD・2003-09〜2025-09 の月次の実績から）: DM equities 15.3%・EM equities 20.2%。米国株の σ は表に無いので DM equities（MSCI World）で代える）",
    "currency": "USD",
    "in_main": true,
    "main_why": "2026年に公表",
@@ -1481,7 +1481,9 @@
     "USL": {
      "label": "US Equities",
      "raw": {
-      "x": 6.4
+      "x": 6.4,
+      "sd": 15.3,
+      "sd_src": "p.11 Volatility assumptions の DM equities（米国株の σ は無い → 代用）"
      },
      "currency": "USD",
      "nominal_geo_pct": 6.4,
@@ -1491,7 +1493,9 @@
     "EM": {
      "label": "Emerging Markets Equities",
      "raw": {
-      "x": 8.0
+      "x": 8.0,
+      "sd": 20.2,
+      "sd_src": "p.11 Volatility assumptions の EM equities"
      },
      "currency": "USD",
      "nominal_geo_pct": 8.0,
@@ -1658,7 +1662,7 @@
    "ja": "米国大型",
    "n": 15,
    "made": true,
-   "basis": "ドル建てだけ（5社以上ある）",
+   "basis": "ドル建てだけ（5社以上）",
    "n_all_currencies": 15,
    "n_usd": 15,
    "local_currency_values_not_used": [],
@@ -1701,13 +1705,14 @@
    "min_pct": -3.5,
    "max_pct": 8.97,
    "n_local_currency": 0,
+   "ref_with_local_pct": null,
    "note": null
   },
   "USS": {
    "ja": "米国小型",
    "n": 12,
    "made": true,
-   "basis": "ドル建てだけ（5社以上ある）",
+   "basis": "ドル建てだけ（5社以上）",
    "n_all_currencies": 12,
    "n_usd": 12,
    "local_currency_values_not_used": [],
@@ -1744,13 +1749,14 @@
    "min_pct": -1.91,
    "max_pct": 7.58,
    "n_local_currency": 0,
+   "ref_with_local_pct": null,
    "note": null
   },
   "USV": {
    "ja": "米国バリュー",
    "n": 5,
    "made": true,
-   "basis": "ドル建てだけ（5社以上ある）",
+   "basis": "ドル建てだけ（5社以上）",
    "n_all_currencies": 5,
    "n_usd": 5,
    "local_currency_values_not_used": [],
@@ -1773,13 +1779,14 @@
    "min_pct": 2.76,
    "max_pct": 7.7,
    "n_local_currency": 0,
+   "ref_with_local_pct": null,
    "note": null
   },
   "USG": {
    "ja": "米国グロース",
    "n": 3,
    "made": false,
-   "basis": "すべて",
+   "basis": "ドル建てだけ（5社未満 → D＝C）",
    "n_all_currencies": 3,
    "n_usd": 3,
    "local_currency_values_not_used": [],
@@ -1798,13 +1805,14 @@
    "min_pct": 1.78,
    "max_pct": 8.0,
    "n_local_currency": 0,
-   "note": "5社に届かない → この種類に割り当てた本は D＝C（事前登録）"
+   "ref_with_local_pct": null,
+   "note": "ドル建ての値が5社に届かない → この種類に割り当てた本は D＝C（事前登録）"
   },
   "EAFE": {
    "ja": "先進国（米国除く）",
    "n": 8,
    "made": true,
-   "basis": "ドル建てだけ（5社以上ある）",
+   "basis": "ドル建てだけ（5社以上）",
    "n_all_currencies": 11,
    "n_usd": 8,
    "local_currency_values_not_used": [
@@ -1846,13 +1854,18 @@
    "min_pct": 5.5,
    "max_pct": 7.87,
    "n_local_currency": 0,
+   "ref_with_local_pct": {
+    "n": 11,
+    "median": 7.1,
+    "note": "現地通貨の値も混ぜた参考（名目ドルではない値を含む → D には使わない）"
+   },
    "note": null
   },
   "EUR": {
    "ja": "欧州",
    "n": 6,
    "made": true,
-   "basis": "ドル建てだけ（5社以上ある）",
+   "basis": "ドル建てだけ（5社以上）",
    "n_all_currencies": 10,
    "n_usd": 6,
    "local_currency_values_not_used": [
@@ -1894,13 +1907,18 @@
    "min_pct": 7.2,
    "max_pct": 8.1,
    "n_local_currency": 0,
+   "ref_with_local_pct": {
+    "n": 10,
+    "median": 7.314,
+    "note": "現地通貨の値も混ぜた参考（名目ドルではない値を含む → D には使わない）"
+   },
    "note": null
   },
   "JP": {
    "ja": "日本",
    "n": 5,
    "made": true,
-   "basis": "ドル建てだけ（5社以上ある）",
+   "basis": "ドル建てだけ（5社以上）",
    "n_all_currencies": 8,
    "n_usd": 5,
    "local_currency_values_not_used": [
@@ -1936,13 +1954,18 @@
    "min_pct": 6.4,
    "max_pct": 8.83,
    "n_local_currency": 0,
+   "ref_with_local_pct": {
+    "n": 8,
+    "median": 7.0,
+    "note": "現地通貨の値も混ぜた参考（名目ドルではない値を含む → D には使わない）"
+   },
    "note": null
   },
   "EM": {
    "ja": "新興国",
    "n": 11,
    "made": true,
-   "basis": "ドル建てだけ（5社以上ある）",
+   "basis": "ドル建てだけ（5社以上）",
    "n_all_currencies": 16,
    "n_usd": 11,
    "local_currency_values_not_used": [
@@ -1998,36 +2021,49 @@
    "min_pct": 3.0,
    "max_pct": 9.9,
    "n_local_currency": 0,
+   "ref_with_local_pct": {
+    "n": 16,
+    "median": 7.25,
+    "note": "現地通貨の値も混ぜた参考（名目ドルではない値を含む → D には使わない）"
+   },
    "note": null
   },
   "IND": {
    "ja": "インド",
-   "n": 2,
+   "n": 1,
    "made": false,
-   "basis": "ドル建て＋現地通貨（ドル建てが5社未満）",
+   "basis": "ドル建てだけ（5社未満 → D＝C）",
    "n_all_currencies": 2,
    "n_usd": 1,
-   "local_currency_values_not_used": [],
+   "local_currency_values_not_used": [
+    [
+     "AMUNDI",
+     7.8
+    ]
+   ],
    "houses": [
-    "AMUNDI",
     "RA"
    ],
    "values_pct": [
-    7.8,
     5.72
    ],
-   "median_pct": 6.76,
-   "H_median": 10.0,
+   "median_pct": 5.72,
+   "H_median": 10,
    "min_pct": 5.72,
-   "max_pct": 7.8,
-   "n_local_currency": 1,
-   "note": "5社に届かない → この種類に割り当てた本は D＝C（事前登録）"
+   "max_pct": 5.72,
+   "n_local_currency": 0,
+   "ref_with_local_pct": {
+    "n": 2,
+    "median": 6.76,
+    "note": "現地通貨の値も混ぜた参考（名目ドルではない値を含む → D には使わない）"
+   },
+   "note": "ドル建ての値が5社に届かない → この種類に割り当てた本は D＝C（事前登録）"
   },
   "CHN": {
    "ja": "中国",
    "n": 5,
    "made": true,
-   "basis": "ドル建てだけ（5社以上ある）",
+   "basis": "ドル建てだけ（5社以上）",
    "n_all_currencies": 7,
    "n_usd": 5,
    "local_currency_values_not_used": [
@@ -2059,13 +2095,18 @@
    "min_pct": 5.8,
    "max_pct": 10.27,
    "n_local_currency": 0,
+   "ref_with_local_pct": {
+    "n": 7,
+    "median": 8.7,
+    "note": "現地通貨の値も混ぜた参考（名目ドルではない値を含む → D には使わない）"
+   },
    "note": null
   },
   "ACWI": {
    "ja": "全世界",
    "n": 6,
    "made": true,
-   "basis": "ドル建てだけ（5社以上ある）",
+   "basis": "ドル建てだけ（5社以上）",
    "n_all_currencies": 10,
    "n_usd": 6,
    "local_currency_values_not_used": [
@@ -2107,36 +2148,49 @@
    "min_pct": 4.75,
    "max_pct": 9.02,
    "n_local_currency": 0,
+   "ref_with_local_pct": {
+    "n": 10,
+    "median": 6.85,
+    "note": "現地通貨の値も混ぜた参考（名目ドルではない値を含む → D には使わない）"
+   },
    "note": null
   },
   "QUALITY": {
    "ja": "質（クオリティ）",
-   "n": 2,
+   "n": 1,
    "made": false,
-   "basis": "ドル建て＋現地通貨（ドル建てが5社未満）",
+   "basis": "ドル建てだけ（5社未満 → D＝C）",
    "n_all_currencies": 2,
    "n_usd": 1,
-   "local_currency_values_not_used": [],
+   "local_currency_values_not_used": [
+    [
+     "SSGA",
+     5.906
+    ]
+   ],
    "houses": [
-    "JPM",
-    "SSGA"
+    "JPM"
    ],
    "values_pct": [
-    6.6,
-    5.906
+    6.6
    ],
-   "median_pct": 6.253,
-   "H_median": 11.25,
-   "min_pct": 5.91,
+   "median_pct": 6.6,
+   "H_median": 12.5,
+   "min_pct": 6.6,
    "max_pct": 6.6,
-   "n_local_currency": 1,
-   "note": "5社に届かない → この種類に割り当てた本は D＝C（事前登録）"
+   "n_local_currency": 0,
+   "ref_with_local_pct": {
+    "n": 2,
+    "median": 6.253,
+    "note": "現地通貨の値も混ぜた参考（名目ドルではない値を含む → D には使わない）"
+   },
+   "note": "ドル建ての値が5社に届かない → この種類に割り当てた本は D＝C（事前登録）"
   },
   "DIV": {
    "ja": "高配当",
    "n": 1,
    "made": false,
-   "basis": "すべて",
+   "basis": "ドル建てだけ（5社未満 → D＝C）",
    "n_all_currencies": 1,
    "n_usd": 1,
    "local_currency_values_not_used": [],
@@ -2151,36 +2205,45 @@
    "min_pct": 7.5,
    "max_pct": 7.5,
    "n_local_currency": 0,
-   "note": "5社に届かない → この種類に割り当てた本は D＝C（事前登録）"
+   "ref_with_local_pct": null,
+   "note": "ドル建ての値が5社に届かない → この種類に割り当てた本は D＝C（事前登録）"
   },
   "MOM": {
    "ja": "勢い（モメンタム）",
-   "n": 2,
+   "n": 1,
    "made": false,
-   "basis": "ドル建て＋現地通貨（ドル建てが5社未満）",
+   "basis": "ドル建てだけ（5社未満 → D＝C）",
    "n_all_currencies": 2,
    "n_usd": 1,
-   "local_currency_values_not_used": [],
+   "local_currency_values_not_used": [
+    [
+     "SSGA",
+     6.483
+    ]
+   ],
    "houses": [
-    "JPM",
-    "SSGA"
+    "JPM"
    ],
    "values_pct": [
-    7.6,
-    6.483
+    7.6
    ],
-   "median_pct": 7.042,
-   "H_median": 11.25,
-   "min_pct": 6.48,
+   "median_pct": 7.6,
+   "H_median": 12.5,
+   "min_pct": 7.6,
    "max_pct": 7.6,
-   "n_local_currency": 1,
-   "note": "5社に届かない → この種類に割り当てた本は D＝C（事前登録）"
+   "n_local_currency": 0,
+   "ref_with_local_pct": {
+    "n": 2,
+    "median": 7.042,
+    "note": "現地通貨の値も混ぜた参考（名目ドルではない値を含む → D には使わない）"
+   },
+   "note": "ドル建ての値が5社に届かない → この種類に割り当てた本は D＝C（事前登録）"
   },
   "SEC_TECH": {
    "ja": "テクノロジー",
    "n": 0,
    "made": false,
-   "basis": "すべて",
+   "basis": "ドル建てだけ（5社未満 → D＝C）",
    "n_all_currencies": 0,
    "n_usd": 0,
    "local_currency_values_not_used": [],
@@ -2191,13 +2254,14 @@
    "min_pct": null,
    "max_pct": null,
    "n_local_currency": 0,
+   "ref_with_local_pct": null,
    "note": "数字を出す会社が見つからない"
   },
   "SEC_SEMI": {
    "ja": "半導体",
    "n": 0,
    "made": false,
-   "basis": "すべて",
+   "basis": "ドル建てだけ（5社未満 → D＝C）",
    "n_all_currencies": 0,
    "n_usd": 0,
    "local_currency_values_not_used": [],
@@ -2208,13 +2272,14 @@
    "min_pct": null,
    "max_pct": null,
    "n_local_currency": 0,
+   "ref_with_local_pct": null,
    "note": "数字を出す会社が見つからない"
   },
   "SEC_IND": {
    "ja": "資本財",
    "n": 0,
    "made": false,
-   "basis": "すべて",
+   "basis": "ドル建てだけ（5社未満 → D＝C）",
    "n_all_currencies": 0,
    "n_usd": 0,
    "local_currency_values_not_used": [],
@@ -2225,13 +2290,14 @@
    "min_pct": null,
    "max_pct": null,
    "n_local_currency": 0,
+   "ref_with_local_pct": null,
    "note": "数字を出す会社が見つからない"
   },
   "SEC_FIN": {
    "ja": "金融",
    "n": 0,
    "made": false,
-   "basis": "すべて",
+   "basis": "ドル建てだけ（5社未満 → D＝C）",
    "n_all_currencies": 0,
    "n_usd": 0,
    "local_currency_values_not_used": [],
@@ -2242,13 +2308,14 @@
    "min_pct": null,
    "max_pct": null,
    "n_local_currency": 0,
+   "ref_with_local_pct": null,
    "note": "数字を出す会社が見つからない"
   },
   "SEC_UTIL": {
    "ja": "公益",
    "n": 0,
    "made": false,
-   "basis": "すべて",
+   "basis": "ドル建てだけ（5社未満 → D＝C）",
    "n_all_currencies": 0,
    "n_usd": 0,
    "local_currency_values_not_used": [],
@@ -2259,13 +2326,14 @@
    "min_pct": null,
    "max_pct": null,
    "n_local_currency": 0,
+   "ref_with_local_pct": null,
    "note": "数字を出す会社が見つからない"
   },
   "SEC_ENERGY": {
    "ja": "エネルギー",
    "n": 0,
    "made": false,
-   "basis": "すべて",
+   "basis": "ドル建てだけ（5社未満 → D＝C）",
    "n_all_currencies": 0,
    "n_usd": 0,
    "local_currency_values_not_used": [],
@@ -2276,13 +2344,14 @@
    "min_pct": null,
    "max_pct": null,
    "n_local_currency": 0,
+   "ref_with_local_pct": null,
    "note": "数字を出す会社が見つからない"
   },
   "SEC_HEALTH": {
    "ja": "ヘルスケア",
    "n": 0,
    "made": false,
-   "basis": "すべて",
+   "basis": "ドル建てだけ（5社未満 → D＝C）",
    "n_all_currencies": 0,
    "n_usd": 0,
    "local_currency_values_not_used": [],
@@ -2293,6 +2362,7 @@
    "min_pct": null,
    "max_pct": null,
    "n_local_currency": 0,
+   "ref_with_local_pct": null,
    "note": "数字を出す会社が見つからない"
   }
  },
@@ -2303,6 +2373,7 @@
   "VWO": "EM",
   "TOPIX": "JP",
   "EPI": "IND",
+  "EPI_LONG": "IND",
   "QQQM": "USL",
   "VUG": "USL",
   "XLK": "USL",
@@ -2331,6 +2402,7 @@
  },
  "D_map_note": {
   "EPI": "JPM_MAP はアジア（日本除く）。D ではインドの種類（2社しかない → C と同じ）",
+  "EPI_LONG": "R7 の EPI の代理つなぎ版（night/bestpf_ext.py）。EPI と同じくインド（2社しかない → C と同じ）",
   "QQQM": "米国グロースの種類は3社（Vanguard 4.6・RA 1.78・BNY 8.0）で5社に届かない → JPM_MAP と同じく米国大型",
   "VUG": "同上（米国グロース 3社）",
   "XLK": "業種の予想は見つからない → 米国大型（JPM_MAP と同じ）",
@@ -2429,7 +2501,15 @@
    "D_made": false,
    "D_net": 0.07124,
    "C_net": 0.07124,
-   "note": "JPM_MAP はアジア（日本除く）。D ではインドの種類（2社しかない → C と同じ）・インドは 2 社で5社未満 → D＝C（事前登録）"
+   "note": "JPM_MAP はアジア（日本除く）。D ではインドの種類（2社しかない → C と同じ）・インドは 1 社で5社未満 → D＝C（事前登録）"
+  },
+  "EPI_LONG": {
+   "ticker": "EPI_LONG",
+   "key": "IND",
+   "D_made": false,
+   "D_net": 0.07124,
+   "C_net": 0.07124,
+   "note": "R7 の EPI の代理つなぎ版（night/bestpf_ext.py）。EPI と同じくインド（2社しかない → C と同じ）・インドは 1 社で5社未満 → D＝C（事前登録）"
   },
   "QQQM": {
    "ticker": "QQQM",
@@ -2632,7 +2712,7 @@
    "D_made": false,
    "D_net": 0.07229,
    "C_net": 0.07229,
-   "note": "質は2社 → C と同じ・質（クオリティ）は 2 社で5社未満 → D＝C（事前登録）"
+   "note": "質は2社 → C と同じ・質（クオリティ）は 1 社で5社未満 → D＝C（事前登録）"
   },
   "MOAT": {
    "ticker": "MOAT",
@@ -2640,7 +2720,7 @@
    "D_made": false,
    "D_net": 0.0684,
    "C_net": 0.0684,
-   "note": "質は2社 → C と同じ・質（クオリティ）は 2 社で5社未満 → D＝C（事前登録）"
+   "note": "質は2社 → C と同じ・質（クオリティ）は 1 社で5社未満 → D＝C（事前登録）"
   },
   "VYM": {
    "ticker": "VYM",
@@ -2689,15 +2769,17 @@
    "ticker": "MTUM",
    "key": "MOM",
    "D_made": false,
-   "pending": true,
-   "note": "勢いは2社（JPM 7.6・SSGA 世界）→ C と同じ・5社未満 → D＝C（R7 の C を使う）"
+   "D_net": 0.07596,
+   "C_net": 0.07596,
+   "note": "勢いは2社（JPM 7.6・SSGA 世界）→ C と同じ・勢い（モメンタム）は 1 社で5社未満 → D＝C（事前登録）"
   },
   "QUAL": {
    "ticker": "QUAL",
    "key": "QUALITY",
    "D_made": false,
-   "pending": true,
-   "note": "質は2社（JPM・SSGA 世界）→ C と同じ・5社未満 → D＝C（R7 の C を使う）"
+   "D_net": 0.07153,
+   "C_net": 0.07153,
+   "note": "質は2社（JPM・SSGA 世界）→ C と同じ・質（クオリティ）は 1 社で5社未満 → D＝C（事前登録）"
   },
   "XLI": {
    "ticker": "XLI",
@@ -2705,8 +2787,14 @@
    "D_made": true,
    "cma": 0.063,
    "H": 10,
-   "pending": true,
-   "note": "この本の B・経費率・外国税（R7 の行）がまだ無い → D_net は未計算。D_net=(H×cma+(20−H)×B_gross)/20−er−tax"
+   "B_gross": 0.08042,
+   "D_gross": 0.07171,
+   "er": 0.0008,
+   "tax": 0.0011,
+   "D_net": 0.06981,
+   "C_net": 0.07013,
+   "D_minus_C": -0.00032,
+   "note": "業種の予想は無い → 米国大型"
   },
   "XLF": {
    "ticker": "XLF",
@@ -2714,8 +2802,14 @@
    "D_made": true,
    "cma": 0.063,
    "H": 10,
-   "pending": true,
-   "note": "この本の B・経費率・外国税（R7 の行）がまだ無い → D_net は未計算。D_net=(H×cma+(20−H)×B_gross)/20−er−tax"
+   "B_gross": 0.07995,
+   "D_gross": 0.07148,
+   "er": 0.0008,
+   "tax": 0.0014,
+   "D_net": 0.06928,
+   "C_net": 0.06966,
+   "D_minus_C": -0.00038,
+   "note": "業種の予想は無い → 米国大型"
   },
   "XLY": {
    "ticker": "XLY",
@@ -2723,8 +2817,14 @@
    "D_made": true,
    "cma": 0.063,
    "H": 10,
-   "pending": true,
-   "note": "この本の B・経費率・外国税（R7 の行）がまだ無い → D_net は未計算。D_net=(H×cma+(20−H)×B_gross)/20−er−tax"
+   "B_gross": 0.08341,
+   "D_gross": 0.07321,
+   "er": 0.0008,
+   "tax": 0.0009,
+   "D_net": 0.07151,
+   "C_net": 0.07146,
+   "D_minus_C": 5e-05,
+   "note": "業種の予想は無い → 米国大型"
   },
   "GRID": {
    "ticker": "GRID",
@@ -2732,8 +2832,14 @@
    "D_made": true,
    "cma": 0.069,
    "H": 10.0,
-   "pending": true,
-   "note": "この本の B・経費率・外国税（R7 の行）がまだ無い → D_net は未計算。D_net=(H×cma+(20−H)×B_gross)/20−er−tax"
+   "B_gross": 0.08236,
+   "D_gross": 0.07568,
+   "er": 0.0056,
+   "tax": 0.0013,
+   "D_net": 0.06878,
+   "C_net": 0.0686,
+   "D_minus_C": 0.00018,
+   "note": "送電・電化の世界株（米国が過半）。業種の予想は無い → 全世界（JPM_MAP に行は無い）"
   }
  },
  "D_net_by_asset": {
@@ -2743,6 +2849,7 @@
   "VWO": 0.0752,
   "TOPIX": 0.08278,
   "EPI": 0.07124,
+  "EPI_LONG": 0.07124,
   "QQQM": 0.071504,
   "VUG": 0.070346,
   "XLK": 0.072497,
@@ -2760,7 +2867,13 @@
   "MOAT": 0.068403,
   "VYM": 0.077195,
   "PXF": 0.0731,
-  "DEM": 0.072361
+  "DEM": 0.072361,
+  "MTUM": 0.075964,
+  "QUAL": 0.071528,
+  "XLI": 0.069811,
+  "XLF": 0.069276,
+  "XLY": 0.071507,
+  "GRID": 0.068778
  },
  "D_inputs_by_key": {
   "USL": {
@@ -2800,622 +2913,1359 @@
    "H": 10.0
   }
  },
- "rows_source": "night/etf_forward_rank.py の main(write=False)[\"rows\"]",
+ "rows_source": "night/etf_forward_rank.py の main(write=False)[\"rows\"] ＋ night/bestpf_ext.py の rank_result()（足した本: MTUM・QUAL・XLI・XLF・XLY・EPI_LONG・GRID）",
  "sensitivity": {
   "S_all_currency": {
-   "why": "ドル建てを優先せず、現地通貨の値（米国外を現地通貨で出す NT・Amundi・AQR・SSGA・GMO）も混ぜる",
+   "why": "参考（事前登録の外）: ドル建てに限らず、現地通貨の値（米国外を現地通貨で出す NT・Amundi・AQR・SSGA・GMO）も混ぜる",
+   "cls": "reference",
    "by_key": {
     "USL": {
      "n": 15,
      "made": true,
      "median": 6.3,
-     "H": 10
+     "H": 10,
+     "ref_with_local": null
     },
     "USS": {
      "n": 12,
      "made": true,
      "median": 6.6,
-     "H": 10.0
+     "H": 10.0,
+     "ref_with_local": null
     },
     "USV": {
      "n": 5,
      "made": true,
      "median": 6.9,
-     "H": 10
+     "H": 10,
+     "ref_with_local": null
     },
     "USG": {
      "n": 3,
      "made": false,
      "median": 4.6,
-     "H": 10
+     "H": 10,
+     "ref_with_local": null
     },
     "EAFE": {
      "n": 11,
      "made": true,
      "median": 7.1,
-     "H": 10
+     "H": 10,
+     "ref_with_local": null
     },
     "EUR": {
      "n": 10,
      "made": true,
      "median": 7.314,
-     "H": 10.0
+     "H": 10.0,
+     "ref_with_local": null
     },
     "JP": {
      "n": 8,
      "made": true,
      "median": 7.0,
-     "H": 10.0
+     "H": 10.0,
+     "ref_with_local": null
     },
     "EM": {
      "n": 16,
      "made": true,
      "median": 7.25,
-     "H": 10.0
+     "H": 10.0,
+     "ref_with_local": null
     },
     "IND": {
      "n": 2,
      "made": false,
      "median": 6.76,
-     "H": 10.0
+     "H": 10.0,
+     "ref_with_local": null
     },
     "CHN": {
      "n": 7,
      "made": true,
      "median": 8.7,
-     "H": 10
+     "H": 10,
+     "ref_with_local": null
     },
     "ACWI": {
      "n": 10,
      "made": true,
      "median": 6.85,
-     "H": 10.0
+     "H": 10.0,
+     "ref_with_local": null
     },
     "QUALITY": {
      "n": 2,
      "made": false,
      "median": 6.253,
-     "H": 11.25
+     "H": 11.25,
+     "ref_with_local": null
     },
     "DIV": {
      "n": 1,
      "made": false,
      "median": 7.5,
-     "H": 12.5
+     "H": 12.5,
+     "ref_with_local": null
     },
     "MOM": {
      "n": 2,
      "made": false,
      "median": 7.042,
-     "H": 11.25
-    }
-   }
-  },
-  "S_with_GS": {
-   "why": "Goldman Sachs（2025-11-12）を足す",
-   "by_key": {
-    "USL": {
-     "n": 16,
-     "made": true,
-     "median": 6.35,
-     "H": 10.0
-    },
-    "USS": {
-     "n": 12,
-     "made": true,
-     "median": 6.6,
-     "H": 10.0
-    },
-    "USV": {
-     "n": 5,
-     "made": true,
-     "median": 6.9,
-     "H": 10
-    },
-    "USG": {
-     "n": 3,
-     "made": false,
-     "median": 4.6,
-     "H": 10
-    },
-    "EAFE": {
-     "n": 8,
-     "made": true,
-     "median": 7.5,
-     "H": 10.0
-    },
-    "EUR": {
-     "n": 6,
-     "made": true,
-     "median": 7.63,
-     "H": 10.0
-    },
-    "JP": {
-     "n": 5,
-     "made": true,
-     "median": 8.6,
-     "H": 10
-    },
-    "EM": {
-     "n": 11,
-     "made": true,
-     "median": 8.0,
-     "H": 10
-    },
-    "IND": {
-     "n": 2,
-     "made": false,
-     "median": 6.76,
-     "H": 10.0
-    },
-    "CHN": {
-     "n": 5,
-     "made": true,
-     "median": 8.7,
-     "H": 10
-    },
-    "ACWI": {
-     "n": 7,
-     "made": true,
-     "median": 7.0,
-     "H": 10
-    },
-    "QUALITY": {
-     "n": 2,
-     "made": false,
-     "median": 6.253,
-     "H": 11.25
-    },
-    "DIV": {
-     "n": 1,
-     "made": false,
-     "median": 7.5,
-     "H": 12.5
-    },
-    "MOM": {
-     "n": 2,
-     "made": false,
-     "median": 7.042,
-     "H": 11.25
-    }
-   }
-  },
-  "S_no_GMO": {
-   "why": "いちばん低い GMO を外す",
-   "by_key": {
-    "USL": {
-     "n": 14,
-     "made": true,
-     "median": 6.35,
-     "H": 10.0
-    },
-    "USS": {
-     "n": 11,
-     "made": true,
-     "median": 6.9,
-     "H": 10
-    },
-    "USV": {
-     "n": 4,
-     "made": false,
-     "median": 7.15,
-     "H": 10.0
-    },
-    "USG": {
-     "n": 3,
-     "made": false,
-     "median": 4.6,
-     "H": 10
-    },
-    "EAFE": {
-     "n": 8,
-     "made": true,
-     "median": 7.5,
-     "H": 10.0
-    },
-    "EUR": {
-     "n": 6,
-     "made": true,
-     "median": 7.63,
-     "H": 10.0
-    },
-    "JP": {
-     "n": 5,
-     "made": true,
-     "median": 8.6,
-     "H": 10
-    },
-    "EM": {
-     "n": 11,
-     "made": true,
-     "median": 8.0,
-     "H": 10
-    },
-    "IND": {
-     "n": 2,
-     "made": false,
-     "median": 6.76,
-     "H": 10.0
-    },
-    "CHN": {
-     "n": 5,
-     "made": true,
-     "median": 8.7,
-     "H": 10
-    },
-    "ACWI": {
-     "n": 6,
-     "made": true,
-     "median": 6.9,
-     "H": 10.0
-    },
-    "QUALITY": {
-     "n": 2,
-     "made": false,
-     "median": 6.253,
-     "H": 11.25
-    },
-    "DIV": {
-     "n": 1,
-     "made": false,
-     "median": 7.5,
-     "H": 12.5
-    },
-    "MOM": {
-     "n": 2,
-     "made": false,
-     "median": 7.042,
-     "H": 11.25
-    }
-   }
-  },
-  "S_strict_2026_pub": {
-   "why": "2026年に公表された版だけ（JPM 2026 LTCMA は2025-10公表 → 外す）",
-   "by_key": {
-    "USL": {
-     "n": 14,
-     "made": true,
-     "median": 6.1,
-     "H": 10.0
-    },
-    "USS": {
-     "n": 11,
-     "made": true,
-     "median": 6.3,
-     "H": 10
-    },
-    "USV": {
-     "n": 4,
-     "made": false,
-     "median": 5.375,
-     "H": 10.0
-    },
-    "USG": {
-     "n": 3,
-     "made": false,
-     "median": 4.6,
-     "H": 10
-    },
-    "EAFE": {
-     "n": 7,
-     "made": true,
-     "median": 7.5,
-     "H": 10
-    },
-    "EUR": {
-     "n": 5,
-     "made": true,
-     "median": 7.46,
-     "H": 10
-    },
-    "JP": {
-     "n": 7,
-     "made": true,
-     "median": 6.7,
-     "H": 10
-    },
-    "EM": {
-     "n": 10,
-     "made": true,
-     "median": 8.05,
-     "H": 10.0
-    },
-    "IND": {
-     "n": 2,
-     "made": false,
-     "median": 6.76,
-     "H": 10.0
-    },
-    "CHN": {
-     "n": 6,
-     "made": true,
-     "median": 8.845,
-     "H": 10.0
-    },
-    "ACWI": {
-     "n": 5,
-     "made": true,
-     "median": 6.8,
-     "H": 10
-    },
-    "QUALITY": {
-     "n": 1,
-     "made": false,
-     "median": 5.906,
-     "H": 10
-    },
-    "MOM": {
-     "n": 1,
-     "made": false,
-     "median": 6.483,
-     "H": 10
-    }
-   }
-  },
-  "S_no_approx": {
-   "why": "近い読み替え（GMO の Deep Value＝バリュー・SSGA の世界の質/勢い）を外す",
-   "by_key": {
-    "USL": {
-     "n": 15,
-     "made": true,
-     "median": 6.3,
-     "H": 10
-    },
-    "USS": {
-     "n": 12,
-     "made": true,
-     "median": 6.6,
-     "H": 10.0
-    },
-    "USV": {
-     "n": 4,
-     "made": false,
-     "median": 7.15,
-     "H": 10.0
-    },
-    "USG": {
-     "n": 3,
-     "made": false,
-     "median": 4.6,
-     "H": 10
-    },
-    "EAFE": {
-     "n": 8,
-     "made": true,
-     "median": 7.5,
-     "H": 10.0
-    },
-    "EUR": {
-     "n": 6,
-     "made": true,
-     "median": 7.63,
-     "H": 10.0
-    },
-    "JP": {
-     "n": 5,
-     "made": true,
-     "median": 8.6,
-     "H": 10
-    },
-    "EM": {
-     "n": 11,
-     "made": true,
-     "median": 8.0,
-     "H": 10
-    },
-    "IND": {
-     "n": 2,
-     "made": false,
-     "median": 6.76,
-     "H": 10.0
-    },
-    "CHN": {
-     "n": 5,
-     "made": true,
-     "median": 8.7,
-     "H": 10
-    },
-    "ACWI": {
-     "n": 6,
-     "made": true,
-     "median": 6.9,
-     "H": 10.0
-    },
-    "QUALITY": {
-     "n": 1,
-     "made": false,
-     "median": 6.6,
-     "H": 12.5
-    },
-    "DIV": {
-     "n": 1,
-     "made": false,
-     "median": 7.5,
-     "H": 12.5
-    },
-    "MOM": {
-     "n": 1,
-     "made": false,
-     "median": 7.6,
-     "H": 12.5
+     "H": 11.25,
+     "ref_with_local": null
     }
    }
   },
   "S_ssga_arith_raw": {
-   "why": "State Street の算術平均を複利へ直さずそのまま",
+   "why": "参考（事前登録の外＝複利でない）: State Street の算術平均を複利へ直さずそのまま",
+   "cls": "reference",
    "by_key": {
     "USL": {
      "n": 15,
      "made": true,
      "median": 6.4,
-     "H": 10
+     "H": 10,
+     "ref_with_local": null
     },
     "USS": {
      "n": 12,
      "made": true,
      "median": 6.95,
-     "H": 10.0
+     "H": 10.0,
+     "ref_with_local": null
     },
     "USV": {
      "n": 5,
      "made": true,
      "median": 6.9,
-     "H": 10
+     "H": 10,
+     "ref_with_local": null
     },
     "USG": {
      "n": 3,
      "made": false,
      "median": 4.6,
-     "H": 10
+     "H": 10,
+     "ref_with_local": null
     },
     "EAFE": {
      "n": 8,
      "made": true,
      "median": 7.5,
-     "H": 10.0
+     "H": 10.0,
+     "ref_with_local": {
+      "n": 11,
+      "median": 7.1
+     }
     },
     "EUR": {
      "n": 6,
      "made": true,
      "median": 7.63,
-     "H": 10.0
+     "H": 10.0,
+     "ref_with_local": {
+      "n": 10,
+      "median": 7.314
+     }
     },
     "JP": {
      "n": 5,
      "made": true,
      "median": 8.6,
-     "H": 10
+     "H": 10,
+     "ref_with_local": {
+      "n": 8,
+      "median": 7.0
+     }
     },
     "EM": {
      "n": 11,
      "made": true,
      "median": 8.0,
-     "H": 10
+     "H": 10,
+     "ref_with_local": {
+      "n": 16,
+      "median": 7.3
+     }
     },
     "IND": {
-     "n": 2,
+     "n": 1,
      "made": false,
-     "median": 6.76,
-     "H": 10.0
+     "median": 5.72,
+     "H": 10,
+     "ref_with_local": {
+      "n": 2,
+      "median": 6.76
+     }
     },
     "CHN": {
      "n": 5,
      "made": true,
      "median": 8.7,
-     "H": 10
+     "H": 10,
+     "ref_with_local": {
+      "n": 7,
+      "median": 8.7
+     }
     },
     "ACWI": {
      "n": 6,
      "made": true,
      "median": 6.9,
-     "H": 10.0
+     "H": 10.0,
+     "ref_with_local": {
+      "n": 10,
+      "median": 6.85
+     }
     },
     "QUALITY": {
-     "n": 2,
+     "n": 1,
      "made": false,
-     "median": 6.75,
-     "H": 11.25
+     "median": 6.6,
+     "H": 12.5,
+     "ref_with_local": {
+      "n": 2,
+      "median": 6.75
+     }
     },
     "DIV": {
      "n": 1,
      "made": false,
      "median": 7.5,
-     "H": 12.5
+     "H": 12.5,
+     "ref_with_local": null
     },
     "MOM": {
-     "n": 2,
+     "n": 1,
      "made": false,
-     "median": 7.65,
-     "H": 11.25
+     "median": 7.6,
+     "H": 12.5,
+     "ref_with_local": {
+      "n": 2,
+      "median": 7.65
+     }
     }
    }
   },
-  "S_aqr_real_plus25": {
-   "why": "AQR を実質＋2.5%（事前登録の換算）で",
+  "S_with_GS": {
+   "why": "Goldman Sachs（2025-11-12）を足す",
+   "cls": "reading",
    "by_key": {
     "USL": {
-     "n": 15,
+     "n": 16,
      "made": true,
-     "median": 6.4,
-     "H": 10
+     "median": 6.35,
+     "H": 10.0,
+     "ref_with_local": null
     },
     "USS": {
      "n": 12,
      "made": true,
      "median": 6.6,
-     "H": 10.0
+     "H": 10.0,
+     "ref_with_local": null
     },
     "USV": {
      "n": 5,
      "made": true,
      "median": 6.9,
-     "H": 10
+     "H": 10,
+     "ref_with_local": null
     },
     "USG": {
      "n": 3,
      "made": false,
      "median": 4.6,
-     "H": 10
+     "H": 10,
+     "ref_with_local": null
     },
     "EAFE": {
      "n": 8,
      "made": true,
      "median": 7.5,
-     "H": 10.0
+     "H": 10.0,
+     "ref_with_local": {
+      "n": 11,
+      "median": 7.1
+     }
     },
     "EUR": {
      "n": 6,
      "made": true,
      "median": 7.63,
-     "H": 10.0
+     "H": 10.0,
+     "ref_with_local": {
+      "n": 11,
+      "median": 7.2
+     }
     },
     "JP": {
      "n": 5,
      "made": true,
      "median": 8.6,
-     "H": 10
+     "H": 10,
+     "ref_with_local": {
+      "n": 9,
+      "median": 7.3
+     }
     },
     "EM": {
      "n": 11,
      "made": true,
      "median": 8.0,
-     "H": 10
+     "H": 10,
+     "ref_with_local": {
+      "n": 17,
+      "median": 7.4
+     }
     },
     "IND": {
-     "n": 2,
+     "n": 1,
      "made": false,
-     "median": 6.76,
-     "H": 10.0
+     "median": 5.72,
+     "H": 10,
+     "ref_with_local": {
+      "n": 2,
+      "median": 6.76
+     }
     },
     "CHN": {
      "n": 5,
      "made": true,
      "median": 8.7,
-     "H": 10
+     "H": 10,
+     "ref_with_local": {
+      "n": 7,
+      "median": 8.7
+     }
     },
     "ACWI": {
-     "n": 6,
+     "n": 7,
      "made": true,
-     "median": 6.9,
-     "H": 10.0
+     "median": 7.0,
+     "H": 10,
+     "ref_with_local": {
+      "n": 11,
+      "median": 6.9
+     }
     },
     "QUALITY": {
-     "n": 2,
+     "n": 1,
      "made": false,
-     "median": 6.253,
-     "H": 11.25
+     "median": 6.6,
+     "H": 12.5,
+     "ref_with_local": {
+      "n": 2,
+      "median": 6.253
+     }
     },
     "DIV": {
      "n": 1,
      "made": false,
      "median": 7.5,
-     "H": 12.5
+     "H": 12.5,
+     "ref_with_local": null
     },
     "MOM": {
-     "n": 2,
+     "n": 1,
      "made": false,
-     "median": 7.042,
-     "H": 11.25
+     "median": 7.6,
+     "H": 12.5,
+     "ref_with_local": {
+      "n": 2,
+      "median": 7.042
+     }
+    }
+   }
+  },
+  "S_no_GMO": {
+   "why": "いちばん低い GMO を外す",
+   "cls": "reading",
+   "by_key": {
+    "USL": {
+     "n": 14,
+     "made": true,
+     "median": 6.35,
+     "H": 10.0,
+     "ref_with_local": null
+    },
+    "USS": {
+     "n": 11,
+     "made": true,
+     "median": 6.9,
+     "H": 10,
+     "ref_with_local": null
+    },
+    "USV": {
+     "n": 4,
+     "made": false,
+     "median": 7.15,
+     "H": 10.0,
+     "ref_with_local": null
+    },
+    "USG": {
+     "n": 3,
+     "made": false,
+     "median": 4.6,
+     "H": 10,
+     "ref_with_local": null
+    },
+    "EAFE": {
+     "n": 8,
+     "made": true,
+     "median": 7.5,
+     "H": 10.0,
+     "ref_with_local": {
+      "n": 10,
+      "median": 7.3
+     }
+    },
+    "EUR": {
+     "n": 6,
+     "made": true,
+     "median": 7.63,
+     "H": 10.0,
+     "ref_with_local": {
+      "n": 10,
+      "median": 7.314
+     }
+    },
+    "JP": {
+     "n": 5,
+     "made": true,
+     "median": 8.6,
+     "H": 10,
+     "ref_with_local": {
+      "n": 8,
+      "median": 7.0
+     }
+    },
+    "EM": {
+     "n": 11,
+     "made": true,
+     "median": 8.0,
+     "H": 10,
+     "ref_with_local": {
+      "n": 15,
+      "median": 7.4
+     }
+    },
+    "IND": {
+     "n": 1,
+     "made": false,
+     "median": 5.72,
+     "H": 10,
+     "ref_with_local": {
+      "n": 2,
+      "median": 6.76
+     }
+    },
+    "CHN": {
+     "n": 5,
+     "made": true,
+     "median": 8.7,
+     "H": 10,
+     "ref_with_local": {
+      "n": 7,
+      "median": 8.7
+     }
+    },
+    "ACWI": {
+     "n": 6,
+     "made": true,
+     "median": 6.9,
+     "H": 10.0,
+     "ref_with_local": {
+      "n": 10,
+      "median": 6.85
+     }
+    },
+    "QUALITY": {
+     "n": 1,
+     "made": false,
+     "median": 6.6,
+     "H": 12.5,
+     "ref_with_local": {
+      "n": 2,
+      "median": 6.253
+     }
+    },
+    "DIV": {
+     "n": 1,
+     "made": false,
+     "median": 7.5,
+     "H": 12.5,
+     "ref_with_local": null
+    },
+    "MOM": {
+     "n": 1,
+     "made": false,
+     "median": 7.6,
+     "H": 12.5,
+     "ref_with_local": {
+      "n": 2,
+      "median": 7.042
+     }
+    }
+   }
+  },
+  "S_strict_2026_pub": {
+   "why": "2026年に公表された版だけ（JPM 2026 LTCMA は2025-10-20 公表・Northern Trust 2026 Edition は表紙に \"RELEASED DECEMBER 2025\" → 2社とも外す）",
+   "cls": "reading",
+   "by_key": {
+    "USL": {
+     "n": 13,
+     "made": true,
+     "median": 5.9,
+     "H": 10,
+     "ref_with_local": null
+    },
+    "USS": {
+     "n": 10,
+     "made": true,
+     "median": 6.1,
+     "H": 10.0,
+     "ref_with_local": null
+    },
+    "USV": {
+     "n": 4,
+     "made": false,
+     "median": 5.375,
+     "H": 10.0,
+     "ref_with_local": null
+    },
+    "USG": {
+     "n": 3,
+     "made": false,
+     "median": 4.6,
+     "H": 10,
+     "ref_with_local": null
+    },
+    "EAFE": {
+     "n": 7,
+     "made": true,
+     "median": 7.5,
+     "H": 10,
+     "ref_with_local": {
+      "n": 10,
+      "median": 7.05
+     }
+    },
+    "EUR": {
+     "n": 5,
+     "made": true,
+     "median": 7.46,
+     "H": 10,
+     "ref_with_local": {
+      "n": 8,
+      "median": 7.314
+     }
+    },
+    "JP": {
+     "n": 4,
+     "made": false,
+     "median": 7.55,
+     "H": 10.0,
+     "ref_with_local": {
+      "n": 6,
+      "median": 6.6
+     }
+    },
+    "EM": {
+     "n": 10,
+     "made": true,
+     "median": 8.05,
+     "H": 10.0,
+     "ref_with_local": {
+      "n": 14,
+      "median": 7.25
+     }
+    },
+    "IND": {
+     "n": 1,
+     "made": false,
+     "median": 5.72,
+     "H": 10,
+     "ref_with_local": {
+      "n": 2,
+      "median": 6.76
+     }
+    },
+    "CHN": {
+     "n": 4,
+     "made": false,
+     "median": 8.845,
+     "H": 10.0,
+     "ref_with_local": {
+      "n": 6,
+      "median": 8.845
+     }
+    },
+    "ACWI": {
+     "n": 5,
+     "made": true,
+     "median": 6.8,
+     "H": 10,
+     "ref_with_local": {
+      "n": 8,
+      "median": 6.65
+     }
+    }
+   }
+  },
+  "S_no_JPM": {
+   "why": "JPM だけ外す（2026-10-12 より前の S_strict_2026_pub と同じ）",
+   "cls": "reading",
+   "by_key": {
+    "USL": {
+     "n": 14,
+     "made": true,
+     "median": 6.1,
+     "H": 10.0,
+     "ref_with_local": null
+    },
+    "USS": {
+     "n": 11,
+     "made": true,
+     "median": 6.3,
+     "H": 10,
+     "ref_with_local": null
+    },
+    "USV": {
+     "n": 4,
+     "made": false,
+     "median": 5.375,
+     "H": 10.0,
+     "ref_with_local": null
+    },
+    "USG": {
+     "n": 3,
+     "made": false,
+     "median": 4.6,
+     "H": 10,
+     "ref_with_local": null
+    },
+    "EAFE": {
+     "n": 7,
+     "made": true,
+     "median": 7.5,
+     "H": 10,
+     "ref_with_local": {
+      "n": 10,
+      "median": 7.05
+     }
+    },
+    "EUR": {
+     "n": 5,
+     "made": true,
+     "median": 7.46,
+     "H": 10,
+     "ref_with_local": {
+      "n": 9,
+      "median": 7.2
+     }
+    },
+    "JP": {
+     "n": 4,
+     "made": false,
+     "median": 7.55,
+     "H": 10.0,
+     "ref_with_local": {
+      "n": 7,
+      "median": 6.7
+     }
+    },
+    "EM": {
+     "n": 10,
+     "made": true,
+     "median": 8.05,
+     "H": 10.0,
+     "ref_with_local": {
+      "n": 15,
+      "median": 7.1
+     }
+    },
+    "IND": {
+     "n": 1,
+     "made": false,
+     "median": 5.72,
+     "H": 10,
+     "ref_with_local": {
+      "n": 2,
+      "median": 6.76
+     }
+    },
+    "CHN": {
+     "n": 4,
+     "made": false,
+     "median": 8.845,
+     "H": 10.0,
+     "ref_with_local": {
+      "n": 6,
+      "median": 8.845
+     }
+    },
+    "ACWI": {
+     "n": 5,
+     "made": true,
+     "median": 6.8,
+     "H": 10,
+     "ref_with_local": {
+      "n": 9,
+      "median": 6.8
+     }
+    }
+   }
+  },
+  "S_no_approx": {
+   "why": "近い読み替え（GMO の Deep Value＝バリュー・SSGA の世界の質/勢い）を外す",
+   "cls": "reading",
+   "by_key": {
+    "USL": {
+     "n": 15,
+     "made": true,
+     "median": 6.3,
+     "H": 10,
+     "ref_with_local": null
+    },
+    "USS": {
+     "n": 12,
+     "made": true,
+     "median": 6.6,
+     "H": 10.0,
+     "ref_with_local": null
+    },
+    "USV": {
+     "n": 4,
+     "made": false,
+     "median": 7.15,
+     "H": 10.0,
+     "ref_with_local": null
+    },
+    "USG": {
+     "n": 3,
+     "made": false,
+     "median": 4.6,
+     "H": 10,
+     "ref_with_local": null
+    },
+    "EAFE": {
+     "n": 8,
+     "made": true,
+     "median": 7.5,
+     "H": 10.0,
+     "ref_with_local": {
+      "n": 11,
+      "median": 7.1
+     }
+    },
+    "EUR": {
+     "n": 6,
+     "made": true,
+     "median": 7.63,
+     "H": 10.0,
+     "ref_with_local": {
+      "n": 10,
+      "median": 7.314
+     }
+    },
+    "JP": {
+     "n": 5,
+     "made": true,
+     "median": 8.6,
+     "H": 10,
+     "ref_with_local": {
+      "n": 8,
+      "median": 7.0
+     }
+    },
+    "EM": {
+     "n": 11,
+     "made": true,
+     "median": 8.0,
+     "H": 10,
+     "ref_with_local": {
+      "n": 16,
+      "median": 7.25
+     }
+    },
+    "IND": {
+     "n": 1,
+     "made": false,
+     "median": 5.72,
+     "H": 10,
+     "ref_with_local": {
+      "n": 2,
+      "median": 6.76
+     }
+    },
+    "CHN": {
+     "n": 5,
+     "made": true,
+     "median": 8.7,
+     "H": 10,
+     "ref_with_local": {
+      "n": 7,
+      "median": 8.7
+     }
+    },
+    "ACWI": {
+     "n": 6,
+     "made": true,
+     "median": 6.9,
+     "H": 10.0,
+     "ref_with_local": {
+      "n": 10,
+      "median": 6.85
+     }
+    },
+    "QUALITY": {
+     "n": 1,
+     "made": false,
+     "median": 6.6,
+     "H": 12.5,
+     "ref_with_local": null
+    },
+    "DIV": {
+     "n": 1,
+     "made": false,
+     "median": 7.5,
+     "H": 12.5,
+     "ref_with_local": null
+    },
+    "MOM": {
+     "n": 1,
+     "made": false,
+     "median": 7.6,
+     "H": 12.5,
+     "ref_with_local": null
+    }
+   }
+  },
+  "S_aqr_real_plus25": {
+   "why": "AQR を実質＋2.5%（事前登録の換算）で",
+   "cls": "reading",
+   "by_key": {
+    "USL": {
+     "n": 15,
+     "made": true,
+     "median": 6.4,
+     "H": 10,
+     "ref_with_local": null
+    },
+    "USS": {
+     "n": 12,
+     "made": true,
+     "median": 6.6,
+     "H": 10.0,
+     "ref_with_local": null
+    },
+    "USV": {
+     "n": 5,
+     "made": true,
+     "median": 6.9,
+     "H": 10,
+     "ref_with_local": null
+    },
+    "USG": {
+     "n": 3,
+     "made": false,
+     "median": 4.6,
+     "H": 10,
+     "ref_with_local": null
+    },
+    "EAFE": {
+     "n": 8,
+     "made": true,
+     "median": 7.5,
+     "H": 10.0,
+     "ref_with_local": {
+      "n": 11,
+      "median": 7.5
+     }
+    },
+    "EUR": {
+     "n": 6,
+     "made": true,
+     "median": 7.63,
+     "H": 10.0,
+     "ref_with_local": {
+      "n": 10,
+      "median": 7.444
+     }
+    },
+    "JP": {
+     "n": 5,
+     "made": true,
+     "median": 8.6,
+     "H": 10,
+     "ref_with_local": {
+      "n": 8,
+      "median": 7.411
+     }
+    },
+    "EM": {
+     "n": 11,
+     "made": true,
+     "median": 8.0,
+     "H": 10,
+     "ref_with_local": {
+      "n": 16,
+      "median": 7.414
+     }
+    },
+    "IND": {
+     "n": 1,
+     "made": false,
+     "median": 5.72,
+     "H": 10,
+     "ref_with_local": {
+      "n": 2,
+      "median": 6.76
+     }
+    },
+    "CHN": {
+     "n": 5,
+     "made": true,
+     "median": 8.7,
+     "H": 10,
+     "ref_with_local": {
+      "n": 7,
+      "median": 8.7
+     }
+    },
+    "ACWI": {
+     "n": 6,
+     "made": true,
+     "median": 6.9,
+     "H": 10.0,
+     "ref_with_local": {
+      "n": 10,
+      "median": 6.852
+     }
+    },
+    "QUALITY": {
+     "n": 1,
+     "made": false,
+     "median": 6.6,
+     "H": 12.5,
+     "ref_with_local": {
+      "n": 2,
+      "median": 6.253
+     }
+    },
+    "DIV": {
+     "n": 1,
+     "made": false,
+     "median": 7.5,
+     "H": 12.5,
+     "ref_with_local": null
+    },
+    "MOM": {
+     "n": 1,
+     "made": false,
+     "median": 7.6,
+     "H": 12.5,
+     "ref_with_local": {
+      "n": 2,
+      "median": 7.042
+     }
+    }
+   }
+  },
+  "S_no_5y": {
+   "why": "5年の予想（T. Rowe Price \"Five-Year Geometric Average\"・Robeco \"5-year annualized\"）を外す（事前登録は「10年前後」）",
+   "cls": "reading",
+   "by_key": {
+    "USL": {
+     "n": 14,
+     "made": true,
+     "median": 6.1,
+     "H": 10.0,
+     "ref_with_local": null
+    },
+    "USS": {
+     "n": 11,
+     "made": true,
+     "median": 6.9,
+     "H": 10,
+     "ref_with_local": null
+    },
+    "USV": {
+     "n": 5,
+     "made": true,
+     "median": 6.9,
+     "H": 10,
+     "ref_with_local": null
+    },
+    "USG": {
+     "n": 3,
+     "made": false,
+     "median": 4.6,
+     "H": 10,
+     "ref_with_local": null
+    },
+    "EAFE": {
+     "n": 7,
+     "made": true,
+     "median": 7.5,
+     "H": 10,
+     "ref_with_local": {
+      "n": 10,
+      "median": 7.25
+     }
+    },
+    "EUR": {
+     "n": 5,
+     "made": true,
+     "median": 7.46,
+     "H": 10,
+     "ref_with_local": {
+      "n": 9,
+      "median": 7.2
+     }
+    },
+    "JP": {
+     "n": 4,
+     "made": false,
+     "median": 8.7,
+     "H": 10.0,
+     "ref_with_local": {
+      "n": 7,
+      "median": 7.3
+     }
+    },
+    "EM": {
+     "n": 9,
+     "made": true,
+     "median": 7.8,
+     "H": 10,
+     "ref_with_local": {
+      "n": 14,
+      "median": 7.0
+     }
+    },
+    "IND": {
+     "n": 1,
+     "made": false,
+     "median": 5.72,
+     "H": 10,
+     "ref_with_local": {
+      "n": 2,
+      "median": 6.76
+     }
+    },
+    "CHN": {
+     "n": 4,
+     "made": false,
+     "median": 8.345,
+     "H": 10.0,
+     "ref_with_local": {
+      "n": 6,
+      "median": 8.345
+     }
+    },
+    "ACWI": {
+     "n": 5,
+     "made": true,
+     "median": 7.0,
+     "H": 10,
+     "ref_with_local": {
+      "n": 9,
+      "median": 6.9
+     }
+    },
+    "QUALITY": {
+     "n": 1,
+     "made": false,
+     "median": 6.6,
+     "H": 12.5,
+     "ref_with_local": {
+      "n": 2,
+      "median": 6.253
+     }
+    },
+    "DIV": {
+     "n": 1,
+     "made": false,
+     "median": 7.5,
+     "H": 12.5,
+     "ref_with_local": null
+    },
+    "MOM": {
+     "n": 1,
+     "made": false,
+     "median": 7.6,
+     "H": 12.5,
+     "ref_with_local": {
+      "n": 2,
+      "median": 7.042
+     }
+    }
+   }
+  },
+  "S_fidi_arith": {
+   "why": "Fidelity International の \"Average expected returns\"（幾何か算術か明記なし）を算術と見て 算術−σ²/2（σ は同じ報告 p.11: DM 15.3%〔米国株の代用〕・EM 20.2%）",
+   "cls": "reading",
+   "by_key": {
+    "USL": {
+     "n": 15,
+     "made": true,
+     "median": 5.9,
+     "H": 10,
+     "ref_with_local": null
+    },
+    "USS": {
+     "n": 12,
+     "made": true,
+     "median": 6.6,
+     "H": 10.0,
+     "ref_with_local": null
+    },
+    "USV": {
+     "n": 5,
+     "made": true,
+     "median": 6.9,
+     "H": 10,
+     "ref_with_local": null
+    },
+    "USG": {
+     "n": 3,
+     "made": false,
+     "median": 4.6,
+     "H": 10,
+     "ref_with_local": null
+    },
+    "EAFE": {
+     "n": 8,
+     "made": true,
+     "median": 7.5,
+     "H": 10.0,
+     "ref_with_local": {
+      "n": 11,
+      "median": 7.1
+     }
+    },
+    "EUR": {
+     "n": 6,
+     "made": true,
+     "median": 7.63,
+     "H": 10.0,
+     "ref_with_local": {
+      "n": 10,
+      "median": 7.314
+     }
+    },
+    "JP": {
+     "n": 5,
+     "made": true,
+     "median": 8.6,
+     "H": 10,
+     "ref_with_local": {
+      "n": 8,
+      "median": 7.0
+     }
+    },
+    "EM": {
+     "n": 11,
+     "made": true,
+     "median": 7.8,
+     "H": 10,
+     "ref_with_local": {
+      "n": 16,
+      "median": 7.0
+     }
+    },
+    "IND": {
+     "n": 1,
+     "made": false,
+     "median": 5.72,
+     "H": 10,
+     "ref_with_local": {
+      "n": 2,
+      "median": 6.76
+     }
+    },
+    "CHN": {
+     "n": 5,
+     "made": true,
+     "median": 8.7,
+     "H": 10,
+     "ref_with_local": {
+      "n": 7,
+      "median": 8.7
+     }
+    },
+    "ACWI": {
+     "n": 6,
+     "made": true,
+     "median": 6.9,
+     "H": 10.0,
+     "ref_with_local": {
+      "n": 10,
+      "median": 6.85
+     }
+    },
+    "QUALITY": {
+     "n": 1,
+     "made": false,
+     "median": 6.6,
+     "H": 12.5,
+     "ref_with_local": {
+      "n": 2,
+      "median": 6.253
+     }
+    },
+    "DIV": {
+     "n": 1,
+     "made": false,
+     "median": 7.5,
+     "H": 12.5,
+     "ref_with_local": null
+    },
+    "MOM": {
+     "n": 1,
+     "made": false,
+     "median": 7.6,
+     "H": 12.5,
+     "ref_with_local": {
+      "n": 2,
+      "median": 7.042
+     }
+    }
+   }
+  },
+  "S_no5y_fidi_arith": {
+   "why": "S_no_5y と S_fidi_arith を両方",
+   "cls": "reading",
+   "by_key": {
+    "USL": {
+     "n": 14,
+     "made": true,
+     "median": 5.702,
+     "H": 10.0,
+     "ref_with_local": null
+    },
+    "USS": {
+     "n": 11,
+     "made": true,
+     "median": 6.9,
+     "H": 10,
+     "ref_with_local": null
+    },
+    "USV": {
+     "n": 5,
+     "made": true,
+     "median": 6.9,
+     "H": 10,
+     "ref_with_local": null
+    },
+    "USG": {
+     "n": 3,
+     "made": false,
+     "median": 4.6,
+     "H": 10,
+     "ref_with_local": null
+    },
+    "EAFE": {
+     "n": 7,
+     "made": true,
+     "median": 7.5,
+     "H": 10,
+     "ref_with_local": {
+      "n": 10,
+      "median": 7.25
+     }
+    },
+    "EUR": {
+     "n": 5,
+     "made": true,
+     "median": 7.46,
+     "H": 10,
+     "ref_with_local": {
+      "n": 9,
+      "median": 7.2
+     }
+    },
+    "JP": {
+     "n": 4,
+     "made": false,
+     "median": 8.7,
+     "H": 10.0,
+     "ref_with_local": {
+      "n": 7,
+      "median": 7.3
+     }
+    },
+    "EM": {
+     "n": 9,
+     "made": true,
+     "median": 7.1,
+     "H": 10,
+     "ref_with_local": {
+      "n": 14,
+      "median": 6.85
+     }
+    },
+    "IND": {
+     "n": 1,
+     "made": false,
+     "median": 5.72,
+     "H": 10,
+     "ref_with_local": {
+      "n": 2,
+      "median": 6.76
+     }
+    },
+    "CHN": {
+     "n": 4,
+     "made": false,
+     "median": 8.345,
+     "H": 10.0,
+     "ref_with_local": {
+      "n": 6,
+      "median": 8.345
+     }
+    },
+    "ACWI": {
+     "n": 5,
+     "made": true,
+     "median": 7.0,
+     "H": 10,
+     "ref_with_local": {
+      "n": 9,
+      "median": 6.9
+     }
+    },
+    "QUALITY": {
+     "n": 1,
+     "made": false,
+     "median": 6.6,
+     "H": 12.5,
+     "ref_with_local": {
+      "n": 2,
+      "median": 6.253
+     }
+    },
+    "DIV": {
+     "n": 1,
+     "made": false,
+     "median": 7.5,
+     "H": 12.5,
+     "ref_with_local": null
+    },
+    "MOM": {
+     "n": 1,
+     "made": false,
+     "median": 7.6,
+     "H": 12.5,
+     "ref_with_local": {
+      "n": 2,
+      "median": 7.042
+     }
     }
    }
   }
@@ -3428,6 +4278,7 @@
    "VWO": 0.07145,
    "TOPIX": 0.07478,
    "EPI": 0.07124,
+   "EPI_LONG": 0.07124,
    "QQQM": 0.0715,
    "VUG": 0.07035,
    "XLK": 0.0725,
@@ -3445,111 +4296,13 @@
    "MOAT": 0.0684,
    "VYM": 0.0772,
    "PXF": 0.0711,
-   "DEM": 0.06861
-  },
-  "S_with_GS": {
-   "VT": 0.0726,
-   "VOO": 0.07085,
-   "VEA": 0.0726,
-   "VWO": 0.0752,
-   "TOPIX": 0.08278,
-   "EPI": 0.07124,
-   "QQQM": 0.07175,
-   "VUG": 0.0706,
-   "XLK": 0.07275,
-   "SMH": 0.06948,
-   "XLV": 0.07341,
-   "XLP": 0.0705,
-   "XLU": 0.0666,
-   "XLE": 0.0701,
-   "ITA": 0.06866,
-   "RSP": 0.07136,
-   "VTV": 0.07889,
-   "VBR": 0.08164,
-   "IJR": 0.07604,
-   "VIG": 0.07229,
-   "MOAT": 0.0684,
-   "VYM": 0.0772,
-   "PXF": 0.0731,
-   "DEM": 0.07236
-  },
-  "S_no_GMO": {
-   "VT": 0.0721,
-   "VOO": 0.07085,
-   "VEA": 0.0726,
-   "VWO": 0.0752,
-   "TOPIX": 0.08278,
-   "EPI": 0.07124,
-   "QQQM": 0.07175,
-   "VUG": 0.0706,
-   "XLK": 0.07275,
-   "SMH": 0.06948,
-   "XLV": 0.07341,
-   "XLP": 0.0705,
-   "XLU": 0.0666,
-   "XLE": 0.0701,
-   "ITA": 0.06866,
-   "RSP": 0.07136,
-   "VTV": 0.08089,
-   "VBR": 0.08314,
-   "IJR": 0.07754,
-   "VIG": 0.07229,
-   "MOAT": 0.0684,
-   "VYM": 0.0772,
-   "PXF": 0.0731,
-   "DEM": 0.07236
-  },
-  "S_strict_2026_pub": {
-   "VT": 0.0716,
-   "VOO": 0.0696,
-   "VEA": 0.0726,
-   "VWO": 0.07545,
-   "TOPIX": 0.07328,
-   "EPI": 0.07124,
-   "QQQM": 0.0705,
-   "VUG": 0.06935,
-   "XLK": 0.0715,
-   "SMH": 0.06823,
-   "XLV": 0.07216,
-   "XLP": 0.06925,
-   "XLU": 0.06535,
-   "XLE": 0.06885,
-   "ITA": 0.06741,
-   "RSP": 0.07011,
-   "VTV": 0.08089,
-   "VBR": 0.08014,
-   "IJR": 0.07454,
-   "VIG": 0.07229,
-   "MOAT": 0.0684,
-   "VYM": 0.0772,
-   "PXF": 0.0731,
-   "DEM": 0.07261
-  },
-  "S_no_approx": {
-   "VT": 0.0721,
-   "VOO": 0.0706,
-   "VEA": 0.0726,
-   "VWO": 0.0752,
-   "TOPIX": 0.08278,
-   "EPI": 0.07124,
-   "QQQM": 0.0715,
-   "VUG": 0.07035,
-   "XLK": 0.0725,
-   "SMH": 0.06923,
-   "XLV": 0.07316,
-   "XLP": 0.07025,
-   "XLU": 0.06635,
-   "XLE": 0.06985,
-   "ITA": 0.06841,
-   "RSP": 0.07111,
-   "VTV": 0.08089,
-   "VBR": 0.08164,
-   "IJR": 0.07604,
-   "VIG": 0.07229,
-   "MOAT": 0.0684,
-   "VYM": 0.0772,
-   "PXF": 0.0731,
-   "DEM": 0.07236
+   "DEM": 0.06861,
+   "MTUM": 0.07596,
+   "QUAL": 0.07153,
+   "XLI": 0.06981,
+   "XLF": 0.06928,
+   "XLY": 0.07151,
+   "GRID": 0.06853
   },
   "S_ssga_arith_raw": {
    "VT": 0.0721,
@@ -3558,6 +4311,7 @@
    "VWO": 0.0752,
    "TOPIX": 0.08278,
    "EPI": 0.07124,
+   "EPI_LONG": 0.07124,
    "QQQM": 0.072,
    "VUG": 0.07085,
    "XLK": 0.073,
@@ -3575,7 +4329,178 @@
    "MOAT": 0.0684,
    "VYM": 0.0772,
    "PXF": 0.0731,
-   "DEM": 0.07236
+   "DEM": 0.07236,
+   "MTUM": 0.07596,
+   "QUAL": 0.07153,
+   "XLI": 0.07031,
+   "XLF": 0.06978,
+   "XLY": 0.07201,
+   "GRID": 0.06878
+  },
+  "S_with_GS": {
+   "VT": 0.0726,
+   "VOO": 0.07085,
+   "VEA": 0.0726,
+   "VWO": 0.0752,
+   "TOPIX": 0.08278,
+   "EPI": 0.07124,
+   "EPI_LONG": 0.07124,
+   "QQQM": 0.07175,
+   "VUG": 0.0706,
+   "XLK": 0.07275,
+   "SMH": 0.06948,
+   "XLV": 0.07341,
+   "XLP": 0.0705,
+   "XLU": 0.0666,
+   "XLE": 0.0701,
+   "ITA": 0.06866,
+   "RSP": 0.07136,
+   "VTV": 0.07889,
+   "VBR": 0.08164,
+   "IJR": 0.07604,
+   "VIG": 0.07229,
+   "MOAT": 0.0684,
+   "VYM": 0.0772,
+   "PXF": 0.0731,
+   "DEM": 0.07236,
+   "MTUM": 0.07596,
+   "QUAL": 0.07153,
+   "XLI": 0.07006,
+   "XLF": 0.06953,
+   "XLY": 0.07176,
+   "GRID": 0.06928
+  },
+  "S_no_GMO": {
+   "VT": 0.0721,
+   "VOO": 0.07085,
+   "VEA": 0.0726,
+   "VWO": 0.0752,
+   "TOPIX": 0.08278,
+   "EPI": 0.07124,
+   "EPI_LONG": 0.07124,
+   "QQQM": 0.07175,
+   "VUG": 0.0706,
+   "XLK": 0.07275,
+   "SMH": 0.06948,
+   "XLV": 0.07341,
+   "XLP": 0.0705,
+   "XLU": 0.0666,
+   "XLE": 0.0701,
+   "ITA": 0.06866,
+   "RSP": 0.07136,
+   "VTV": 0.08089,
+   "VBR": 0.08314,
+   "IJR": 0.07754,
+   "VIG": 0.07229,
+   "MOAT": 0.0684,
+   "VYM": 0.0772,
+   "PXF": 0.0731,
+   "DEM": 0.07236,
+   "MTUM": 0.07596,
+   "QUAL": 0.07153,
+   "XLI": 0.07006,
+   "XLF": 0.06953,
+   "XLY": 0.07176,
+   "GRID": 0.06878
+  },
+  "S_strict_2026_pub": {
+   "VT": 0.0716,
+   "VOO": 0.0686,
+   "VEA": 0.0726,
+   "VWO": 0.07545,
+   "TOPIX": 0.08468,
+   "EPI": 0.07124,
+   "EPI_LONG": 0.07124,
+   "QQQM": 0.0695,
+   "VUG": 0.06835,
+   "XLK": 0.0705,
+   "SMH": 0.06723,
+   "XLV": 0.07116,
+   "XLP": 0.06825,
+   "XLU": 0.06435,
+   "XLE": 0.06785,
+   "ITA": 0.06641,
+   "RSP": 0.06911,
+   "VTV": 0.08089,
+   "VBR": 0.07914,
+   "IJR": 0.07354,
+   "VIG": 0.07229,
+   "MOAT": 0.0684,
+   "VYM": 0.0772,
+   "PXF": 0.0731,
+   "DEM": 0.07261,
+   "MTUM": 0.07596,
+   "QUAL": 0.07153,
+   "XLI": 0.06781,
+   "XLF": 0.06728,
+   "XLY": 0.06951,
+   "GRID": 0.06828
+  },
+  "S_no_JPM": {
+   "VT": 0.0716,
+   "VOO": 0.0696,
+   "VEA": 0.0726,
+   "VWO": 0.07545,
+   "TOPIX": 0.08468,
+   "EPI": 0.07124,
+   "EPI_LONG": 0.07124,
+   "QQQM": 0.0705,
+   "VUG": 0.06935,
+   "XLK": 0.0715,
+   "SMH": 0.06823,
+   "XLV": 0.07216,
+   "XLP": 0.06925,
+   "XLU": 0.06535,
+   "XLE": 0.06885,
+   "ITA": 0.06741,
+   "RSP": 0.07011,
+   "VTV": 0.08089,
+   "VBR": 0.08014,
+   "IJR": 0.07454,
+   "VIG": 0.07229,
+   "MOAT": 0.0684,
+   "VYM": 0.0772,
+   "PXF": 0.0731,
+   "DEM": 0.07261,
+   "MTUM": 0.07596,
+   "QUAL": 0.07153,
+   "XLI": 0.06881,
+   "XLF": 0.06828,
+   "XLY": 0.07051,
+   "GRID": 0.06828
+  },
+  "S_no_approx": {
+   "VT": 0.0721,
+   "VOO": 0.0706,
+   "VEA": 0.0726,
+   "VWO": 0.0752,
+   "TOPIX": 0.08278,
+   "EPI": 0.07124,
+   "EPI_LONG": 0.07124,
+   "QQQM": 0.0715,
+   "VUG": 0.07035,
+   "XLK": 0.0725,
+   "SMH": 0.06923,
+   "XLV": 0.07316,
+   "XLP": 0.07025,
+   "XLU": 0.06635,
+   "XLE": 0.06985,
+   "ITA": 0.06841,
+   "RSP": 0.07111,
+   "VTV": 0.08089,
+   "VBR": 0.08164,
+   "IJR": 0.07604,
+   "VIG": 0.07229,
+   "MOAT": 0.0684,
+   "VYM": 0.0772,
+   "PXF": 0.0731,
+   "DEM": 0.07236,
+   "MTUM": 0.07596,
+   "QUAL": 0.07153,
+   "XLI": 0.06981,
+   "XLF": 0.06928,
+   "XLY": 0.07151,
+   "GRID": 0.06878
   },
   "S_aqr_real_plus25": {
    "VT": 0.0721,
@@ -3584,6 +4509,7 @@
    "VWO": 0.0752,
    "TOPIX": 0.08278,
    "EPI": 0.07124,
+   "EPI_LONG": 0.07124,
    "QQQM": 0.072,
    "VUG": 0.07085,
    "XLK": 0.073,
@@ -3601,7 +4527,112 @@
    "MOAT": 0.0684,
    "VYM": 0.0772,
    "PXF": 0.0731,
-   "DEM": 0.07236
+   "DEM": 0.07236,
+   "MTUM": 0.07596,
+   "QUAL": 0.07153,
+   "XLI": 0.07031,
+   "XLF": 0.06978,
+   "XLY": 0.07201,
+   "GRID": 0.06878
+  },
+  "S_no_5y": {
+   "VT": 0.0726,
+   "VOO": 0.0696,
+   "VEA": 0.0726,
+   "VWO": 0.0742,
+   "TOPIX": 0.08468,
+   "EPI": 0.07124,
+   "EPI_LONG": 0.07124,
+   "QQQM": 0.0705,
+   "VUG": 0.06935,
+   "XLK": 0.0715,
+   "SMH": 0.06823,
+   "XLV": 0.07216,
+   "XLP": 0.06925,
+   "XLU": 0.06535,
+   "XLE": 0.06885,
+   "ITA": 0.06741,
+   "RSP": 0.07011,
+   "VTV": 0.07889,
+   "VBR": 0.08314,
+   "IJR": 0.07754,
+   "VIG": 0.07229,
+   "MOAT": 0.0684,
+   "VYM": 0.0772,
+   "PXF": 0.0731,
+   "DEM": 0.07136,
+   "MTUM": 0.07596,
+   "QUAL": 0.07153,
+   "XLI": 0.06881,
+   "XLF": 0.06828,
+   "XLY": 0.07051,
+   "GRID": 0.06928
+  },
+  "S_fidi_arith": {
+   "VT": 0.0721,
+   "VOO": 0.0686,
+   "VEA": 0.0726,
+   "VWO": 0.0742,
+   "TOPIX": 0.08278,
+   "EPI": 0.07124,
+   "EPI_LONG": 0.07124,
+   "QQQM": 0.0695,
+   "VUG": 0.06835,
+   "XLK": 0.0705,
+   "SMH": 0.06723,
+   "XLV": 0.07116,
+   "XLP": 0.06825,
+   "XLU": 0.06435,
+   "XLE": 0.06785,
+   "ITA": 0.06641,
+   "RSP": 0.06911,
+   "VTV": 0.07889,
+   "VBR": 0.08164,
+   "IJR": 0.07604,
+   "VIG": 0.07229,
+   "MOAT": 0.0684,
+   "VYM": 0.0772,
+   "PXF": 0.0731,
+   "DEM": 0.07136,
+   "MTUM": 0.07596,
+   "QUAL": 0.07153,
+   "XLI": 0.06781,
+   "XLF": 0.06728,
+   "XLY": 0.06951,
+   "GRID": 0.06878
+  },
+  "S_no5y_fidi_arith": {
+   "VT": 0.0726,
+   "VOO": 0.06761,
+   "VEA": 0.0726,
+   "VWO": 0.0707,
+   "TOPIX": 0.08468,
+   "EPI": 0.07124,
+   "EPI_LONG": 0.07124,
+   "QQQM": 0.06851,
+   "VUG": 0.06736,
+   "XLK": 0.06951,
+   "SMH": 0.06624,
+   "XLV": 0.07017,
+   "XLP": 0.06726,
+   "XLU": 0.06336,
+   "XLE": 0.06686,
+   "ITA": 0.06542,
+   "RSP": 0.06812,
+   "VTV": 0.07889,
+   "VBR": 0.08314,
+   "IJR": 0.07754,
+   "VIG": 0.07229,
+   "MOAT": 0.0684,
+   "VYM": 0.0772,
+   "PXF": 0.0731,
+   "DEM": 0.06786,
+   "MTUM": 0.07596,
+   "QUAL": 0.07153,
+   "XLI": 0.06682,
+   "XLF": 0.06629,
+   "XLY": 0.06852,
+   "GRID": 0.06928
   }
  },
  "jpm_check_vs_repo": [
@@ -3724,7 +4755,7 @@
      "1位の組 予想/実際": "5.51 / 5.99",
      "5位の組 予想/実際": "-1.29 / -4.92"
     },
-    "note": "順位はよく当たった（5種類のうち4つの順位が一致）。水準は5つ中4つで予想が高すぎた（2000〜2008は下落相場）"
+    "note": "順位はよく当たった（5種類のうち4つの順位が一致）。水準は5つ中4つで予想が高すぎた（2000〜2008は下落相場）。ただし 2000〜2008年の1回の窓・株5種類（n=5）だけの例で、順位が当たりやすいことの一般の証拠にはならない"
    },
    {
     "who": "Research Affiliates（自社の点検 \"Asset Allocation Interactive at 10 Years: The Good, the Not Too Bad, and the Ugly\"・2025-01）",
@@ -3924,7 +4955,7 @@
     "source": "CFA Institute Enterprising Investor 2021-04-12（Anson J. Glacy Jr.・JPM の \"fall from 5.6% last year to 4.1%\" を引用・二次）: https://rpc.cfainstitute.org/blogs/enterprising-investor/2021/building-optimized-portfolios-with-jpmorgans-2021-forecasts",
     "items": [
      {
-      "asset": "米国大型（名目・複利 4.1%）",
+      "asset": "米国株（記事の表現 \"equity market returns\"・名目。大型か・幾何か算術かは記事に書かれていない）",
       "forecast": 4.1,
       "proxy": "SPY",
       "realized": {
@@ -3940,7 +4971,7 @@
      }
     ],
     "partial": true,
-    "note": "途中経過（2026-09 までの6年）。名目で比べる"
+    "note": "途中経過（2026-09 までの6年）。名目で比べる。比べる相手を SPY（米国大型）に置いたのはこちらの読み替え"
    }
   ],
   "cape": {
@@ -4039,7 +5070,7 @@
     "注意": "CAPE 40 超は1999-2000年の数か月しか過去に無い（外挿）。Shiller の CAPE と RA の CAPE は作り方が少し違う"
    }
   },
-  "summary": "どの会社も2010年代〜2020年代前半の米国大型株を大きく低く見積もった（BNY 2016: 7.1→実際13.4・NT 2020: 4.7→15.9・GMO 2014: −1.5実質→実際+10%台）。理由は PER の上昇（BNY: 18.8→26.5）と AI の熱狂（NT）。逆に新興国は高く見積もりがち（BNY 2016: 8.9→5.2）。順位（どれが相対的に良いか）は水準より当たりやすい（Tower 2008 の GMO: 相関0.94）が、2010年代の米国 vs 米国外は外れた。CAPE の10年予想は長い目では負の関係が効くが誤差が大きい（下の cape.stats）"
+  "summary": "どの会社も2010年代〜2020年代前半の米国大型株を大きく低く見積もった（BNY 2016: 7.1→実際13.4・NT 2020: 4.7→15.9・GMO 2014: 実質−1.5→実際+11.9%〔2014-06〜2021-05・SPY・CPI で実質〕）。理由は PER の上昇（BNY: 18.8→26.5）と AI の熱狂（NT）。逆に新興国は高く見積もりがち（BNY 2016: 8.9→5.2）。順位（どれが相対的に良いか）は水準より当たったという例がある（Tower 2008 の GMO: 相関0.94・ただし 2000〜2008年の1回の窓・株5種類だけ）が、2010年代の米国 vs 米国外は外れた。CAPE の10年予想は長い目では負の関係が効くが誤差が大きい（下の cape.stats）"
  },
  "present": {
   "cape": {
@@ -4139,33 +5170,45 @@
      "tag": "PaymentsToAcquirePropertyPlantAndEquipment",
      "ttm_to_2026_06": 115.95,
      "ttm_src": "FY2026（2025-07-01〜2026-06-30・10-K 2026-07-29）",
-     "prev_year": 64.55,
-     "prev_src": "FY2025"
+     "ttm_to_2025_06": 64.55,
+     "ttm_prev_src": "FY2025（2024-07-01〜2025-06-30・10-K 2026-07-29）",
+     "ref_fy_or_cal2025": 64.55,
+     "ref_src": "FY2025（2024-07〜2025-06）"
     },
     "GOOGL": {
      "tag": "PaymentsToAcquirePropertyPlantAndEquipment",
      "ttm_to_2026_06": 132.4,
      "ttm_src": "2025暦年 91.4 − 2025年上期 39.6 + 2026年上期 80.6（10-Q 2026-07-23）",
-     "prev_year": 91.45,
-     "prev_src": "2025暦年"
+     "ttm_to_2025_06": 66.98,
+     "ttm_prev_src": "2024暦年 52.5 − 2024年上期 25.2 + 2025年上期 39.6（10-Q 2026-07-23）",
+     "ref_fy_or_cal2025": 91.45,
+     "ref_src": "2025暦年"
     },
     "AMZN": {
      "tag": "PaymentsToAcquireProductiveAssets",
      "ttm_to_2026_06": 173.03,
      "ttm_src": "2025暦年 131.8 − 2025年上期 57.2 + 2026年上期 98.4（10-Q 2026-07-31）",
-     "prev_year": 131.82,
-     "prev_src": "2025暦年"
+     "ttm_to_2025_06": 107.66,
+     "ttm_prev_src": "2024暦年 83.0 − 2024年上期 32.5 + 2025年上期 57.2（10-Q 2026-07-31）",
+     "ref_fy_or_cal2025": 131.82,
+     "ref_src": "2025暦年"
     },
     "META": {
      "tag": "PaymentsToAcquirePropertyPlantAndEquipment",
      "ttm_to_2026_06": 89.33,
      "ttm_src": "2025暦年 69.7 − 2025年上期 29.5 + 2026年上期 49.1（10-Q 2026-07-30）",
-     "prev_year": 69.69,
-     "prev_src": "2025暦年"
+     "ttm_to_2025_06": 52.16,
+     "ttm_prev_src": "2024暦年 37.3 − 2024年上期 14.6 + 2025年上期 29.5（10-Q 2026-07-30）",
+     "ref_fy_or_cal2025": 69.69,
+     "ref_src": "2025暦年"
     }
    },
    "total_ttm_bn": 510.7,
-   "total_prev_bn": 357.5,
+   "total_prev_bn": 291.3,
+   "prev_def": "前年＝1年前の同じ12か月（2024-07〜2025-06。MSFT は FY2025・他3社は 2024暦年−2024年上期＋2025年上期）",
+   "growth_pct": 75.3,
+   "ref_msft_fy25_plus_cal2025_bn": 357.5,
+   "ref_note": "参考: MSFT FY2025＋他3社の2025暦年。直近12か月（2025-07〜2026-06）と他3社の分が6か月重なるので、「前年」として伸びの計算には使わない（2026-10-12 の直し: 以前はこの値を「前年」と書いていた）",
    "src": "SEC data.sec.gov companyconcept（us-gaap PaymentsToAcquirePropertyPlantAndEquipment／PaymentsToAcquireProductiveAssets）・単位 十億ドル・現金の購入（ファイナンスリースは含まない）"
   },
   "ai_capex_guidance": {
@@ -4182,7 +5225,7 @@
  "observations": [
   {
    "what": "米国大型の予想のばらつき",
-   "detail": "最も低い GMO -3.5% 〜 最も高い BLK 9.0%（中央値 6.3%）。低い側は「今の値段（CAPE 40）が平均へ戻る」を強く入れる会社（GMO・Research Affiliates・Invesco）、高い側は「AI で利益が伸びる」を入れる会社（BlackRock の Starting point）"
+   "detail": "最も低い GMO -3.5% 〜 最も高い BLK 9.0%（中央値 6.3%）。低い側は「今の値段（CAPE 40）が平均へ戻る」を強く入れる会社（GMO・Research Affiliates・Invesco）。高い側は BlackRock の Starting point（同社の2025-09-30 時点の10年予想は 5.2%＝Morningstar 2026-01-12 の記事。上がった理由は原本の表に書かれておらず確かめられない。同じ表に別の場合として AI productivity boom 15.9%・Global risk premia rise 2.0% もある）"
   },
   {
    "what": "グロース（成長株）は米国大型より低く見られがち",
@@ -4198,17 +5241,671 @@
   },
   {
    "what": "過去の同じ種類の予想の当たり外れ",
-   "detail": "どの会社も2010年代〜2020年代前半の米国大型株を大きく低く見積もった（BNY 2016: 7.1→実際13.4・NT 2020: 4.7→15.9・GMO 2014: −1.5実質→実際+10%台）。理由は PER の上昇（BNY: 18.8→26.5）と AI の熱狂（NT）。逆に新興国は高く見積もりがち（BNY 2016: 8.9→5.2）。順位（どれが相対的に良いか）は水準より当たりやすい（Tower 2008 の GMO: 相関0.94）が、2010年代の米国 vs 米国外は外れた。CAPE の10年予想は長い目では負の関係が効くが誤差が大きい（下の cape.stats）"
+   "detail": "どの会社も2010年代〜2020年代前半の米国大型株を大きく低く見積もった（BNY 2016: 7.1→実際13.4・NT 2020: 4.7→15.9・GMO 2014: 実質−1.5→実際+11.9%〔2014-06〜2021-05・SPY・CPI で実質〕）。理由は PER の上昇（BNY: 18.8→26.5）と AI の熱狂（NT）。逆に新興国は高く見積もりがち（BNY 2016: 8.9→5.2）。順位（どれが相対的に良いか）は水準より当たったという例がある（Tower 2008 の GMO: 相関0.94・ただし 2000〜2008年の1回の窓・株5種類だけ）が、2010年代の米国 vs 米国外は外れた。CAPE の10年予想は長い目では負の関係が効くが誤差が大きい（下の cape.stats）"
   },
   {
    "what": "今の値段",
-   "detail": "CAPE（米国大型）40.51（1880年からの上位 1.3%）・12か月先の PER 19.1（10年平均と同じ）・上位10社 40.57%・2026年の利益の伸びの予想 +32.7%・2027年 +15.8%・大手4社の設備投資 直近12か月 510.7 十億ドル（前年 357.5）。利益が急に伸びているので、過去10年の利益で測る CAPE は「とても高い」、来年の利益で測る PER は「ふつう」と、物差しで答えが割れている"
+   "detail": "CAPE（米国大型）40.51（1880年からの上位 1.3%）・12か月先の PER 19.1（10年平均と同じ）・上位10社 40.57%・2026年の利益の伸びの予想 +32.7%・2027年 +15.8%・大手4社の設備投資 直近12か月（2025-07〜2026-06）510.7 十億ドル（1年前の同じ12か月 291.3・+75%）。利益が急に伸びているので、過去10年の利益で測る CAPE は「とても高い」、来年の利益で測る PER は「ふつう」と、物差しで答えが割れている"
   }
  ],
- "for_final": {
-  "how": "night/bestpf_eval.py の load_D() は D_net_by_asset を読む（無い本は C で代える）。",
-  "pending": "R7（night/bestpf_ext.py）の行がまだ無い本（MTUM・QUAL・XLI・XLF・XLY・GRID）は D_net を出していない。R7 の後に python3 night/bestpf_cma.py を回し直すと埋まる（bestpf_ext.rank_result() を読む）。手で埋めるなら D_inputs_by_key の cma と H で D_net=(H×cma+(20−H)×B_gross)/20−経費率−外国税。MTUM・QUAL は5社未満の種類なので D＝C のまま",
-  "sensitivity": "感度は sensitivity_D_net_by_asset（S_all_currency・S_with_GS・S_no_GMO・S_strict_2026_pub・S_no_approx・S_ssga_arith_raw・S_aqr_real_plus25）。候補ごとの最大の動き: VOO 7.06%→6.96〜7.11%・QQQM 7.15%→7.05〜7.20%・SMH 6.92%→6.82〜6.97%・VT 7.21%→7.16〜7.26%・VEA 7.26%→7.06〜7.26%・VWO 7.52%→7.14〜7.54%・TOPIX 8.28%→7.33〜8.28%・VTV 7.89%→7.89〜8.09%・VBR 8.16%→8.01〜8.34%。日本は現地通貨の予想を混ぜると下がり、VTV は GMO の Deep Value を外すと米国バリューが4社になり D＝C"
+ "sensitivity_range_by_asset": {
+  "VT": {
+   "main": 0.0721,
+   "C": 0.07125,
+   "D_made": true,
+   "reading": {
+    "min": 0.0716,
+    "min_by": "S_no_JPM",
+    "max": 0.0726,
+    "max_by": "S_with_GS"
+   },
+   "with_reference": {
+    "min": 0.0716,
+    "min_by": "S_no_JPM",
+    "max": 0.0726,
+    "max_by": "S_with_GS"
+   }
+  },
+  "VOO": {
+   "main": 0.0706,
+   "C": 0.07088,
+   "D_made": true,
+   "reading": {
+    "min": 0.06761,
+    "min_by": "S_no5y_fidi_arith",
+    "max": 0.0711,
+    "max_by": "S_aqr_real_plus25"
+   },
+   "with_reference": {
+    "min": 0.06761,
+    "min_by": "S_no5y_fidi_arith",
+    "max": 0.0711,
+    "max_by": "S_ssga_arith_raw"
+   }
+  },
+  "VEA": {
+   "main": 0.0726,
+   "C": 0.07188,
+   "D_made": true,
+   "reading": {
+    "min": 0.0726,
+    "min_by": "S_aqr_real_plus25",
+    "max": 0.0726,
+    "max_by": "S_with_GS"
+   },
+   "with_reference": {
+    "min": 0.0706,
+    "min_by": "S_all_currency",
+    "max": 0.0726,
+    "max_by": "S_with_GS"
+   }
+  },
+  "VWO": {
+   "main": 0.0752,
+   "C": 0.07385,
+   "D_made": true,
+   "reading": {
+    "min": 0.0707,
+    "min_by": "S_no5y_fidi_arith",
+    "max": 0.07545,
+    "max_by": "S_strict_2026_pub"
+   },
+   "with_reference": {
+    "min": 0.0707,
+    "min_by": "S_no5y_fidi_arith",
+    "max": 0.07545,
+    "max_by": "S_strict_2026_pub"
+   }
+  },
+  "TOPIX": {
+   "main": 0.08278,
+   "C": 0.08468,
+   "D_made": true,
+   "reading": {
+    "min": 0.08278,
+    "min_by": "S_aqr_real_plus25",
+    "max": 0.08468,
+    "max_by": "S_strict_2026_pub"
+   },
+   "with_reference": {
+    "min": 0.07478,
+    "min_by": "S_all_currency",
+    "max": 0.08468,
+    "max_by": "S_strict_2026_pub"
+   }
+  },
+  "EPI": {
+   "main": 0.07124,
+   "C": 0.07124,
+   "D_made": false,
+   "reading": {
+    "min": 0.07124,
+    "min_by": "S_aqr_real_plus25",
+    "max": 0.07124,
+    "max_by": "S_with_GS"
+   },
+   "with_reference": {
+    "min": 0.07124,
+    "min_by": "S_all_currency",
+    "max": 0.07124,
+    "max_by": "S_with_GS"
+   }
+  },
+  "EPI_LONG": {
+   "main": 0.07124,
+   "C": 0.07124,
+   "D_made": false,
+   "reading": {
+    "min": 0.07124,
+    "min_by": "S_aqr_real_plus25",
+    "max": 0.07124,
+    "max_by": "S_with_GS"
+   },
+   "with_reference": {
+    "min": 0.07124,
+    "min_by": "S_all_currency",
+    "max": 0.07124,
+    "max_by": "S_with_GS"
+   }
+  },
+  "QQQM": {
+   "main": 0.0715,
+   "C": 0.07139,
+   "D_made": true,
+   "reading": {
+    "min": 0.06851,
+    "min_by": "S_no5y_fidi_arith",
+    "max": 0.072,
+    "max_by": "S_aqr_real_plus25"
+   },
+   "with_reference": {
+    "min": 0.06851,
+    "min_by": "S_no5y_fidi_arith",
+    "max": 0.072,
+    "max_by": "S_ssga_arith_raw"
+   }
+  },
+  "VUG": {
+   "main": 0.07035,
+   "C": 0.07085,
+   "D_made": true,
+   "reading": {
+    "min": 0.06736,
+    "min_by": "S_no5y_fidi_arith",
+    "max": 0.07085,
+    "max_by": "S_aqr_real_plus25"
+   },
+   "with_reference": {
+    "min": 0.06736,
+    "min_by": "S_no5y_fidi_arith",
+    "max": 0.07085,
+    "max_by": "S_ssga_arith_raw"
+   }
+  },
+  "XLK": {
+   "main": 0.0725,
+   "C": 0.07232,
+   "D_made": true,
+   "reading": {
+    "min": 0.06951,
+    "min_by": "S_no5y_fidi_arith",
+    "max": 0.073,
+    "max_by": "S_aqr_real_plus25"
+   },
+   "with_reference": {
+    "min": 0.06951,
+    "min_by": "S_no5y_fidi_arith",
+    "max": 0.073,
+    "max_by": "S_ssga_arith_raw"
+   }
+  },
+  "SMH": {
+   "main": 0.06923,
+   "C": 0.06926,
+   "D_made": true,
+   "reading": {
+    "min": 0.06624,
+    "min_by": "S_no5y_fidi_arith",
+    "max": 0.06973,
+    "max_by": "S_aqr_real_plus25"
+   },
+   "with_reference": {
+    "min": 0.06624,
+    "min_by": "S_no5y_fidi_arith",
+    "max": 0.06973,
+    "max_by": "S_ssga_arith_raw"
+   }
+  },
+  "XLV": {
+   "main": 0.07316,
+   "C": 0.07254,
+   "D_made": true,
+   "reading": {
+    "min": 0.07017,
+    "min_by": "S_no5y_fidi_arith",
+    "max": 0.07366,
+    "max_by": "S_aqr_real_plus25"
+   },
+   "with_reference": {
+    "min": 0.07017,
+    "min_by": "S_no5y_fidi_arith",
+    "max": 0.07366,
+    "max_by": "S_ssga_arith_raw"
+   }
+  },
+  "XLP": {
+   "main": 0.07025,
+   "C": 0.07012,
+   "D_made": true,
+   "reading": {
+    "min": 0.06726,
+    "min_by": "S_no5y_fidi_arith",
+    "max": 0.07075,
+    "max_by": "S_aqr_real_plus25"
+   },
+   "with_reference": {
+    "min": 0.06726,
+    "min_by": "S_no5y_fidi_arith",
+    "max": 0.07075,
+    "max_by": "S_ssga_arith_raw"
+   }
+  },
+  "XLU": {
+   "main": 0.06635,
+   "C": 0.06714,
+   "D_made": true,
+   "reading": {
+    "min": 0.06336,
+    "min_by": "S_no5y_fidi_arith",
+    "max": 0.06685,
+    "max_by": "S_aqr_real_plus25"
+   },
+   "with_reference": {
+    "min": 0.06336,
+    "min_by": "S_no5y_fidi_arith",
+    "max": 0.06685,
+    "max_by": "S_ssga_arith_raw"
+   }
+  },
+  "XLE": {
+   "main": 0.06985,
+   "C": 0.06984,
+   "D_made": true,
+   "reading": {
+    "min": 0.06686,
+    "min_by": "S_no5y_fidi_arith",
+    "max": 0.07035,
+    "max_by": "S_aqr_real_plus25"
+   },
+   "with_reference": {
+    "min": 0.06686,
+    "min_by": "S_no5y_fidi_arith",
+    "max": 0.07035,
+    "max_by": "S_ssga_arith_raw"
+   }
+  },
+  "ITA": {
+   "main": 0.06841,
+   "C": 0.06852,
+   "D_made": true,
+   "reading": {
+    "min": 0.06542,
+    "min_by": "S_no5y_fidi_arith",
+    "max": 0.06891,
+    "max_by": "S_aqr_real_plus25"
+   },
+   "with_reference": {
+    "min": 0.06542,
+    "min_by": "S_no5y_fidi_arith",
+    "max": 0.06891,
+    "max_by": "S_ssga_arith_raw"
+   }
+  },
+  "RSP": {
+   "main": 0.07111,
+   "C": 0.07071,
+   "D_made": true,
+   "reading": {
+    "min": 0.06812,
+    "min_by": "S_no5y_fidi_arith",
+    "max": 0.07161,
+    "max_by": "S_aqr_real_plus25"
+   },
+   "with_reference": {
+    "min": 0.06812,
+    "min_by": "S_no5y_fidi_arith",
+    "max": 0.07161,
+    "max_by": "S_ssga_arith_raw"
+   }
+  },
+  "VTV": {
+   "main": 0.07889,
+   "C": 0.08089,
+   "D_made": true,
+   "reading": {
+    "min": 0.07889,
+    "min_by": "S_aqr_real_plus25",
+    "max": 0.08089,
+    "max_by": "S_strict_2026_pub"
+   },
+   "with_reference": {
+    "min": 0.07889,
+    "min_by": "S_all_currency",
+    "max": 0.08089,
+    "max_by": "S_strict_2026_pub"
+   }
+  },
+  "VBR": {
+   "main": 0.08164,
+   "C": 0.07901,
+   "D_made": true,
+   "reading": {
+    "min": 0.07914,
+    "min_by": "S_strict_2026_pub",
+    "max": 0.08314,
+    "max_by": "S_no_GMO"
+   },
+   "with_reference": {
+    "min": 0.07914,
+    "min_by": "S_strict_2026_pub",
+    "max": 0.08339,
+    "max_by": "S_ssga_arith_raw"
+   }
+  },
+  "IJR": {
+   "main": 0.07604,
+   "C": 0.07488,
+   "D_made": true,
+   "reading": {
+    "min": 0.07354,
+    "min_by": "S_strict_2026_pub",
+    "max": 0.07754,
+    "max_by": "S_no_GMO"
+   },
+   "with_reference": {
+    "min": 0.07354,
+    "min_by": "S_strict_2026_pub",
+    "max": 0.07779,
+    "max_by": "S_ssga_arith_raw"
+   }
+  },
+  "VIG": {
+   "main": 0.07229,
+   "C": 0.07229,
+   "D_made": false,
+   "reading": {
+    "min": 0.07229,
+    "min_by": "S_aqr_real_plus25",
+    "max": 0.07229,
+    "max_by": "S_with_GS"
+   },
+   "with_reference": {
+    "min": 0.07229,
+    "min_by": "S_all_currency",
+    "max": 0.07229,
+    "max_by": "S_with_GS"
+   }
+  },
+  "MOAT": {
+   "main": 0.0684,
+   "C": 0.0684,
+   "D_made": false,
+   "reading": {
+    "min": 0.0684,
+    "min_by": "S_aqr_real_plus25",
+    "max": 0.0684,
+    "max_by": "S_with_GS"
+   },
+   "with_reference": {
+    "min": 0.0684,
+    "min_by": "S_all_currency",
+    "max": 0.0684,
+    "max_by": "S_with_GS"
+   }
+  },
+  "VYM": {
+   "main": 0.0772,
+   "C": 0.0772,
+   "D_made": false,
+   "reading": {
+    "min": 0.0772,
+    "min_by": "S_aqr_real_plus25",
+    "max": 0.0772,
+    "max_by": "S_with_GS"
+   },
+   "with_reference": {
+    "min": 0.0772,
+    "min_by": "S_all_currency",
+    "max": 0.0772,
+    "max_by": "S_with_GS"
+   }
+  },
+  "PXF": {
+   "main": 0.0731,
+   "C": 0.07129,
+   "D_made": true,
+   "reading": {
+    "min": 0.0731,
+    "min_by": "S_aqr_real_plus25",
+    "max": 0.0731,
+    "max_by": "S_with_GS"
+   },
+   "with_reference": {
+    "min": 0.0711,
+    "min_by": "S_all_currency",
+    "max": 0.0731,
+    "max_by": "S_with_GS"
+   }
+  },
+  "DEM": {
+   "main": 0.07236,
+   "C": 0.06978,
+   "D_made": true,
+   "reading": {
+    "min": 0.06786,
+    "min_by": "S_no5y_fidi_arith",
+    "max": 0.07261,
+    "max_by": "S_strict_2026_pub"
+   },
+   "with_reference": {
+    "min": 0.06786,
+    "min_by": "S_no5y_fidi_arith",
+    "max": 0.07261,
+    "max_by": "S_strict_2026_pub"
+   }
+  },
+  "MTUM": {
+   "main": 0.07596,
+   "C": 0.07596,
+   "D_made": false,
+   "reading": {
+    "min": 0.07596,
+    "min_by": "S_aqr_real_plus25",
+    "max": 0.07596,
+    "max_by": "S_with_GS"
+   },
+   "with_reference": {
+    "min": 0.07596,
+    "min_by": "S_all_currency",
+    "max": 0.07596,
+    "max_by": "S_with_GS"
+   }
+  },
+  "QUAL": {
+   "main": 0.07153,
+   "C": 0.07153,
+   "D_made": false,
+   "reading": {
+    "min": 0.07153,
+    "min_by": "S_aqr_real_plus25",
+    "max": 0.07153,
+    "max_by": "S_with_GS"
+   },
+   "with_reference": {
+    "min": 0.07153,
+    "min_by": "S_all_currency",
+    "max": 0.07153,
+    "max_by": "S_with_GS"
+   }
+  },
+  "XLI": {
+   "main": 0.06981,
+   "C": 0.07013,
+   "D_made": true,
+   "reading": {
+    "min": 0.06682,
+    "min_by": "S_no5y_fidi_arith",
+    "max": 0.07031,
+    "max_by": "S_aqr_real_plus25"
+   },
+   "with_reference": {
+    "min": 0.06682,
+    "min_by": "S_no5y_fidi_arith",
+    "max": 0.07031,
+    "max_by": "S_ssga_arith_raw"
+   }
+  },
+  "XLF": {
+   "main": 0.06928,
+   "C": 0.06966,
+   "D_made": true,
+   "reading": {
+    "min": 0.06629,
+    "min_by": "S_no5y_fidi_arith",
+    "max": 0.06978,
+    "max_by": "S_aqr_real_plus25"
+   },
+   "with_reference": {
+    "min": 0.06629,
+    "min_by": "S_no5y_fidi_arith",
+    "max": 0.06978,
+    "max_by": "S_ssga_arith_raw"
+   }
+  },
+  "XLY": {
+   "main": 0.07151,
+   "C": 0.07146,
+   "D_made": true,
+   "reading": {
+    "min": 0.06852,
+    "min_by": "S_no5y_fidi_arith",
+    "max": 0.07201,
+    "max_by": "S_aqr_real_plus25"
+   },
+   "with_reference": {
+    "min": 0.06852,
+    "min_by": "S_no5y_fidi_arith",
+    "max": 0.07201,
+    "max_by": "S_ssga_arith_raw"
+   }
+  },
+  "GRID": {
+   "main": 0.06878,
+   "C": 0.0686,
+   "D_made": true,
+   "reading": {
+    "min": 0.06828,
+    "min_by": "S_no_JPM",
+    "max": 0.06928,
+    "max_by": "S_with_GS"
+   },
+   "with_reference": {
+    "min": 0.06828,
+    "min_by": "S_no_JPM",
+    "max": 0.06928,
+    "max_by": "S_with_GS"
+   }
+  }
  },
- "summary_ja": "2026年に出た長期（5〜15年）の株の予想を 16 社から集めた（Goldman Sachs は2025年11月なので感度だけ・Franklin は数字が取れなかった）。中央値は 米国大型 6.3%（15社・幅 -3.5〜9.0）・米国小型 6.6%・先進国（米国除く）7.5%・日本 8.6%・新興国 8.0%・全世界 6.9%（いずれも名目のドル建て・年率・ドル建ての値だけの中央値）。米国大型は過去100年の平均（約10%）よりかなり低く、米国外のほうを高く見る会社が多い。ただし同じ方法の予想は2010年代の米国株を大きく低く見積もってきた（BNY 2016: 7.1%→実際13.4%）。"
+ "for_final": {
+  "how": "night/bestpf_eval.py の load_D() は D_net_by_asset を読む（無い本は C で代える）。最終の採点の直前に python3 night/bestpf_cma.py を回し直す（R7 の行を読み直すため）。",
+  "pending": "なし（R7 の行も読めた: MTUM・QUAL・XLI・XLF・XLY・EPI_LONG・GRID。MTUM・QUAL・EPI・EPI_LONG は5社未満の種類なので D＝C）",
+  "sensitivity": "感度の幅は sensitivity_range_by_asset。reading（事前登録の中で読み方が分かれる所: S_with_GS・S_no_GMO・S_strict_2026_pub・S_no_JPM・S_no_approx・S_aqr_real_plus25・S_no_5y・S_fidi_arith・S_no5y_fidi_arith）と、with_reference（さらに事前登録の外の参考 S_all_currency・S_ssga_arith_raw を入れた幅）を分けた。主と reading の最小〜最大: VOO 7.06%（6.76〜7.11）・QQQM 7.15%（6.85〜7.20）・SMH 6.92%（6.62〜6.97）・VT 7.21%（7.16〜7.26）・VEA 7.26%（7.26〜7.26）・VWO 7.52%（7.07〜7.54）・TOPIX 8.28%（8.28〜8.47）・VTV 7.89%（7.89〜8.09）・VBR 8.16%（7.91〜8.31）・XLI 6.98%（6.68〜7.03）・XLF 6.93%（6.63〜6.98）・XLY 7.15%（6.85〜7.20）・GRID 6.88%（6.83〜6.93）。主の D と C の差の最大は VBR の +0.26pt・reading の感度の中での最大は VBR（S_no_GMO）の C との差 0.41pt。日本は5年の予想を外すとドル建てが4社になり D＝C、VTV は GMO の Deep Value を外すと米国バリューが4社になり D＝C"
+ },
+ "fixes_applied": [
+  {
+   "severity": "medium",
+   "issue": "感度に「5年の予想を外す」と「Fidelity International を算術と見る」が無く、米国大型の中央値と VOO の D_net の幅が狭く見えていた",
+   "fix": "感度 S_no_5y（T. Rowe Price・Robeco を外す）・S_fidi_arith（FIDI を 算術−σ²/2。σ は同じ報告 p.11 の Volatility assumptions: DM equities 15.3%〔米国株の σ は無いので代用〕・EM 20.2%・--verify で棒の位置を確認）・S_no5y_fidi_arith（両方）を足した。for_final.sensitivity と summary_ja の幅をこの結果に合わせた",
+   "after": {
+    "USL_median_pct": {
+     "S_no_5y": 6.1,
+     "S_fidi_arith": 5.9,
+     "S_no5y_fidi_arith": 5.702
+    },
+    "EM_median_pct": {
+     "S_no_5y": 7.8,
+     "S_fidi_arith": 7.8,
+     "S_no5y_fidi_arith": 7.1
+    },
+    "JP": {
+     "S_no_5y": {
+      "n": 4,
+      "made": false,
+      "median": 8.7,
+      "H": 10.0,
+      "ref_with_local": {
+       "n": 7,
+       "median": 7.3
+      }
+     },
+     "S_no5y_fidi_arith": {
+      "n": 4,
+      "made": false,
+      "median": 8.7,
+      "H": 10.0,
+      "ref_with_local": {
+       "n": 7,
+       "median": 7.3
+      }
+     }
+    },
+    "VOO_D_net_reading_range_pct": [
+     6.76,
+     7.11
+    ]
+   },
+   "before": "VOO の D_net の幅は 6.96〜7.11%（以前の7本の感度・現地通貨を混ぜる参考も含む）"
+  },
+  {
+   "severity": "low",
+   "issue": "設備投資の「前年 3,575億ドル」は1年前の12か月ではなかった（MSFT FY2025＋他3社の2025暦年＝直近12か月と6か月重なる）",
+   "fix": "前年＝1年前の同じ12か月（2024-07〜2025-06）に替えた（SEC companyconcept の 2024暦年−2024年上期＋2025年上期・MSFT は FY2025）。357.5 は ref_msft_fy25_plus_cal2025_bn として「前年」と呼ばずに残した",
+   "before": {
+    "prev_bn": 357.5,
+    "growth_pct": 42.9
+   },
+   "after": {
+    "prev_bn": 291.3,
+    "growth_pct": 75.3,
+    "ref_bn": 357.5
+   }
+  },
+  {
+   "severity": "low",
+   "issue": "出力が R7（night/bestpf_ext.py）より前に作られ、XLI・XLF・XLY・GRID の D_net が無かった。R7 を読む所が例外を黙って捨てていた",
+   "fix": "回し直して R7 の行を読んだ（足した本: MTUM・QUAL・XLI・XLF・XLY・EPI_LONG・GRID）。R7 が読めないときは rows_source と for_final.pending に理由を書く形にした。EPI_LONG（R7 の行）を D_MAP に足した（インド＝5社未満 → D＝C）",
+   "after": {
+    "XLI": {
+     "D_net": 6.981,
+     "C": 7.013
+    },
+    "XLF": {
+     "D_net": 6.928,
+     "C": 6.966
+    },
+    "XLY": {
+     "D_net": 7.151,
+     "C": 7.146
+    },
+    "GRID": {
+     "D_net": 6.878,
+     "C": 6.86
+    },
+    "MTUM": {
+     "D_net": 7.596,
+     "C": 7.596
+    },
+    "QUAL": {
+     "D_net": 7.153,
+     "C": 7.153
+    },
+    "EPI_LONG": {
+     "D_net": 7.124,
+     "C": 7.124
+    }
+   },
+   "r7_problem": null
+  },
+  {
+   "severity": "low",
+   "issue": "(a) ドル建てが5社未満の種類で、感度が現地通貨の値を「名目ドル」の中央値に混ぜていた（事前登録は D＝C）。(b) S_strict_2026_pub が Northern Trust（表紙 \"RELEASED DECEMBER 2025\"）を残していた",
+   "fix": "(a) d_table を「ドル建てだけで中央値・5社未満なら D＝C」に直し、現地通貨を混ぜた値は ref_with_local に参考として別名で残した。S_all_currency と S_ssga_arith_raw は「参考（事前登録の外）」の印を付け、幅の主な数字（reading）から外した。(b) S_strict_2026_pub は JPM と NT の両方を外す形にし、以前の JPM だけの版は S_no_JPM として残した",
+   "before": {
+    "S_strict_USL_pct": 6.1,
+    "S_strict_VOO_D_net_pct": 6.96,
+    "S_strict_JP_pct": "6.7（7社・現地通貨込み）"
+   },
+   "after": {
+    "S_strict_USL_pct": 5.9,
+    "S_strict_VOO_D_net_pct": 6.86,
+    "S_strict_JP": {
+     "n": 4,
+     "made": false,
+     "median": 7.55,
+     "H": 10.0,
+     "ref_with_local": {
+      "n": 6,
+      "median": 6.6
+     }
+    }
+   }
+  },
+  {
+   "severity": "low",
+   "issue": "説明の一部が出典より強く言い切っていた",
+   "fix": "(1) BlackRock の米国大型 5.2%→9.0% の理由（「AI による利益の上方修正」）は原本に書かれていない → 「理由は確かめられない」に。(2) Tower 2008 の順位の相関0.94 に「2000〜2008年の1回の窓・株5種類だけの例」を書き添えた。(3) JPM 2021 の 4.1% を「米国株（記事の表現 \"equity market returns\"・大型か・幾何か算術かは不明）」に書き直した"
+  }
+ ],
+ "summary_ja": "2026年に出た長期（5〜15年）の株の予想を 16 社から集めた（Goldman Sachs は2025年11月なので感度だけ・Franklin は数字が取れなかった）。中央値は 米国大型 6.3%（15社・幅 -3.5〜9.0）・米国小型 6.6%・先進国（米国除く）7.5%・日本 8.6%・新興国 8.0%・全世界 6.9%（いずれも名目のドル建て・年率・ドル建ての値だけの中央値）。米国大型は過去100年の平均（約10%）よりかなり低く、米国外のほうを高く見る会社が多い。D（20年へ伸ばして費用と税を引いた後）と C の差は主の計算で最大 0.26pt（VBR）。ただし読み方を変えると（5年の予想を外す・Fidelity を算術と見る・2026年公表だけ など）、米国大型の中央値は 5.7〜6.4% まで動き、VOO の D は 6.76〜7.11% になる。同じ方法の予想は2010年代の米国株を大きく低く見積もってきた（BNY 2016: 7.1%→実際13.4%）。"
 }
