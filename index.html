@@ -1161,7 +1161,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.216</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.217</span></h1>
     <div style="margin:6px 0 2px"><button id="hintBtn" onclick="ccfToggleHints()" style="padding:5px 11px;background:none;border:1px solid var(--line);border-radius:7px;color:var(--dim);font-size:11.5px;cursor:pointer">欄の注記を出す</button></div>
   <div class="sub"><details class="why plain" data-fold="6"><summary>ℹ この画面について</summary><div class="why-body"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——絶対MOAT指数をΩの直接項に加え(実効≒22%)、<b>四関門の一つ（絶対MOAT指数75+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%。⚠率そのものは退場社の抜けた母集団で測った下限の側で、2013年の質実証プールでは4.2〜19.2%の幅がある〔2026-09-23 に退場日を是正した後の値・是正前は2.0〜25.7%〕）。</div></details></div>
   </div>
@@ -1418,7 +1418,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
   <h1 class="serif">買付順位</h1>
   <div style="text-align:right;margin-top:-6px"><a href="industry.html" target="_blank" style="font-size:12px;text-decoration:none;margin-right:12px">🏭 業種の伸び ↗</a><a href="v10.html" target="_blank" style="font-size:12px;text-decoration:none">✦ v10影スコア ↗</a></div>
  </div>
- <div class="wrap"><div id="planBox"></div></div>
+ <div class="wrap"><div id="packFreshBar5" style="display:none;margin:0 0 12px;padding:10px 13px;border:1px solid rgba(84,184,138,.5);border-radius:8px;background:rgba(84,184,138,.10);font-size:13px"></div><div id="planBox"></div></div>
 </div>
 
 <div id="pg7" class="pg">
@@ -2938,7 +2938,13 @@ async function ccfRenderQueue(){
   await ccfRenderQueueInto('queueShelf','all');
 }
 async function ccfRenderAllQueues(){ await ccfRenderQueue(); if($('queueShelf_fetch'))await ccfRenderQueueInto('queueShelf_fetch','untaken'); }
-async function processBatch(t){
+// v9.9.217: 取り込みは採点機のフォーム（applyFields→compute→autoSave）を共有するので、**同時に2つ走らせない**。
+//   2つが交互にフォームへ書くと、ある社の記録が別の社の数字で保存されうる（台帳が空のときの自動取込と、人が押す一括取込が重なる場合）。
+//   後から来た取り込みは、前の取り込みが終わってから走る（順番に並べるだけ・中身は変えない）。
+var __ccfBatchChain=Promise.resolve();
+function processBatch(t,opt){ const p=__ccfBatchChain.then(function(){return processBatchRun(t,opt);}); __ccfBatchChain=p.catch(function(){}); return p; }
+async function processBatchRun(t,opt){
+  opt=opt||{};   // v9.9.217: opt.stay＝📚台帳へ飛ばない（🛒買付順位から押したとき）／opt.auto＝台帳が空のときの自動取込（知らせ方と記録の題を変える）
   t=t.replace(/```json|```/g,'').trim();
   let d;
   const am=t.match(/\[[\s\S]*\]/);
@@ -2951,7 +2957,8 @@ async function processBatch(t){
   if(jpsus.length){ await ccfShelveDrafts(jpsus); uiNotice('日本株'+jpsus.length+'件を審査待ちへ隔離: roic>40%なのにroicExが無い=EDINET生値の疑い。検死(roicEx)を埋めて再納品',8000); }
   if(!arr.length){ await renderLedger(); const bb=$('batchBox'); if(bb)bb.innerHTML='<div style="background:var(--panel2);border:1px solid rgba(84,184,138,.5);border-radius:10px;padding:12px 14px;margin-top:12px;color:#8fc9a4;font-size:13px">全'+drafts.length+'件は<b>審査待ち</b>（機械値のみ）だったので台帳に入れず隣離した。下の「審査待ち」棚から依頼文をClaudeへ。</div>'; return; }
   const results=[],errors=[];
-  for(const one of arr){ applyFields(one); compute(); const info=await autoSave('JSON取込',arr.length>1); if(info){info.error?errors.push(info):results.push(info);} if(arr.length>5)await _sleep(130); }
+  let _ns=0;
+  for(const one of arr){ applyFields(one); compute(); const info=await autoSave('JSON取込',arr.length>1); if(info){info.error?errors.push(info):results.push(info);} _ns++; if(opt.onSave){try{opt.onSave(_ns,arr.length);}catch(_){}} if(arr.length>5)await _sleep(130); }
   if(arr.length>1)renderLedger();
   if(errors.length)uiNotice(`保存失敗 ${errors.length}件——Ⅲの結果パネルに理由を表示`,6000);
   if(arr.length>1){
@@ -2959,11 +2966,11 @@ async function processBatch(t){
     const rows=results.map(x=>`<div style="display:flex;gap:8px;font-size:12.5px;padding:3px 0;border-bottom:1px solid rgba(40,52,74,.4)"><span style="flex:1">${x.nm}</span><span>${x.prevScore?x.prevScore+'→':''}<b>${x.score}</b>${x.diff}</span><span style="color:var(--muted)">${x.prevTier&&x.prevTier!==x.tier?x.prevTier+'→':''}${x.tier}</span></div>`).join('');
     const erows=errors.map(x=>`<div style="font-size:12px;color:var(--rust);padding:2px 0">✕ ${x.nm}：${x.error}</div>`).join('');
     if(bb)bb.innerHTML=`<div style="background:var(--panel2);border:1px solid ${errors.length?'var(--rust)':'var(--gold-line)'};border-radius:10px;padding:12px 14px;margin-top:12px"><div style="display:flex;justify-content:space-between;align-items:center"><b style="color:${errors.length?'var(--rust)':'var(--gold-bright)'}">一括取込：成功 ${results.length}件・失敗 ${errors.length}件（${new Date().toLocaleString('ja-JP')}）</b><button onclick="$('batchBox').innerHTML=''" style="background:none;border:none;color:var(--dim);cursor:pointer;font-size:13px">✕</button></div>${erows}${results.length>8?`<details class="why" data-fold="5"><summary>内訳 ${results.length}件</summary><div class="why-body">${rows}</div></details>`:rows}</div>`;
-    uiNotice(`一括取込完了：${results.length}件——詳細は🗒検証履歴に記録済み`);
-    if(typeof showPage==='function')showPage(3);
+    uiNotice(opt.auto?`台帳が空だったので、全パック ${results.length}件を自動で取り込みました`:`一括取込完了：${results.length}件——詳細は🗒検証履歴に記録済み`,opt.auto?6000:undefined);
+    if(typeof showPage==='function'&&!opt.stay)showPage(3);
     // v9.1: 検証履歴への自動記録（クリックで開く詳細一覧）
     const lg=results.map(x=>`${x.nm}　評価 ${x.prevScore?x.prevScore+'→':''}${x.score}（${x.tier}）${x.prevTier&&x.prevTier!==x.tier?' ★ティア変更':''}　ROIC ${x.roic}%　PER ${x.per}`).join('\n');
-    saveLog({date:new Date().toISOString().slice(0,10),title:`一括再採点 ${results.length}銘柄`,body:lg});
+    saveLog({date:new Date().toISOString().slice(0,10),title:(opt.auto?`自動取込（台帳が空だった） ${results.length}銘柄`:`一括再採点 ${results.length}銘柄`),body:lg});
   }
 }
 function applyJSON(){
@@ -7776,7 +7783,22 @@ async function renderPlan(){
                            '納品検査のFAIL','out/validate_fail.json',gBlind);
   const pendMap=ccfGateInput(await _gj('out/pending.json'),v=>v&&v.verdict!=='ok',
                              '未完了の重大事象','out/pending.json',gBlind);
-  if(!items.length){pb.innerHTML=ccfGateBlindHTML(gBlind)+ccfMonthPlanBox([])+'<div style="color:var(--dim);font-size:13px;margin-top:6px">個別の買付順位は、✎採点機で銘柄を投入すると自動生成される（投下可が出れば上の個別枠に配分される）。</div>';return;}
+  if(!items.length){
+    // v9.9.217: 台帳が空のときは「なぜ出ないか」と直し方をその場に出す（旧は「✎採点機で銘柄を投入すると自動生成される」だけで、
+    //   ホーム画面のアプリを初めて開いた人には理由が分からなかった）。自動取込（ccfAutoImportIfEmpty）の最中なら進み具合を出す。
+    const ai=window.__ccfAutoImp, busy=!!(ai&&typeof ai==='object');
+    const why=busy
+      ? '<b>台帳がまだ空です——全パックを自動で取り込んでいます</b>（<span class="autoImpProg">'+(ai.n?(ai.st+' '+ai.done+'/'+ai.n):'準備中')+'</span>・初回だけ約1分）。終わるとこの画面に買付順位と今月の注文書が出ます。'
+      : ai==='fail'
+        ? '<b>台帳が空です</b>——自動の取り込みに失敗しました（通信を確かめて、下の「⭳ いま取り込む」を押してください）。'
+        : '<b>台帳が空です</b>（このブラウザ／ホーム画面のアプリでは、まだパックを取り込んでいません＝Safari とアプリは保存場所が別）。';
+    pb.innerHTML=ccfGateBlindHTML(gBlind)
+      +'<div style="margin:6px 0 12px;padding:10px 13px;border:1px solid rgba(84,184,138,.5);border-radius:8px;background:rgba(84,184,138,.10);font-size:13px;line-height:1.7">'
+      +why+(busy?'':' <button onclick="ccfImportPacks(this,\'all\',{stay:true})" style="margin-left:6px">⭳ いま取り込む</button>')
+      +'<div style="color:var(--muted);font-size:12px;margin-top:4px">個別株の買付順位と注文書は台帳（門の審査の結果）から作る。台帳が空のあいだは個別株を1社も選べない。</div></div>'
+      +ccfMonthPlanBox([]);
+    return;
+  }
   const num=x=>parseFloat(x)||0;
   // v9.9.30: 現在保有pos%は🏦保有の実額(pf:portfolio)から都度算出——手入力d.posは記帳凍結で陳腐化し、
   //   買付後も同銘柄へ不足按分が続く欠陥があった。実額が無い銘柄のみd.posへフォールバック
@@ -9029,7 +9051,21 @@ function pfShow(){ const f=document.getElementById('pfFrame'); if(!f)return; try
 //   「採取器を直しても門に反映されない」状態を作っていた。
 async function ccfImportJpPacks(btn){ return ccfImportPacks(btn,'jp'); }
 async function ccfImportAllPacks(btn){ return ccfImportPacks(btn,'all'); }
-async function ccfImportPacks(btn,mode){
+// v9.9.217: 同じパックの取り込みが既に走っていれば、もう1本は始めずにそれが終わるのを待つ（'all' は 'jp' を含む）。
+//   例: 台帳が空のときの自動取込の最中に「⭳ 全パック一括取込」を押した場合。二重に取り込んでも結果は同じで、時間が倍かかるだけ。
+window.__ccfImpRun=null;
+async function ccfImportPacks(btn,mode,opt){
+  var cur=window.__ccfImpRun;
+  if(cur&&(cur.mode==='all'||cur.mode===mode)){
+    var o0=btn?btn.textContent:''; if(btn)btn.textContent='取り込み中…';
+    try{ return await cur.p; } finally{ if(btn)btn.textContent=o0; }
+  }
+  var p=ccfImportPacksRun(btn,mode,opt);
+  window.__ccfImpRun={mode:mode,p:p};
+  try{ return await p; } finally{ if(window.__ccfImpRun&&window.__ccfImpRun.p===p)window.__ccfImpRun=null; }
+}
+async function ccfImportPacksRun(btn,mode,opt){
+  opt=opt||{};   // v9.9.217: opt.stay（📚台帳へ飛ばない）・opt.auto（台帳が空のときの自動取込）・opt.onProgress(段階,done,total)
   var o=btn?btn.textContent:'';
   try{
     if(btn)btn.textContent='索引を取得中…';
@@ -9047,15 +9083,22 @@ async function ccfImportPacks(btn,mode){
       got.forEach(function(x){if(x)arr.push(x);});
       done+=chunk.length;
       if(btn)btn.textContent='取得 '+done+'/'+jp.length;
+      if(opt.onProgress){try{opt.onProgress('取得',done,jp.length);}catch(_){}}
     }
     if(!arr.length)throw new Error('パックを読めなかった');
-    await processBatch(JSON.stringify(arr));
+    await processBatch(JSON.stringify(arr),{stay:!!opt.stay,auto:!!opt.auto,onSave:function(i,n){
+      if(btn&&i%8===0)btn.textContent='取込 '+i+'/'+n;
+      if(opt.onProgress){try{opt.onProgress('取込',i,n);}catch(_){}}
+    }});
     if(btn){btn.textContent='取込 ✓ '+arr.length+'件';setTimeout(function(){btn.textContent=o;},3000);}
     // 取込のあと、台帳の取り残しの帯を測り直す（2026-09-22）。
     //   **直ったことを画面で示すのが本体**——押したのに帯が残っていれば、それは別の原因
     //   （索引が古い／パックにその欄がそもそも無い）なので、次に疑う先が変わる。
     try{ if(typeof ccfLedgerStale==='function') await ccfLedgerStale('staleBar'); }catch(_){}
-  }catch(e){uiNotice('一括取込失敗: '+(e&&e.message||e),6000);if(btn)btn.textContent=o;}
+    // その場に留まるときは、見えている画面（🛒買付順位・📋今日・🏦保有）を新しい台帳で作り直す（v9.9.209 の受け手を使う＝呼び出し地点を増やさない）
+    if(opt.stay){ try{ await ccfCheckPacksFresh(); }catch(_){} try{ if(typeof ccfHoldingsChanged==='function')ccfHoldingsChanged(); }catch(_){} }
+    return true;
+  }catch(e){uiNotice('一括取込失敗: '+(e&&e.message||e),6000);if(btn)btn.textContent=o;return false;}
 }
 async function ccfSyncFromLocal(){
   if(store.mode!=='claude')return;
@@ -9088,20 +9131,51 @@ async function ccfCheckPacksFresh(){
     // 索引にあるのに台帳に無い＝**まだ取り込んでいない社**。名前の揺れは safeKey と同じ規則で吸収する
     const miss=idx.map(f=>String(f).replace('_gate_pack.json',''))
                   .filter(t=>![...have].some(k=>k.split(/[\s_]/)[0].toUpperCase()===t.toUpperCase()));
-    const el=document.getElementById('packFreshBar');
-    if(!el||!miss.length){if(el)el.style.display='none';return miss;}
-    el.style.display='block';
-    el.innerHTML='<b>⭳ 台帳に入っていないパックが '+miss.length+'社あります</b>'
-      +'<span style="color:var(--muted);font-size:12.5px"> — '+miss.slice(0,12).join(' ')
-      +(miss.length>12?' …':'')+'</span>'
-      +'<button onclick="ccfImportAllPacks(this)" style="margin-left:10px">⭳ いま取り込む</button>'
-      +'<div style="color:var(--muted);font-size:12px;margin-top:4px">'
-      +'※**自動では取り込まない**——一括取込は台帳のレコードを置き換えるので、'
-      +'✎採点機で直した値を無言で巻き戻す事故を避けるため、押すかどうかは人が決める。</div>';
+    // v9.9.217: 同じ帯を 📚台帳（packFreshBar）と 🛒買付順位（packFreshBar5）の両方に出す——取り込んでいない社は買付順位にも出ないので、
+    //   旧は📚台帳のタブにしか案内が無く、買付順位だけ見る人には「投下可なし」の理由が分からなかった（2026-10-12 ユーザー「全然買付順位に出ない」）。
+    const els=['packFreshBar','packFreshBar5'].map(function(id){return document.getElementById(id);}).filter(Boolean);
+    if(!miss.length){els.forEach(function(e){e.style.display='none';});return miss;}
+    const ai=window.__ccfAutoImp, busy=!!(ai&&typeof ai==='object');   // 台帳が空のときの自動取込の最中（ccfAutoImportIfEmpty）
+    const html=busy
+      ? '<b>⭳ 台帳が空なので、全パック（'+miss.length+'社）を自動で取り込んでいます</b>'
+        +' <span class="autoImpProg" style="color:var(--muted);font-size:12.5px">'+(ai.n?(ai.st+' '+ai.done+'/'+ai.n):'')+'</span>'
+        +'<div style="color:var(--muted);font-size:12px;margin-top:4px">'
+        +'※自動で取り込むのは台帳が空のときだけ（巻き戻す値が無いので）。1件でも入っていれば、取り込むかは人が決める。</div>'
+      : '<b>⭳ 台帳に入っていないパックが '+miss.length+'社あります</b>'
+        +'<span style="color:var(--muted);font-size:12.5px"> — '+miss.slice(0,12).join(' ')
+        +(miss.length>12?' …':'')+'</span>'
+        +'<button onclick="ccfImportPacks(this,\'all\',{stay:true})" style="margin-left:10px">⭳ いま取り込む</button>'
+        +'<div style="color:var(--muted);font-size:12px;margin-top:4px">'
+        +'※取り込んでいない社は🛒買付順位にも出ない。**自動では取り込まない**——一括取込は台帳のレコードを置き換えるので、'
+        +'✎採点機で直した値を無言で巻き戻す事故を避けるため、押すかどうかは人が決める。</div>';
+    els.forEach(function(e){e.style.display='block';e.innerHTML=html;});
     return miss;                       // v9.9.140: 📋今日タブが同じ判定を再実装しないため返す
   }catch(e){return null;}              // ⚠ null は「判らなかった」＝**0件と区別する**（ルール7）
 }
-store.init().then(async()=>{await ccfSyncFromLocal();compute();renderLedger();if(typeof ccfRenderAllQueues==='function')ccfRenderAllQueues();ccfCheckPacksFresh();
+// ── v9.9.217（2026-10-12・ユーザー「全然買付順位に出ない」）: **台帳が空のときだけ**、全パックを自動で取り込む ──
+//   ホーム画面のアプリ（v9.9.216）は Safari と保存場所（localStorage）が別で、初めて開くと台帳が0件
+//   ＝🛒買付順位が「🟢投下可なし」だけになり、注文書も出なかった（案内の帯は📚台帳のタブにしか無かった）。
+//   v9.9.128 が自動で取り込まない理由は「一括取込は台帳のレコードを置き換え、✎採点機で人が直した値を黙って巻き戻す」こと。
+//   **台帳が空なら巻き戻す値が無い**ので当てはまらない。1件でも入っていれば従来どおり知らせるだけ（ccfCheckPacksFresh）。
+//   台帳を読めないときは何もしない（読めないを0件と読まない＝ルール7）。同じ読み込みの中で二度は走らせない。
+//   終わったら見えている画面を作り直す（ccfImportPacks の stay → ccfHoldingsChanged）。表示と取り込みの道だけ・採点に不介入。
+window.__ccfAutoImp=null;            // null＝未着手 / {st,done,n}＝取り込み中（st は 取得→取込）/ 'done' / 'fail'
+async function ccfAutoImportIfEmpty(){
+  if(window.__ccfAutoImp)return false;
+  let n=-1; try{const l=await store.list('g7:'); if(l&&Array.isArray(l.keys))n=l.keys.length;}catch(e){}
+  if(n!==0)return false;
+  window.__ccfAutoImp={st:'取得',done:0,n:0};
+  try{ ccfCheckPacksFresh(); }catch(e){}
+  try{ if(window.__ccfPage===5&&typeof renderPlan==='function')renderPlan(); }catch(e){}
+  const ok=await ccfImportPacks(null,'all',{stay:true,auto:true,onProgress:function(st,d,t){
+    window.__ccfAutoImp={st:st,done:d,n:t};
+    document.querySelectorAll('.autoImpProg').forEach(function(el){el.textContent=st+' '+d+'/'+t;});
+  }});
+  window.__ccfAutoImp=ok?'done':'fail';
+  if(!ok){ try{ ccfCheckPacksFresh(); }catch(e){} try{ if(window.__ccfPage===5&&typeof renderPlan==='function')renderPlan(); }catch(e){} }
+  return true;                       // 自動取込に入った（成否は __ccfAutoImp）＝呼び手は改めて帯を測らなくてよい
+}
+store.init().then(async()=>{await ccfSyncFromLocal();compute();renderLedger();if(typeof ccfRenderAllQueues==='function')ccfRenderAllQueues();ccfAutoImportIfEmpty().then(function(r){if(!r)ccfCheckPacksFresh();});
   /* v9.9.131: 人の決定(state.json)を repo から読む。**採用は repo のほうが新しいときだけ**で、
      手元に未書き出しがあれば採用せず警告する（黙って上書きする経路を作らない）。
      ⚠ ccfSyncFromLocal の**後**に置く——先に走らせると、まだ同期していない localStorage を
