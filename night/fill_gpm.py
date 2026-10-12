@@ -226,9 +226,11 @@ def sec_gpm(facts, report_date):
 # ─────────────────────────── 日本株（有報PDF） ───────────────────────────
 PL_HEAD = re.compile(r'【(?:要約)?連結損益(?:計算書|及び(?:その他の)?包括利益計算書)】')
 PL_HEAD_SOLO = re.compile(r'【損益計算書】')
-REV_LINE = re.compile(r'^\s*(売上高合計|売上収益合計|営業収益合計|売上高|売上収益|営業収益)(?:\s|※|\()')
-GP_LINE = re.compile(r'^\s*売上総利益(?!率)')
-NUM = re.compile(r'(△|▲|-)?\s*(\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?')
+_PFX = r'(?:[IVXⅠ-Ⅹ]+\s+|\d+\.\s*)?'     # 旧様式の『I 売上高』『1.売上原価』の番号
+REV_LINE = re.compile(r'^\s*' + _PFX + r'(売上高合計|売上収益合計|営業収益合計|売上高|売上収益|営業収益)(?:\s|※|\()')
+GP_LINE = re.compile(r'^\s*' + _PFX + r'売上総利益(?!率)')
+COST_LINE = re.compile(r'^\s*' + _PFX + r'(売上原価合計|売上原価)(?:\s|※|\()')   # 粗利の行が無い表だけ『売上−原価』（米国株と同じ）
+NUM = re.compile(r'(△|▲|-)?\s*(\d{1,3}(?:,\d{3})+|\d+)(\.\d+)?')   # 小数のある数（百分比の列）は金額ではないので捨てる（_nums）
 
 
 def _nf(s):
@@ -240,6 +242,8 @@ def _nums(line):
     s = re.sub(r'\(注\s*\d*\)', ' ', s)
     out = []
     for m in NUM.finditer(s):
+        if m.group(3):            # 『100.0』『23.4』＝百分比の列（実測 村田製作所の旧様式）。有報の金額は整数
+            continue
         v = float(m.group(2).replace(',', ''))
         out.append(-v if m.group(1) else v)
     return out
@@ -280,7 +284,7 @@ def jp_pl(txt):
         if not (two or one):
             continue
         need = 2 if two else 1
-        rv = gp = None
+        rv = gp = cs = None
         um = re.search(r'\(単位\s*[:：]\s*(百万円|千円|円)\)', blk[:400])
         unit = um.group(1) if um else '単位不明'
         for ln in blk.split('\n')[1:]:
@@ -292,12 +296,20 @@ def jp_pl(txt):
                 n = _nums(ln)
                 if len(n) >= need:
                     gp = (n[-2] if two else None, n[-1])
+            if cs is None and COST_LINE.match(ln):
+                n = _nums(ln)
+                if len(n) >= need:
+                    cs = (n[-2] if two else None, n[-1])
             if rv and gp:
                 break
+        how = ''
+        if rv and not gp and cs:
+            gp = (None if rv[0] is None or cs[0] is None else rv[0] - cs[0], rv[1] - cs[1])
+            how = '・粗利の行が無く売上−売上原価'
         if rv and gp:
-            return ((rv[0], gp[0]), (rv[1], gp[1]), '%s・%s（%s%s）' % (kind, m.group(0), unit, '' if two else '・当期の1列だけ')), ''
+            return ((rv[0], gp[0]), (rv[1], gp[1]), '%s・%s（%s%s%s）' % (kind, m.group(0), unit, '' if two else '・当期の1列だけ', how)), ''
         if rv and not gp:
-            return None, '%s の損益計算書に売上総利益の行が無い（売上原価を開示しない業態）' % kind
+            return None, '%s の損益計算書に売上総利益の行も売上原価の行も無い（売上原価を開示しない業態）' % kind
     return None, '損益計算書の表（前期・当期の2列）を読めない'
 
 
@@ -344,7 +356,7 @@ def jp_gpm(t, pack, log):
         pl, why = jp_pl(txt)
         if pl is None:
             notes.append('%s（FY%d）%s' % (d, fy, why))
-            if '売上総利益の行が無い' in why:
+            if '売上原価の行も無い' in why:
                 return None, [], why + '（%s・FY%d）' % (d, fy)
             continue
         (rp, gpp), (rc, gpc), head = pl
