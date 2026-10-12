@@ -181,6 +181,25 @@ def tickers(fetch=True):
     return c2t, names
 
 
+def sec_names(ciks, fetch=True):
+    """SEC submissions の社名・旧社名・最後の届け出（ティッカーの無い社を名指しするため）。CACHE/sub_names.json に貯める"""
+    fn = os.path.join(CACHE, 'sub_names.json')
+    sn = json.load(open(fn)) if os.path.exists(fn) else {}
+    miss = [c for c in ciks if str(c) not in sn]
+    if fetch and miss:
+        def one(c):
+            j = sec_json(f'https://data.sec.gov/submissions/CIK{c:010d}.json') or {}
+            rec = j.get('filings', {}).get('recent', {})
+            return c, {'name': j.get('name', ''), 'tickers': j.get('tickers', []), 'former': [f.get('name') for f in j.get('formerNames', [])],
+                       'last': (rec.get('filingDate') or [''])[0], 'last_forms': (rec.get('form') or [])[:3], 'sic': j.get('sic', '')}
+        with ThreadPoolExecutor(4) as ex:
+            for c, v in ex.map(one, miss):
+                sn[str(c)] = v
+        os.makedirs(CACHE, exist_ok=True)
+        json.dump(sn, open(fn, 'w'))
+    return {c: sn.get(str(c)) for c in ciks}
+
+
 def sic_map(ciks, fetch=True):
     """SIC（業種コード）。out/sic_by_cik.json（industry_trends が貯めたもの）＋足りない社は submissions から"""
     base = json.load(open(os.path.join(BASE, 'out', 'sic_by_cik.json')))
@@ -793,8 +812,14 @@ SIC3_JA = {283: '医薬品', 284: '日用品・化粧品', 384: '医療機器', 
            594: '専門店', 596: 'ネット・通販', 599: '専門店', 701: 'ホテル・カジノ', 734: '企業向けサービス', 735: '機器レンタル',
            736: '人材', 738: '企業向けサービス', 781: '映画・動画', 799: '娯楽', 801: '医療', 805: '介護', 806: '病院',
            807: '検査・医療サービス', 808: '在宅医療', 809: '医療サービス', 822: '教育', 871: '技術サービス', 873: '研究・検査',
-           874: '経営・調査サービス'}
-SIC2_JA = {1: '農業', 2: '農業', 10: '金属鉱業', 12: '石炭', 13: '石油・ガス', 14: '鉱物', 15: '建設', 16: '建設', 17: '設備工事',
+           874: '経営・調査サービス',
+           367: '半導体・電子部品', 366: '通信機器', 365: '音響・映像機器', 355: '特殊な産業機械（半導体装置など）', 737: 'ソフトウェア・ネット',
+           602: '銀行', 603: '銀行', 609: '金融サービス', 611: '政府系の金融', 614: 'カード・消費者金融', 615: '事業向け金融',
+           616: '住宅ローン', 619: 'カード・金融サービス', 620: '証券・取引所', 621: '証券会社', 622: '商品取引', 628: '資産運用・取引所',
+           631: '生命保険', 632: '医療保険', 633: '損害保険', 635: '保証保険', 636: '権原保険', 637: '年金', 639: '保険', 641: '保険仲介',
+           651: '不動産', 653: '不動産仲介', 655: '不動産開発', 671: '持株会社', 672: '投資会社', 679: 'REIT・投資'}
+SIC2_JA = {60: '銀行', 61: '金融（貸金・カード）', 62: '証券・取引所', 63: '保険', 64: '保険仲介', 65: '不動産', 67: '持株・投資',
+           1: '農業', 2: '農業', 10: '金属鉱業', 12: '石炭', 13: '石油・ガス', 14: '鉱物', 15: '建設', 16: '建設', 17: '設備工事',
            20: '食品', 21: 'たばこ', 22: '繊維', 23: '衣料', 24: '木材', 25: '家具', 26: '紙・包装', 27: '出版・印刷',
            28: '化学', 29: '石油精製', 30: 'ゴム・樹脂', 31: '皮革', 32: '窯業・ガラス', 33: '鉄鋼・非鉄', 34: '金属製品',
            35: '機械', 36: '電気機器', 37: '輸送機器', 38: '精密・医療機器', 39: 'その他の製造', 40: '鉄道', 42: 'トラック輸送',
@@ -1506,6 +1531,17 @@ def holdings():
         by_sector[r['sector']] = round(by_sector.get(r['sector'], 0) + r['w'], 6)
     big = [{'t': ctx.c2t[c], 'nm': ctx.names.get(c, ''), 'why': co['why'][c][0]}
            for c in sorted(co['why'], key=lambda c: -co['mv'].get(c, 0))[:20]]
+    # 番号（CIK）が変わった疑い: 浮動株の上位300社で、今のティッカーが無い社を名指しする（7月の点検で SUCCESSORS に足すか決める）
+    lost = [c for c in co['ranked'][:300] if not ctx.c2t.get(c)]
+    sn = sec_names(lost, True)
+    gone = []
+    for c in lost:
+        x = sn.get(c) or {}
+        recent = (x.get('last') or '') >= (today - dt.timedelta(days=400)).isoformat()
+        exited = any(f in ('15-12B', '15-12G', '15-15D', '25-NSE') for f in (x.get('last_forms') or []))
+        gone.append({'cik': c, 'rank': co['ranked'].index(c) + 1, 'float_b': round(co['fl'][c][0] / 1e9, 1), 'name': x.get('name', ''),
+                     'former': (x.get('former') or [])[:2], 'last': x.get('last'), 'last_forms': x.get('last_forms'),
+                     'read': '上場をやめた（買収・倒産など）' if exited or not recent else 'まだ届け出がある＝番号が変わった疑い（SUCCESSORS を確かめる）'})
     doc = {'name': R['name'], 'ja': R['ja'], 'version': R['version'], 'method': 'v2', 'rules': 'out/ccf15_rules.json',
            'generated': today.isoformat(), 'cohort': f'{Y}年7月の組', 'data_year': co['D'], 'price_month': now,
            'data_note': f"決算は会社ごとに、{Y}年4月1日までに終わった最新の会計年度（6月末に出ていた10-K）",
@@ -1514,6 +1550,7 @@ def holdings():
            'テックの比重': round(sum(r['w'] for r in rows if r['tech']), 4), '金融の比重': round(sum(r['w'] for r in rows if r['fin']), 4),
            '上位10社の比重': round(sum(r['w'] for r in rows[:10]), 4),
            '外した理由': co['log'], '大きいのに外した社（時価の大きい順）': big,
+           'ティッカーの無い大きな社（浮動株の上位300社のうち）': gone,
            'by_sector': dict(sorted(by_sector.items(), key=lambda kv: -kv[1])),
            'holdings': rows, '次の候補（持たなかった上位）': nxt}
     json.dump(doc, open(OUT_HOLD, 'w'), ensure_ascii=False, indent=1)
@@ -1521,6 +1558,8 @@ def holdings():
     for r in rows[:30]:
         print(f"  {r['rank']:4d} {r['t']:6s} {r['w']*100:5.2f}% 傾き{r['tilt']} {r['sector']:10s} {r['nm'][:36]}")
     print('大きいのに外した社:', [(b['t'], b['why']) for b in big[:12]])
+    sus = [g for g in gone if g['read'].startswith('まだ')]
+    print(f'ティッカーの無い大きな社 {len(gone)} 社（番号が変わった疑い {len(sus)} 社）:', [(g['rank'], g['name'][:28], g['last']) for g in sus[:10]])
 
 
 # ───────────────────────── 今日の中身（v1 の作り方・記録の再現用） ─────────────────────────
