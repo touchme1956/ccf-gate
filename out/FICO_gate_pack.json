@@ -110,7 +110,8 @@
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 1,294,562,000 → 2023年 1,513,557,000 → 2025年 1,990,869,000。A案(端点) 直近2年CAGR 14.69% − その前3年CAGR 5.35% = +9.34pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = +10.08pt ／ 年次YoY {'2021': 1.7, '2022': 4.6, '2023': 9.9, '2024': 13.5, '2025': 15.9} → **採用 +10.08pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
    "intcov": "機械算出 2025年: 営業利益 ÷ 支払利息 = 6.92。利息タグ InterestExpenseNonoperating（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict",
    "acqS5": "買収支出 5年ぶん合計 0百万$ ÷ 期初総資産(2020-09-30) 1606百万$ ＝ 0.000／**5年で買収支出の申告なし＝一円も買っていない**（総資産は申告済＝タグ付けしている社で、のれん増加・取得対価の申告も0であることを裏から確認済）（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）",
-   "cagr": "機械算出: 売上 2020年 1,294,562,000 → 2025年 1,990,869,000＝5年の年率"
+   "cagr": "機械算出: 売上 2020年 1,294,562,000 → 2025年 1,990,869,000＝5年の年率",
+   "gpm": "粗利率（粗利÷売上）の直近5会計年度の中央値 = 79.5%（5年: 2021 74.8%（売上−CostOfRevenue） / 2022 78.1%（売上−CostOfRevenue） / 2023 79.5%（売上−CostOfRevenue） / 2024 79.7%（売上−CostOfRevenue） / 2025 82.2%（売上−CostOfRevenue））。帯 85（<26.8→50／26.8〜44.0→70／≥44.0→85）。原本: SEC XBRL companyfacts（us-gaap・単位 USD・売上 RevenueFromContractWithCustomerExcludingAssessedTax・粗利 GrossProfit〔無い年は 売上−原価〕・様式 10-K）。night/fill_gpm.py"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出可)",
@@ -138,7 +139,8 @@
    "p1": "machine",
    "cagrT": "machine",
    "acqS5": "machine",
-   "cagr": "machine"
+   "cagr": "machine",
+   "gpm": "machine"
   },
   "basis": {
    "roic": "single-year",
@@ -190,5 +192,6 @@
  "roiic5": 89.8,
  "cagrT": 10.08,
  "intcov": 6.92,
- "acqS5": 0.0
+ "acqS5": 0.0,
+ "gpm": 79.5
 }

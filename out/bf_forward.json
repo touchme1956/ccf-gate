@@ -1,0 +1,780 @@
+{
+ "angle": "bf_forward",
+ "role": "前向きの検定（登録 2026-10-11・最初の月 2026-11）。読むだけ・門の判定・採点・配分には不使用",
+ "prereg": "out/bf_forward_prereg.json",
+ "prereg_commit": "0ea07d9ceebd3d7e75f9f4303cc8973b31673c5e",
+ "first_forward_month": 202611,
+ "max_end": 204610,
+ "review_month": 11,
+ "rule": "主（G1）は e ≥ 20 に一度でも達したら『勝ち』。逆向きの e_f ≥ 20 で見込みなし（拘束しない）。副（G1r・G2・G3）は報告だけ（族の線 60）",
+ "funds": {
+  "FANG": {
+   "name": "iFreeNEXT FANG+インデックス",
+   "isin": "JP90C000FZD4",
+   "assoc": "04311181",
+   "co": "大和アセットマネジメント",
+   "fee_pct_tax_incl": 0.7755,
+   "index": "NYSE FANG+ 指数（円換算）"
+  },
+  "SP500": {
+   "name": "eMAXIS Slim 米国株式（S&P500）",
+   "isin": "JP90C000GKC6",
+   "assoc": "03311187",
+   "co": "三菱UFJアセットマネジメント",
+   "fee_pct_tax_incl": 0.0814,
+   "index": "S&P500（配当込み・円換算）"
+  },
+  "NDX": {
+   "name": "iFreeNEXT NASDAQ100インデックス",
+   "isin": "JP90C000GUN2",
+   "assoc": "04317188",
+   "co": "大和アセットマネジメント",
+   "fee_pct_tax_incl": 0.495,
+   "index": "NASDAQ100（配当込み・円換算）"
+  },
+  "ACWI": {
+   "name": "eMAXIS Slim 全世界株式（オール・カントリー）",
+   "isin": "JP90C000H1T1",
+   "assoc": "0331418A",
+   "co": "三菱UFJアセットマネジメント",
+   "fee_pct_tax_incl": 0.05775,
+   "index": "MSCI ACWI（配当込み・円換算）"
+  }
+ },
+ "hypotheses": {
+  "G1_FANG_vs_SP500": {
+   "definition": "iFreeNEXT FANG+インデックス 対 eMAXIS Slim 米国株式（S&P500）（円・基準価額の総リターン・信託報酬を引いた後）",
+   "family": "main",
+   "why": "bestfund の登録どおりの最良の1本（CE γ=2 で1位）と、0.2pt 以内で並んだ2位（S&P500 の最安の投信）。つみたて投資枠でどちらも買える",
+   "frozen": {
+    "sigma_d": 17.982,
+    "sigma_window": [
+     201808,
+     202609
+    ],
+    "n_months": 98,
+    "sigma_source": "iFreeNEXT FANG+インデックス − eMAXIS Slim 米国株式（S&P500） の月次の差（基準価額の総リターン・円・信託報酬の後）",
+    "mu_d": 3.0,
+    "mu_source": "FANG−SP500 の登録前の算術の超過（2018-08〜2026-09） = +12.131%/年 × 0.5 → [0.5, 3.0] に収める",
+    "B": 0.21,
+    "lambda_kelly": 0.9278,
+    "lambda": 0.9278,
+    "lambda_capped": false,
+    "mu_f": 3.0,
+    "clipped_months_hist": 0,
+    "hist_mean_ann_pct": 12.131,
+    "hist_geo_ann_pct": {
+     "port": 31.61,
+     "bench": 19.57,
+     "diff": 12.04
+    },
+    "hist_nw_t": 1.52
+   },
+   "forward": {
+    "n_months": 0,
+    "first_month": null,
+    "last_month": null,
+    "e_now": 1.0,
+    "e_max": 1.0,
+    "line_individual": 20.0,
+    "line_family": 20.0,
+    "crossed_individual_at": null,
+    "crossed_family_at": null,
+    "futility_now": 1.0,
+    "futility_at": null,
+    "mean_active_ann_pct": null,
+    "clipped_months": 0,
+    "missing_months": [],
+    "waiting_for": [],
+    "months": [],
+    "cum_active_geo_pct": null
+   },
+   "status": "前向きの月はまだ無い（最初の月 202611 は 2026-12 の最初の営業日の後に入る）"
+  },
+  "G1r_SP500_vs_FANG": {
+   "definition": "同じ組の逆向き（S&P500 が FANG+ に勝つ・μ0=0）＝『FANG+ を選んだのが外れだった』の側（副・判定に使わない）",
+   "family": "sub",
+   "why": "主の検定は片側（FANG+ の上乗せ）だけを見る。逆の側（S&P500 のほうが良かった）も同じ λ・B の e過程で記録する（報告のみ）",
+   "frozen": {
+    "sigma_d": 17.982,
+    "sigma_window": [
+     201808,
+     202609
+    ],
+    "n_months": 98,
+    "sigma_source": "iFreeNEXT FANG+インデックス − eMAXIS Slim 米国株式（S&P500） の月次の差（基準価額の総リターン・円・信託報酬の後）",
+    "mu_d": 0.0,
+    "mu_source": "逆向き（μ0=0）・λ と B は G1_FANG_vs_SP500 と同じ（futility は持たない）",
+    "B": 0.21,
+    "lambda_kelly": 0.9278,
+    "lambda": 0.9278,
+    "lambda_capped": false,
+    "mu_f": null,
+    "clipped_months_hist": 0,
+    "hist_mean_ann_pct": 12.131,
+    "hist_geo_ann_pct": {
+     "port": 31.61,
+     "bench": 19.57,
+     "diff": 12.04
+    },
+    "hist_nw_t": 1.52
+   },
+   "forward": {
+    "n_months": 0,
+    "first_month": null,
+    "last_month": null,
+    "e_now": 1.0,
+    "e_max": 1.0,
+    "line_individual": 20.0,
+    "line_family": 60.0,
+    "crossed_individual_at": null,
+    "crossed_family_at": null,
+    "futility_now": null,
+    "futility_at": null,
+    "mean_active_ann_pct": null,
+    "clipped_months": 0,
+    "missing_months": [],
+    "waiting_for": [],
+    "months": [],
+    "cum_active_geo_pct": null
+   },
+   "status": "前向きの月はまだ無い（最初の月 202611 は 2026-12 の最初の営業日の後に入る）"
+  },
+  "G2_FANG_vs_NDX": {
+   "definition": "iFreeNEXT FANG+インデックス 対 iFreeNEXT NASDAQ100インデックス（ユーザーの今の主力の器）（副・判定に使わない）",
+   "family": "sub",
+   "why": "今の主力（NASDAQ100）から FANG+ へ替える価値があるか（報告のみ）",
+   "frozen": {
+    "sigma_d": 12.598,
+    "sigma_window": [
+     201809,
+     202609
+    ],
+    "n_months": 97,
+    "sigma_source": "iFreeNEXT FANG+インデックス − iFreeNEXT NASDAQ100インデックス の月次の差（基準価額の総リターン・円・信託報酬の後）",
+    "mu_d": 1.0,
+    "mu_source": "fixed 1.0（0.5〜3.0 の中・nx_forward の副と同じ）",
+    "B": 0.15,
+    "lambda_kelly": 0.6301,
+    "lambda": 0.6301,
+    "lambda_capped": false,
+    "mu_f": 1.0,
+    "clipped_months_hist": 0,
+    "hist_mean_ann_pct": 7.188,
+    "hist_geo_ann_pct": {
+     "port": 30.98,
+     "bench": 24.0,
+     "diff": 6.98
+    },
+    "hist_nw_t": 1.34
+   },
+   "forward": {
+    "n_months": 0,
+    "first_month": null,
+    "last_month": null,
+    "e_now": 1.0,
+    "e_max": 1.0,
+    "line_individual": 20.0,
+    "line_family": 60.0,
+    "crossed_individual_at": null,
+    "crossed_family_at": null,
+    "futility_now": 1.0,
+    "futility_at": null,
+    "mean_active_ann_pct": null,
+    "clipped_months": 0,
+    "missing_months": [],
+    "waiting_for": [],
+    "months": [],
+    "cum_active_geo_pct": null
+   },
+   "status": "前向きの月はまだ無い（最初の月 202611 は 2026-12 の最初の営業日の後に入る）"
+  },
+  "G3_FANG_vs_ACWI": {
+   "definition": "iFreeNEXT FANG+インデックス 対 eMAXIS Slim 全世界株式（オール・カントリー）（副・判定に使わない）",
+   "family": "sub",
+   "why": "日本で最も多く積み立てられている相手（報告のみ）",
+   "frozen": {
+    "sigma_d": 19.0,
+    "sigma_window": [
+     201811,
+     202609
+    ],
+    "n_months": 95,
+    "sigma_source": "iFreeNEXT FANG+インデックス − eMAXIS Slim 全世界株式（オール・カントリー） の月次の差（基準価額の総リターン・円・信託報酬の後）",
+    "mu_d": 1.0,
+    "mu_source": "fixed 1.0（0.5〜3.0 の中・nx_forward の副と同じ）",
+    "B": 0.22,
+    "lambda_kelly": 0.277,
+    "lambda": 0.277,
+    "lambda_capped": false,
+    "mu_f": 1.0,
+    "clipped_months_hist": 0,
+    "hist_mean_ann_pct": 15.233,
+    "hist_geo_ann_pct": {
+     "port": 34.01,
+     "bench": 18.29,
+     "diff": 15.73
+    },
+    "hist_nw_t": 1.91
+   },
+   "forward": {
+    "n_months": 0,
+    "first_month": null,
+    "last_month": null,
+    "e_now": 1.0,
+    "e_max": 1.0,
+    "line_individual": 20.0,
+    "line_family": 60.0,
+    "crossed_individual_at": null,
+    "crossed_family_at": null,
+    "futility_now": 1.0,
+    "futility_at": null,
+    "mean_active_ann_pct": null,
+    "clipped_months": 0,
+    "missing_months": [],
+    "waiting_for": [],
+    "months": [],
+    "cum_active_geo_pct": null
+   },
+   "status": "前向きの月はまだ無い（最初の月 202611 は 2026-12 の最初の営業日の後に入る）"
+  }
+ },
+ "families": {
+  "main": {
+   "K": 1,
+   "line_bonferroni": 20.0,
+   "e_bh_rejected_now": [],
+   "mean_e_now": 1.0
+  },
+  "sub": {
+   "K": 3,
+   "line_bonferroni": 60.0,
+   "e_bh_rejected_now": [],
+   "mean_e_now": 1.0
+  },
+  "cross_session_reference": {
+   "K": 20,
+   "line_bonferroni": 400.0,
+   "note": "mw_forward（8本）・nx_forward（8本）と合わせた全セッションの線（参考）"
+  }
+ },
+ "log": [],
+ "design_recheck_vs_prereg": {},
+ "power": {
+  "G1_FANG_vs_SP500": {
+   "sigma_d": 17.982,
+   "lambda": 0.9278,
+   "B": 0.21,
+   "mu_d": 3.0,
+   "line": 20.0,
+   "hist_months_bootstrapped": 98,
+   "by_true_edge_pct_per_year": {
+    "-3": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "p_cross_family_line_by": {
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "median_years_to_line": ">40",
+     "oracle_years_6_over_IR2": null,
+     "p_futility_by": {
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.013
+     }
+    },
+    "0": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.002
+     },
+     "p_cross_family_line_by": {
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.002
+     },
+     "median_years_to_line": ">40",
+     "oracle_years_6_over_IR2": null,
+     "p_futility_by": {
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.004
+     }
+    },
+    "1": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.003
+     },
+     "p_cross_family_line_by": {
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.003
+     },
+     "median_years_to_line": ">40",
+     "oracle_years_6_over_IR2": 1940.1,
+     "p_futility_by": {
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.002
+     }
+    },
+    "3": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.005
+     },
+     "p_cross_family_line_by": {
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.005
+     },
+     "median_years_to_line": ">40",
+     "oracle_years_6_over_IR2": 215.6,
+     "p_futility_by": {
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     }
+    },
+    "6": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.018
+     },
+     "p_cross_family_line_by": {
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.018
+     },
+     "median_years_to_line": ">40",
+     "oracle_years_6_over_IR2": 53.9,
+     "p_futility_by": {
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     }
+    },
+    "10": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.002,
+      "20y": 0.079
+     },
+     "p_cross_family_line_by": {
+      "5y": 0.0,
+      "10y": 0.002,
+      "20y": 0.079
+     },
+     "median_years_to_line": 36.7,
+     "oracle_years_6_over_IR2": 19.4,
+     "p_futility_by": {
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     }
+    }
+   },
+   "edge_needed_for_50pct_line_by_pct_per_year": {
+    "5y": ">30",
+    "10y": ">30",
+    "20y": 17.5
+   }
+  },
+  "G1r_SP500_vs_FANG": {
+   "sigma_d": 17.982,
+   "lambda": 0.9278,
+   "B": 0.21,
+   "mu_d": 0.0,
+   "line": 60.0,
+   "hist_months_bootstrapped": 98,
+   "by_true_edge_pct_per_year": {
+    "-3": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "p_cross_family_line_by": {
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "median_years_to_line": ">40",
+     "oracle_years_6_over_IR2": null
+    },
+    "0": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "p_cross_family_line_by": {
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "median_years_to_line": ">40",
+     "oracle_years_6_over_IR2": null
+    },
+    "1": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.001
+     },
+     "p_cross_family_line_by": {
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "median_years_to_line": ">40",
+     "oracle_years_6_over_IR2": 1940.1
+    },
+    "3": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.004
+     },
+     "p_cross_family_line_by": {
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "median_years_to_line": ">40",
+     "oracle_years_6_over_IR2": 215.6
+    },
+    "6": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.014
+     },
+     "p_cross_family_line_by": {
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "median_years_to_line": ">40",
+     "oracle_years_6_over_IR2": 53.9
+    },
+    "10": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.082
+     },
+     "p_cross_family_line_by": {
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.005
+     },
+     "median_years_to_line": ">40",
+     "oracle_years_6_over_IR2": 19.4
+    }
+   },
+   "edge_needed_for_50pct_line_by_pct_per_year": {
+    "5y": ">30",
+    "10y": ">30",
+    "20y": 24.0
+   }
+  },
+  "G2_FANG_vs_NDX": {
+   "sigma_d": 12.598,
+   "lambda": 0.6301,
+   "B": 0.15,
+   "mu_d": 1.0,
+   "line": 60.0,
+   "hist_months_bootstrapped": 97,
+   "by_true_edge_pct_per_year": {
+    "-3": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "p_cross_family_line_by": {
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "median_years_to_line": ">40",
+     "oracle_years_6_over_IR2": null,
+     "p_futility_by": {
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     }
+    },
+    "0": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "p_cross_family_line_by": {
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "median_years_to_line": ">40",
+     "oracle_years_6_over_IR2": null,
+     "p_futility_by": {
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     }
+    },
+    "1": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "p_cross_family_line_by": {
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "median_years_to_line": ">40",
+     "oracle_years_6_over_IR2": 952.3,
+     "p_futility_by": {
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     }
+    },
+    "3": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "p_cross_family_line_by": {
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "median_years_to_line": ">40",
+     "oracle_years_6_over_IR2": 105.8,
+     "p_futility_by": {
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     }
+    },
+    "6": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "p_cross_family_line_by": {
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "median_years_to_line": ">40",
+     "oracle_years_6_over_IR2": 26.5,
+     "p_futility_by": {
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     }
+    },
+    "10": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "p_cross_family_line_by": {
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "median_years_to_line": ">40",
+     "oracle_years_6_over_IR2": 9.5,
+     "p_futility_by": {
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     }
+    }
+   },
+   "edge_needed_for_50pct_line_by_pct_per_year": {
+    "5y": ">30",
+    "10y": ">30",
+    "20y": ">30"
+   }
+  },
+  "G3_FANG_vs_ACWI": {
+   "sigma_d": 19.0,
+   "lambda": 0.277,
+   "B": 0.22,
+   "mu_d": 1.0,
+   "line": 60.0,
+   "hist_months_bootstrapped": 95,
+   "by_true_edge_pct_per_year": {
+    "-3": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "p_cross_family_line_by": {
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "median_years_to_line": ">40",
+     "oracle_years_6_over_IR2": null,
+     "p_futility_by": {
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     }
+    },
+    "0": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "p_cross_family_line_by": {
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "median_years_to_line": ">40",
+     "oracle_years_6_over_IR2": null,
+     "p_futility_by": {
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     }
+    },
+    "1": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "p_cross_family_line_by": {
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "median_years_to_line": ">40",
+     "oracle_years_6_over_IR2": 2166.0,
+     "p_futility_by": {
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     }
+    },
+    "3": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "p_cross_family_line_by": {
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "median_years_to_line": ">40",
+     "oracle_years_6_over_IR2": 240.7,
+     "p_futility_by": {
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     }
+    },
+    "6": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "p_cross_family_line_by": {
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "median_years_to_line": ">40",
+     "oracle_years_6_over_IR2": 60.2,
+     "p_futility_by": {
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     }
+    },
+    "10": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "p_cross_family_line_by": {
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "median_years_to_line": ">40",
+     "oracle_years_6_over_IR2": 21.7,
+     "p_futility_by": {
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     }
+    }
+   },
+   "edge_needed_for_50pct_line_by_pct_per_year": {
+    "5y": ">30",
+    "10y": ">30",
+    "20y": ">30"
+   }
+  }
+ },
+ "ci_suggestion": "ops.yml の forward ジョブに1段（mw・nx と同じ形）: `python3 night/forward_run_mark.py bf started` → `timeout 600 python3 night/bf_forward.py update` → 印。出力 out/bf_forward.json を forward ジョブのコミットに足す。凍結の検査（out/forward_frozen.json に群 bf・night/check_forward_frozen.py の --group の選択肢）も同時に足す。★足すかはユーザーの判断（bestfund の事前登録 live_forward_test）",
+ "tool_sha256": "f44803686239152041cbffe13f968aadf83ccd84ce96dbd41108fb7092115a10",
+ "tool_sha256_matches_prereg": true,
+ "runtime_s": 3.8,
+ "generated": "2026-10-11"
+}

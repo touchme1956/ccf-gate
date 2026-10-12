@@ -123,7 +123,8 @@
    "perF": "**フォワードPER = 株価 $269.64（Finnhub 2026-09-22 終値＝_meta.px・out/dashboard.json と同値＝per と同じ株価）÷ FY2027 コンセンサスEPS $12.2577**（Alpha Vantage EARNINGS_ESTIMATES 2026-09-23取得・fiscal year 2027-06-30・アナリスト18名・FY2027＝パックの会計年度 FY2026 の次の年度）= **22.0**。→ gr = per 24.65 ÷ 22.0 − 1 = **+12.0%**（門は gcap 空欄時にこれを実力成長の暫定代用に使う）。\n《基準の検問（片側・閾値+5%）》①パックの会計年度 FY2026（2025-07-01〜2026-06-30） の四半期コンセンサス（決算前の値）を合算: 2.4426+2.5686+3.2956+2.5989 = **10.9057** vs GAAP 希薄化EPS実績 **10.94**（FY2026 10-K の希薄化後EPS（XBRL EarningsPerShareDiluted 2026-06-30 = 10.94））＝ **-0.3%**＝上回っていない（ビート）。②会社自身の調整後EPS **11.12** ＝ GAAP比 **+1.6%**（Q4 FY2026 決算 8-K Ex.99.1（accn 0000008670-26-000025・2026-07-29）『adjusted diluted EPS increased 11% to $11.12』。FY2027 の会社予想は GAAP 希薄化EPS +11〜13% / 調整後 +9〜11%（コンセンサス 12.2577 は GAAP 10.94 比 +12.0%＝GAAP予想の幅の中））＝+5%以下。→ **基準は揃っている**と判定して充填した。【片側検定】non-GAAPは調整の足し戻しゆえ通常GAAP以上なので、再構成がGAAP実績を+5%超えて上回るときだけ基準の相違と判定し、下回るのはビートと読む。ただしビートが調整額を隠す（MCO/IRMD/VRSK/RMDで実測）ので、会社自身の調整後EPSの対GAAP差（②）も同じ+5%で見る。閾値+5%は門の compute() が px÷eps と per の食い違いを「PER不整合」と判定する線（5%）に合わせた——10%にすると V（+9.4%）のような非GAAPコンセンサスが通り、gr が調整額の分だけ膨らむ（上限が事実上外れる＝ADBEの型）。\n《per の基準》px÷per = 10.939（GAAP FY2026 実績 10.94 比 -0.0%）。gr はこの基準から FY2027E までの1年の成長。",
    "sbc": "SBC比率＝株式報酬 242.6百万$ ÷ 売上（2026-06-30 期・SEC XBRL ShareBasedCompensation 等 ÷ Revenues 等）＝1.11%。門の定義は「株式報酬÷売上（%）」（index.html の入力欄 SBC比率）",
    "beta": "市場データ機械充填 2026-10-06: market_fetch/market_data.json（常識帯(0.0, 4.0)を通過）",
-   "evebit": "市場データ機械充填 2026-10-06: market_fetch/market_data.json（常識帯(0.0, 300.0)を通過）"
+   "evebit": "市場データ機械充填 2026-10-06: market_fetch/market_data.json（常識帯(0.0, 300.0)を通過）",
+   "gpm": "粗利率（粗利÷売上）の直近5会計年度の中央値 = 45.4%（5年: 2022 42.6%（売上−CostOfGoodsAndServicesSold） / 2023 44.7%（売上−CostOfGoodsAndServicesSold） / 2024 45.4%（売上−CostOfGoodsAndServicesSold） / 2025 46.0%（売上−CostOfGoodsAndServicesSold） / 2026 46.4%（売上−CostOfGoodsAndServicesSold））。帯 85（<26.8→50／26.8〜44.0→70／≥44.0→85）。原本: SEC XBRL companyfacts（us-gaap・単位 USD・売上 Revenues・粗利 GrossProfit〔無い年は 売上−原価〕・様式 10-K）。night/fill_gpm.py"
   },
   "nulls": {
    "dom_irr_rep_dur": "【2026-07-28更新】irr/rep/dur は原本10-K Item1(Business・Competition・Clients)および重要な会計上の見積り注記から充填済(_meta.evidence参照)。dom は既存判定を維持。",
@@ -176,7 +177,8 @@
    "perF": "market",
    "sbc": "machine",
    "beta": "market",
-   "evebit": "market"
+   "evebit": "market",
+   "gpm": "machine"
   },
   "basis": {
    "roic": "through-cycle-med5(5年)",
@@ -246,5 +248,6 @@
  "mcap": 108.42,
  "dep": 10,
  "cagrT": -1.66,
- "acqS5": 0.0259
+ "acqS5": 0.0259,
+ "gpm": 45.4
 }

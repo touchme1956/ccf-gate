@@ -123,7 +123,8 @@
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 46,881,000,000 → 2023年 59,380,000,000 → 2025年 59,320,000,000。A案(端点) 直近2年CAGR -0.05% − その前3年CAGR 8.20% = -8.25pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -6.46pt ／ 年次YoY {'2021': 15.8, '2022': 6.4, '2023': 2.8, '2024': 0.7, '2025': -0.7} → **採用 -6.46pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
    "intcov": "20-F原本 FY2025（https://www.sec.gov/Archives/edgar/data/1668717/000119312526088105/d65314d20f.htm）: 営業利益 15,405 ÷ 借入の真正の利息 3,194（百万USD）= 4.823。Note 11 Finance expense and income: 『Interest expense ( 3 194 )』（リース利息は同注記『accretion expense included … interest on lease liabilities of 144m US dollar』で Accretion expense 側に在り、Interest expense に含まれない。為替『( 386 )』・ヘッジ損『( 310 )』・銀行手数料等『( 221 )』・年金利息『( 74 )』は除外）。営業利益 『Profit from operations 15 405』。基準=**借入の利息だけ**（為替・リース利息・割引の巻き戻し・デリバティブ損益は除外）。2026-09-23 審査官が注記から分離",
    "acqS5": "買収支出 5年ぶん合計 451百万$ ÷ 期初総資産(2020-12-31) 226410百万$ ＝ 0.002／内訳: 2021-12-31 451百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）",
-   "ni": "機械算出 2025年: 純利益 8,477,000,000（÷1e9で十億単位表示）"
+   "ni": "機械算出 2025年: 純利益 8,477,000,000（÷1e9で十億単位表示）",
+   "gpm": "粗利率（粗利÷売上）の直近5会計年度の中央値 = 55.2%（5年: 2021 57.5% / 2022 54.5% / 2023 53.9% / 2024 55.2% / 2025 55.9%）。帯 85（<26.8→50／26.8〜44.0→70／≥44.0→85）。原本: SEC XBRL companyfacts（ifrs-full・単位 USD・売上 Revenue・粗利 GrossProfit〔無い年は 売上−原価〕・様式 20-F）。night/fill_gpm.py"
   },
   "provenance": {
    "roic": "machine",
@@ -138,7 +139,8 @@
    "cagrT": "machine",
    "acqS5": "machine",
    "intcov": "kenshi",
-   "ni": "machine"
+   "ni": "machine",
+   "gpm": "machine"
   },
   "nulls": {
    "f5": "【2026-08-03】f5=75 は disrupt=settled（決着済/影響軽微） からの門の導出値 85 と食い違う『逸脱評価』だったが _meta.evidence.f5 に根拠が無かった。導出項目に根拠なき値を残すと門がそれを尊重し、**disruptを直しても f5 が追随しない＝陳腐化する**（night/fill_derived_judgment.py の設計思想）。空欄へ戻して門の導出に委ねる。逸脱させるなら原本根拠を付けて入れ直すこと",
@@ -176,5 +178,6 @@
  "mcap": 156.17,
  "cagrT": -6.46,
  "intcov": 4.823,
- "acqS5": 0.002
+ "acqS5": 0.002,
+ "gpm": 55.2
 }

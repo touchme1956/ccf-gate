@@ -133,7 +133,8 @@
    "fcf": "原本検算 2025年: 営業CF **2,836** − 設備投資 **525** = **2,311百万GBP**（十億GBP表示 2.3）。設備投資は20-Fが実額を明記——『Capital expenditure on **property, plant, equipment and internally developed intangible assets** … amounted to £477 million, £484 million and **£525 million** in 2023, 2024 and 2025』。XBRLでも PurchaseOfPropertyPlantAndEquipment 21 + PaymentsForDevelopmentProjectExpenditure 504 = 525 と一致。⚠**旧値 2.8 は有形固定資産の21百万GBPしか引いていなかった**（2,836−21≒2,815）——RELXの設備投資は**96%が資本化した開発費**なので、これを落とすと再投資を過小に見る（BR で『資本化ソフト込み』へ是正したのと同型。『候補＝代替か構成要素か』の型で、capexは代替ではなく構成要素だった）。なお venture capital investments 42百万GBP は20-Fが設備投資と別項目として書いているので含めない",
    "ni": "原本検算 2025年: 純利益 **2,078百万GBP**（ifrs-full:ProfitLoss・十億GBP表示 2.1）。系列 2021 1,471 / 2022 1,632 / 2023 1,788 / 2024 1,944 / 2025 2,078百万GBP と単調増。出典 20-F FY2025 (relx-20251231x20f.htm) ＋ SEC XBRL(ifrs-full・全て20-F由来)。門は fcf/ni を比でしか使わないので単位規約はパックのまま（比 2,311÷2,078 = 1.11）",
    "acqS5": "買収支出 5年ぶん合計 1202百万$ ÷ 期初総資産(2020-12-31) 14145百万$ ＝ 0.085／内訳: 2025-12-31 260百万$ / 2024-12-31 170百万$ / 2023-12-31 124百万$ / 2022-12-31 394百万$ / 2021-12-31 254百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）",
-   "intcov": "20-F原本 FY2025（https://www.sec.gov/Archives/edgar/data/929869/000110465926017277/relx-20251231x20f.htm）: 営業利益 3,027 ÷ 借入の真正の利息 269（百万GBP）= 11.253。20-F（accn 0001104659-26-017277・財務諸表は Exhibit 15.2 の年次報告書）のXBRL: InterestExpenseOnBankLoansAndOverdrafts 47 ＋ InterestExpenseOnDebtInstrumentsIssued 222 ＝ 269（InterestExpenseOnLeaseLiabilities 4 は除外）。営業利益 ProfitLossFromOperatingActivities 3,027。基準=**借入の利息だけ**（為替・リース利息・割引の巻き戻し・デリバティブ損益は除外）。2026-09-23 審査官が注記から分離"
+   "intcov": "20-F原本 FY2025（https://www.sec.gov/Archives/edgar/data/929869/000110465926017277/relx-20251231x20f.htm）: 営業利益 3,027 ÷ 借入の真正の利息 269（百万GBP）= 11.253。20-F（accn 0001104659-26-017277・財務諸表は Exhibit 15.2 の年次報告書）のXBRL: InterestExpenseOnBankLoansAndOverdrafts 47 ＋ InterestExpenseOnDebtInstrumentsIssued 222 ＝ 269（InterestExpenseOnLeaseLiabilities 4 は除外）。営業利益 ProfitLossFromOperatingActivities 3,027。基準=**借入の利息だけ**（為替・リース利息・割引の巻き戻し・デリバティブ損益は除外）。2026-09-23 審査官が注記から分離",
+   "gpm": "粗利率（粗利÷売上）の直近5会計年度の中央値 = 64.9%（5年: 2021 64.6% / 2022 64.4% / 2023 64.9% / 2024 65.0% / 2025 66.3%）。帯 85（<26.8→50／26.8〜44.0→70／≥44.0→85）。原本: SEC XBRL companyfacts（ifrs-full・単位 GBP・売上 RevenueFromContractsWithCustomers・粗利 GrossProfit〔無い年は 売上−原価〕・様式 20-F）。night/fill_gpm.py"
   },
   "nulls": {
    "z": "Altman Z は時価総額が必要(市場データ手入力後に算出)",
@@ -184,7 +185,8 @@
    "geopol": "audit",
    "cagrT": "machine",
    "acqS5": "machine",
-   "intcov": "kenshi"
+   "intcov": "kenshi",
+   "gpm": "machine"
   },
   "basis": {
    "roic": "na",
@@ -243,5 +245,6 @@
  "dep": 10,
  "cagrT": -4.79,
  "acqS5": 0.085,
- "intcov": 11.253
+ "intcov": 11.253,
+ "gpm": 64.9
 }

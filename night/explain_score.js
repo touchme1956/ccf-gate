@@ -63,8 +63,8 @@ for (const t of tickers) {
     sustain: (dom('pmV') != null && dom('prV') != null)
       ? +gm([dom('pmV'), dom('prV')], [.475, .525]).toFixed(1) : null,
     pfail: r.pfail, kills: r.kills,
-    // 堀の5本（生値）
-    legs: { dom: d.dom, irr: d.irr, rep: d.rep, dur: d.dur, moatW: d.moatW },
+    // 堀の5本（生値）＋粗利率の水準（v9.9.212・機械の柱・帯 50/70/85 は門の ccfGpmBand）
+    legs: { dom: d.dom, irr: d.irr, rep: d.rep, dur: d.dur, moatW: d.moatW, gpm: d.gpm, gpmBand: m.gpmBand != null ? m.gpmBand : null },
     moatMiss: m.miss, moatNA: m.na,
     // 関門
     xEr: x.xEr != null ? +x.xEr.toFixed(1) : null, xPass: x.xPass,

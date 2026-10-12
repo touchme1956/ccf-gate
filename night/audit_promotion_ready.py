@@ -106,7 +106,7 @@ def main():
     #      規則の再実装ではなく「結果を読む」に留める。
     def ready_ok(r):
         return (((r.get("s") or 0) >= 75 or r.get("frame85"))   # Ωの線 or 別枠85
-                and r.get("moatOK") is True                      # 堀70+
+                and r.get("moatOK") is True                      # 堀の関門（門の CCF_MOAT_GATE・v9.9.213 から75）
                 and (r.get("audE") or 0) == 0 and (r.get("audU") or 0) == 0
                 and r.get("staleBS") is None and r.get("pending") is None
                 and r.get("shrink") is None

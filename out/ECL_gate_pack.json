@@ -143,7 +143,8 @@
    "dep": "3軸(a顧客集中 / bチャネル・トラフィック / c仕入・製造委託)の最大値。(a)10-K FY2025『We believe our business is **not materially dependent upon a single customer**. … **no customer or distributor constituted 10 percent or more of our consolidated revenues** in 2025, 2024 or 2023』 → **上限10**（10%開示閾値が上限を証明する『上限の不等式』。ベトは dep≥40 の一方向なので上限で裁ける）",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 11,790,200,000 → 2023年 15,320,200,000 → 2025年 16,081,200,000。A案(端点) 直近2年CAGR 2.45% − その前3年CAGR 9.12% = -6.67pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -5.54pt ／ 年次YoY {'2021': 8.0, '2022': 11.4, '2023': 8.0, '2024': 2.7, '2025': 2.2} → **採用 -5.54pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
    "intcov": "機械算出 2025年: 営業利益 ÷ 支払利息 = 8.941。利息タグ InterestExpense（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict",
-   "f2": "【2026-09-23 刻みの定義を正本へ同期（f2_rubric_sync）】p≈8.6% は測れているが TAM 成長は『GROWING MARKET』の定性だけ。正本の刻み 90:p<20∧g>10 / 80:p<40∧g>7 は g の実測を要するので 90/80 は置けず、p<60 の 65（旧 80 → 65）。今日の判定圏外の掃き出しは夜間テンプレの旧定義『一桁%→90-80』（g を問わない）で据え置いていた。｜旧根拠: 【2026-09-23 f2 統一規約の適用（2026-08-16 ユーザー明示指示・判定圏外）】旧値 70 は刻みに無い中間値で根拠の記録も無かったが、同じパックの evidence.dom が自社の SEC 提出書類（8-K 2022-06-07 Item 7.01 EX-99.1・スライド19/26/39）を引いている——市場機会 $152B（2021）に対し Ecolab 売上 $13B＝p≈8.6%（一桁%・『$139+ Billion Remains to be Sold』）＝90-80 帯。TAM 成長は『GROWING MARKET』の定性だけで g は測れていないので、主張の少ない下の刻み 80 へ。⚠市場データは 2021年時点（約5年前・経営陣推計）。（旧 70 → 80）（2026-08-16 統一規約: 刻み 90:p<20∧g>10 / 80:p<40∧g>7 / 65:p<60 / 50:p≥60 は*測った* p を前提にする。90/80 は『測って低浸透』、50 は『測って飽和(p≥60)』を主張し、65 だけが測っていない事実を主張しない）｜旧根拠: なし"
+   "f2": "【2026-09-23 刻みの定義を正本へ同期（f2_rubric_sync）】p≈8.6% は測れているが TAM 成長は『GROWING MARKET』の定性だけ。正本の刻み 90:p<20∧g>10 / 80:p<40∧g>7 は g の実測を要するので 90/80 は置けず、p<60 の 65（旧 80 → 65）。今日の判定圏外の掃き出しは夜間テンプレの旧定義『一桁%→90-80』（g を問わない）で据え置いていた。｜旧根拠: 【2026-09-23 f2 統一規約の適用（2026-08-16 ユーザー明示指示・判定圏外）】旧値 70 は刻みに無い中間値で根拠の記録も無かったが、同じパックの evidence.dom が自社の SEC 提出書類（8-K 2022-06-07 Item 7.01 EX-99.1・スライド19/26/39）を引いている——市場機会 $152B（2021）に対し Ecolab 売上 $13B＝p≈8.6%（一桁%・『$139+ Billion Remains to be Sold』）＝90-80 帯。TAM 成長は『GROWING MARKET』の定性だけで g は測れていないので、主張の少ない下の刻み 80 へ。⚠市場データは 2021年時点（約5年前・経営陣推計）。（旧 70 → 80）（2026-08-16 統一規約: 刻み 90:p<20∧g>10 / 80:p<40∧g>7 / 65:p<60 / 50:p≥60 は*測った* p を前提にする。90/80 は『測って低浸透』、50 は『測って飽和(p≥60)』を主張し、65 だけが測っていない事実を主張しない）｜旧根拠: なし",
+   "gpm": "粗利率（粗利÷売上）の直近5会計年度の中央値 = 40.2%（5年: 2021 40.2%（売上−CostOfGoodsAndServicesSold） / 2022 37.8%（売上−CostOfGoodsAndServicesSold） / 2023 40.2%（売上−CostOfGoodsAndServicesSold） / 2024 43.5%（売上−CostOfGoodsAndServicesSold） / 2025 44.5%（売上−CostOfGoodsAndServicesSold））。帯 70（<26.8→50／26.8〜44.0→70／≥44.0→85）。原本: SEC XBRL companyfacts（us-gaap・単位 USD・売上 RevenueFromContractWithCustomerExcludingAssessedTax・粗利 GrossProfit〔無い年は 売上−原価〕・様式 10-K）。night/fill_gpm.py"
   },
   "nulls": {
    "f5": "【2026-07-29】規約どおり空欄へ戻した。f5 は門が disrupt='settled' から同表で導出する（settled→85 / unsettled→65 / threat→45）。台帳にあった 85 は導出値と一致していたので、値を置いておく意味が無い——むしろ値が残っていると門はそれを『逸脱評価』として尊重し、disrupt を直しても f5 が追随しなくなる（陳腐化する）。審査プロトコル『disruptを埋めれば空欄可＝門が機械導出』。",
@@ -169,7 +170,8 @@
    "p1": "machine",
    "acq5": "machine",
    "dom": "human",
-   "cagrT": "machine"
+   "cagrT": "machine",
+   "gpm": "machine"
   },
   "basis": {
    "roic": "through-cycle-med5(5年)",
@@ -224,5 +226,6 @@
  "ddate": "2026-08-19",
  "dep": 10,
  "cagrT": -5.54,
- "intcov": 8.941
+ "intcov": 8.941,
+ "gpm": 40.2
 }
