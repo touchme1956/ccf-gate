@@ -108,7 +108,8 @@
    "roict": "機械算出: のれん除外ROIC 5年系列 16.4% / 19.2% / 18.4%（最古→直近の差で判定）",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 33,014,000,000 → 2023年 45,754,000,000 → 2025年 47,941,000,000。A案(端点) 直近2年CAGR 2.36% − その前3年CAGR 11.49% = -9.13pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -8.89pt ／ 年次YoY {'2021': 17.1, '2022': 11.3, '2023': 6.4, '2024': 2.9, '2025': 1.9} → **採用 -8.89pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
    "intcov": "機械算出 2025年: 営業利益 ÷ 支払利息 = 8.32。利息タグ InterestExpense（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict",
-   "sbc": "SBC比率＝株式報酬 279.0百万$ ÷ 売上（2025-12-31 期・SEC XBRL の ShareBasedCompensation 等 ÷ Revenues 等）＝0.58%。門の定義は「株式報酬÷売上（%）」（index.html の入力欄 SBC比率）"
+   "sbc": "SBC比率＝株式報酬 279.0百万$ ÷ 売上（2025-12-31 期・SEC XBRL の ShareBasedCompensation 等 ÷ Revenues 等）＝0.58%。門の定義は「株式報酬÷売上（%）」（index.html の入力欄 SBC比率）",
+   "gpm": "粗利率（粗利÷売上）の直近5会計年度の中央値 = 60.3%（5年: 2021 60.3% / 2022 58.1% / 2023 59.5% / 2024 61.1% / 2025 61.6%）。帯 85（<26.8→50／26.8〜44.0→70／≥44.0→85）。原本: SEC XBRL companyfacts（us-gaap・単位 USD・売上 Revenues・粗利 GrossProfit〔無い年は 売上−原価〕・様式 10-K）。night/fill_gpm.py"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出可)",
@@ -137,7 +138,8 @@
    "roic": "machine",
    "roict": "machine",
    "cagrT": "machine",
-   "sbc": "machine"
+   "sbc": "machine",
+   "gpm": "machine"
   },
   "basis": {
    "roic": "through-cycle-med5(?年)",
@@ -170,5 +172,6 @@
  "roiic": 23.7,
  "roiic5": 34.8,
  "cagrT": -8.89,
- "intcov": 8.32
+ "intcov": 8.32,
+ "gpm": 60.3
 }

@@ -108,7 +108,8 @@
    "sht": "【2026-07-29 機械算出】自社の売上5年CAGR **5.9%** / 同業（SIC7372「Services-Prepackaged Software」・154社）の中央値 **13.2%**。シェア = 自社売上 ÷ 市場売上 なので、5年のシェア変化 = ((1+5.9%)÷(1+13.2%))^5 − 1 = **-28.5%**（相対）。出典: 売上系列=SEC XBRL / 母集団=gate0_all.csv 全上場の sales_cagr5 / 業種=SEC submissions の SIC。**これは実シェアの開示ではなく代理指標**（原本にシェアの実開示があればそちらを優先し、evidence を差し替えること）。 → 5年で20%以上縮んだ＝**down**",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 2,064,900,000 → 2023年 2,414,700,000 → 2025年 2,725,400,000。A案(端点) 直近2年CAGR 6.24% − その前3年CAGR 5.35% = +0.88pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = +1.30pt ／ 年次YoY {'2021': 4.9, '2022': 7.5, '2023': 3.6, '2024': 6.2, '2025': 6.3} → **採用 +1.30pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
    "acqS5": "買収支出 5年ぶん合計 1186百万$ ÷ 期初総資産(2020-12-31) 5839百万$ ＝ 0.203／内訳: 2025-12-31 273百万$ / 2024-12-31 186百万$ / 2023-12-31 459百万$ / 2022-12-31 48百万$ / 2021-12-31 220百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）",
-   "nde": "【2026-09-23 原本検算】FY2025（20-F accn 0001178913-26-001932・期末 2025-12-31・百万$）: (有利子負債 1,972.1 − 現金同等物 3,014.9) ÷ (営業利益 831.1 + 減価償却 92.9) = −1.13。有利子負債＝BS『Convertible senior notes, net』1,972.1（2025年発行）。現金同等物＝現金 1,800.0 ＋ Short-term bank deposits 525.7 ＋ 流動の Marketable securities 689.2（長期の Marketable securities 1,326.8 は入れない）。減価償却＝CF Depreciation 24.8 ＋ Amortization of intangible assets 68.1。⚠採取器の現版は 0.20——短期預金・市場性証券のタグが sti の候補に無く現金 1,800.0 だけを引き、D&A も減価償却 24.8 だけ"
+   "nde": "【2026-09-23 原本検算】FY2025（20-F accn 0001178913-26-001932・期末 2025-12-31・百万$）: (有利子負債 1,972.1 − 現金同等物 3,014.9) ÷ (営業利益 831.1 + 減価償却 92.9) = −1.13。有利子負債＝BS『Convertible senior notes, net』1,972.1（2025年発行）。現金同等物＝現金 1,800.0 ＋ Short-term bank deposits 525.7 ＋ 流動の Marketable securities 689.2（長期の Marketable securities 1,326.8 は入れない）。減価償却＝CF Depreciation 24.8 ＋ Amortization of intangible assets 68.1。⚠採取器の現版は 0.20——短期預金・市場性証券のタグが sti の候補に無く現金 1,800.0 だけを引き、D&A も減価償却 24.8 だけ",
+   "gpm": "粗利率（粗利÷売上）の直近5会計年度の中央値 = 87.5%（5年: 2021 88.1%（売上−CostOfGoodsAndServicesSold） / 2022 86.9%（売上−CostOfGoodsAndServicesSold） / 2023 88.3%（売上−CostOfGoodsAndServicesSold） / 2024 87.5%（売上−CostOfGoodsAndServicesSold） / 2025 86.7%（売上−CostOfGoodsAndServicesSold））。帯 85（<26.8→50／26.8〜44.0→70／≥44.0→85）。原本: SEC XBRL companyfacts（us-gaap・単位 USD・売上 Revenues・粗利 GrossProfit〔無い年は 売上−原価〕・様式 20-F）。night/fill_gpm.py"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出)",
@@ -134,7 +135,8 @@
    "acq5": "machine",
    "sht": "machine",
    "cagrT": "machine",
-   "acqS5": "machine"
+   "acqS5": "machine",
+   "gpm": "machine"
   },
   "basis": {
    "roic": "na",
@@ -176,5 +178,6 @@
  },
  "sht": "down",
  "cagrT": 1.3,
- "acqS5": 0.2031
+ "acqS5": 0.2031,
+ "gpm": 87.5
 }

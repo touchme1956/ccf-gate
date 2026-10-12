@@ -49,7 +49,9 @@ JUDGE = ["dom", "moatW", "irr", "rep", "dur", "p1", "p2", "p3", "p4",
          "expiry", "geopol", "nrr"]
 # 機械項目＝採取器が算出する。「機械の出力だから正しい」が誤りだったのでこちらも出典が要る。
 MACHINE = ["roic", "roicg", "roicEx", "roict", "gm", "gmt", "cagr", "nde", "fcf", "ni",
-           "accr", "gpa", "dilNet", "eps", "acqS5"]
+           "accr", "gpa", "dilNet", "eps", "acqS5", "gpm"]
+# 2026-10-12: gpm（粗利率の水準・v9.9.212 で堀の6本目）を足した——night/fill_gpm.py が年ごとの値と原本を _meta.evidence.gpm に、
+#   provenance="machine" を刻む機械項目。
 # 2026-09-29: acqS5 を足した——v9.9.181 で採点に入った（ccfAcqBand・+2/+1/0/−1）機械項目で、
 #   night/fill_acqS5.py が式と実額を _meta.evidence に、provenance="machine" を刻む。
 #   一覧に無かったので「値はあるのに根拠が無い」パックが来ても黙って通っていた（実測: 値のある270社は全社 evidence あり）。

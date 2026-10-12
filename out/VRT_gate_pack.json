@@ -153,7 +153,8 @@
    "evebit": "EV/EBIT ＝ (時価総額 97.09十億$ ＋ 有利子負債 2,913.0百万$ − 現金同等物 1,728.4＋流動の満期保有 99.5（nde の根拠と同じ） 1,827.9百万$) ÷ FY2025 営業利益（OperatingIncomeLoss） 1,829.7百万$ ＝ **53.7**（market_fetch と同じ式。表示層＝価格の論外線にだけ使われる）",
    "intcov": "機械算出 2025年: 営業利益 1,829.7百万$ ÷ 支払利息 86.1百万$ ＝ 21.251。利息タグ InterestExpense（night/v11_facts.py の intcov_strict・2026-10-04 に --only で算出。基準＝interest）。⚠ 10-K の損益計算書の行は『Interest expense, net』で、MD&A は2025年の減少を『a $33.0 increase of interest income and a $26.1 reduction to interest expense』と説明する＝受取利息と相殺された純額の可能性がある。現金で払った利息（InterestPaidNet 126.7百万$）で割っても 14.4 で、キルの線（3）からは遠い——基準の違う二つは混ぜずに併記だけする",
    "acqS5": "買収支出 5年ぶん合計 2400百万$ ÷ 期初総資産(2020-12-31) 5074百万$ ＝ 0.473／内訳: 2025-12-31 1185百万$ / 2024-12-31 18百万$ / 2023-12-31 29百万$ / 2022-12-31 5百万$ / 2021-12-31 1164百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）",
-   "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 4,370,600,000 → 2023年 6,863,200,000 → 2025年 10,229,900,000。A案(端点) 直近2年CAGR 22.09% − その前3年CAGR 16.23% = +5.86pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = +7.85pt ／ 年次YoY {'2021': 14.4, '2022': 13.9, '2023': 20.6, '2024': 16.7, '2025': 27.7} → **採用 +7.85pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。"
+   "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 4,370,600,000 → 2023年 6,863,200,000 → 2025年 10,229,900,000。A案(端点) 直近2年CAGR 22.09% − その前3年CAGR 16.23% = +5.86pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = +7.85pt ／ 年次YoY {'2021': 14.4, '2022': 13.9, '2023': 20.6, '2024': 16.7, '2025': 27.7} → **採用 +7.85pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
+   "gpm": "粗利率（粗利÷売上）の直近5会計年度の中央値 = 35.0%（5年: 2021 30.5%（売上−CostOfGoodsAndServicesSold） / 2022 28.4%（売上−CostOfGoodsAndServicesSold） / 2023 35.0%（売上−CostOfGoodsAndServicesSold） / 2024 36.6%（売上−CostOfGoodsAndServicesSold） / 2025 36.3%（売上−CostOfGoodsAndServicesSold））。帯 70（<26.8→50／26.8〜44.0→70／≥44.0→85）。原本: SEC XBRL companyfacts（us-gaap・単位 USD・売上 RevenueFromContractWithCustomerExcludingAssessedTax・粗利 GrossProfit〔無い年は 売上−原価〕・様式 10-K）。night/fill_gpm.py"
   },
   "nulls": {
    "市場データ": "beta/per/perF/evebit/px/shy/gr/gcap/analysts/instOwn/gls/idx/indG は指示書により触らない（後から機械充填）",
@@ -189,7 +190,8 @@
    "acq5": "kenshi",
    "intcov": "machine",
    "acqS5": "machine",
-   "cagrT": "machine"
+   "cagrT": "machine",
+   "gpm": "machine"
   },
   "basis": {
    "roic": "through-cycle",
@@ -240,5 +242,6 @@
  "ddate": "2026-10-02",
  "intcov": 21.251,
  "acqS5": 0.473,
- "cagrT": 7.85
+ "cagrT": 7.85,
+ "gpm": 35.0
 }

@@ -142,7 +142,8 @@
    "intcov": "機械算出 2025年: 営業利益 ÷ 支払利息 = 13.698。利息タグ InterestExpense（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict",
    "acq5": "直近5年の大型買収あり: AMPAC（2024-01-16 取得・PaymentsToAcquireBusinessesNetOfCashAcquired 681.5百万$）と Calca（2025-10-01・213.4百万$）。のれん総額（XBRL GoodwillGross）2023 123.7 → 2025 424.1百万$＝**現のれんの70.8%が直近5年の流入**（fix_acq5.py の規則 yes≥30%）。night/fix_acq5.py は us-gaap:Goodwill 残高タグが無いため判定不能を返したので、同じ問いを GoodwillGross 系列で確定した。⚠門の採点は v9.9.183 以降 acq5 を読まない（買収の強度は acqS5 が持つ）。",
    "per": "2026-09-23 per = px $888.78（Alpha Vantage GLOBAL_QUOTE（2026-09-22 終値））÷ TTM GAAP 希薄化EPS $46.47 = 19.13。TTM の内訳は旧 nulls.per の記録どおり（SEC XBRL の10-K・10-Q）",
-   "px": "Alpha Vantage GLOBAL_QUOTE（2026-09-22 終値）"
+   "px": "Alpha Vantage GLOBAL_QUOTE（2026-09-22 終値）",
+   "gpm": "粗利率（粗利÷売上）の直近5会計年度の中央値 = 28.6%（5年: 2021 23.2% / 2022 23.2% / 2023 28.6% / 2024 31.8% / 2025 31.5%）。帯 70（<26.8→50／26.8〜44.0→70／≥44.0→85）。原本: SEC XBRL companyfacts（us-gaap・単位 USD・売上 RevenueFromContractWithCustomerExcludingAssessedTax・粗利 GrossProfit〔無い年は 売上−原価〕・様式 10-K）。night/fill_gpm.py"
   },
   "provenance": {
    "cagr": "machine",
@@ -167,7 +168,8 @@
    "acqS5": "machine",
    "intcov": "machine",
    "acq5": "kenshi",
-   "per": "kenshi"
+   "per": "kenshi",
+   "gpm": "machine"
   },
   "nulls": {
    "dom": "【2026-09-23】空欄——(2)100/85/70 に要る数値（自社シェア%＋上位N社合計%）が原本に無い。会社は『We believe we are one of the four largest manufacturers and suppliers in the petroleum additives marketplace.』と**順位**だけを述べ、潤滑油添加剤の大手3社（Lubrizol・Infineum・Chevron Oronite）を名指しするが比率は無い（規約4: 順位の自称はどの刻みの証拠にもならない）。(3)の残余刻み50も置けない——提出書類が述べる構造は fragmented ではなく**4社への集中**で、自社が40%未満だと定義上言えない。燃料添加剤は『characterized by more competitors』、特殊材料は『leading』の自称のみで、事業ごとの構造も揃わない。EDGAR 全文検索（2021-01〜2026-09・\"Afton\"/\"Lubrizol\"/\"Infineum\"/\"Oronite\" と share・percent の組合せ）で市場全体の比率表を載せた他社の提出書類は見つからなかった（ヒットは当社の 10-K/ARS の定型の将来予測文のみ）。",
@@ -225,5 +227,6 @@
  "cagrT": -9.8,
  "acqS5": 0.4628,
  "intcov": 13.698,
- "ddate": "2026-10-10"
+ "ddate": "2026-10-10",
+ "gpm": 28.6
 }

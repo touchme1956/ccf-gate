@@ -124,7 +124,8 @@
    "ni": "FY2025 純利益 NetIncomeLoss = 2,856.0百万$ = 2.86十億$（XBRL companyfacts。EPS検算 2,856÷356.9百万株=8.00≒ドラフト8.04）。2026-08-02の検死で確定済みだったが evidence 欄に写していなかったので刻んだ",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 4,358,400,000 → 2023年 7,124,100,000 → 2025年 10,064,700,000。A案(端点) 直近2年CAGR 18.86% − その前3年CAGR 17.80% = +1.06pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = +4.38pt ／ 年次YoY {'2021': 31.0, '2022': 9.0, '2023': 14.5, '2024': 17.2, '2025': 20.5} → **採用 +4.38pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
    "acqS5": "買収支出 5年ぶん合計 59百万$ ÷ 期初総資産(2020-12-31) 11169百万$ ＝ 0.005／内訳: 2025-12-31 14百万$ / 2024-12-31 1百万$ / 2023-12-31 9百万$ / 2022-12-31 13百万$ / 2021-12-31 23百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）",
-   "sbc": "SBC比率＝株式報酬 788.2百万$ ÷ 売上（2025-12-31 期・SEC XBRL の ShareBasedCompensation 等 ÷ Revenues 等）＝7.83%。門の定義は「株式報酬÷売上（%）」（index.html の入力欄 SBC比率）"
+   "sbc": "SBC比率＝株式報酬 788.2百万$ ÷ 売上（2025-12-31 期・SEC XBRL の ShareBasedCompensation 等 ÷ Revenues 等）＝7.83%。門の定義は「株式報酬÷売上（%）」（index.html の入力欄 SBC比率）",
+   "gpm": "粗利率（粗利÷売上）の直近5会計年度の中央値 = 67.4%（5年: 2021 69.3% / 2022 67.4% / 2023 66.4% / 2024 67.5% / 2025 66.0%）。帯 85（<26.8→50／26.8〜44.0→70／≥44.0→85）。原本: SEC XBRL companyfacts（us-gaap・単位 USD・売上 RevenueFromContractWithCustomerExcludingAssessedTax・粗利 GrossProfit〔無い年は 売上−原価〕・様式 10-K）。night/fill_gpm.py"
   },
   "nulls": {
    "fcf": "capexタグがcompanyfacts未収載(タグ不発見)。OCFのみのFCFは過大となるため誤値回避でnull(kenshi参照)",
@@ -154,7 +155,8 @@
    "dom": "human",
    "cagrT": "machine",
    "acqS5": "machine",
-   "sbc": "machine"
+   "sbc": "machine",
+   "gpm": "machine"
   },
   "basis": {
    "roic": "through-cycle-med5(5年)",
@@ -209,5 +211,6 @@
  "sht": "up",
  "ddate": "2026-08-05",
  "cagrT": 4.38,
- "acqS5": 0.0053
+ "acqS5": 0.0053,
+ "gpm": 67.4
 }

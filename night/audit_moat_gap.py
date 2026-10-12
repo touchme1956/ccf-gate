@@ -75,15 +75,18 @@ OUT = os.path.join(BASE, "out")
 # 正は index.html の ccfMoat。★2026-09-23: 手で写すのをやめ、**門の本体の `const W={dom:…}` を読む**
 #   （写しは必ず古くなる——audit_moat_double_count.py が v9.9.36 の重み .25/.25/.20/.12/.18 のまま残り、
 #    355/356社で門と最大±14ずれていた）。読めないときだけ下の既定値へ落ち、その旨を必ず表示する。
-_W_DEFAULT = {"dom": .30, "irr": .45, "rep": .10, "dur": .06, "moatW": .09}   # v9.9.185
+_W_DEFAULT = {"dom": .30, "irr": .45, "rep": .10, "dur": .06, "moatW": .09, "gpm": .1765}   # v9.9.212（v9.9.185 に粗利率 gpm を足した）
+_CUT_DEFAULT = [26.8, 44.0]   # v9.9.212: 門の CCF_GPM_CUT（粗利率の帯の切れ目）
+J5 = ("dom", "irr", "rep", "dur", "moatW")   # 読解の5本（算出不能の線はこの5本で数える＝門の ccfMoat と同じ）
 
 
 def _gate_weights():
     try:
         src = open(os.path.join(BASE, "index.html"), encoding="utf-8").read()
-        m = re.search(r"const W=\{dom:([\d.]+),irr:([\d.]+),rep:([\d.]+),dur:([\d.]+),moatW:([\d.]+)\}", src)
+        m = re.search(r"const W=\{dom:([\d.]+),irr:([\d.]+),rep:([\d.]+),dur:([\d.]+),moatW:([\d.]+)(?:,gpm:([\d.]+))?\}", src)
         if m:
-            return dict(zip(("dom", "irr", "rep", "dur", "moatW"), map(float, m.groups()))), True
+            w = dict(zip(("dom", "irr", "rep", "dur", "moatW", "gpm"), (float(x) for x in m.groups() if x is not None)))
+            return w, True
     except OSError:
         pass
     print("⚠ index.html の ccfMoat の重みを読めなかった——既定値（v9.9.185）で計算する。門と食い違っていないか確かめること",
@@ -92,6 +95,32 @@ def _gate_weights():
 
 
 W, W_FROM_GATE = _gate_weights()
+
+
+def _gate_cut():
+    """門の CCF_GPM_CUT（粗利率の帯の切れ目）を読む。読めなければ既定値（v9.9.212）"""
+    try:
+        src = open(os.path.join(BASE, "index.html"), encoding="utf-8").read()
+        m = re.search(r"var CCF_GPM_CUT=\[([\d.]+),([\d.]+)\]", src)
+        if m:
+            return [float(m.group(1)), float(m.group(2))]
+    except OSError:
+        pass
+    return list(_CUT_DEFAULT)
+
+
+GPM_CUT = _gate_cut()
+
+
+def gpm_band(v):
+    """門の ccfGpmBand と同じ（<下→50 / <上→70 / それ以上→85）"""
+    if v is None:
+        return None
+    try:
+        x = float(str(v).strip())
+    except ValueError:
+        return None
+    return 50 if x < GPM_CUT[0] else (70 if x < GPM_CUT[1] else 85)
 # 正は index.html の SELECT／審査プロトコル。**規約に無い刻みは提示しない**
 GRADES = {"dom": [50, 70, 85, 100], "irr": [50, 70, 85, 100], "rep": [35, 60, 80, 100],
           "dur": [55, 75, 85, 100], "moatW": [50, 70, 85, 100]}
@@ -125,12 +154,12 @@ IRRTOP = {85: 100}
 
 
 def moat_idx(d):
-    """index.html の ccfMoat と同値（TOPCAP まで含める）。4本未満はNA。"""
-    legs = [(k, num(d.get(k))) for k in W]
+    """index.html の ccfMoat と同値（TOPCAP・粗利率の帯まで含める）。読解の5本のうち4本未満はNA（v9.9.212: 粗利率は数えない）。"""
+    legs = [(k, (gpm_band(d.get(k)) if k == "gpm" else num(d.get(k)))) for k in W]
     legs = [(k, (IRRTOP[v] if (k == "irr" and v in IRRTOP)
                else (TOPCAP[k] if (k in TOPCAP and v == 100) else v))) for k, v in legs]
     legs = [(k, v) for k, v in legs if v is not None]
-    if len(legs) < 4:
+    if sum(1 for k, _ in legs if k in J5) < 4:
         return None
     sw = sum(W[k] for k, _ in legs)
     g = math.exp(sum(W[k] / sw * math.log(max(min(96, v), 1)) for k, v in legs))
@@ -163,7 +192,7 @@ def main():
         def audited(k):   # 据置と決めた記録は evidence にも nulls にも残りうる
             return "再監査" in (str(ev.get(k, "")) + str(nu.get(k, "")))
         single, fresh = [], []
-        for k in W:
+        for k in J5:   # v9.9.212: 粗利率 gpm は機械の柱＝原本を読んで上げる本ではないので、昇格の候補にしない
             v = num(d.get(k))
             best = None
             for g in GRADES[k]:
@@ -190,7 +219,7 @@ def main():
                 fresh.append(lab)
         # 全本を満点にしても届かないか（＝原本を読むだけ無駄）
         dmax = dict(d)
-        for k in W:
+        for k in J5:
             dmax[k] = GRADES[k][-1]
         hopeless = (moat_idx(dmax) or 0) < PASS
         rows.append((t, r, d, cur, single, hopeless, fresh))

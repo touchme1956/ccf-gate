@@ -132,7 +132,8 @@
    "acqS5": "買収支出 5年ぶん合計 8百万$ ÷ 期初総資産(2021-01-31) 3046百万$ ＝ 0.003／内訳: 2022-01-31 8百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）",
    "f2": "【2026-09-23 f2 統一規約の適用（2026-08-16 ユーザー明示指示・判定圏外）】旧値 80 には根拠の記録が無く（_meta.evidence.f2 空欄）、原本の TAM 浸透率・TAM 成長の数値が示されていない → 65。⚠原本は今回読み直していない——原本に p の数値開示が見つかれば刻み(90/80/50)を当て直すこと。（2026-08-16 統一規約: 刻み 90:p<20∧g>10 / 80:p<40∧g>7 / 65:p<60 / 50:p≥60 は*測った* p を前提にする。90/80 は『測って低浸透』、50 は『測って飽和(p≥60)』を主張し、65 だけが測っていない事実を主張しない）",
    "cagr": "機械算出: 売上 2021年 1,465,069,000 → 2026年 3,195,311,000＝5年の年率",
-   "p1": "【2026-09-23 機械算出・変動係数刻み(v9.9.50)・todo p1_debtfree_apply】ROIC安定性＝のれん・無形除外ROIC5年系列の**変動係数(σ÷平均)**。系列: 2022 17.8% / 2023 13.8% / 2024 9.3% / 2025 10.0% / 2026 10.3% → 平均12.2% / σ3.2pt / **CV=26.0%** → 刻み(CV<15→90 / <30→80 / <50→65 / 以上→50・v9.9.50)で **80**。投下資本 = 自己資本 + 有利子負債 − のれん − 無形（門式）。有利子負債タグの無い年は debt_evidence()（採取器と同じ関数）で痕跡ゼロ＝無借金を確かめた年だけ debt=0 で算入。 旧値 85 は根拠なし（規約の刻みに無い中間値）。出典: SEC XBRL companyfacts（night/fill_derived_judgment.roic_series）。"
+   "p1": "【2026-09-23 機械算出・変動係数刻み(v9.9.50)・todo p1_debtfree_apply】ROIC安定性＝のれん・無形除外ROIC5年系列の**変動係数(σ÷平均)**。系列: 2022 17.8% / 2023 13.8% / 2024 9.3% / 2025 10.0% / 2026 10.3% → 平均12.2% / σ3.2pt / **CV=26.0%** → 刻み(CV<15→90 / <30→80 / <50→65 / 以上→50・v9.9.50)で **80**。投下資本 = 自己資本 + 有利子負債 − のれん − 無形（門式）。有利子負債タグの無い年は debt_evidence()（採取器と同じ関数）で痕跡ゼロ＝無借金を確かめた年だけ debt=0 で算入。 旧値 85 は根拠なし（規約の刻みに無い中間値）。出典: SEC XBRL companyfacts（night/fill_derived_judgment.roic_series）。",
+   "gpm": "粗利率（粗利÷売上）の直近5会計年度の中央値 = 72.8%（5年: 2022 72.8% / 2023 71.7% / 2024 71.3% / 2025 74.5% / 2026 75.5%）。帯 85（<26.8→50／26.8〜44.0→70／≥44.0→85）。原本: SEC XBRL companyfacts（us-gaap・単位 USD・売上 RevenueFromContractWithCustomerExcludingAssessedTax・粗利 GrossProfit〔無い年は 売上−原価〕・様式 10-K）。night/fill_gpm.py"
   },
   "nulls": {
    "dom": "v9.9.41再監査で **空欄化**（旧dom=85は撤回）。旧根拠「ライフサイエンスCRMシェア約8割」は原本(10-K)に存在しない数値だった（10-K全文にシェア%の記載はゼロ）。原本のCompetition節は事業ごとに市場構造が**別の刻みへ散る**: (a) CRM(Commercial Cloudの中核): 「Our CRM solutions primarily compete with Salesforce, which has developed a life sciences industry-specific CRM application. IQVIA, which historically offered a competitive CRM solution, has licensed its CRM software to Salesforce」→ 競合が実質1社に収斂した**複占型の構造記述**であり、「多数が供給可能」ではないので残余刻み50は置けない。一方 自社シェア%も上位2社合計%も未開示なので規約2により85も置けない＝**測れない**。(b) Veeva Data Cloud/Crossix: 「compete with IQVIA Holdings, Ipsos Group S.A., Definitive Health Corp., and smaller data and data analytics providers」→ 多数供給者=50。(c) Development Cloud/Quality Cloud: 「IQVIA, Dassault Systemes, OpenText, Oracle, Honeywell, and other smaller application providers offer applications that compete with certain of our...」→ 多数供給者=50。(d) ライフサイエンス外: 「we compete with solutions such as those offered by OpenText, Microsoft, Honeywell, EtQ, Oracle, and Box, and custom-built software」→ 多数供給者=50。売上比率は Commercial Solutions 45% / R&D and Quality Solutions 55%(FY2026・10-K本文明記)で、(a)は無視できる規模ではない。**50と「測れない(複占型)」に割れる**ため規約1により空欄が正解。なお「Veeva is the leading provider of industry cloud solutions」は順位の自称であり規約4によりどの刻みの証拠にもならない。出典: SEC EDGAR 10-K FY2026(2026-01-31) CIK0001393052 acc 0001393052-26-000014 https://www.sec.gov/Archives/edgar/data/1393052/000139305226000014/veev-20260131.htm ⇒ 【2026-08-04 横断探索(domの他社横断探索プロトコル)実施→空欄維持を確定】探索経路: (1)自社8-K添付(投資家説明会資料) (2)EDGAR全文検索(efts.sec.gov)で他社提出書類の市場表 (3)自社10-K。旧dom=85の根拠だった『ライフサイエンスCRMシェア約8割』は今回もSEC提出書類の宇宙に存在しないことを確認＝撤回は維持。クエリ: \"life sciences CRM\"(全10件。他社はFullPAC S-1=役員経歴でのCegedim言及のみ・市場表なし)／\"Veeva\"+\"market share\"(3,172件・上位は自社8-K決算リリースで『expanding market share』等の定性のみ。2020-03-03 Q4'20リリースで実確認)／\"pharma CRM\"(2件。うち自社DEFA14A 2020-12-09=Forbes記事全文のPBC転換ソリシテーション資料・シェア数値なし=実確認)／\"IQVIA\"+\"Veeva\"+\"share\"・\"Veeva CRM\"+\"Salesforce\"(自社10-K/10-Qのみ)。競合側(IQVIA 10-K・Salesforce 10-K・Certara/Definitive Healthcare S-1)にVeevaを名指す市場表なし。自社8-K item7.01の投資家説明会デッキ提出なし。結論: ベンダー別シェアの提出済み実数は存在しない＝『掘り尽くして確定できないと確定』。複占型(CRM)と多数供給(他クラウド)に散る既記録の構造分析が引き続き空欄の根拠。 ／ 【2026-08-04 再探索・空欄維持】EDGAR FTS(Veeva+market share / life sciences CRM / Veeva+CRM+share)2021-2026を再走査——FullPAC S-1は政治献金CRMの別物・Veeva自身の開示は決算のper shareのみ。『ライフサイエンスCRM約8割』の filed な出典は依然として存在しない",
@@ -163,7 +164,8 @@
    "cagrT": "machine",
    "acqS5": "machine",
    "cagr": "machine",
-   "p1": "machine"
+   "p1": "machine",
+   "gpm": "machine"
   },
   "basis": {
    "roic": "single-year",
@@ -224,5 +226,6 @@
  "ddate": "2026-08-19",
  "dep": 10,
  "cagrT": -0.17,
- "acqS5": 0.0026
+ "acqS5": 0.0026,
+ "gpm": 72.8
 }
