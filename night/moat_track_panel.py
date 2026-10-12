@@ -21,8 +21,11 @@
   粗利＝GrossProfit。無い年は 売上 − 原価（CostOfRevenue → CostOfGoodsAndServicesSold の代替）。それも無ければ欠測
 入力: companyfacts.zip（リポジトリ直下・gitignore・SEC の一括ファイル）
 出力: out/_moat2_panel.json（gitignore・作り直せる）
-使い方: python3 night/moat_track_panel.py            # 4並列・約10〜20分
+使い方: python3 night/moat_track_panel.py            # 4並列・約1分（既定はビンテージ 2012〜2015 → out/_moat2_panel.json）
         python3 night/moat_track_panel.py --selfcheck  # backtest_core.pit_metrics との一致だけを確かめる
+        python3 night/moat_track_panel.py --vint 2012-2020 --out out/_moat3_panel.json
+          # 2026-10-12〜（堀の再現の検定 moat_repl）: ビンテージを広げる。2017 以降を含むときは 2018年の読解の社も下限なしで残す。
+          #   既定の動き（2012〜2015・読解 2013/2015）は変えていない＝② の表と同じ
 """
 import json, multiprocessing as mp, os, sys, time, zipfile
 
@@ -109,9 +112,19 @@ def year_row(s, y, tax_of=None):
 _Z = None
 
 
-def _init():
+def set_vint(vint):
+    """ビンテージを差し替える（--vint）。CUT・FWD_LO も同じ規則で作り直す"""
+    global VINT, CUT, FWD_LO
+    VINT = tuple(vint)
+    CUT = {y: f'{y + 1}-07-01' for y in VINT}
+    FWD_LO = min(VINT) + 1
+
+
+def _init(vint=None):
     global _Z
     _Z = zipfile.ZipFile(ZIP)
+    if vint:
+        set_vint(vint)
 
 
 def work(args):
@@ -160,6 +173,28 @@ def read_ciks():
     miss = sorted(x for x in t if x not in m)
     if miss:
         raise SystemExit(f'✗ 読解の社に CIK が無い: {miss[:10]}')
+    return {m[x] for x in t}, {x: m[x] for x in t}
+
+
+def read_ciks_2018():
+    """2018年の読解（retro_moat_2018・_rest＝2018-07-01 までの提出を読んだ177社）の CIK。ティッカー→CIK は read_ciks と同じ在庫"""
+    m = {}
+    for y in (2012, 2013, 2015):
+        for r in json.load(open(os.path.join(BASE, 'out', f'retro_cohort_{y}.json')))['rows']:
+            if r.get('ticker') and r.get('cik'):
+                m.setdefault(r['ticker'], int(r['cik']))
+    rs = json.load(open(os.path.join(BASE, 'out', 'retro_sic.json')))
+    for r in (rs['rows'] if isinstance(rs, dict) and 'rows' in rs else rs):
+        if r.get('ticker') and r.get('cik'):
+            m.setdefault(r['ticker'], int(r['cik']))
+    t = set()
+    for f in ('retro_moat_2018.json', 'retro_moat_2018_rest.json'):
+        d = json.load(open(os.path.join(BASE, 'out', f)))
+        t |= {(r.get('t') or r.get('ticker')) for r in (d['rows'] if isinstance(d, dict) and 'rows' in d else d)
+              if (r.get('t') or r.get('ticker'))}
+    miss = sorted(x for x in t if x not in m)
+    if miss:
+        raise SystemExit(f'✗ 2018年の読解の社に CIK が無い: {miss[:10]}')
     return {m[x] for x in t}, {x: m[x] for x in t}
 
 
@@ -222,11 +257,19 @@ def main():
     if '--selfcheck' in sys.argv:
         print(json.dumps(selfcheck(), ensure_ascii=False, indent=1))
         return
+    out = OUT
+    if '--vint' in sys.argv:
+        a, b = sys.argv[sys.argv.index('--vint') + 1].split('-')
+        set_vint(range(int(a), int(b) + 1))
+    if '--out' in sys.argv:
+        out = os.path.join(BASE, sys.argv[sys.argv.index('--out') + 1])
     keep, _ = read_ciks()
+    if max(VINT) >= 2017:
+        keep = keep | read_ciks_2018()[0]
     names = [n for n in zipfile.ZipFile(ZIP).namelist() if n.startswith('CIK') and n.endswith('.json')]
     t0 = time.time()
     res = {}
-    with mp.Pool(4, initializer=_init) as pool:
+    with mp.Pool(4, initializer=_init, initargs=(VINT,)) as pool:
         for i, r in enumerate(pool.imap_unordered(work, [(n, keep) for n in names], chunksize=16), 1):
             if r:
                 res[str(r[0])] = r[1]
@@ -236,9 +279,9 @@ def main():
             'zip_mtime': time.strftime('%Y-%m-%d', time.localtime(os.path.getmtime(ZIP))), 'vintages': list(VINT), 'cutoffs': CUT,
             'row': ['売上', '営業利益', '粗利率', '営業利益率', 'ROIC_のれん込み', 'ROIC_のれん無形除く'], 'tax': TAX,
             'min_rev': MIN_REV, 'fwd_lo': FWD_LO, 'read_ciks': len(keep), 'n': len(res)}
-    with open(OUT, 'w') as f:
+    with open(out, 'w') as f:
         json.dump({'meta': meta, 'firms': res}, f, separators=(',', ':'))
-    print(f'書いた {OUT}  {len(res)}社  {time.time() - t0:.0f}秒')
+    print(f'書いた {out}  {len(res)}社  {time.time() - t0:.0f}秒')
 
 
 if __name__ == '__main__':
