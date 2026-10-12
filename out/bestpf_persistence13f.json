@@ -1,0 +1,5296 @@
+{
+ "module": "R2b_persistence",
+ "prereg": "out/bestpf_prereg.json → modules.R2_elite_clone.R2b_persistence",
+ "prereg_commit": "7c4b672",
+ "tool": "night/bestpf_persistence13f.py",
+ "generated": "2026-10-12",
+ "question": "13F の全提出者のうち、過去3年の成績が上位10%の運用者は、その後の1年も SPY に勝つか",
+ "data_sources": {
+  "13F": "SEC Form 13F data sets（https://www.sec.gov/data-research/sec-markets-data/form-13f-data-sets）の各年第1四半期の zip（12月末の報告期間）",
+  "cusip_to_symbol": "SEC fails-to-deliver data（https://www.sec.gov/data-research/sec-markets-data/fails-deliver-data・当時の記号）＋ OpenFIGI v3 mapping（現在の記号）",
+  "prices": "Yahoo Finance chart API の月次（adjclose＝分割と配当を調整）。記号は 13F の当時の株価と ±15% で照合（mw_best_ideas_13f.resolve）",
+  "benchmark": "SPY・QQQ（Yahoo 月次の adjclose＝配当込み・mw_common.yahoo）"
+ },
+ "method": {
+  "periods": [
+   201312,
+   201412,
+   201512,
+   201612,
+   201712,
+   201812,
+   201912,
+   202012,
+   202112,
+   202212,
+   202312,
+   202412,
+   202512
+  ],
+  "hold": "12月末の保有を、翌々月の初め（3月初め）から翌年の2月末まで買って持つ（12か月・期中は比重が漂う）",
+  "manager_line": "受動的な名前を除く・株の銘柄数 10〜500・ETF 等の比重 ≤20%・銀行／保険を除く（mw_best_ideas_13f と同じ）",
+  "cover_rule": "価格が取れる比重（組む前に取引が終わった株を除いた分母）が80%未満の運用者はその年は外す",
+  "missing": "O＝期中に価格が途切れた株は外して按分し直す（主）／P30＝価格が取れない株・途切れた株は最初の月に −30%・以後は現金（悲観側）",
+  "rank": "過去3年の『翌年の成績』（O）の複利。3年ともそろう運用者だけを順位付けし、上位10%・下位10%（切り上げ）",
+  "basket": "上位10%の運用者に同じ金額を配り、各自の保有を1年持つ（年リターン＝運用者の単純平均・月次は価値で加重）",
+  "cost": "片道 0.2%・売りと買いの両方に掛ける（年の費用＝2×かごの片道の入れ替わり×0.2%）",
+  "stats": "SPY との差: 月次の差の Newey-West t（lag 12）と、年次の差の単純な t・lag1 の Newey-West t（年次の点は9つ＝参考）"
+ },
+ "deviations": [
+  "2012-12 の報告期間は使えない: SEC の構造化した 13F データセットは 2013Q2 からしか無い（一覧のページに 2013q2_form13f.zip より古い zip が無い）。使ったのは 2013-12〜2025-12 の13年分。過去3年がそろう最初の年は 2016-12（2017-03 から持つ）＝R2 の E3 と同じ「2016年から」",
+  "最後の年（2025-12 の保有）は 2026-03〜2026-08 の6か月しか測れない（株価の終わりは mw_best_ideas_13f の END=2026-08）。主の統計には入れず別に出した",
+  "運用者の線は mw_best_ideas_13f と同じにするため、銀行の信託部門・保険会社を除く条件（その道具の eligible）も当てた",
+  "費用: R2 の「片道 0.2%」を、上位10%のかごの年ごとの入れ替わり（組む時の比重どうしの差・期中の漂いは無視）の売りと買いの両方に掛けた（年の費用＝2×入れ替わり×0.2%）",
+  "順位は O（観測できる分で按分）の成績で付けた。P30 は結果の囲みだけ",
+  "探索（事前登録の外・判定しない）: 過去36か月のシャープ比・SPY に対する切片の上位10%、集中型（銘柄10〜40）だけの上位10%、過去1年・上位5%・上位20% の感度を足した",
+  "因子の回帰（FF5＋勢い）は事前登録に無い追加（判定しない）",
+  "道 Q（事前登録の外・頑健性）: Yahoo の道は上場廃止した会社の株価が無く、初めの年ほど『価格が取れる比重80%以上』を満たす運用者が少ない（2013-12 は 2,170人中 594人）。そこで 13F の四半期末の合意の株価で同じ保有を測る道を足した。このため第4四半期以外の 13F データセット（2014Q1〜2026Q2 の四半期末）も取得した。道 Q は 3月末〜翌年3月末・配当なし（相手も SPY の配当なし）で、主の判定は事前登録どおり道 Y",
+  "OpenFIGI は鍵なしで遅い（1分に約250件）ので、FTD で照合できなかった CUSIP 20,011件のうち、全運用者の比重の合計が大きい上位3,000件だけに当てた（その3,000件で照合できなかった比重の約9割。増えた照合は121組だけ＝残りの大半は上場廃止で Yahoo に記録が無い）"
+ ],
+ "caveats": [
+  "株価は Yahoo の今の記録。上場廃止した会社の多くは記録が無い（生き残りの偏り）。比重の20%までは価格が無くても数え、O と P30 で囲んだ",
+  "年に1回（12月末の保有）だけで測るので、運用者が1年のうちに入れ替えた分は写せていない。13F は米国上場の株と一部の ADR だけで、空売り・債券・現金・外国株は見えない",
+  "13F の比重は報告の日（12月31日）の値段で、買うのは2月末＝写すまでに約2か月の遅れがある",
+  "年次の点は9つしか無い（2017-03〜2026-02）。t は参考。月次の Newey-West t も、年ごとに入れ替わるかごの重なりは扱わない",
+  "期間（2017〜2026）は米国の大型テック株が強かった時代で、テックに寄った運用者が続けて上位に来やすい"
+ ],
+ "counts_by_year": {
+  "201312": {
+   "filings": 3661,
+   "eligible": 2170,
+   "excluded_by_line": {
+    "etf_share": 518,
+    "n_gt_500": 359,
+    "n_lt_10": 341,
+    "bank_insurance": 100,
+    "no_stock": 10,
+    "passive_name": 26
+   },
+   "kept_cover80": 594,
+   "dropped_cover_lt_80": 1576,
+   "dropped_no_live": 0,
+   "cusip_status": {
+    "unmapped": 5534,
+    "ok": 3097
+   },
+   "selfcheck_full_managers": 594,
+   "selfcheck_mismatch": 0,
+   "months": [
+    201403,
+    201404,
+    201405,
+    201406,
+    201407,
+    201408,
+    201409,
+    201410,
+    201411,
+    201412,
+    201501,
+    201502
+   ]
+  },
+  "201412": {
+   "filings": 4004,
+   "eligible": 2308,
+   "excluded_by_line": {
+    "bank_insurance": 104,
+    "n_lt_10": 402,
+    "etf_share": 628,
+    "n_gt_500": 399,
+    "no_stock": 8,
+    "passive_name": 26
+   },
+   "kept_cover80": 729,
+   "dropped_cover_lt_80": 1579,
+   "dropped_no_live": 0,
+   "cusip_status": {
+    "unmapped": 5257,
+    "ok": 3297
+   },
+   "selfcheck_full_managers": 705,
+   "selfcheck_mismatch": 0,
+   "months": [
+    201503,
+    201504,
+    201505,
+    201506,
+    201507,
+    201508,
+    201509,
+    201510,
+    201511,
+    201512,
+    201601,
+    201602
+   ]
+  },
+  "201512": {
+   "filings": 4200,
+   "eligible": 2344,
+   "excluded_by_line": {
+    "n_lt_10": 457,
+    "etf_share": 713,
+    "n_gt_500": 403,
+    "bank_insurance": 100,
+    "no_stock": 11,
+    "passive_name": 24
+   },
+   "kept_cover80": 905,
+   "dropped_cover_lt_80": 1439,
+   "dropped_no_live": 0,
+   "cusip_status": {
+    "unmapped": 5094,
+    "ok": 3463
+   },
+   "selfcheck_full_managers": 900,
+   "selfcheck_mismatch": 0,
+   "months": [
+    201603,
+    201604,
+    201605,
+    201606,
+    201607,
+    201608,
+    201609,
+    201610,
+    201611,
+    201612,
+    201701,
+    201702
+   ]
+  },
+  "201612": {
+   "filings": 4309,
+   "eligible": 2286,
+   "excluded_by_line": {
+    "bank_insurance": 94,
+    "n_gt_500": 433,
+    "etf_share": 839,
+    "n_lt_10": 466,
+    "no_stock": 10,
+    "passive_name": 22
+   },
+   "kept_cover80": 1039,
+   "dropped_cover_lt_80": 1247,
+   "dropped_no_live": 0,
+   "cusip_status": {
+    "unmapped": 4797,
+    "ok": 3539
+   },
+   "selfcheck_full_managers": 1035,
+   "selfcheck_mismatch": 0,
+   "months": [
+    201703,
+    201704,
+    201705,
+    201706,
+    201707,
+    201708,
+    201709,
+    201710,
+    201711,
+    201712,
+    201801,
+    201802
+   ]
+  },
+  "201712": {
+   "filings": 4625,
+   "eligible": 2305,
+   "excluded_by_line": {
+    "n_lt_10": 507,
+    "etf_share": 1070,
+    "n_gt_500": 470,
+    "bank_insurance": 87,
+    "passive_name": 19,
+    "no_stock": 11
+   },
+   "kept_cover80": 1205,
+   "dropped_cover_lt_80": 1100,
+   "dropped_no_live": 0,
+   "cusip_status": {
+    "unmapped": 4751,
+    "ok": 3716
+   },
+   "selfcheck_full_managers": 1200,
+   "selfcheck_mismatch": 0,
+   "months": [
+    201803,
+    201804,
+    201805,
+    201806,
+    201807,
+    201808,
+    201809,
+    201810,
+    201811,
+    201812,
+    201901,
+    201902
+   ]
+  },
+  "201812": {
+   "filings": 4985,
+   "eligible": 2348,
+   "excluded_by_line": {
+    "bank_insurance": 89,
+    "etf_share": 1300,
+    "n_gt_500": 468,
+    "n_lt_10": 591,
+    "no_stock": 7,
+    "passive_name": 23
+   },
+   "kept_cover80": 1476,
+   "dropped_cover_lt_80": 872,
+   "dropped_no_live": 0,
+   "cusip_status": {
+    "unmapped": 4424,
+    "ok": 3948
+   },
+   "selfcheck_full_managers": 1467,
+   "selfcheck_mismatch": 0,
+   "months": [
+    201903,
+    201904,
+    201905,
+    201906,
+    201907,
+    201908,
+    201909,
+    201910,
+    201911,
+    201912,
+    202001,
+    202002
+   ]
+  },
+  "201912": {
+   "filings": 5360,
+   "eligible": 2375,
+   "excluded_by_line": {
+    "etf_share": 1571,
+    "n_lt_10": 631,
+    "n_gt_500": 477,
+    "bank_insurance": 89,
+    "passive_name": 23,
+    "no_stock": 10
+   },
+   "kept_cover80": 1653,
+   "dropped_cover_lt_80": 722,
+   "dropped_no_live": 0,
+   "cusip_status": {
+    "unmapped": 4130,
+    "ok": 4154,
+    "gone_before": 2
+   },
+   "selfcheck_full_managers": 1587,
+   "selfcheck_mismatch": 0,
+   "months": [
+    202003,
+    202004,
+    202005,
+    202006,
+    202007,
+    202008,
+    202009,
+    202010,
+    202011,
+    202012,
+    202101,
+    202102
+   ]
+  },
+  "202012": {
+   "filings": 5769,
+   "eligible": 2514,
+   "excluded_by_line": {
+    "bank_insurance": 76,
+    "n_gt_500": 496,
+    "etf_share": 1810,
+    "n_lt_10": 651,
+    "no_stock": 10,
+    "passive_name": 23
+   },
+   "kept_cover80": 1849,
+   "dropped_cover_lt_80": 665,
+   "dropped_no_live": 0,
+   "cusip_status": {
+    "unmapped": 4154,
+    "ok": 4471,
+    "gone_before": 2
+   },
+   "selfcheck_full_managers": 1746,
+   "selfcheck_mismatch": 0,
+   "months": [
+    202103,
+    202104,
+    202105,
+    202106,
+    202107,
+    202108,
+    202109,
+    202110,
+    202111,
+    202112,
+    202201,
+    202202
+   ]
+  },
+  "202112": {
+   "filings": 6611,
+   "eligible": 2706,
+   "excluded_by_line": {
+    "etf_share": 2178,
+    "n_lt_10": 823,
+    "n_gt_500": 605,
+    "bank_insurance": 73,
+    "passive_name": 27,
+    "no_stock": 10
+   },
+   "kept_cover80": 2063,
+   "dropped_cover_lt_80": 643,
+   "dropped_no_live": 0,
+   "cusip_status": {
+    "unmapped": 5623,
+    "ok": 5083,
+    "gone_before": 4
+   },
+   "selfcheck_full_managers": 2025,
+   "selfcheck_mismatch": 0,
+   "months": [
+    202203,
+    202204,
+    202205,
+    202206,
+    202207,
+    202208,
+    202209,
+    202210,
+    202211,
+    202212,
+    202301,
+    202302
+   ]
+  },
+  "202212": {
+   "filings": 6865,
+   "eligible": 2623,
+   "excluded_by_line": {
+    "etf_share": 2411,
+    "n_gt_500": 594,
+    "n_lt_10": 901,
+    "bank_insurance": 70,
+    "passive_name": 25,
+    "no_stock": 15
+   },
+   "kept_cover80": 2176,
+   "dropped_cover_lt_80": 447,
+   "dropped_no_live": 0,
+   "cusip_status": {
+    "unmapped": 4424,
+    "ok": 4912,
+    "gone_before": 1
+   },
+   "selfcheck_full_managers": 2142,
+   "selfcheck_mismatch": 0,
+   "months": [
+    202303,
+    202304,
+    202305,
+    202306,
+    202307,
+    202308,
+    202309,
+    202310,
+    202311,
+    202312,
+    202401,
+    202402
+   ]
+  },
+  "202312": {
+   "filings": 7164,
+   "eligible": 2655,
+   "excluded_by_line": {
+    "etf_share": 2686,
+    "n_gt_500": 595,
+    "n_lt_10": 902,
+    "bank_insurance": 76,
+    "passive_name": 28,
+    "no_stock": 12
+   },
+   "kept_cover80": 2359,
+   "dropped_cover_lt_80": 296,
+   "dropped_no_live": 0,
+   "cusip_status": {
+    "ok": 5292,
+    "unmapped": 3019,
+    "gone_before": 2
+   },
+   "selfcheck_full_managers": 2299,
+   "selfcheck_mismatch": 0,
+   "months": [
+    202403,
+    202404,
+    202405,
+    202406,
+    202407,
+    202408,
+    202409,
+    202410,
+    202411,
+    202412,
+    202501,
+    202502
+   ]
+  },
+  "202412": {
+   "filings": 7918,
+   "eligible": 2771,
+   "excluded_by_line": {
+    "etf_share": 3249,
+    "n_gt_500": 661,
+    "n_lt_10": 914,
+    "no_stock": 9,
+    "bank_insurance": 76,
+    "passive_name": 26
+   },
+   "kept_cover80": 2551,
+   "dropped_cover_lt_80": 220,
+   "dropped_no_live": 0,
+   "cusip_status": {
+    "ok": 5569,
+    "unmapped": 2543
+   },
+   "selfcheck_full_managers": 2496,
+   "selfcheck_mismatch": 0,
+   "months": [
+    202503,
+    202504,
+    202505,
+    202506,
+    202507,
+    202508,
+    202509,
+    202510,
+    202511,
+    202512,
+    202601,
+    202602
+   ]
+  },
+  "202512": {
+   "filings": 8604,
+   "eligible": 2796,
+   "excluded_by_line": {
+    "n_lt_10": 1004,
+    "etf_share": 3698,
+    "n_gt_500": 759,
+    "no_stock": 11,
+    "bank_insurance": 65,
+    "passive_name": 28
+   },
+   "kept_cover80": 2654,
+   "dropped_cover_lt_80": 142,
+   "dropped_no_live": 0,
+   "cusip_status": {
+    "ok": 6065,
+    "unmapped": 1987,
+    "gone_before": 2
+   },
+   "selfcheck_full_managers": 0,
+   "selfcheck_mismatch": 0,
+   "months": [
+    202603,
+    202604,
+    202605,
+    202606,
+    202607,
+    202608
+   ]
+  }
+ },
+ "price_match_weight_coverage_by_year": {
+  "201312": 0.6583,
+  "201412": 0.6636,
+  "201512": 0.6923,
+  "201612": 0.7189,
+  "201712": 0.7511,
+  "201812": 0.7913,
+  "201912": 0.8198,
+  "202012": 0.8455,
+  "202112": 0.8571,
+  "202212": 0.8868,
+  "202312": 0.9216,
+  "202412": 0.9433,
+  "202512": 0.9702
+ },
+ "rows": [
+  {
+   "period": 201612,
+   "hold_from": 201703,
+   "hold_to": 201802,
+   "full_year": true,
+   "n_with_3y": 372,
+   "n_kept_this_year": 1039,
+   "n_top": 38,
+   "top_mean": 20.44,
+   "top_mean_P30": 16.15,
+   "bot_mean": 15.22,
+   "bot_mean_P30": 10.43,
+   "ranked_mean": 16.63,
+   "all_kept_mean": 18.6,
+   "all_kept_median": 17.1,
+   "spy": 17.11,
+   "qqq": 29.78,
+   "top_minus_spy": 3.33,
+   "bot_minus_spy": -1.89,
+   "spearman_past3_next": 0.245,
+   "spearman_past1_next": 0.167,
+   "n_past1_pairs": 724,
+   "decile_next_mean_pct": [
+    20.65,
+    17.86,
+    16.25,
+    17.45,
+    15.34,
+    15.97,
+    16.55,
+    14.92,
+    16.1,
+    15.29
+   ],
+   "top_past3_median_pct": 44.9,
+   "top_median_value_usd_m": 672.3,
+   "all_median_value_usd_m": 416.0,
+   "top_median_n_stocks": 70.5,
+   "top_turnover_oneway_vs_prev": null,
+   "top_basket_top25": [
+    [
+     "BRK-A",
+     "BERKSHIRE HATHAWAY INC DEL",
+     5.91
+    ],
+    [
+     "AAPL",
+     "APPLE INC",
+     3.75
+    ],
+    [
+     "MSFT",
+     "MICROSOFT CORP",
+     3.18
+    ],
+    [
+     "SYK",
+     "STRYKER CORP",
+     3.12
+    ],
+    [
+     "JNJ",
+     "JOHNSON & JOHNSON",
+     1.96
+    ],
+    [
+     "BRK-B",
+     "BERKSHIRE HATHAWAY INC DEL",
+     1.68
+    ],
+    [
+     "PEP",
+     "PEPSICO INC",
+     1.41
+    ],
+    [
+     "JPM",
+     "JPMORGAN CHASE & CO",
+     1.35
+    ],
+    [
+     "PG",
+     "PROCTER AND GAMBLE CO",
+     1.34
+    ],
+    [
+     "GOOGL",
+     "ALPHABET INC",
+     1.34
+    ],
+    [
+     "FISV",
+     "FISERV INC",
+     1.31
+    ],
+    [
+     "META",
+     "FACEBOOK INC",
+     1.27
+    ],
+    [
+     "TJX",
+     "TJX COS INC NEW",
+     1.12
+    ],
+    [
+     "ORCL",
+     "ORACLE CORP",
+     1.1
+    ],
+    [
+     "AMZN",
+     "AMAZON COM INC",
+     1.09
+    ],
+    [
+     "COST",
+     "COSTCO WHSL CORP NEW",
+     1.08
+    ],
+    [
+     "GS",
+     "GOLDMAN SACHS GROUP INC",
+     1.06
+    ],
+    [
+     "UNH",
+     "UNITEDHEALTH GROUP INC",
+     1.05
+    ],
+    [
+     "WFC",
+     "WELLS FARGO & CO NEW",
+     1.02
+    ],
+    [
+     "GOOG",
+     "ALPHABET INC",
+     1.01
+    ],
+    [
+     "C",
+     "CITIGROUP INC",
+     0.99
+    ],
+    [
+     "INTC",
+     "INTEL CORP",
+     0.98
+    ],
+    [
+     "GE",
+     "GENERAL ELECTRIC CO",
+     0.95
+    ],
+    [
+     "XOM",
+     "EXXON MOBIL CORP",
+     0.95
+    ],
+    [
+     "MMM",
+     "3M CO",
+     0.91
+    ]
+   ],
+   "top_managers": [
+    [
+     "Fundsmith LLP",
+     62.6,
+     27.9
+    ],
+    [
+     "GREENLEAF TRUST",
+     61.8,
+     26.5
+    ],
+    [
+     "ASHMORE WEALTH MANAGEMENT LLC",
+     59.0,
+     35.9
+    ],
+    [
+     "Greenbrier Partners Capital Management, LLC",
+     58.8,
+     25.4
+    ],
+    [
+     "Horseman Capital Management Ltd",
+     58.3,
+     24.6
+    ],
+    [
+     "Independent Franchise Partners LLP",
+     57.7,
+     20.7
+    ],
+    [
+     "L & S Advisors Inc",
+     57.5,
+     21.9
+    ],
+    [
+     "PITTENGER & ANDERSON INC",
+     56.3,
+     19.8
+    ],
+    [
+     "GREENHAVEN ASSOCIATES INC",
+     52.2,
+     31.4
+    ],
+    [
+     "MACNEALY HOOVER INVESTMENT MANAGEMENT INC",
+     51.2,
+     18.8
+    ],
+    [
+     "MCDONALD CAPITAL INVESTORS INC/CA",
+     50.4,
+     14.6
+    ],
+    [
+     "Clarkston Capital Partners, LLC",
+     50.0,
+     15.6
+    ],
+    [
+     "WELLCOME TRUST LTD (THE) as trustee of the WELLCOME TRUST",
+     50.0,
+     25.6
+    ],
+    [
+     "Kiltearn Partners LLP",
+     47.4,
+     11.5
+    ],
+    [
+     "SYMONS CAPITAL MANAGEMENT INC",
+     47.0,
+     -0.0
+    ]
+   ]
+  },
+  {
+   "period": 201712,
+   "hold_from": 201803,
+   "hold_to": 201902,
+   "full_year": true,
+   "n_with_3y": 464,
+   "n_kept_this_year": 1205,
+   "n_top": 47,
+   "top_mean": 3.58,
+   "top_mean_P30": 1.16,
+   "bot_mean": 4.73,
+   "bot_mean_P30": 0.94,
+   "ranked_mean": 5.46,
+   "all_kept_mean": 5.12,
+   "all_kept_median": 5.43,
+   "spy": 4.54,
+   "qqq": 4.45,
+   "top_minus_spy": -0.95,
+   "bot_minus_spy": 0.2,
+   "spearman_past3_next": -0.099,
+   "spearman_past1_next": -0.09,
+   "n_past1_pairs": 849,
+   "decile_next_mean_pct": [
+    3.54,
+    5.66,
+    4.78,
+    5.71,
+    5.36,
+    6.6,
+    6.14,
+    5.43,
+    6.57,
+    4.75
+   ],
+   "top_past3_median_pct": 54.5,
+   "top_median_value_usd_m": 1530.1,
+   "all_median_value_usd_m": 431.7,
+   "top_median_n_stocks": 52,
+   "top_turnover_oneway_vs_prev": 0.416,
+   "top_basket_top25": [
+    [
+     "MSFT",
+     "MICROSOFT CORP",
+     3.78
+    ],
+    [
+     "AAPL",
+     "APPLE INC",
+     3.48
+    ],
+    [
+     "META",
+     "FACEBOOK INC",
+     2.89
+    ],
+    [
+     "GOOGL",
+     "ALPHABET INC",
+     2.51
+    ],
+    [
+     "AMZN",
+     "AMAZON COM INC",
+     2.43
+    ],
+    [
+     "BABA",
+     "ALIBABA GROUP HLDG LTD",
+     2.29
+    ],
+    [
+     "V",
+     "VISA INC",
+     2.04
+    ],
+    [
+     "GOOG",
+     "ALPHABET INC",
+     1.95
+    ],
+    [
+     "JPM",
+     "JPMORGAN CHASE & CO",
+     1.92
+    ],
+    [
+     "JNJ",
+     "JOHNSON & JOHNSON",
+     1.6
+    ],
+    [
+     "C",
+     "CITIGROUP INC",
+     1.45
+    ],
+    [
+     "BF-A",
+     "BROWN FORMAN CORP",
+     1.42
+    ],
+    [
+     "UNH",
+     "UNITEDHEALTH GROUP INC",
+     1.33
+    ],
+    [
+     "MA",
+     "MASTERCARD INCORPORATED",
+     1.23
+    ],
+    [
+     "BAC",
+     "BANK AMER CORP",
+     1.13
+    ],
+    [
+     "BRK-B",
+     "BERKSHIRE HATHAWAY INC DEL",
+     1.11
+    ],
+    [
+     "BIDU",
+     "BAIDU INC",
+     1.09
+    ],
+    [
+     "CTSH",
+     "COGNIZANT TECHNOLOGY SOLUTIO",
+     0.99
+    ],
+    [
+     "PYPL",
+     "PAYPAL HLDGS INC",
+     0.96
+    ],
+    [
+     "GS",
+     "GOLDMAN SACHS GROUP INC",
+     0.94
+    ],
+    [
+     "TSM",
+     "TAIWAN SEMICONDUCTOR MFG LTD",
+     0.89
+    ],
+    [
+     "NVDA",
+     "NVIDIA CORP",
+     0.88
+    ],
+    [
+     "ADBE",
+     "ADOBE SYS INC",
+     0.87
+    ],
+    [
+     "JELD",
+     "JELD-WEN HLDG INC",
+     0.86
+    ],
+    [
+     "ORCL",
+     "ORACLE CORP",
+     0.85
+    ]
+   ],
+   "top_managers": [
+    [
+     "BAILLIE GIFFORD & CO",
+     84.4,
+     3.3
+    ],
+    [
+     "ASHMORE WEALTH MANAGEMENT LLC",
+     78.5,
+     5.7
+    ],
+    [
+     "Fundsmith LLP",
+     74.3,
+     15.2
+    ],
+    [
+     "Atlas Brown,Inc.",
+     73.4,
+     -4.7
+    ],
+    [
+     "Oldfield Partners LLP",
+     73.1,
+     -2.9
+    ],
+    [
+     "PARUS FINANCE (UK) Ltd",
+     66.7,
+     -6.1
+    ],
+    [
+     "LANSDOWNE PARTNERS (UK) LLP",
+     66.5,
+     -5.0
+    ],
+    [
+     "WELLCOME TRUST LTD (THE) as trustee of the WELLCOME TRUST",
+     64.7,
+     -3.1
+    ],
+    [
+     "MARK ASSET MANAGEMENT CORP",
+     63.3,
+     -0.9
+    ],
+    [
+     "EAGLE CAPITAL MANAGEMENT LLC",
+     62.8,
+     3.3
+    ],
+    [
+     "Veritas Investment Management LLP",
+     61.2,
+     6.8
+    ],
+    [
+     "Greenbrier Partners Capital Management, LLC",
+     58.6,
+     1.1
+    ],
+    [
+     "Independent Franchise Partners LLP",
+     58.2,
+     6.2
+    ],
+    [
+     "COMGEST GLOBAL INVESTORS S.A.S.",
+     58.0,
+     -6.7
+    ],
+    [
+     "BONNESS ENTERPRISES INC",
+     57.2,
+     12.4
+    ]
+   ]
+  },
+  {
+   "period": 201812,
+   "hold_from": 201903,
+   "hold_to": 202002,
+   "full_year": true,
+   "n_with_3y": 578,
+   "n_kept_this_year": 1476,
+   "n_top": 58,
+   "top_mean": 10.49,
+   "top_mean_P30": 7.68,
+   "bot_mean": 4.22,
+   "bot_mean_P30": 1.62,
+   "ranked_mean": 7.45,
+   "all_kept_mean": 7.23,
+   "all_kept_median": 7.5,
+   "spy": 8.32,
+   "qqq": 19.81,
+   "top_minus_spy": 2.17,
+   "bot_minus_spy": -4.1,
+   "spearman_past3_next": 0.33,
+   "spearman_past1_next": 0.239,
+   "n_past1_pairs": 1026,
+   "decile_next_mean_pct": [
+    10.49,
+    9.45,
+    9.68,
+    7.9,
+    7.64,
+    7.07,
+    6.29,
+    5.36,
+    6.39,
+    4.22
+   ],
+   "top_past3_median_pct": 75.4,
+   "top_median_value_usd_m": 730.3,
+   "all_median_value_usd_m": 362.4,
+   "top_median_n_stocks": 47.0,
+   "top_turnover_oneway_vs_prev": 0.352,
+   "top_basket_top25": [
+    [
+     "MSFT",
+     "MICROSOFT CORP",
+     3.99
+    ],
+    [
+     "AMZN",
+     "AMAZON COM INC",
+     2.72
+    ],
+    [
+     "V",
+     "VISA INC",
+     2.43
+    ],
+    [
+     "GOOG",
+     "ALPHABET INC",
+     2.37
+    ],
+    [
+     "MA",
+     "MASTERCARD INCORPORATED",
+     2.18
+    ],
+    [
+     "AAPL",
+     "APPLE INC",
+     2.04
+    ],
+    [
+     "GOOGL",
+     "ALPHABET INC",
+     1.78
+    ],
+    [
+     "META",
+     "FACEBOOK INC",
+     1.6
+    ],
+    [
+     "BOKF",
+     "BOK FINL CORP",
+     1.52
+    ],
+    [
+     "BABA",
+     "ALIBABA GROUP HLDG LTD",
+     1.21
+    ],
+    [
+     "SBAC",
+     "SBA COMMUNICATIONS CORP NEW",
+     1.13
+    ],
+    [
+     "PYPL",
+     "PAYPAL HLDGS INC",
+     1.1
+    ],
+    [
+     "INTC",
+     "INTEL CORP",
+     1.04
+    ],
+    [
+     "ADBE",
+     "ADOBE INC",
+     0.94
+    ],
+    [
+     "NFLX",
+     "NETFLIX INC",
+     0.92
+    ],
+    [
+     "UNH",
+     "UNITEDHEALTH GROUP INC",
+     0.9
+    ],
+    [
+     "BXMT",
+     "BLACKSTONE MTG TR INC",
+     0.87
+    ],
+    [
+     "BRK-B",
+     "BERKSHIRE HATHAWAY INC DEL",
+     0.84
+    ],
+    [
+     "CRM",
+     "SALESFORCE COM INC",
+     0.79
+    ],
+    [
+     "ITUB",
+     "ITAU UNIBANCO HLDG SA",
+     0.73
+    ],
+    [
+     "JNJ",
+     "JOHNSON & JOHNSON",
+     0.73
+    ],
+    [
+     "CSCO",
+     "CISCO SYS INC",
+     0.71
+    ],
+    [
+     "AMX",
+     "AMERICA MOVIL SAB DE CV",
+     0.7
+    ],
+    [
+     "ORCL",
+     "ORACLE CORP",
+     0.68
+    ],
+    [
+     "JPM",
+     "JPMORGAN CHASE & CO",
+     0.66
+    ]
+   ],
+   "top_managers": [
+    [
+     "Cavalry Management Group, LLC",
+     166.3,
+     19.1
+    ],
+    [
+     "Prescott General Partners LLC",
+     121.3,
+     -12.0
+    ],
+    [
+     "Night Owl Capital Management, LLC",
+     107.8,
+     32.0
+    ],
+    [
+     "Zuckerman Investment Group, LLC",
+     106.4,
+     -4.3
+    ],
+    [
+     "Westwood Global Investments, LLC",
+     98.9,
+     -11.6
+    ],
+    [
+     "BAILLIE GIFFORD & CO",
+     95.7,
+     16.8
+    ],
+    [
+     "ASHMORE WEALTH MANAGEMENT LLC",
+     93.0,
+     24.2
+    ],
+    [
+     "Winslow Capital Management, LLC",
+     91.9,
+     14.4
+    ],
+    [
+     "GEORGE KAISER FAMILY FOUNDATION",
+     91.8,
+     -11.9
+    ],
+    [
+     "MARSHFIELD ASSOCIATES",
+     90.2,
+     14.3
+    ],
+    [
+     "Fundsmith LLP",
+     87.0,
+     9.6
+    ],
+    [
+     "Guinness Atkinson Asset Management Inc",
+     86.6,
+     12.6
+    ],
+    [
+     "CAPITAL INTERNATIONAL INC /CA/",
+     85.0,
+     6.1
+    ],
+    [
+     "KAYNE ANDERSON RUDNICK INVESTMENT MANAGEMENT LLC",
+     83.8,
+     11.1
+    ],
+    [
+     "CANTILLON CAPITAL MANAGEMENT LLC",
+     82.9,
+     14.8
+    ]
+   ]
+  },
+  {
+   "period": 201912,
+   "hold_from": 202003,
+   "hold_to": 202102,
+   "full_year": true,
+   "n_with_3y": 684,
+   "n_kept_this_year": 1653,
+   "n_top": 69,
+   "top_mean": 47.36,
+   "top_mean_P30": 42.66,
+   "bot_mean": 27.09,
+   "bot_mean_P30": 23.22,
+   "ranked_mean": 32.64,
+   "all_kept_mean": 38.85,
+   "all_kept_median": 32.85,
+   "spy": 30.78,
+   "qqq": 53.51,
+   "top_minus_spy": 16.58,
+   "bot_minus_spy": -3.69,
+   "spearman_past3_next": 0.469,
+   "spearman_past1_next": 0.356,
+   "n_past1_pairs": 1238,
+   "decile_next_mean_pct": [
+    47.73,
+    38.39,
+    32.36,
+    34.65,
+    31.83,
+    30.08,
+    28.5,
+    28.64,
+    26.94,
+    27.27
+   ],
+   "top_past3_median_pct": 64.1,
+   "top_median_value_usd_m": 672.5,
+   "all_median_value_usd_m": 409.0,
+   "top_median_n_stocks": 50,
+   "top_turnover_oneway_vs_prev": 0.346,
+   "top_basket_top25": [
+    [
+     "MSFT",
+     "MICROSOFT CORP",
+     4.49
+    ],
+    [
+     "V",
+     "VISA INC",
+     3.51
+    ],
+    [
+     "AMZN",
+     "AMAZON COM INC",
+     3.43
+    ],
+    [
+     "AAPL",
+     "APPLE INC",
+     3.31
+    ],
+    [
+     "META",
+     "FACEBOOK INC",
+     2.76
+    ],
+    [
+     "MA",
+     "MASTERCARD INC",
+     2.44
+    ],
+    [
+     "GOOG",
+     "ALPHABET INC",
+     2.33
+    ],
+    [
+     "GOOGL",
+     "ALPHABET INC",
+     2.12
+    ],
+    [
+     "ADBE",
+     "ADOBE INC",
+     1.54
+    ],
+    [
+     "PYPL",
+     "PAYPAL HLDGS INC",
+     1.28
+    ],
+    [
+     "SBAC",
+     "SBA COMMUNICATIONS CORP NEW",
+     1.18
+    ],
+    [
+     "BABA",
+     "ALIBABA GROUP HLDG LTD",
+     1.09
+    ],
+    [
+     "NKE",
+     "NIKE INC",
+     1.01
+    ],
+    [
+     "BKNG",
+     "BOOKING HLDGS INC",
+     0.94
+    ],
+    [
+     "CRM",
+     "SALESFORCE COM INC",
+     0.86
+    ],
+    [
+     "TMO",
+     "THERMO FISHER SCIENTIFIC INC",
+     0.82
+    ],
+    [
+     "TROW",
+     "PRICE T ROWE GROUP INC",
+     0.81
+    ],
+    [
+     "UNH",
+     "UNITEDHEALTH GROUP INC",
+     0.81
+    ],
+    [
+     "SPGI",
+     "S&P GLOBAL INC",
+     0.76
+    ],
+    [
+     "MCO",
+     "MOODYS CORP",
+     0.76
+    ],
+    [
+     "BXMT",
+     "BLACKSTONE MTG TR INC",
+     0.74
+    ],
+    [
+     "NVDA",
+     "NVIDIA CORP",
+     0.73
+    ],
+    [
+     "FISV",
+     "FISERV INC",
+     0.72
+    ],
+    [
+     "CACC",
+     "CREDIT ACCEP CORP MICH",
+     0.72
+    ],
+    [
+     "NFLX",
+     "NETFLIX INC",
+     0.71
+    ]
+   ],
+   "top_managers": [
+    [
+     "GLYNN CAPITAL MANAGEMENT LLC",
+     165.5,
+     104.3
+    ],
+    [
+     "Night Owl Capital Management, LLC",
+     125.2,
+     52.6
+    ],
+    [
+     "Crestwood Capital Management, L.P.",
+     124.3,
+     80.5
+    ],
+    [
+     "Stockbridge Partners LLC",
+     91.8,
+     46.5
+    ],
+    [
+     "Firsthand Capital Management, Inc.",
+     89.3,
+     119.8
+    ],
+    [
+     "AKO CAPITAL LLP",
+     87.5,
+     19.3
+    ],
+    [
+     "EDGEWOOD MANAGEMENT LLC",
+     82.9,
+     48.5
+    ],
+    [
+     "AKRE CAPITAL MANAGEMENT LLC",
+     82.6,
+     15.8
+    ],
+    [
+     "MUFG Securities EMEA plc",
+     80.9,
+     28.4
+    ],
+    [
+     "YIHENG CAPITAL LLC",
+     79.4,
+     129.3
+    ],
+    [
+     "SANDS CAPITAL MANAGEMENT, LLC",
+     79.2,
+     56.1
+    ],
+    [
+     "POLEN CAPITAL MANAGEMENT LLC",
+     78.3,
+     41.8
+    ],
+    [
+     "ROSENBLUM SILVERMAN SUTTON S F INC /CA",
+     78.1,
+     50.0
+    ],
+    [
+     "Prescott General Partners LLC",
+     77.8,
+     54.0
+    ],
+    [
+     "Bishop Rock Capital, L.P.",
+     77.4,
+     22.7
+    ]
+   ]
+  },
+  {
+   "period": 202012,
+   "hold_from": 202103,
+   "hold_to": 202202,
+   "full_year": true,
+   "n_with_3y": 825,
+   "n_kept_this_year": 1849,
+   "n_top": 83,
+   "top_mean": 1.2,
+   "top_mean_P30": -0.31,
+   "bot_mean": 19.5,
+   "bot_mean_P30": 16.57,
+   "ranked_mean": 13.34,
+   "all_kept_mean": 9.12,
+   "all_kept_median": 13.16,
+   "spy": 16.32,
+   "qqq": 10.93,
+   "top_minus_spy": -15.13,
+   "bot_minus_spy": 3.17,
+   "spearman_past3_next": -0.455,
+   "spearman_past1_next": -0.553,
+   "n_past1_pairs": 1377,
+   "decile_next_mean_pct": [
+    1.15,
+    9.71,
+    13.19,
+    13.33,
+    14.7,
+    14.39,
+    15.66,
+    15.0,
+    16.69,
+    19.5
+   ],
+   "top_past3_median_pct": 92.3,
+   "top_median_value_usd_m": 828.6,
+   "all_median_value_usd_m": 464.5,
+   "top_median_n_stocks": 46,
+   "top_turnover_oneway_vs_prev": 0.327,
+   "top_basket_top25": [
+    [
+     "AAPL",
+     "APPLE INC",
+     4.22
+    ],
+    [
+     "AMZN",
+     "AMAZON COM INC",
+     4.19
+    ],
+    [
+     "MSFT",
+     "MICROSOFT CORP",
+     3.97
+    ],
+    [
+     "META",
+     "FACEBOOK INC",
+     2.77
+    ],
+    [
+     "PYPL",
+     "PAYPAL HLDGS INC",
+     2.08
+    ],
+    [
+     "V",
+     "VISA INC",
+     1.93
+    ],
+    [
+     "GOOG",
+     "ALPHABET INC",
+     1.91
+    ],
+    [
+     "MA",
+     "MASTERCARD INCORPORATED",
+     1.9
+    ],
+    [
+     "GOOGL",
+     "ALPHABET INC",
+     1.88
+    ],
+    [
+     "ADBE",
+     "ADOBE SYSTEMS INCORPORATED",
+     1.35
+    ],
+    [
+     "NVDA",
+     "NVIDIA CORPORATION",
+     1.04
+    ],
+    [
+     "DIS",
+     "DISNEY WALT CO",
+     1.03
+    ],
+    [
+     "TSLA",
+     "TESLA INC",
+     1.02
+    ],
+    [
+     "BABA",
+     "ALIBABA GROUP HLDG LTD",
+     1.02
+    ],
+    [
+     "SBAC",
+     "SBA COMMUNICATIONS CORP NEW",
+     1.01
+    ],
+    [
+     "NFLX",
+     "NETFLIX INC",
+     0.99
+    ],
+    [
+     "MELI",
+     "MERCADOLIBRE INC",
+     0.99
+    ],
+    [
+     "NKE",
+     "NIKE INC",
+     0.93
+    ],
+    [
+     "SE",
+     "SEA LTD",
+     0.91
+    ],
+    [
+     "CRM",
+     "SALESFORCE COM INC",
+     0.9
+    ],
+    [
+     "TSM",
+     "TAIWAN SEMICONDUCTOR MFG LTD",
+     0.86
+    ],
+    [
+     "TDG",
+     "TRANSDIGM GROUP INC",
+     0.86
+    ],
+    [
+     "CHTR",
+     "CHARTER COMMUNICATIONS INC N",
+     0.84
+    ],
+    [
+     "NOW",
+     "SERVICENOW INC",
+     0.82
+    ],
+    [
+     "ROKU",
+     "ROKU INC",
+     0.78
+    ]
+   ],
+   "top_managers": [
+    [
+     "GLYNN CAPITAL MANAGEMENT LLC",
+     240.1,
+     -26.8
+    ],
+    [
+     "Taylor Frigon Capital Management LLC",
+     224.0,
+     -12.4
+    ],
+    [
+     "GOODNOW INVESTMENT GROUP, LLC",
+     206.0,
+     -20.4
+    ],
+    [
+     "Firsthand Capital Management, Inc.",
+     175.0,
+     -35.2
+    ],
+    [
+     "Spence Asset Management",
+     154.5,
+     -9.8
+    ],
+    [
+     "Night Owl Capital Management, LLC",
+     143.9,
+     -7.0
+    ],
+    [
+     "Cavalry Management Group, LLC",
+     136.2,
+     -3.1
+    ],
+    [
+     "BAILLIE GIFFORD & CO",
+     130.6,
+     -16.2
+    ],
+    [
+     "Honeycomb Asset Management LP",
+     125.2,
+     -13.0
+    ],
+    [
+     "Northcape Capital Pty Ltd",
+     124.4,
+     -7.0
+    ],
+    [
+     "Stockbridge Partners LLC",
+     119.5,
+     2.2
+    ],
+    [
+     "MARK ASSET MANAGEMENT LP",
+     118.5,
+     9.1
+    ],
+    [
+     "ALKEON CAPITAL MANAGEMENT LLC",
+     115.2,
+     -12.1
+    ],
+    [
+     "Yiheng Capital Management, L.P.",
+     115.1,
+     -46.0
+    ],
+    [
+     "Skye Global Management LP",
+     114.3,
+     12.7
+    ]
+   ]
+  },
+  {
+   "period": 202112,
+   "hold_from": 202203,
+   "hold_to": 202302,
+   "full_year": true,
+   "n_with_3y": 985,
+   "n_kept_this_year": 2063,
+   "n_top": 99,
+   "top_mean": -12.5,
+   "top_mean_P30": -13.21,
+   "bot_mean": -7.13,
+   "bot_mean_P30": -8.68,
+   "ranked_mean": -7.63,
+   "all_kept_mean": -9.27,
+   "all_kept_median": -7.56,
+   "spy": -7.77,
+   "qqq": -14.73,
+   "top_minus_spy": -4.72,
+   "bot_minus_spy": 0.64,
+   "spearman_past3_next": -0.327,
+   "spearman_past1_next": 0.454,
+   "n_past1_pairs": 1543,
+   "decile_next_mean_pct": [
+    -12.55,
+    -9.63,
+    -9.3,
+    -7.74,
+    -6.73,
+    -7.32,
+    -5.26,
+    -5.43,
+    -5.2,
+    -7.13
+   ],
+   "top_past3_median_pct": 95.2,
+   "top_median_value_usd_m": 647.8,
+   "all_median_value_usd_m": 470.5,
+   "top_median_n_stocks": 46,
+   "top_turnover_oneway_vs_prev": 0.349,
+   "top_basket_top25": [
+    [
+     "AAPL",
+     "APPLE INC",
+     6.28
+    ],
+    [
+     "MSFT",
+     "MICROSOFT CORP",
+     4.82
+    ],
+    [
+     "AMZN",
+     "AMAZON COM INC",
+     3.89
+    ],
+    [
+     "GOOGL",
+     "ALPHABET INC",
+     2.61
+    ],
+    [
+     "GOOG",
+     "ALPHABET INC",
+     2.01
+    ],
+    [
+     "V",
+     "VISA INC",
+     1.82
+    ],
+    [
+     "META",
+     "META PLATFORMS INC",
+     1.64
+    ],
+    [
+     "NVDA",
+     "NVIDIA CORPORATION",
+     1.41
+    ],
+    [
+     "SHOP",
+     "SHOPIFY INC",
+     1.0
+    ],
+    [
+     "MA",
+     "MASTERCARD INCORPORATED",
+     0.98
+    ],
+    [
+     "MU",
+     "MICRON TECHNOLOGY INC",
+     0.95
+    ],
+    [
+     "NFLX",
+     "NETFLIX INC",
+     0.92
+    ],
+    [
+     "COST",
+     "COSTCO WHSL CORP NEW",
+     0.89
+    ],
+    [
+     "AMAT",
+     "APPLIED MATLS INC",
+     0.84
+    ],
+    [
+     "TSM",
+     "TAIWAN SEMICONDUCTOR MFG LTD",
+     0.84
+    ],
+    [
+     "QCOM",
+     "QUALCOMM INC",
+     0.8
+    ],
+    [
+     "ADBE",
+     "ADOBE SYSTEMS INCORPORATED",
+     0.79
+    ],
+    [
+     "SBAC",
+     "SBA COMMUNICATIONS CORP NEW",
+     0.75
+    ],
+    [
+     "BRK-B",
+     "BERKSHIRE HATHAWAY INC DEL",
+     0.73
+    ],
+    [
+     "UNH",
+     "UNITEDHEALTH GROUP INC",
+     0.72
+    ],
+    [
+     "TMO",
+     "THERMO FISHER SCIENTIFIC INC",
+     0.71
+    ],
+    [
+     "TSLA",
+     "TESLA INC",
+     0.63
+    ],
+    [
+     "WSM",
+     "WILLIAMS SONOMA INC",
+     0.61
+    ],
+    [
+     "DIS",
+     "DISNEY WALT CO",
+     0.61
+    ],
+    [
+     "BRK-A",
+     "BERKSHIRE HATHAWAY INC DEL",
+     0.59
+    ]
+   ],
+   "top_managers": [
+    [
+     "Optimus Prime Fund Management Co., Ltd.",
+     385.8,
+     -32.6
+    ],
+    [
+     "PECONIC PARTNERS LLC",
+     195.4,
+     35.1
+    ],
+    [
+     "Noked Israel Ltd",
+     176.9,
+     -21.8
+    ],
+    [
+     "Noked Capital LTD",
+     176.9,
+     -21.8
+    ],
+    [
+     "Crestline Management, LP",
+     162.5,
+     -14.0
+    ],
+    [
+     "Taylor Frigon Capital Management LLC",
+     159.3,
+     -13.5
+    ],
+    [
+     "Oak Grove Capital LLC",
+     153.7,
+     -14.6
+    ],
+    [
+     "Capital Markets Trading UK LLP",
+     147.4,
+     0.5
+    ],
+    [
+     "MARK ASSET MANAGEMENT LP",
+     140.6,
+     -17.9
+    ],
+    [
+     "ZEVENBERGEN CAPITAL INVESTMENTS LLC",
+     136.2,
+     -34.3
+    ],
+    [
+     "KCL Capital, L.P.",
+     130.6,
+     -27.6
+    ],
+    [
+     "MARVIN & PALMER ASSOCIATES INC",
+     119.4,
+     -4.3
+    ],
+    [
+     "GFI Investment Counsel Ltd.",
+     116.5,
+     -9.5
+    ],
+    [
+     "DOCK STREET ASSET MANAGEMENT INC",
+     115.9,
+     -13.2
+    ],
+    [
+     "Skye Global Management LP",
+     115.7,
+     -25.3
+    ]
+   ]
+  },
+  {
+   "period": 202212,
+   "hold_from": 202303,
+   "hold_to": 202402,
+   "full_year": true,
+   "n_with_3y": 1080,
+   "n_kept_this_year": 2176,
+   "n_top": 108,
+   "top_mean": 21.9,
+   "top_mean_P30": 19.67,
+   "bot_mean": 28.87,
+   "bot_mean_P30": 26.31,
+   "ranked_mean": 24.46,
+   "all_kept_mean": 24.35,
+   "all_kept_median": 22.72,
+   "spy": 30.17,
+   "qqq": 50.58,
+   "top_minus_spy": -8.27,
+   "bot_minus_spy": -1.3,
+   "spearman_past3_next": -0.184,
+   "spearman_past1_next": -0.414,
+   "n_past1_pairs": 1699,
+   "decile_next_mean_pct": [
+    21.9,
+    22.72,
+    22.81,
+    22.28,
+    22.76,
+    23.78,
+    23.94,
+    25.64,
+    29.95,
+    28.87
+   ],
+   "top_past3_median_pct": 63.2,
+   "top_median_value_usd_m": 345.1,
+   "all_median_value_usd_m": 369.2,
+   "top_median_n_stocks": 49.0,
+   "top_turnover_oneway_vs_prev": 0.508,
+   "top_basket_top25": [
+    [
+     "AAPL",
+     "APPLE INC",
+     2.76
+    ],
+    [
+     "MSFT",
+     "MICROSOFT CORP",
+     1.61
+    ],
+    [
+     "BRK-B",
+     "BERKSHIRE HATHAWAY INC DEL",
+     1.16
+    ],
+    [
+     "XOM",
+     "EXXON MOBIL CORP",
+     1.13
+    ],
+    [
+     "TSM",
+     "TAIWAN SEMICONDUCTOR MFG LTD",
+     0.79
+    ],
+    [
+     "JNJ",
+     "JOHNSON & JOHNSON",
+     0.78
+    ],
+    [
+     "GOOGL",
+     "ALPHABET INC",
+     0.73
+    ],
+    [
+     "CVX",
+     "CHEVRON CORP NEW",
+     0.72
+    ],
+    [
+     "ABBV",
+     "ABBVIE INC",
+     0.68
+    ],
+    [
+     "GOOG",
+     "ALPHABET INC",
+     0.68
+    ],
+    [
+     "JPM",
+     "JPMORGAN CHASE & CO",
+     0.62
+    ],
+    [
+     "TSLA",
+     "TESLA INC",
+     0.61
+    ],
+    [
+     "GS",
+     "GOLDMAN SACHS GROUP INC",
+     0.58
+    ],
+    [
+     "UNH",
+     "UNITEDHEALTH GROUP INC",
+     0.58
+    ],
+    [
+     "WFC",
+     "WELLS FARGO CO NEW",
+     0.57
+    ],
+    [
+     "PGR",
+     "PROGRESSIVE CORP",
+     0.57
+    ],
+    [
+     "PWR",
+     "QUANTA SVCS INC",
+     0.54
+    ],
+    [
+     "COP",
+     "CONOCOPHILLIPS",
+     0.54
+    ],
+    [
+     "WSM",
+     "WILLIAMS SONOMA INC",
+     0.53
+    ],
+    [
+     "BAC",
+     "BANK AMERICA CORP",
+     0.53
+    ],
+    [
+     "ELV",
+     "ELEVANCE HEALTH INC",
+     0.52
+    ],
+    [
+     "CSCO",
+     "CISCO SYS INC",
+     0.52
+    ],
+    [
+     "AMZN",
+     "AMAZON COM INC",
+     0.51
+    ],
+    [
+     "CAR",
+     "AVIS BUDGET GROUP",
+     0.51
+    ],
+    [
+     "DE",
+     "DEERE & CO",
+     0.49
+    ]
+   ],
+   "top_managers": [
+    [
+     "PECONIC PARTNERS LLC",
+     241.1,
+     35.2
+    ],
+    [
+     "Capital Markets Trading UK LLP",
+     150.5,
+     16.3
+    ],
+    [
+     "Crestline Management, LP",
+     141.2,
+     11.2
+    ],
+    [
+     "Sloy Dahl & Holst, LLC",
+     122.0,
+     12.4
+    ],
+    [
+     "Noked Israel Ltd",
+     119.9,
+     3.6
+    ],
+    [
+     "Lodge Hill Capital, LLC",
+     114.9,
+     30.3
+    ],
+    [
+     "Optimus Prime Fund Management Co., Ltd.",
+     112.2,
+     47.3
+    ],
+    [
+     "Elm Ridge Management, LLC",
+     105.8,
+     -2.7
+    ],
+    [
+     "Moerus Capital Management LLC",
+     105.2,
+     21.4
+    ],
+    [
+     "Taylor Frigon Capital Management LLC",
+     104.9,
+     25.2
+    ],
+    [
+     "ARGA Investment Management, LP",
+     98.6,
+     6.5
+    ],
+    [
+     "ADAMS NATURAL RESOURCES FUND, INC.",
+     98.0,
+     7.3
+    ],
+    [
+     "Impala Asset Management LLC",
+     97.3,
+     1.8
+    ],
+    [
+     "Karani Asset Management LLC",
+     94.8,
+     42.5
+    ],
+    [
+     "RWC ASSET ADVISORS (US) LLC",
+     90.6,
+     23.9
+    ]
+   ]
+  },
+  {
+   "period": 202312,
+   "hold_from": 202403,
+   "hold_to": 202502,
+   "full_year": true,
+   "n_with_3y": 1203,
+   "n_kept_this_year": 2359,
+   "n_top": 121,
+   "top_mean": 16.24,
+   "top_mean_P30": 15.09,
+   "bot_mean": 16.85,
+   "bot_mean_P30": 15.33,
+   "ranked_mean": 15.36,
+   "all_kept_mean": 15.04,
+   "all_kept_median": 15.07,
+   "spy": 18.45,
+   "qqq": 16.44,
+   "top_minus_spy": -2.21,
+   "bot_minus_spy": -1.59,
+   "spearman_past3_next": 0.086,
+   "spearman_past1_next": 0.086,
+   "n_past1_pairs": 1878,
+   "decile_next_mean_pct": [
+    16.29,
+    15.65,
+    15.51,
+    15.84,
+    15.97,
+    15.07,
+    14.65,
+    14.18,
+    13.6,
+    16.88
+   ],
+   "top_past3_median_pct": 50.0,
+   "top_median_value_usd_m": 681.7,
+   "all_median_value_usd_m": 423.9,
+   "top_median_n_stocks": 50,
+   "top_turnover_oneway_vs_prev": 0.395,
+   "top_basket_top25": [
+    [
+     "MSFT",
+     "MICROSOFT CORP",
+     4.35
+    ],
+    [
+     "AAPL",
+     "APPLE INC",
+     3.02
+    ],
+    [
+     "BRK-B",
+     "BERKSHIRE HATHAWAY INC DEL",
+     2.8
+    ],
+    [
+     "BRK-A",
+     "BERKSHIRE HATHAWAY INC DEL",
+     2.44
+    ],
+    [
+     "AMZN",
+     "AMAZON COM INC",
+     2.23
+    ],
+    [
+     "GOOGL",
+     "ALPHABET INC",
+     1.62
+    ],
+    [
+     "GOOG",
+     "ALPHABET INC",
+     1.6
+    ],
+    [
+     "COST",
+     "COSTCO WHSL CORP NEW",
+     1.57
+    ],
+    [
+     "NVDA",
+     "NVIDIA CORPORATION",
+     1.54
+    ],
+    [
+     "TJX",
+     "TJX COS INC NEW",
+     1.04
+    ],
+    [
+     "LLY",
+     "ELI LILLY & CO",
+     1.03
+    ],
+    [
+     "META",
+     "META PLATFORMS INC",
+     0.98
+    ],
+    [
+     "V",
+     "VISA INC",
+     0.97
+    ],
+    [
+     "UNH",
+     "UNITEDHEALTH GROUP INC",
+     0.92
+    ],
+    [
+     "MA",
+     "MASTERCARD INCORPORATED",
+     0.89
+    ],
+    [
+     "PGR",
+     "PROGRESSIVE CORP",
+     0.82
+    ],
+    [
+     "JNJ",
+     "JOHNSON & JOHNSON",
+     0.76
+    ],
+    [
+     "JPM",
+     "JPMORGAN CHASE & CO",
+     0.75
+    ],
+    [
+     "APO",
+     "APOLLO GLOBAL MGMT INC",
+     0.68
+    ],
+    [
+     "AMAT",
+     "APPLIED MATLS INC",
+     0.66
+    ],
+    [
+     "AVGO",
+     "BROADCOM INC",
+     0.64
+    ],
+    [
+     "ELV",
+     "ELEVANCE HEALTH INC",
+     0.62
+    ],
+    [
+     "WSM",
+     "WILLIAMS SONOMA INC",
+     0.55
+    ],
+    [
+     "XOM",
+     "EXXON MOBIL CORP",
+     0.51
+    ],
+    [
+     "TMO",
+     "THERMO FISHER SCIENTIFIC INC",
+     0.48
+    ]
+   ],
+   "top_managers": [
+    [
+     "Emerald Advisors, LLC",
+     122.3,
+     39.8
+    ],
+    [
+     "MFN Partners Management, LP",
+     119.5,
+     8.1
+    ],
+    [
+     "Moerus Capital Management LLC",
+     107.2,
+     18.9
+    ],
+    [
+     "GoodHaven Capital Management, LLC",
+     106.0,
+     18.5
+    ],
+    [
+     "Recurrent Investment Advisors LLC",
+     105.5,
+     28.5
+    ],
+    [
+     "Hyperion Capital Advisors LP",
+     101.5,
+     16.2
+    ],
+    [
+     "Analog Century Management LP",
+     99.1,
+     -0.7
+    ],
+    [
+     "O'Keefe Stevens Advisory, Inc.",
+     94.0,
+     19.5
+    ],
+    [
+     "Brave Warrior Advisors, LLC",
+     89.9,
+     15.2
+    ],
+    [
+     "Lodge Hill Capital, LLC",
+     88.5,
+     -10.4
+    ],
+    [
+     "Private Capital Advisors, Inc.",
+     80.2,
+     18.2
+    ],
+    [
+     "ADAMS NATURAL RESOURCES FUND, INC.",
+     80.0,
+     7.6
+    ],
+    [
+     "Lingotto Investment Management LLP",
+     76.9,
+     37.9
+    ],
+    [
+     "DISCIPLINED GROWTH INVESTORS INC /MN",
+     71.6,
+     -8.1
+    ],
+    [
+     "Cartenna Capital, LP",
+     69.9,
+     12.9
+    ]
+   ]
+  },
+  {
+   "period": 202412,
+   "hold_from": 202503,
+   "hold_to": 202602,
+   "full_year": true,
+   "n_with_3y": 1381,
+   "n_kept_this_year": 2551,
+   "n_top": 139,
+   "top_mean": 20.28,
+   "top_mean_P30": 18.92,
+   "bot_mean": 20.73,
+   "bot_mean_P30": 19.04,
+   "ranked_mean": 18.44,
+   "all_kept_mean": 20.71,
+   "all_kept_median": 17.77,
+   "spy": 16.81,
+   "qqq": 20.11,
+   "top_minus_spy": 3.47,
+   "bot_minus_spy": 3.92,
+   "spearman_past3_next": 0.006,
+   "spearman_past1_next": -0.014,
+   "n_past1_pairs": 2042,
+   "decile_next_mean_pct": [
+    20.37,
+    18.25,
+    15.42,
+    17.26,
+    17.8,
+    19.71,
+    16.47,
+    18.42,
+    19.78,
+    20.88
+   ],
+   "top_past3_median_pct": 60.1,
+   "top_median_value_usd_m": 652.5,
+   "all_median_value_usd_m": 441.4,
+   "top_median_n_stocks": 38,
+   "top_turnover_oneway_vs_prev": 0.384,
+   "top_basket_top25": [
+    [
+     "NVDA",
+     "NVIDIA CORPORATION",
+     3.76
+    ],
+    [
+     "AMZN",
+     "AMAZON COM INC",
+     3.38
+    ],
+    [
+     "MSFT",
+     "MICROSOFT CORP",
+     2.89
+    ],
+    [
+     "AAPL",
+     "APPLE INC",
+     2.54
+    ],
+    [
+     "META",
+     "META PLATFORMS INC",
+     2.39
+    ],
+    [
+     "GOOGL",
+     "ALPHABET INC",
+     1.96
+    ],
+    [
+     "GOOG",
+     "ALPHABET INC",
+     1.49
+    ],
+    [
+     "TPL",
+     "TEXAS PACIFIC LAND CORPORATI",
+     1.25
+    ],
+    [
+     "COST",
+     "COSTCO WHSL CORP NEW",
+     1.24
+    ],
+    [
+     "BRK-B",
+     "BERKSHIRE HATHAWAY INC DEL",
+     1.15
+    ],
+    [
+     "V",
+     "VISA INC",
+     1.07
+    ],
+    [
+     "MA",
+     "MASTERCARD INCORPORATED",
+     1.03
+    ],
+    [
+     "AVGO",
+     "BROADCOM INC",
+     0.99
+    ],
+    [
+     "WFC",
+     "WELLS FARGO CO NEW",
+     0.92
+    ],
+    [
+     "TJX",
+     "TJX COS INC NEW",
+     0.85
+    ],
+    [
+     "PGR",
+     "PROGRESSIVE CORP",
+     0.84
+    ],
+    [
+     "BRK-A",
+     "BERKSHIRE HATHAWAY INC DEL",
+     0.83
+    ],
+    [
+     "TSLA",
+     "TESLA INC",
+     0.78
+    ],
+    [
+     "JPM",
+     "JPMORGAN CHASE & CO.",
+     0.77
+    ],
+    [
+     "TSM",
+     "TAIWAN SEMICONDUCTOR MFG LTD",
+     0.74
+    ],
+    [
+     "APP",
+     "APPLOVIN CORP",
+     0.74
+    ],
+    [
+     "TMUS",
+     "T-MOBILE US INC",
+     0.72
+    ],
+    [
+     "LLY",
+     "ELI LILLY & CO",
+     0.71
+    ],
+    [
+     "APO",
+     "APOLLO GLOBAL MGMT INC",
+     0.68
+    ],
+    [
+     "WSM",
+     "WILLIAMS SONOMA INC",
+     0.58
+    ]
+   ],
+   "top_managers": [
+    [
+     "MAD RIVER INVESTORS",
+     149.6,
+     21.3
+    ],
+    [
+     "HORIZON KINETICS ASSET MANAGEMENT LLC",
+     146.9,
+     20.1
+    ],
+    [
+     "BLACKHILL CAPITAL INC",
+     120.0,
+     9.2
+    ],
+    [
+     " ONCE CAPITAL MANAGEMENT, LLC",
+     111.3,
+     30.0
+    ],
+    [
+     "Shannon River Fund Management LLC",
+     110.9,
+     41.6
+    ],
+    [
+     "Hiddenite Capital Partners LP",
+     110.2,
+     40.6
+    ],
+    [
+     "Emerald Advisors, LLC",
+     102.7,
+     -1.2
+    ],
+    [
+     "Lingotto Investment Management LLP",
+     98.1,
+     76.4
+    ],
+    [
+     "BWCP, LP",
+     97.6,
+     6.5
+    ],
+    [
+     "Voyager Global Management LP",
+     96.9,
+     22.7
+    ],
+    [
+     "Westwood Wealth Management",
+     96.4,
+     29.5
+    ],
+    [
+     "AUGUSTINE ASSET MANAGEMENT INC",
+     96.4,
+     30.0
+    ],
+    [
+     "Teilinger Capital Ltd.",
+     95.4,
+     14.3
+    ],
+    [
+     "KENSICO CAPITAL MANAGEMENT CORP",
+     91.8,
+     9.1
+    ],
+    [
+     "GHE, LLC",
+     90.2,
+     20.4
+    ]
+   ]
+  },
+  {
+   "period": 202512,
+   "hold_from": 202603,
+   "hold_to": 202608,
+   "full_year": false,
+   "n_with_3y": 1488,
+   "n_kept_this_year": 2654,
+   "n_top": 149,
+   "top_mean": 12.22,
+   "top_mean_P30": 11.8,
+   "bot_mean": 9.45,
+   "bot_mean_P30": 8.61,
+   "ranked_mean": 10.33,
+   "all_kept_mean": 11.09,
+   "all_kept_median": 10.42,
+   "spy": 12.41,
+   "qqq": 18.3,
+   "top_minus_spy": -0.19,
+   "bot_minus_spy": -2.96,
+   "spearman_past3_next": 0.181,
+   "spearman_past1_next": 0.007,
+   "n_past1_pairs": 2150,
+   "decile_next_mean_pct": [
+    12.22,
+    11.44,
+    12.92,
+    10.05,
+    10.91,
+    9.06,
+    9.08,
+    8.41,
+    9.74,
+    9.45
+   ],
+   "top_past3_median_pct": 130.7,
+   "top_median_value_usd_m": 649.8,
+   "all_median_value_usd_m": 468.7,
+   "top_median_n_stocks": 41,
+   "top_turnover_oneway_vs_prev": 0.419,
+   "top_basket_top25": [
+    [
+     "NVDA",
+     "NVIDIA CORPORATION",
+     3.92
+    ],
+    [
+     "AMZN",
+     "AMAZON COM INC",
+     3.37
+    ],
+    [
+     "GOOGL",
+     "ALPHABET INC",
+     2.96
+    ],
+    [
+     "META",
+     "META PLATFORMS INC",
+     2.21
+    ],
+    [
+     "MSFT",
+     "MICROSOFT CORP",
+     2.03
+    ],
+    [
+     "GOOG",
+     "ALPHABET INC",
+     1.71
+    ],
+    [
+     "AAPL",
+     "APPLE INC",
+     1.65
+    ],
+    [
+     "TSM",
+     "TAIWAN SEMICONDUCTOR MFG LTD",
+     1.58
+    ],
+    [
+     "AVGO",
+     "BROADCOM INC",
+     1.13
+    ],
+    [
+     "TSLA",
+     "TESLA INC",
+     1.03
+    ],
+    [
+     "COST",
+     "COSTCO WHSL CORP NEW",
+     0.92
+    ],
+    [
+     "APP",
+     "APPLOVIN CORP",
+     0.86
+    ],
+    [
+     "PLTR",
+     "PALANTIR TECHNOLOGIES INC",
+     0.85
+    ],
+    [
+     "CVNA",
+     "CARVANA CO",
+     0.85
+    ],
+    [
+     "VRT",
+     "VERTIV HOLDINGS CO",
+     0.76
+    ],
+    [
+     "LLY",
+     "ELI LILLY & CO",
+     0.75
+    ],
+    [
+     "NU",
+     "NU HLDGS LTD",
+     0.71
+    ],
+    [
+     "MU",
+     "MICRON TECHNOLOGY INC",
+     0.66
+    ],
+    [
+     "TJX",
+     "TJX COS INC NEW",
+     0.65
+    ],
+    [
+     "ECHO",
+     "ECHOSTAR CORP",
+     0.63
+    ],
+    [
+     "MA",
+     "MASTERCARD INCORPORATED",
+     0.61
+    ],
+    [
+     "MELI",
+     "MERCADOLIBRE INC",
+     0.61
+    ],
+    [
+     "LRCX",
+     "LAM RESEARCH CORP",
+     0.6
+    ],
+    [
+     "NFLX",
+     "NETFLIX INC",
+     0.58
+    ],
+    [
+     "BW",
+     "BABCOCK & WILCOX ENTERPRISES",
+     0.52
+    ]
+   ],
+   "top_managers": [
+    [
+     "KEYWISE CAPITAL MANAGEMENT (HK) Ltd",
+     339.8,
+     13.3
+    ],
+    [
+     "Longitude (Cayman) Ltd.",
+     294.4,
+     31.8
+    ],
+    [
+     "Value Aligned Research Advisors, LLC",
+     283.0,
+     22.7
+    ],
+    [
+     " ONCE CAPITAL MANAGEMENT, LLC",
+     270.6,
+     34.6
+    ],
+    [
+     "Duquesne Family Office LLC",
+     258.1,
+     14.1
+    ],
+    [
+     "Atreides Management, LP",
+     240.0,
+     43.6
+    ],
+    [
+     "HIGHLAND PEAK CAPITAL, LLC",
+     233.9,
+     24.0
+    ],
+    [
+     "Wolf Hill Capital Management, LP",
+     231.6,
+     16.4
+    ],
+    [
+     "Shannon River Fund Management LLC",
+     226.9,
+     51.7
+    ],
+    [
+     "Analog Century Management LP",
+     223.9,
+     25.4
+    ],
+    [
+     "Hiddenite Capital Partners LP",
+     220.4,
+     0.7
+    ],
+    [
+     "REDWOOD CAPITAL MANAGEMENT, LLC",
+     217.1,
+     7.0
+    ],
+    [
+     "BERKSHIRE CAPITAL HOLDINGS INC",
+     207.7,
+     21.1
+    ],
+    [
+     "JOHNSON & JOHNSON",
+     204.0,
+     44.9
+    ],
+    [
+     "Euro Pacific Asset Management, LLC",
+     201.0,
+     -12.2
+    ]
+   ]
+  }
+ ],
+ "summary": {
+  "top": {
+   "vs_spy_monthly": {
+    "from": 201703,
+    "to": 202602,
+    "years": 9.0,
+    "ex_ann": -0.69,
+    "t": -0.31,
+    "p": 0.7579,
+    "cagr_s": 13.25,
+    "cagr_b": 14.38,
+    "cagr_diff": -1.13,
+    "te": 4.58,
+    "ir": -0.15,
+    "beta": 1.09,
+    "vol_s": 17.4,
+    "vol_b": 15.6
+   },
+   "vs_qqq_monthly": {
+    "from": 201703,
+    "to": 202602,
+    "years": 9.0,
+    "ex_ann": -5.67,
+    "t": -3.04,
+    "p": 0.0024,
+    "cagr_s": 13.25,
+    "cagr_b": 19.49,
+    "cagr_diff": -6.24,
+    "te": 7.53,
+    "ir": -0.75,
+    "beta": 0.85,
+    "vol_s": 17.4,
+    "vol_b": 18.8
+   },
+   "max_dd": -33.4,
+   "cagr": 13.25,
+   "vs_spy_after_cost": {
+    "from": 201703,
+    "to": 202602,
+    "years": 9.0,
+    "ex_ann": -0.85,
+    "t": -0.38,
+    "p": 0.706,
+    "cagr_s": 13.08,
+    "cagr_b": 14.38,
+    "cagr_diff": -1.3,
+    "te": 4.58,
+    "ir": -0.19,
+    "beta": 1.09,
+    "vol_s": 17.4,
+    "vol_b": 15.6
+   },
+   "ff5_umd_alpha": {
+    "alpha_ann": -0.99,
+    "t": -0.79,
+    "n": 108,
+    "loadings": {
+     "mktrf": 1.04,
+     "smb": 0.06,
+     "hml": -0.08,
+     "rmw": -0.01,
+     "cma": -0.05,
+     "umd": -0.0
+    }
+   }
+  },
+  "bot": {
+   "vs_spy_monthly": {
+    "from": 201703,
+    "to": 202602,
+    "years": 9.0,
+    "ex_ann": -0.13,
+    "t": -0.08,
+    "p": 0.9354,
+    "cagr_s": 13.89,
+    "cagr_b": 14.38,
+    "cagr_diff": -0.49,
+    "te": 5.93,
+    "ir": -0.02,
+    "beta": 1.05,
+    "vol_s": 17.3,
+    "vol_b": 15.6
+   },
+   "vs_qqq_monthly": {
+    "from": 201703,
+    "to": 202602,
+    "years": 9.0,
+    "ex_ann": -5.11,
+    "t": -1.23,
+    "p": 0.2177,
+    "cagr_s": 13.89,
+    "cagr_b": 19.49,
+    "cagr_diff": -5.6,
+    "te": 11.15,
+    "ir": -0.46,
+    "beta": 0.75,
+    "vol_s": 17.3,
+    "vol_b": 18.8
+   },
+   "max_dd": -27.0,
+   "cagr": 13.89,
+   "ff5_umd_alpha": {
+    "alpha_ann": 1.25,
+    "t": 0.97,
+    "n": 108,
+    "loadings": {
+     "mktrf": 1.0,
+     "smb": -0.03,
+     "hml": 0.19,
+     "rmw": -0.18,
+     "cma": 0.08,
+     "umd": -0.09
+    }
+   }
+  },
+  "all": {
+   "vs_spy_monthly": {
+    "from": 201703,
+    "to": 202602,
+    "years": 9.0,
+    "ex_ann": -0.46,
+    "t": -0.42,
+    "p": 0.6711,
+    "cagr_s": 13.69,
+    "cagr_b": 14.38,
+    "cagr_diff": -0.69,
+    "te": 2.99,
+    "ir": -0.16,
+    "beta": 1.04,
+    "vol_s": 16.4,
+    "vol_b": 15.6
+   },
+   "vs_qqq_monthly": {
+    "from": 201703,
+    "to": 202602,
+    "years": 9.0,
+    "ex_ann": -5.44,
+    "t": -2.0,
+    "p": 0.0456,
+    "cagr_s": 13.69,
+    "cagr_b": 19.49,
+    "cagr_diff": -5.8,
+    "te": 8.75,
+    "ir": -0.62,
+    "beta": 0.77,
+    "vol_s": 16.4,
+    "vol_b": 18.8
+   },
+   "max_dd": -26.6,
+   "cagr": 13.69,
+   "ff5_umd_alpha": {
+    "alpha_ann": -0.01,
+    "t": -0.02,
+    "n": 108,
+    "loadings": {
+     "mktrf": 0.99,
+     "smb": 0.07,
+     "hml": 0.06,
+     "rmw": 0.01,
+     "cma": -0.0,
+     "umd": -0.01
+    }
+   }
+  },
+  "top_P30": {
+   "vs_spy_monthly": {
+    "from": 201703,
+    "to": 202602,
+    "years": 9.0,
+    "ex_ann": -2.79,
+    "t": -1.34,
+    "p": 0.1808,
+    "cagr_s": 11.0,
+    "cagr_b": 14.38,
+    "cagr_diff": -3.38,
+    "te": 4.84,
+    "ir": -0.58,
+    "beta": 1.05,
+    "vol_s": 17.1,
+    "vol_b": 15.6
+   },
+   "vs_qqq_monthly": {
+    "from": 201703,
+    "to": 202602,
+    "years": 9.0,
+    "ex_ann": -7.76,
+    "t": -3.95,
+    "p": 0.0001,
+    "cagr_s": 11.0,
+    "cagr_b": 19.49,
+    "cagr_diff": -8.49,
+    "te": 7.98,
+    "ir": -0.97,
+    "beta": 0.82,
+    "vol_s": 17.1,
+    "vol_b": 18.8
+   },
+   "max_dd": -33.2,
+   "cagr": 11.0,
+   "vs_spy_after_cost": {
+    "from": 201703,
+    "to": 202602,
+    "years": 9.0,
+    "ex_ann": -2.94,
+    "t": -1.41,
+    "p": 0.1577,
+    "cagr_s": 10.83,
+    "cagr_b": 14.38,
+    "cagr_diff": -3.55,
+    "te": 4.84,
+    "ir": -0.61,
+    "beta": 1.05,
+    "vol_s": 17.1,
+    "vol_b": 15.6
+   }
+  },
+  "bot_P30": {
+   "vs_spy_monthly": {
+    "from": 201703,
+    "to": 202602,
+    "years": 9.0,
+    "ex_ann": -2.72,
+    "t": -1.61,
+    "p": 0.1081,
+    "cagr_s": 11.09,
+    "cagr_b": 14.38,
+    "cagr_diff": -3.29,
+    "te": 6.25,
+    "ir": -0.44,
+    "beta": 1.01,
+    "vol_s": 16.9,
+    "vol_b": 15.6
+   },
+   "vs_qqq_monthly": {
+    "from": 201703,
+    "to": 202602,
+    "years": 9.0,
+    "ex_ann": -7.69,
+    "t": -1.83,
+    "p": 0.0677,
+    "cagr_s": 11.09,
+    "cagr_b": 19.49,
+    "cagr_diff": -8.4,
+    "te": 11.46,
+    "ir": -0.67,
+    "beta": 0.72,
+    "vol_s": 16.9,
+    "vol_b": 18.8
+   },
+   "max_dd": -27.2,
+   "cagr": 11.09
+  },
+  "factor_note": "Fama-French 5因子＋勢い（Ken French のデータ・2026-08 まで）に回帰した切片（年率%）と HAC の t（mw_best_ideas_13f.factor_alpha）",
+  "spy_cagr_same_window": 14.38,
+  "spy_max_dd_same_window": -23.9,
+  "qqq_cagr_same_window": 19.49,
+  "annual_top_minus_spy": {
+   "n_years": 9,
+   "mean_pct": -0.64,
+   "median_pct": -0.95,
+   "years_positive": 4,
+   "t_simple": -0.22,
+   "t_nw_lag1": -0.25,
+   "values": [
+    3.33,
+    -0.95,
+    2.17,
+    16.58,
+    -15.13,
+    -4.72,
+    -8.27,
+    -2.21,
+    3.47
+   ]
+  },
+  "annual_bot_minus_spy": {
+   "n_years": 9,
+   "mean_pct": -0.52,
+   "median_pct": -1.3,
+   "years_positive": 4,
+   "t_simple": -0.56,
+   "t_nw_lag1": -0.61,
+   "values": [
+    -1.89,
+    0.2,
+    -4.1,
+    -3.69,
+    3.17,
+    0.64,
+    -1.3,
+    -1.59,
+    3.92
+   ]
+  },
+  "annual_top_minus_bot": {
+   "mean_pct": -0.12,
+   "years_positive": 3,
+   "n_years": 9,
+   "t_simple": -0.03,
+   "values": [
+    5.22,
+    -1.15,
+    6.27,
+    20.27,
+    -18.3,
+    -5.37,
+    -6.97,
+    -0.61,
+    -0.45
+   ]
+  },
+  "annual_top_minus_ranked_avg": {
+   "mean_pct": 0.32,
+   "years_positive": 5,
+   "t_simple": 0.13
+  },
+  "annual_all_managers_minus_spy": {
+   "mean_pct": -0.55,
+   "years_positive": 4,
+   "t_simple": -0.35
+  },
+  "spearman_past3_next": {
+   "mean": 0.008,
+   "median": 0.006,
+   "years_positive": 5,
+   "n_years": 9,
+   "t_across_years": 0.08,
+   "values": [
+    0.245,
+    -0.099,
+    0.33,
+    0.469,
+    -0.455,
+    -0.327,
+    -0.184,
+    0.086,
+    0.006
+   ]
+  },
+  "spearman_past1_next": {
+   "mean": 0.026,
+   "median": 0.086,
+   "years_positive": 5,
+   "n_years": 9,
+   "t_across_years": 0.23,
+   "values": [
+    0.167,
+    -0.09,
+    0.239,
+    0.356,
+    -0.553,
+    0.454,
+    -0.414,
+    0.086,
+    -0.014
+   ]
+  },
+  "decile_next_mean_pct_avg": [
+   14.4,
+   14.23,
+   13.41,
+   14.08,
+   13.85,
+   13.93,
+   13.66,
+   13.57,
+   14.54,
+   14.5
+  ],
+  "decile_note": "0＝過去3年の成績が最上位の1/10・9＝最下位の1/10。各年の翌年の成績（O）の平均を年でならした",
+  "half1": {
+   "formation_years": [
+    2016,
+    2017,
+    2018,
+    2019
+   ],
+   "hold_from": 201703,
+   "hold_to": 202102,
+   "top_minus_spy_annual_mean_pct": 5.28,
+   "top_vs_spy_monthly": {
+    "from": 201703,
+    "to": 202102,
+    "years": 4.0,
+    "ex_ann": 4.19,
+    "t": 1.72,
+    "p": 0.0863,
+    "cagr_s": 19.38,
+    "cagr_b": 14.76,
+    "cagr_diff": 4.63,
+    "te": 2.69,
+    "ir": 1.56,
+    "beta": 1.06,
+    "vol_s": 17.4,
+    "vol_b": 16.2
+   },
+   "bot_vs_spy_monthly": {
+    "from": 201703,
+    "to": 202102,
+    "years": 4.0,
+    "ex_ann": -1.68,
+    "t": -0.53,
+    "p": 0.5932,
+    "cagr_s": 12.44,
+    "cagr_b": 14.76,
+    "cagr_diff": -2.32,
+    "te": 5.2,
+    "ir": -0.32,
+    "beta": 1.08,
+    "vol_s": 18.2,
+    "vol_b": 16.2
+   },
+   "spearman_mean": 0.236
+  },
+  "half2": {
+   "formation_years": [
+    2020,
+    2021,
+    2022,
+    2023,
+    2024
+   ],
+   "hold_from": 202103,
+   "hold_to": 202602,
+   "top_minus_spy_annual_mean_pct": -5.37,
+   "top_vs_spy_monthly": {
+    "from": 202103,
+    "to": 202602,
+    "years": 5.0,
+    "ex_ann": -4.6,
+    "t": -1.7,
+    "p": 0.0886,
+    "cagr_s": 8.58,
+    "cagr_b": 14.08,
+    "cagr_diff": -5.5,
+    "te": 5.42,
+    "ir": -0.85,
+    "beta": 1.11,
+    "vol_s": 17.5,
+    "vol_b": 15.1
+   },
+   "bot_vs_spy_monthly": {
+    "from": 202103,
+    "to": 202602,
+    "years": 5.0,
+    "ex_ann": 1.11,
+    "t": 0.73,
+    "p": 0.4626,
+    "cagr_s": 15.07,
+    "cagr_b": 14.08,
+    "cagr_diff": 0.99,
+    "te": 6.48,
+    "ir": 0.17,
+    "beta": 1.02,
+    "vol_s": 16.7,
+    "vol_b": 15.1
+   },
+   "spearman_mean": -0.175
+  },
+  "mean_turnover_oneway": 0.388,
+  "cost_per_year_pct": 0.155,
+  "sensitivity_annual_minus_spy": {
+   "past1_top10": {
+    "mean_minus_spy_pct": -0.89,
+    "years_positive": 5,
+    "n_years": 9,
+    "t_simple": -0.2
+   },
+   "past1_bot10": {
+    "mean_minus_spy_pct": 1.17,
+    "years_positive": 6,
+    "n_years": 9,
+    "t_simple": 0.42
+   },
+   "past3_top5": {
+    "mean_minus_spy_pct": -0.36,
+    "years_positive": 3,
+    "n_years": 9,
+    "t_simple": -0.09
+   },
+   "past3_top20": {
+    "mean_minus_spy_pct": -0.66,
+    "years_positive": 5,
+    "n_years": 9,
+    "t_simple": -0.3
+   },
+   "x_past3_sharpe_top10": {
+    "mean_minus_spy_pct": -1.13,
+    "years_positive": 5,
+    "n_years": 9,
+    "t_simple": -0.51
+   },
+   "x_past3_alpha_top10": {
+    "mean_minus_spy_pct": -1.3,
+    "years_positive": 4,
+    "n_years": 9,
+    "t_simple": -0.44
+   },
+   "conc_top10": {
+    "mean_minus_spy_pct": -1.06,
+    "years_positive": 4,
+    "n_years": 9,
+    "t_simple": -0.26
+   },
+   "conc_bot10": {
+    "mean_minus_spy_pct": -0.29,
+    "years_positive": 3,
+    "n_years": 9,
+    "t_simple": -0.15
+   }
+  },
+  "pass_bar_E3_line": {
+   "criteria": {
+    "after_cost_ex_ge_1pct": false,
+    "nw_t_ge_2": false,
+    "half1_positive": true,
+    "half2_positive": false
+   },
+   "pass": false,
+   "note": "R2 の pass_bar（費用後 SPY に +1%/年以上・NW t≥2・前半と後半の両方で正）をそのまま上位10%のかごに当てた"
+  },
+  "partial_year": [
+   {
+    "period": 202512,
+    "months": "202603〜202608",
+    "top_minus_spy_pct": -0.19,
+    "top_mean": 12.22,
+    "spy": 12.41
+   }
+  ]
+ },
+ "path_Q_robustness": {
+  "what": "道 Q（頑健性・事前登録の外）: 同じ 12月末の保有を、13F の四半期末の合意の株価（全提出者の暗黙の株価の中央値・3社以上）で、3月末から翌年3月末まで（4四半期）持つ。配当は入らない（相手も SPY の配当なしの終値）。上場廃止した会社も機関が持っている間は株価がある＝Yahoo の道より生き残りの偏りが小さい。分割は Yahoo の分割の記録（照合できた CUSIP）か持ち手の株数の比で直す（mw_best_ideas_13f の道 Q と同じ部品）",
+  "spy_dividend_gap_by_year_pct": [
+   2.13,
+   2.08,
+   1.86,
+   2.47,
+   1.5,
+   1.54,
+   1.85,
+   1.36,
+   1.33
+  ],
+  "counts_by_year": {
+   "201312": {
+    "eligible": 2170,
+    "kept_cover80": 2141,
+    "dropped_cover_lt_80": 29,
+    "dropped_no_live": 0,
+    "months": [
+     201406,
+     201409,
+     201412,
+     201503
+    ]
+   },
+   "201412": {
+    "eligible": 2308,
+    "kept_cover80": 2292,
+    "dropped_cover_lt_80": 16,
+    "dropped_no_live": 0,
+    "months": [
+     201506,
+     201509,
+     201512,
+     201603
+    ]
+   },
+   "201512": {
+    "eligible": 2344,
+    "kept_cover80": 2331,
+    "dropped_cover_lt_80": 13,
+    "dropped_no_live": 0,
+    "months": [
+     201606,
+     201609,
+     201612,
+     201703
+    ]
+   },
+   "201612": {
+    "eligible": 2286,
+    "kept_cover80": 2269,
+    "dropped_cover_lt_80": 17,
+    "dropped_no_live": 0,
+    "months": [
+     201706,
+     201709,
+     201712,
+     201803
+    ]
+   },
+   "201712": {
+    "eligible": 2305,
+    "kept_cover80": 2278,
+    "dropped_cover_lt_80": 27,
+    "dropped_no_live": 0,
+    "months": [
+     201806,
+     201809,
+     201812,
+     201903
+    ]
+   },
+   "201812": {
+    "eligible": 2348,
+    "kept_cover80": 2329,
+    "dropped_cover_lt_80": 19,
+    "dropped_no_live": 0,
+    "months": [
+     201906,
+     201909,
+     201912,
+     202003
+    ]
+   },
+   "201912": {
+    "eligible": 2375,
+    "kept_cover80": 2347,
+    "dropped_cover_lt_80": 28,
+    "dropped_no_live": 0,
+    "months": [
+     202006,
+     202009,
+     202012,
+     202103
+    ]
+   },
+   "202012": {
+    "eligible": 2514,
+    "kept_cover80": 2497,
+    "dropped_cover_lt_80": 17,
+    "dropped_no_live": 0,
+    "months": [
+     202106,
+     202109,
+     202112,
+     202203
+    ]
+   },
+   "202112": {
+    "eligible": 2706,
+    "kept_cover80": 2689,
+    "dropped_cover_lt_80": 17,
+    "dropped_no_live": 0,
+    "months": [
+     202206,
+     202209,
+     202212,
+     202303
+    ]
+   },
+   "202212": {
+    "eligible": 2623,
+    "kept_cover80": 2588,
+    "dropped_cover_lt_80": 35,
+    "dropped_no_live": 0,
+    "months": [
+     202306,
+     202309,
+     202312,
+     202403
+    ]
+   },
+   "202312": {
+    "eligible": 2655,
+    "kept_cover80": 2639,
+    "dropped_cover_lt_80": 16,
+    "dropped_no_live": 0,
+    "months": [
+     202406,
+     202409,
+     202412,
+     202503
+    ]
+   },
+   "202412": {
+    "eligible": 2771,
+    "kept_cover80": 2751,
+    "dropped_cover_lt_80": 19,
+    "dropped_no_live": 1,
+    "months": [
+     202506,
+     202509,
+     202512,
+     202603
+    ]
+   },
+   "202512": {
+    "eligible": 2796,
+    "kept_cover80": 2771,
+    "dropped_cover_lt_80": 25,
+    "dropped_no_live": 0,
+    "months": [
+     202606
+    ]
+   }
+  },
+  "rows": [
+   {
+    "period": 201612,
+    "hold_from": 201706,
+    "hold_to": 201803,
+    "full_year": true,
+    "n_with_3y": 1544,
+    "n_kept_this_year": 2269,
+    "n_top": 155,
+    "top_mean": 16.82,
+    "top_mean_P30": 14.27,
+    "bot_mean": 3.66,
+    "bot_mean_P30": 0.4,
+    "ranked_mean": 10.78,
+    "all_kept_mean": 11.11,
+    "all_kept_median": 10.5,
+    "spy": 11.63,
+    "qqq": 20.96,
+    "top_minus_spy": 5.19,
+    "bot_minus_spy": -7.97,
+    "spearman_past3_next": 0.319,
+    "spearman_past1_next": 0.143,
+    "n_past1_pairs": 1987,
+    "decile_next_mean_pct": [
+     16.8,
+     14.18,
+     12.02,
+     11.37,
+     10.72,
+     9.77,
+     10.41,
+     9.32,
+     9.61,
+     3.59
+    ],
+    "top_past3_median_pct": 38.9,
+    "top_median_value_usd_m": 924.0,
+    "all_median_value_usd_m": 394.9,
+    "top_median_n_stocks": 38,
+    "top_turnover_oneway_vs_prev": null
+   },
+   {
+    "period": 201712,
+    "hold_from": 201806,
+    "hold_to": 201903,
+    "full_year": true,
+    "n_with_3y": 1607,
+    "n_kept_this_year": 2278,
+    "n_top": 161,
+    "top_mean": 3.64,
+    "top_mean_P30": 1.96,
+    "bot_mean": -0.03,
+    "bot_mean_P30": -2.91,
+    "ranked_mean": 3.67,
+    "all_kept_mean": 3.72,
+    "all_kept_median": 4.64,
+    "spy": 7.35,
+    "qqq": 12.2,
+    "top_minus_spy": -3.7,
+    "bot_minus_spy": -7.38,
+    "spearman_past3_next": 0.167,
+    "spearman_past1_next": 0.185,
+    "n_past1_pairs": 1982,
+    "decile_next_mean_pct": [
+     3.64,
+     4.51,
+     5.37,
+     5.35,
+     5.84,
+     4.19,
+     3.77,
+     3.98,
+     0.03,
+     -0.03
+    ],
+    "top_past3_median_pct": 52.8,
+    "top_median_value_usd_m": 603.5,
+    "all_median_value_usd_m": 444.7,
+    "top_median_n_stocks": 40,
+    "top_turnover_oneway_vs_prev": 0.443
+   },
+   {
+    "period": 201812,
+    "hold_from": 201906,
+    "hold_to": 202003,
+    "full_year": true,
+    "n_with_3y": 1601,
+    "n_kept_this_year": 2329,
+    "n_top": 161,
+    "top_mean": -11.38,
+    "top_mean_P30": -12.35,
+    "bot_mean": -34.08,
+    "bot_mean_P30": -34.0,
+    "ranked_mean": -16.86,
+    "all_kept_mean": -16.74,
+    "all_kept_median": -13.91,
+    "spy": -8.75,
+    "qqq": 5.98,
+    "top_minus_spy": -2.63,
+    "bot_minus_spy": -25.33,
+    "spearman_past3_next": 0.378,
+    "spearman_past1_next": 0.517,
+    "n_past1_pairs": 1978,
+    "decile_next_mean_pct": [
+     -11.21,
+     -12.91,
+     -12.73,
+     -13.53,
+     -14.79,
+     -15.25,
+     -15.6,
+     -17.52,
+     -20.97,
+     -34.07
+    ],
+    "top_past3_median_pct": 80.3,
+    "top_median_value_usd_m": 702.8,
+    "all_median_value_usd_m": 358.8,
+    "top_median_n_stocks": 33,
+    "top_turnover_oneway_vs_prev": 0.464
+   },
+   {
+    "period": 201912,
+    "hold_from": 202006,
+    "hold_to": 202103,
+    "full_year": true,
+    "n_with_3y": 1575,
+    "n_kept_this_year": 2347,
+    "n_top": 158,
+    "top_mean": 83.06,
+    "top_mean_P30": 80.31,
+    "bot_mean": 122.86,
+    "bot_mean_P30": 104.63,
+    "ranked_mean": 78.55,
+    "all_kept_mean": 79.65,
+    "all_kept_median": 68.0,
+    "spy": 53.77,
+    "qqq": 67.61,
+    "top_minus_spy": 29.29,
+    "bot_minus_spy": 69.09,
+    "spearman_past3_next": -0.317,
+    "spearman_past1_next": -0.433,
+    "n_past1_pairs": 2006,
+    "decile_next_mean_pct": [
+     83.06,
+     66.04,
+     61.1,
+     65.59,
+     64.96,
+     69.68,
+     74.39,
+     80.96,
+     96.86,
+     122.9
+    ],
+    "top_past3_median_pct": 39.5,
+    "top_median_value_usd_m": 824.0,
+    "all_median_value_usd_m": 401.9,
+    "top_median_n_stocks": 37.5,
+    "top_turnover_oneway_vs_prev": 0.404
+   },
+   {
+    "period": 202012,
+    "hold_from": 202106,
+    "hold_to": 202203,
+    "full_year": true,
+    "n_with_3y": 1567,
+    "n_kept_this_year": 2497,
+    "n_top": 157,
+    "top_mean": -9.42,
+    "top_mean_P30": -10.11,
+    "bot_mean": 9.88,
+    "bot_mean_P30": 6.36,
+    "ranked_mean": 5.27,
+    "all_kept_mean": 3.58,
+    "all_kept_median": 7.45,
+    "spy": 13.96,
+    "qqq": 13.6,
+    "top_minus_spy": -23.37,
+    "bot_minus_spy": -4.07,
+    "spearman_past3_next": -0.3,
+    "spearman_past1_next": -0.394,
+    "n_past1_pairs": 2035,
+    "decile_next_mean_pct": [
+     -9.42,
+     0.08,
+     4.77,
+     7.39,
+     7.72,
+     6.96,
+     9.3,
+     7.76,
+     8.23,
+     9.88
+    ],
+    "top_past3_median_pct": 112.8,
+    "top_median_value_usd_m": 846.4,
+    "all_median_value_usd_m": 453.1,
+    "top_median_n_stocks": 43,
+    "top_turnover_oneway_vs_prev": 0.427
+   },
+   {
+    "period": 202112,
+    "hold_from": 202206,
+    "hold_to": 202303,
+    "full_year": true,
+    "n_with_3y": 1602,
+    "n_kept_this_year": 2689,
+    "n_top": 161,
+    "top_mean": -12.8,
+    "top_mean_P30": -14.37,
+    "bot_mean": -13.02,
+    "bot_mean_P30": -16.28,
+    "ranked_mean": -11.26,
+    "all_kept_mean": -11.92,
+    "all_kept_median": -10.15,
+    "spy": -9.35,
+    "qqq": -11.48,
+    "top_minus_spy": -3.44,
+    "bot_minus_spy": -3.66,
+    "spearman_past3_next": -0.001,
+    "spearman_past1_next": 0.248,
+    "n_past1_pairs": 2169,
+    "decile_next_mean_pct": [
+     -12.82,
+     -11.63,
+     -10.73,
+     -9.97,
+     -10.16,
+     -9.38,
+     -10.34,
+     -11.33,
+     -13.26,
+     -12.96
+    ],
+    "top_past3_median_pct": 95.9,
+    "top_median_value_usd_m": 632.5,
+    "all_median_value_usd_m": 459.2,
+    "top_median_n_stocks": 46,
+    "top_turnover_oneway_vs_prev": 0.507
+   },
+   {
+    "period": 202212,
+    "hold_from": 202306,
+    "hold_to": 202403,
+    "full_year": true,
+    "n_with_3y": 1605,
+    "n_kept_this_year": 2588,
+    "n_top": 161,
+    "top_mean": 24.25,
+    "top_mean_P30": 22.17,
+    "bot_mean": 23.21,
+    "bot_mean_P30": 19.42,
+    "ranked_mean": 21.96,
+    "all_kept_mean": 22.2,
+    "all_kept_median": 20.98,
+    "spy": 27.77,
+    "qqq": 38.35,
+    "top_minus_spy": -3.52,
+    "bot_minus_spy": -4.56,
+    "spearman_past3_next": 0.057,
+    "spearman_past1_next": -0.066,
+    "n_past1_pairs": 2251,
+    "decile_next_mean_pct": [
+     24.17,
+     22.55,
+     22.19,
+     22.55,
+     22.54,
+     21.35,
+     20.54,
+     19.24,
+     21.28,
+     23.21
+    ],
+    "top_past3_median_pct": 134.8,
+    "top_median_value_usd_m": 424.2,
+    "all_median_value_usd_m": 354.3,
+    "top_median_n_stocks": 38,
+    "top_turnover_oneway_vs_prev": 0.541
+   },
+   {
+    "period": 202312,
+    "hold_from": 202406,
+    "hold_to": 202503,
+    "full_year": true,
+    "n_with_3y": 1700,
+    "n_kept_this_year": 2639,
+    "n_top": 170,
+    "top_mean": 4.41,
+    "top_mean_P30": 3.52,
+    "bot_mean": -2.13,
+    "bot_mean_P30": -3.96,
+    "ranked_mean": 2.79,
+    "all_kept_mean": 2.79,
+    "all_kept_median": 3.71,
+    "spy": 6.94,
+    "qqq": 5.61,
+    "top_minus_spy": -2.53,
+    "bot_minus_spy": -9.07,
+    "spearman_past3_next": 0.164,
+    "spearman_past1_next": -0.007,
+    "n_past1_pairs": 2241,
+    "decile_next_mean_pct": [
+     4.41,
+     3.74,
+     4.8,
+     4.36,
+     3.39,
+     3.08,
+     1.88,
+     1.82,
+     2.53,
+     -2.13
+    ],
+    "top_past3_median_pct": 44.6,
+    "top_median_value_usd_m": 653.8,
+    "all_median_value_usd_m": 408.9,
+    "top_median_n_stocks": 39.5,
+    "top_turnover_oneway_vs_prev": 0.512
+   },
+   {
+    "period": 202412,
+    "hold_from": 202506,
+    "hold_to": 202603,
+    "full_year": true,
+    "n_with_3y": 1798,
+    "n_kept_this_year": 2751,
+    "n_top": 180,
+    "top_mean": 22.38,
+    "top_mean_P30": 20.14,
+    "bot_mean": 33.58,
+    "bot_mean_P30": 29.03,
+    "ranked_mean": 20.8,
+    "all_kept_mean": 22.55,
+    "all_kept_median": 17.02,
+    "spy": 16.26,
+    "qqq": 23.09,
+    "top_minus_spy": 6.13,
+    "bot_minus_spy": 17.32,
+    "spearman_past3_next": -0.079,
+    "spearman_past1_next": -0.174,
+    "n_past1_pairs": 2288,
+    "decile_next_mean_pct": [
+     22.38,
+     17.4,
+     17.76,
+     17.39,
+     17.58,
+     18.41,
+     18.42,
+     20.62,
+     24.46,
+     33.58
+    ],
+    "top_past3_median_pct": 43.7,
+    "top_median_value_usd_m": 651.1,
+    "all_median_value_usd_m": 428.1,
+    "top_median_n_stocks": 32.0,
+    "top_turnover_oneway_vs_prev": 0.415
+   },
+   {
+    "period": 202512,
+    "hold_from": 202606,
+    "hold_to": 202606,
+    "full_year": false,
+    "n_with_3y": 1753,
+    "n_kept_this_year": 2771,
+    "n_top": 176,
+    "top_mean": 21.64,
+    "top_mean_P30": 20.8,
+    "bot_mean": 11.58,
+    "bot_mean_P30": 10.64,
+    "ranked_mean": 13.49,
+    "all_kept_mean": 13.95,
+    "all_kept_median": 12.0,
+    "spy": 14.83,
+    "qqq": 27.59,
+    "top_minus_spy": 6.82,
+    "bot_minus_spy": -3.25,
+    "spearman_past3_next": 0.275,
+    "spearman_past1_next": 0.372,
+    "n_past1_pairs": 2321,
+    "decile_next_mean_pct": [
+     21.7,
+     15.72,
+     14.54,
+     13.68,
+     13.12,
+     11.22,
+     11.52,
+     11.15,
+     10.59,
+     11.63
+    ],
+    "top_past3_median_pct": 113.7,
+    "top_median_value_usd_m": 755.7,
+    "all_median_value_usd_m": 465.6,
+    "top_median_n_stocks": 42.5,
+    "top_turnover_oneway_vs_prev": 0.506
+   }
+  ],
+  "summary": {
+   "top": {
+    "vs_spy_monthly": {
+     "from": 201706,
+     "to": 202603,
+     "years": 9.0,
+     "ex_ann": -0.47,
+     "t": -0.12,
+     "p": 0.9026,
+     "cagr_s": 10.54,
+     "cagr_b": 11.94,
+     "cagr_diff": -1.4,
+     "te": 9.1,
+     "ir": -0.05,
+     "beta": 1.18,
+     "vol_s": 21.4,
+     "vol_b": 16.6
+    },
+    "vs_qqq_monthly": {
+     "from": 201706,
+     "to": 202603,
+     "years": 9.0,
+     "ex_ann": -6.49,
+     "t": -2.75,
+     "p": 0.0059,
+     "cagr_s": 10.54,
+     "cagr_b": 17.78,
+     "cagr_diff": -7.24,
+     "te": 9.37,
+     "ir": -0.69,
+     "beta": 0.92,
+     "vol_s": 21.4,
+     "vol_b": 21.1
+    },
+    "max_dd": -36.6,
+    "cagr": 10.54,
+    "vs_spy_after_cost": {
+     "from": 201706,
+     "to": 202603,
+     "years": 9.0,
+     "ex_ann": -0.65,
+     "t": -0.17,
+     "p": 0.8637,
+     "cagr_s": 10.33,
+     "cagr_b": 11.94,
+     "cagr_diff": -1.6,
+     "te": 9.1,
+     "ir": -0.07,
+     "beta": 1.18,
+     "vol_s": 21.4,
+     "vol_b": 16.6
+    }
+   },
+   "bot": {
+    "vs_spy_monthly": {
+     "from": 201706,
+     "to": 202603,
+     "years": 9.0,
+     "ex_ann": -0.02,
+     "t": -0.0,
+     "p": 0.9966,
+     "cagr_s": 9.93,
+     "cagr_b": 11.94,
+     "cagr_diff": -2.01,
+     "te": 14.23,
+     "ir": -0.0,
+     "beta": 1.32,
+     "vol_s": 25.5,
+     "vol_b": 16.6
+    },
+    "vs_qqq_monthly": {
+     "from": 201706,
+     "to": 202603,
+     "years": 9.0,
+     "ex_ann": -6.04,
+     "t": -1.08,
+     "p": 0.2789,
+     "cagr_s": 9.93,
+     "cagr_b": 17.78,
+     "cagr_diff": -7.85,
+     "te": 17.82,
+     "ir": -0.34,
+     "beta": 0.88,
+     "vol_s": 25.5,
+     "vol_b": 21.1
+    },
+    "max_dd": -39.4,
+    "cagr": 9.93
+   },
+   "all": {
+    "vs_spy_monthly": {
+     "from": 201706,
+     "to": 202603,
+     "years": 9.0,
+     "ex_ann": -1.02,
+     "t": -0.53,
+     "p": 0.5981,
+     "cagr_s": 10.32,
+     "cagr_b": 11.94,
+     "cagr_diff": -1.61,
+     "te": 5.59,
+     "ir": -0.18,
+     "beta": 1.12,
+     "vol_s": 19.3,
+     "vol_b": 16.6
+    },
+    "vs_qqq_monthly": {
+     "from": 201706,
+     "to": 202603,
+     "years": 9.0,
+     "ex_ann": -7.04,
+     "t": -2.45,
+     "p": 0.0142,
+     "cagr_s": 10.32,
+     "cagr_b": 17.78,
+     "cagr_diff": -7.45,
+     "te": 10.6,
+     "ir": -0.66,
+     "beta": 0.79,
+     "vol_s": 19.3,
+     "vol_b": 21.1
+    },
+    "max_dd": -26.4,
+    "cagr": 10.32
+   },
+   "top_P30": {
+    "vs_spy_monthly": {
+     "from": 201706,
+     "to": 202603,
+     "years": 9.0,
+     "ex_ann": -2.1,
+     "t": -0.56,
+     "p": 0.5746,
+     "cagr_s": 8.9,
+     "cagr_b": 11.94,
+     "cagr_diff": -3.04,
+     "te": 8.85,
+     "ir": -0.24,
+     "beta": 1.15,
+     "vol_s": 20.9,
+     "vol_b": 16.6
+    },
+    "vs_qqq_monthly": {
+     "from": 201706,
+     "to": 202603,
+     "years": 9.0,
+     "ex_ann": -8.12,
+     "t": -3.46,
+     "p": 0.0005,
+     "cagr_s": 8.9,
+     "cagr_b": 17.78,
+     "cagr_diff": -8.88,
+     "te": 9.19,
+     "ir": -0.88,
+     "beta": 0.9,
+     "vol_s": 20.9,
+     "vol_b": 21.1
+    },
+    "max_dd": -36.9,
+    "cagr": 8.9,
+    "vs_spy_after_cost": {
+     "from": 201706,
+     "to": 202603,
+     "years": 9.0,
+     "ex_ann": -2.29,
+     "t": -0.61,
+     "p": 0.5409,
+     "cagr_s": 8.7,
+     "cagr_b": 11.94,
+     "cagr_diff": -3.24,
+     "te": 8.85,
+     "ir": -0.26,
+     "beta": 1.15,
+     "vol_s": 20.9,
+     "vol_b": 16.6
+    }
+   },
+   "bot_P30": {
+    "vs_spy_monthly": {
+     "from": 201706,
+     "to": 202603,
+     "years": 9.0,
+     "ex_ann": -3.8,
+     "t": -0.94,
+     "p": 0.3483,
+     "cagr_s": 6.31,
+     "cagr_b": 11.94,
+     "cagr_diff": -5.62,
+     "te": 12.95,
+     "ir": -0.29,
+     "beta": 1.24,
+     "vol_s": 24.0,
+     "vol_b": 16.6
+    },
+    "vs_qqq_monthly": {
+     "from": 201706,
+     "to": 202603,
+     "years": 9.0,
+     "ex_ann": -9.82,
+     "t": -1.89,
+     "p": 0.059,
+     "cagr_s": 6.31,
+     "cagr_b": 17.78,
+     "cagr_diff": -11.46,
+     "te": 16.71,
+     "ir": -0.59,
+     "beta": 0.83,
+     "vol_s": 24.0,
+     "vol_b": 21.1
+    },
+    "max_dd": -40.1,
+    "cagr": 6.31
+   },
+   "factor_note": "四半期の道では因子の回帰をしない",
+   "spy_cagr_same_window": 11.94,
+   "spy_max_dd_same_window": -24.8,
+   "qqq_cagr_same_window": 17.78,
+   "annual_top_minus_spy": {
+    "n_years": 9,
+    "mean_pct": 0.16,
+    "median_pct": -2.63,
+    "years_positive": 3,
+    "t_simple": 0.03,
+    "t_nw_lag1": 0.05,
+    "values": [
+     5.19,
+     -3.7,
+     -2.63,
+     29.29,
+     -23.37,
+     -3.44,
+     -3.52,
+     -2.53,
+     6.13
+    ]
+   },
+   "annual_bot_minus_spy": {
+    "n_years": 9,
+    "mean_pct": 2.71,
+    "median_pct": -4.56,
+    "years_positive": 2,
+    "t_simple": 0.3,
+    "t_nw_lag1": 0.39,
+    "values": [
+     -7.97,
+     -7.38,
+     -25.33,
+     69.09,
+     -4.07,
+     -3.66,
+     -4.56,
+     -9.07,
+     17.32
+    ]
+   },
+   "annual_top_minus_bot": {
+    "mean_pct": -2.55,
+    "years_positive": 6,
+    "n_years": 9,
+    "t_simple": -0.41,
+    "values": [
+     13.16,
+     3.67,
+     22.7,
+     -39.8,
+     -19.3,
+     0.22,
+     1.04,
+     6.54,
+     -11.2
+    ]
+   },
+   "annual_top_minus_ranked_avg": {
+    "mean_pct": 0.58,
+    "years_positive": 6,
+    "t_simple": 0.28
+   },
+   "annual_all_managers_minus_spy": {
+    "mean_pct": -0.29,
+    "years_positive": 2,
+    "t_simple": -0.08
+   },
+   "spearman_past3_next": {
+    "mean": 0.043,
+    "median": 0.057,
+    "years_positive": 5,
+    "n_years": 9,
+    "t_across_years": 0.53,
+    "values": [
+     0.319,
+     0.167,
+     0.378,
+     -0.317,
+     -0.3,
+     -0.001,
+     0.057,
+     0.164,
+     -0.079
+    ]
+   },
+   "spearman_past1_next": {
+    "mean": 0.002,
+    "median": -0.007,
+    "years_positive": 4,
+    "n_years": 9,
+    "t_across_years": 0.02,
+    "values": [
+     0.143,
+     0.185,
+     0.517,
+     -0.433,
+     -0.394,
+     0.248,
+     -0.066,
+     -0.007,
+     -0.174
+    ]
+   },
+   "decile_next_mean_pct_avg": [
+    13.45,
+    11.55,
+    11.62,
+    12.28,
+    11.98,
+    12.09,
+    12.53,
+    12.76,
+    14.31,
+    16.0
+   ],
+   "decile_note": "0＝過去3年の成績が最上位の1/10・9＝最下位の1/10。各年の翌年の成績（O）の平均を年でならした",
+   "half1": {
+    "formation_years": [
+     2016,
+     2017,
+     2018,
+     2019
+    ],
+    "hold_from": 201706,
+    "hold_to": 202103,
+    "top_minus_spy_annual_mean_pct": 7.04,
+    "top_vs_spy_monthly": null,
+    "bot_vs_spy_monthly": null,
+    "spearman_mean": 0.137
+   },
+   "half2": {
+    "formation_years": [
+     2020,
+     2021,
+     2022,
+     2023,
+     2024
+    ],
+    "hold_from": 202106,
+    "hold_to": 202603,
+    "top_minus_spy_annual_mean_pct": -5.35,
+    "top_vs_spy_monthly": null,
+    "bot_vs_spy_monthly": null,
+    "spearman_mean": -0.032
+   },
+   "mean_turnover_oneway": 0.469,
+   "cost_per_year_pct": 0.187,
+   "sensitivity_annual_minus_spy": {
+    "past1_top10": {
+     "mean_minus_spy_pct": -1.13,
+     "years_positive": 3,
+     "n_years": 9,
+     "t_simple": -0.36
+    },
+    "past1_bot10": {
+     "mean_minus_spy_pct": 4.75,
+     "years_positive": 2,
+     "n_years": 9,
+     "t_simple": 0.49
+    },
+    "past3_top5": {
+     "mean_minus_spy_pct": 0.75,
+     "years_positive": 3,
+     "n_years": 9,
+     "t_simple": 0.14
+    },
+    "past3_top20": {
+     "mean_minus_spy_pct": -0.79,
+     "years_positive": 3,
+     "n_years": 9,
+     "t_simple": -0.23
+    },
+    "x_past3_sharpe_top10": {
+     "mean_minus_spy_pct": 0.9,
+     "years_positive": 4,
+     "n_years": 9,
+     "t_simple": 0.27
+    },
+    "x_past3_alpha_top10": {
+     "mean_minus_spy_pct": 0.53,
+     "years_positive": 3,
+     "n_years": 9,
+     "t_simple": 0.12
+    },
+    "conc_top10": {
+     "mean_minus_spy_pct": 1.66,
+     "years_positive": 4,
+     "n_years": 9,
+     "t_simple": 0.33
+    },
+    "conc_bot10": {
+     "mean_minus_spy_pct": 7.54,
+     "years_positive": 2,
+     "n_years": 9,
+     "t_simple": 0.55
+    }
+   },
+   "pass_bar_E3_line": {
+    "criteria": {
+     "after_cost_ex_ge_1pct": false,
+     "nw_t_ge_2": false,
+     "half1_positive": false,
+     "half2_positive": false
+    },
+    "pass": false,
+    "note": "R2 の pass_bar（費用後 SPY に +1%/年以上・NW t≥2・前半と後半の両方で正）をそのまま上位10%のかごに当てた"
+   },
+   "partial_year": [
+    {
+     "period": 202512,
+     "months": "202606〜202606",
+     "top_minus_spy_pct": 6.82,
+     "top_mean": 21.64,
+     "spy": 14.83
+    }
+   ]
+  },
+  "series_quarterly": {
+   "top": {
+    "201706": 0.038274,
+    "201709": 0.055443,
+    "201712": 0.048593,
+    "201803": 0.016619,
+    "201806": 0.059816,
+    "201809": 0.036721,
+    "201812": -0.187722,
+    "201903": 0.161287,
+    "201906": 0.032845,
+    "201909": -0.047865,
+    "201912": 0.11561,
+    "202003": -0.192252,
+    "202006": 0.345276,
+    "202009": 0.118084,
+    "202012": 0.202957,
+    "202103": 0.011698,
+    "202106": 0.08114,
+    "202109": -0.033919,
+    "202112": -0.004224,
+    "202203": -0.129059,
+    "202206": -0.216518,
+    "202209": -0.033547,
+    "202212": 0.05818,
+    "202303": 0.088358,
+    "202306": 0.052321,
+    "202309": -0.014108,
+    "202312": 0.096101,
+    "202403": 0.092603,
+    "202406": 0.00532,
+    "202409": 0.060621,
+    "202412": 0.009075,
+    "202503": -0.029586,
+    "202506": 0.116057,
+    "202509": 0.09898,
+    "202512": 0.024982,
+    "202603": -0.026507,
+    "202606": 0.216441
+   },
+   "bot": {
+    "201706": -0.015628,
+    "201709": 0.044235,
+    "201712": 0.04643,
+    "201803": -0.036307,
+    "201806": 0.065056,
+    "201809": 0.020195,
+    "201812": -0.189083,
+    "201903": 0.134578,
+    "201906": -0.005041,
+    "201909": -0.032781,
+    "201912": 0.059317,
+    "202003": -0.353398,
+    "202006": 0.345587,
+    "202009": 0.001117,
+    "202012": 0.333994,
+    "202103": 0.240163,
+    "202106": 0.071792,
+    "202109": -0.023146,
+    "202112": 0.037563,
+    "202203": 0.011535,
+    "202206": -0.1678,
+    "202209": -0.033118,
+    "202212": 0.047643,
+    "202303": 0.031875,
+    "202306": 0.057782,
+    "202309": -0.05318,
+    "202312": 0.153703,
+    "202403": 0.066318,
+    "202406": -0.044316,
+    "202409": 0.084567,
+    "202412": 0.018497,
+    "202503": -0.072923,
+    "202506": 0.119081,
+    "202509": 0.139583,
+    "202512": 0.055991,
+    "202603": -0.008075,
+    "202606": 0.115782
+   },
+   "all": {
+    "201706": 0.023257,
+    "201709": 0.044995,
+    "201712": 0.049118,
+    "201803": -0.009547,
+    "201806": 0.040143,
+    "201809": 0.04531,
+    "201812": -0.163886,
+    "201903": 0.140953,
+    "201906": 0.029085,
+    "201909": -0.008908,
+    "201912": 0.085193,
+    "202003": -0.247716,
+    "202006": 0.261364,
+    "202009": 0.073892,
+    "202012": 0.207927,
+    "202103": 0.097947,
+    "202106": 0.070232,
+    "202109": -0.021968,
+    "202112": 0.052338,
+    "202203": -0.05966,
+    "202206": -0.178904,
+    "202209": -0.046278,
+    "202212": 0.064208,
+    "202303": 0.056952,
+    "202306": 0.055787,
+    "202309": -0.036534,
+    "202312": 0.112153,
+    "202403": 0.080196,
+    "202406": -0.004809,
+    "202409": 0.066983,
+    "202412": 0.009154,
+    "202503": -0.040743,
+    "202506": 0.108315,
+    "202509": 0.09447,
+    "202512": 0.031214,
+    "202603": -0.020252,
+    "202606": 0.139538
+   },
+   "top_P30": {
+    "201706": 0.031704,
+    "201709": 0.048035,
+    "201712": 0.041918,
+    "201803": 0.014321,
+    "201806": 0.054483,
+    "201809": 0.032705,
+    "201812": -0.185709,
+    "201903": 0.149789,
+    "201906": 0.027457,
+    "201909": -0.049538,
+    "201912": 0.101818,
+    "202003": -0.185404,
+    "202006": 0.340479,
+    "202009": 0.115786,
+    "202012": 0.193513,
+    "202103": 0.010053,
+    "202106": 0.076707,
+    "202109": -0.036168,
+    "202112": -0.008646,
+    "202203": -0.126239,
+    "202206": -0.217423,
+    "202209": -0.03487,
+    "202212": 0.047851,
+    "202303": 0.081989,
+    "202306": 0.0473,
+    "202309": -0.01705,
+    "202312": 0.089642,
+    "202403": 0.089145,
+    "202406": 0.002713,
+    "202409": 0.058049,
+    "202412": 0.007709,
+    "202503": -0.031724,
+    "202506": 0.111683,
+    "202509": 0.095492,
+    "202512": 0.019651,
+    "202603": -0.032527,
+    "202606": 0.207977
+   },
+   "bot_P30": {
+    "201706": -0.024182,
+    "201709": 0.033253,
+    "201712": 0.037329,
+    "201803": -0.040056,
+    "201806": 0.058819,
+    "201809": 0.010154,
+    "201812": -0.186165,
+    "201903": 0.115436,
+    "201906": -0.013876,
+    "201909": -0.036328,
+    "201912": 0.044582,
+    "202003": -0.335134,
+    "202006": 0.321656,
+    "202009": -0.012664,
+    "202012": 0.30327,
+    "202103": 0.203245,
+    "202106": 0.059144,
+    "202109": -0.028971,
+    "202112": 0.026015,
+    "202203": 0.007909,
+    "202206": -0.17403,
+    "202209": -0.038516,
+    "202212": 0.029785,
+    "202303": 0.023676,
+    "202306": 0.051548,
+    "202309": -0.057873,
+    "202312": 0.141022,
+    "202403": 0.056395,
+    "202406": -0.051958,
+    "202409": 0.076928,
+    "202412": 0.013595,
+    "202503": -0.071973,
+    "202506": 0.113292,
+    "202509": 0.129303,
+    "202512": 0.045306,
+    "202603": -0.018218,
+    "202606": 0.106421
+   }
+  }
+ },
+ "series_monthly": {
+  "top": {
+   "201703": 0.001875,
+   "201704": 0.011335,
+   "201705": 0.017936,
+   "201706": 0.005936,
+   "201707": 0.022827,
+   "201708": 0.004746,
+   "201709": 0.022099,
+   "201710": 0.030402,
+   "201711": 0.034156,
+   "201712": 0.010994,
+   "201801": 0.058731,
+   "201802": -0.031031,
+   "201803": -0.027128,
+   "201804": 0.001266,
+   "201805": 0.026583,
+   "201806": 3.3e-05,
+   "201807": 0.034256,
+   "201808": 0.030777,
+   "201809": 0.000208,
+   "201810": -0.073863,
+   "201811": 0.022424,
+   "201812": -0.088936,
+   "201901": 0.088008,
+   "201902": 0.034913,
+   "201903": 0.017042,
+   "201904": 0.045387,
+   "201905": -0.060752,
+   "201906": 0.068399,
+   "201907": 0.016904,
+   "201908": -0.016022,
+   "201909": 0.00565,
+   "201910": 0.023215,
+   "201911": 0.037898,
+   "201912": 0.03144,
+   "202001": 0.007534,
+   "202002": -0.067479,
+   "202003": -0.125944,
+   "202004": 0.150889,
+   "202005": 0.080632,
+   "202006": 0.035984,
+   "202007": 0.074979,
+   "202008": 0.080116,
+   "202009": -0.035091,
+   "202010": -0.027428,
+   "202011": 0.119933,
+   "202012": 0.048603,
+   "202101": -0.006344,
+   "202102": 0.029126,
+   "202103": 0.001163,
+   "202104": 0.062896,
+   "202105": -0.010461,
+   "202106": 0.054562,
+   "202107": 0.020867,
+   "202108": 0.030395,
+   "202109": -0.05481,
+   "202110": 0.064965,
+   "202111": -0.024324,
+   "202112": 0.016084,
+   "202201": -0.092198,
+   "202202": -0.043653,
+   "202203": 0.02237,
+   "202204": -0.117172,
+   "202205": -0.014146,
+   "202206": -0.091184,
+   "202207": 0.108401,
+   "202208": -0.038651,
+   "202209": -0.102268,
+   "202210": 0.067378,
+   "202211": 0.057845,
+   "202212": -0.069737,
+   "202301": 0.102727,
+   "202302": -0.023419,
+   "202303": 0.001431,
+   "202304": 0.001107,
+   "202305": -0.016347,
+   "202306": 0.0787,
+   "202307": 0.045644,
+   "202308": -0.023807,
+   "202309": -0.039904,
+   "202310": -0.038402,
+   "202311": 0.089634,
+   "202312": 0.061532,
+   "202401": -0.000384,
+   "202402": 0.051648,
+   "202403": 0.041698,
+   "202404": -0.042096,
+   "202405": 0.045001,
+   "202406": 0.014741,
+   "202407": 0.029372,
+   "202408": 0.018665,
+   "202409": 0.014063,
+   "202410": -0.011457,
+   "202411": 0.06466,
+   "202412": -0.042882,
+   "202501": 0.039073,
+   "202502": -0.01298,
+   "202503": -0.063971,
+   "202504": 0.003278,
+   "202505": 0.070066,
+   "202506": 0.055128,
+   "202507": 0.025297,
+   "202508": 0.023317,
+   "202509": 0.040975,
+   "202510": 0.016578,
+   "202511": -0.002513,
+   "202512": 0.004183,
+   "202601": 0.0188,
+   "202602": 0.001167,
+   "202603": -0.055376,
+   "202604": 0.131355,
+   "202605": 0.07012,
+   "202606": 0.004084,
+   "202607": -0.054307,
+   "202608": 0.033381
+  },
+  "bot": {
+   "201703": 0.004356,
+   "201704": -0.00138,
+   "201705": 0.006833,
+   "201706": 0.015153,
+   "201707": 0.026115,
+   "201708": -0.001558,
+   "201709": 0.033952,
+   "201710": 0.017258,
+   "201711": 0.026438,
+   "201712": 0.019803,
+   "201801": 0.048653,
+   "201802": -0.049815,
+   "201803": -0.016893,
+   "201804": 0.009391,
+   "201805": 0.017475,
+   "201806": 0.006599,
+   "201807": 0.036433,
+   "201808": 0.01778,
+   "201809": 0.001842,
+   "201810": -0.056858,
+   "201811": 0.021511,
+   "201812": -0.086997,
+   "201901": 0.077462,
+   "201902": 0.028874,
+   "201903": 0.015393,
+   "201904": 0.032741,
+   "201905": -0.056857,
+   "201906": 0.06539,
+   "201907": 0.011061,
+   "201908": -0.015735,
+   "201909": 0.023855,
+   "201910": 0.015261,
+   "201911": 0.028655,
+   "201912": 0.028593,
+   "202001": -0.007926,
+   "202002": -0.089084,
+   "202003": -0.191843,
+   "202004": 0.118048,
+   "202005": 0.035045,
+   "202006": 0.017936,
+   "202007": 0.039338,
+   "202008": 0.054762,
+   "202009": -0.0373,
+   "202010": -0.017507,
+   "202011": 0.150587,
+   "202012": 0.047568,
+   "202101": 0.002944,
+   "202102": 0.065058,
+   "202103": 0.057127,
+   "202104": 0.044553,
+   "202105": 0.030809,
+   "202106": -0.009168,
+   "202107": 0.005645,
+   "202108": 0.019626,
+   "202109": -0.034234,
+   "202110": 0.054112,
+   "202111": -0.03259,
+   "202112": 0.061111,
+   "202201": -0.010614,
+   "202202": -0.000584,
+   "202203": 0.018645,
+   "202204": -0.080028,
+   "202205": 0.003905,
+   "202206": -0.081867,
+   "202207": 0.068402,
+   "202208": -0.027173,
+   "202209": -0.099433,
+   "202210": 0.075913,
+   "202211": 0.070576,
+   "202212": -0.042029,
+   "202301": 0.079463,
+   "202302": -0.035646,
+   "202303": 0.030188,
+   "202304": -0.01393,
+   "202305": 0.011038,
+   "202306": 0.071562,
+   "202307": 0.063191,
+   "202308": -0.040883,
+   "202309": -0.054675,
+   "202310": -0.038857,
+   "202311": 0.125229,
+   "202312": 0.061119,
+   "202401": -0.008174,
+   "202402": 0.067228,
+   "202403": 0.017592,
+   "202404": -0.044611,
+   "202405": 0.037995,
+   "202406": 0.008636,
+   "202407": 0.0092,
+   "202408": 0.012388,
+   "202409": 0.064497,
+   "202410": -0.002519,
+   "202411": 0.085267,
+   "202412": -0.037036,
+   "202501": 0.056434,
+   "202502": -0.0415,
+   "202503": -0.075159,
+   "202504": -0.003481,
+   "202505": 0.073109,
+   "202506": 0.0614,
+   "202507": 0.025233,
+   "202508": 0.037762,
+   "202509": 0.038332,
+   "202510": 0.025318,
+   "202511": -0.015191,
+   "202512": 0.002795,
+   "202601": 0.015411,
+   "202602": 0.012544,
+   "202603": -0.060251,
+   "202604": 0.080541,
+   "202605": 0.02564,
+   "202606": 0.024222,
+   "202607": 0.006534,
+   "202608": 0.019397
+  },
+  "all": {
+   "201703": 0.002275,
+   "201704": 0.011083,
+   "201705": 0.016193,
+   "201706": 0.009243,
+   "201707": 0.020654,
+   "201708": 0.003165,
+   "201709": 0.026804,
+   "201710": 0.024193,
+   "201711": 0.030756,
+   "201712": 0.01269,
+   "201801": 0.056073,
+   "201802": -0.038603,
+   "201803": -0.019433,
+   "201804": 0.001802,
+   "201805": 0.025072,
+   "201806": 0.003484,
+   "201807": 0.036652,
+   "201808": 0.028483,
+   "201809": 0.00191,
+   "201810": -0.06933,
+   "201811": 0.024016,
+   "201812": -0.088694,
+   "201901": 0.080907,
+   "201902": 0.037441,
+   "201903": 0.015638,
+   "201904": 0.04163,
+   "201905": -0.062524,
+   "201906": 0.070019,
+   "201907": 0.013845,
+   "201908": -0.016503,
+   "201909": 0.0156,
+   "201910": 0.020666,
+   "201911": 0.035755,
+   "201912": 0.028557,
+   "202001": -0.002267,
+   "202002": -0.080296,
+   "202003": -0.154201,
+   "202004": 0.134414,
+   "202005": 0.060508,
+   "202006": 0.024916,
+   "202007": 0.059385,
+   "202008": 0.069983,
+   "202009": -0.032034,
+   "202010": -0.016802,
+   "202011": 0.128677,
+   "202012": 0.048258,
+   "202101": -0.000588,
+   "202102": 0.043742,
+   "202103": 0.029914,
+   "202104": 0.050032,
+   "202105": 0.007023,
+   "202106": 0.020827,
+   "202107": 0.012408,
+   "202108": 0.02428,
+   "202109": -0.045753,
+   "202110": 0.060076,
+   "202111": -0.02333,
+   "202112": 0.040879,
+   "202201": -0.057482,
+   "202202": -0.02347,
+   "202203": 0.018382,
+   "202204": -0.095074,
+   "202205": -0.004741,
+   "202206": -0.08434,
+   "202207": 0.088842,
+   "202208": -0.034572,
+   "202209": -0.096963,
+   "202210": 0.077009,
+   "202211": 0.063273,
+   "202212": -0.054781,
+   "202301": 0.080227,
+   "202302": -0.026649,
+   "202303": 0.015211,
+   "202304": 0.003441,
+   "202305": -0.005319,
+   "202306": 0.069521,
+   "202307": 0.042972,
+   "202308": -0.024634,
+   "202309": -0.046166,
+   "202310": -0.034342,
+   "202311": 0.093329,
+   "202312": 0.059361,
+   "202401": 0.004513,
+   "202402": 0.052551,
+   "202403": 0.034599,
+   "202404": -0.04498,
+   "202405": 0.042272,
+   "202406": 0.010663,
+   "202407": 0.029815,
+   "202408": 0.016583,
+   "202409": 0.023124,
+   "202410": -0.009401,
+   "202411": 0.07014,
+   "202412": -0.043782,
+   "202501": 0.04001,
+   "202502": -0.021145,
+   "202503": -0.058994,
+   "202504": -0.007605,
+   "202505": 0.061858,
+   "202506": 0.051378,
+   "202507": 0.020251,
+   "202508": 0.03339,
+   "202509": 0.03341,
+   "202510": 0.02045,
+   "202511": 0.005876,
+   "202512": 0.001655,
+   "202601": 0.025372,
+   "202602": 0.007963,
+   "202603": -0.052209,
+   "202604": 0.093347,
+   "202605": 0.04243,
+   "202606": 0.005496,
+   "202607": -0.005765,
+   "202608": 0.028692
+  },
+  "top_P30": {
+   "201703": -0.024135,
+   "201704": 0.010704,
+   "201705": 0.016686,
+   "201706": 0.005655,
+   "201707": 0.021505,
+   "201708": 0.004489,
+   "201709": 0.020847,
+   "201710": 0.028679,
+   "201711": 0.032475,
+   "201712": 0.010513,
+   "201801": 0.05572,
+   "201802": -0.029587,
+   "201803": -0.046951,
+   "201804": 0.001217,
+   "201805": 0.025208,
+   "201806": 9e-06,
+   "201807": 0.032691,
+   "201808": 0.029329,
+   "201809": 8.8e-05,
+   "201810": -0.070289,
+   "201811": 0.021304,
+   "201812": -0.084263,
+   "201901": 0.082946,
+   "201902": 0.032986,
+   "201903": -0.005328,
+   "201904": 0.043234,
+   "201905": -0.057728,
+   "201906": 0.06482,
+   "201907": 0.016295,
+   "201908": -0.015016,
+   "201909": 0.005285,
+   "201910": 0.022072,
+   "201911": 0.036124,
+   "201912": 0.030034,
+   "202001": 0.007269,
+   "202002": -0.064634,
+   "202003": -0.134788,
+   "202004": 0.143817,
+   "202005": 0.077114,
+   "202006": 0.034608,
+   "202007": 0.072182,
+   "202008": 0.077679,
+   "202009": -0.034297,
+   "202010": -0.026788,
+   "202011": 0.115216,
+   "202012": 0.046748,
+   "202101": -0.007456,
+   "202102": 0.028087,
+   "202103": -0.015089,
+   "202104": 0.060572,
+   "202105": -0.009963,
+   "202106": 0.052245,
+   "202107": 0.020425,
+   "202108": 0.029728,
+   "202109": -0.053061,
+   "202110": 0.062564,
+   "202111": -0.023064,
+   "202112": 0.015794,
+   "202201": -0.08832,
+   "202202": -0.042242,
+   "202203": 0.009368,
+   "202204": -0.113826,
+   "202205": -0.013837,
+   "202206": -0.088143,
+   "202207": 0.104683,
+   "202208": -0.037438,
+   "202209": -0.098882,
+   "202210": 0.064912,
+   "202211": 0.055743,
+   "202212": -0.067451,
+   "202301": 0.09899,
+   "202302": -0.022621,
+   "202303": -0.011423,
+   "202304": 0.00094,
+   "202305": -0.015507,
+   "202306": 0.076005,
+   "202307": 0.044179,
+   "202308": -0.023029,
+   "202309": -0.038759,
+   "202310": -0.036926,
+   "202311": 0.087014,
+   "202312": 0.059374,
+   "202401": -0.000207,
+   "202402": 0.050048,
+   "202403": 0.032348,
+   "202404": -0.041298,
+   "202405": 0.044271,
+   "202406": 0.014847,
+   "202407": 0.028472,
+   "202408": 0.018652,
+   "202409": 0.013955,
+   "202410": -0.011371,
+   "202411": 0.063382,
+   "202412": -0.041785,
+   "202501": 0.038387,
+   "202502": -0.012529,
+   "202503": -0.069688,
+   "202504": 0.003388,
+   "202505": 0.068958,
+   "202506": 0.054144,
+   "202507": 0.024931,
+   "202508": 0.022675,
+   "202509": 0.040371,
+   "202510": 0.016582,
+   "202511": -0.002998,
+   "202512": 0.004202,
+   "202601": 0.018178,
+   "202602": 0.000425,
+   "202603": -0.057671,
+   "202604": 0.130381,
+   "202605": 0.069532,
+   "202606": 0.003971,
+   "202607": -0.053847,
+   "202608": 0.033112
+  },
+  "bot_P30": {
+   "201703": -0.027726,
+   "201704": -0.001557,
+   "201705": 0.006,
+   "201706": 0.014137,
+   "201707": 0.024098,
+   "201708": -0.001564,
+   "201709": 0.031666,
+   "201710": 0.015941,
+   "201711": 0.024728,
+   "201712": 0.018658,
+   "201801": 0.045629,
+   "201802": -0.046757,
+   "201803": -0.047037,
+   "201804": 0.008555,
+   "201805": 0.016131,
+   "201806": 0.006016,
+   "201807": 0.033652,
+   "201808": 0.016359,
+   "201809": 0.001526,
+   "201810": -0.052813,
+   "201811": 0.019825,
+   "201812": -0.080808,
+   "201901": 0.071461,
+   "201902": 0.026388,
+   "201903": -0.008941,
+   "201904": 0.031136,
+   "201905": -0.054084,
+   "201906": 0.061962,
+   "201907": 0.01049,
+   "201908": -0.015054,
+   "201909": 0.022634,
+   "201910": 0.014525,
+   "201911": 0.02743,
+   "201912": 0.027308,
+   "202001": -0.007535,
+   "202002": -0.084822,
+   "202003": -0.198831,
+   "202004": 0.110942,
+   "202005": 0.033117,
+   "202006": 0.017022,
+   "202007": 0.037454,
+   "202008": 0.05223,
+   "202009": -0.035517,
+   "202010": -0.016795,
+   "202011": 0.142971,
+   "202012": 0.045587,
+   "202101": 0.002714,
+   "202102": 0.062215,
+   "202103": 0.036541,
+   "202104": 0.042792,
+   "202105": 0.02857,
+   "202106": -0.008867,
+   "202107": 0.005445,
+   "202108": 0.018834,
+   "202109": -0.032795,
+   "202110": 0.052195,
+   "202111": -0.031287,
+   "202112": 0.058742,
+   "202201": -0.009978,
+   "202202": -0.000581,
+   "202203": -0.002602,
+   "202204": -0.076414,
+   "202205": 0.003718,
+   "202206": -0.07709,
+   "202207": 0.064148,
+   "202208": -0.025702,
+   "202209": -0.094124,
+   "202210": 0.071093,
+   "202211": 0.067218,
+   "202212": -0.039972,
+   "202301": 0.074739,
+   "202302": -0.033899,
+   "202303": 0.015943,
+   "202304": -0.013119,
+   "202305": 0.010124,
+   "202306": 0.069167,
+   "202307": 0.06138,
+   "202308": -0.039374,
+   "202309": -0.052931,
+   "202310": -0.03719,
+   "202311": 0.120876,
+   "202312": 0.058919,
+   "202401": -0.007842,
+   "202402": 0.065458,
+   "202403": 0.006743,
+   "202404": -0.043131,
+   "202405": 0.03716,
+   "202406": 0.008419,
+   "202407": 0.008561,
+   "202408": 0.011979,
+   "202409": 0.063722,
+   "202410": -0.002344,
+   "202411": 0.082454,
+   "202412": -0.036276,
+   "202501": 0.055331,
+   "202502": -0.040057,
+   "202503": -0.081678,
+   "202504": -0.00346,
+   "202505": 0.071398,
+   "202506": 0.060045,
+   "202507": 0.024692,
+   "202508": 0.03674,
+   "202509": 0.037797,
+   "202510": 0.024676,
+   "202511": -0.015328,
+   "202512": 0.002489,
+   "202601": 0.014903,
+   "202602": 0.011982,
+   "202603": -0.06517,
+   "202604": 0.07931,
+   "202605": 0.025241,
+   "202606": 0.023524,
+   "202607": 0.006724,
+   "202608": 0.018965
+  }
+ },
+ "summary_ja": [
+  "問い: 13F を出す運用会社（受動的な会社などを除いた毎年約2,200〜2,800社）のうち、過去3年の成績が上位10%だった会社の持ち株を、12月末の報告が出た後の3月初めから1年まねて持つと、S&P500（SPY・配当込み）に勝つか。2017年3月〜2026年2月の9年（上位10%は毎年 38〜139社）",
+  "答え: 勝たなかった。上位10%のかごは SPY に 年-0.69%（t -0.31）、売買の費用を引くと 年-0.85%（t -0.38）。年ごとに見ると勝ったのは 4/9 年（平均 -0.64%）",
+  "過去3年の順位と次の1年の順位の相関（順位相関）は 平均 0.008（正の年 5/9）＝ほぼ0。過去1年でも 平均 0.026。過去の成績を10段に分けても、次の1年の平均はどの段も 年13.41〜14.54% でほとんど同じ",
+  "前半（2017-03〜2021-02）は上位10%が SPY に 年4.19%（t 1.72）勝ったが、後半（2021-03〜2026-02）は 年-4.6%（t -1.7）負けた＝勝ちが続かず、入れ替わった",
+  "上位10%のかごは NASDAQ100（QQQ）には 年-5.67%（t -3.04）負け、いちばん深い下落は -33.4%（SPY -23.9%）",
+  "注意: Yahoo には上場廃止した会社の株価が無いので、初めの年ほど『持ち株の8割以上の株価が取れる』会社が少ない（2013年末は 594/2170社）",
+  "上場廃止した会社も数えられる別の測り方（13F に載る四半期末の株価・配当なし・道 Q・毎年ほぼ全員の約1,550〜1,800社を順位付け）でも同じ: 費用後 年-0.65%（t -0.17）・順位相関 平均 0.043",
+  "いま（2026年2月末に組む）の上位10%の合算の持ち株の上位10は NVDA, AMZN, GOOGL, META, MSFT, GOOG, AAPL, TSM, AVGO, TSLA（かごの 21.6%・上位25で 32.1%・残りは多くの銘柄に散る）＝NASDAQ100 の最上位とほぼ同じ顔ぶれ（TSM は NASDAQ100 に入らない。採用の一覧との照合はしていない）"
+ ],
+ "prediction_check": "事前登録の予想『R2b の上位10%も有意に勝たない』『順位相関はほぼ0』はどちらも当たった。上位10%−SPY は費用後 年-0.85%・t -0.38（道 Q でも 年-0.65%・t -0.17）、順位相関の平均は 0.008（道 Q 0.043）。R2 の合格の線（費用後 +1%/年・t≥2・前半と後半の両方で正）を当てても不合格（前半だけ正）",
+ "for_final_selection": "R2b は不合格＝『13F の成績上位の運用者を写す』器は最終の候補に入れない（参考どまり）。渡すもの: ①過去の成績上位の運用者の勝ちは翌年に続かない（順位相関 ≈0・上位10%は SPY に費用後 年-0.85%）という基礎率 ②いまの上位10%の合算の持ち株の上位10（NVDA, AMZN, GOOGL, META, MSFT, GOOG, AAPL, TSM, AVGO, TSLA・かごの 21.6%）は NASDAQ100 の最上位とほぼ同じ顔ぶれ＝個別株の部分の『超投資家との重なり』の参考（写す理由にはならない） ③上位10%のかごは QQQ に年-5.67% 負け・いちばん深い下落は SPY より深い（-33.4% 対 -23.9%）"
+}

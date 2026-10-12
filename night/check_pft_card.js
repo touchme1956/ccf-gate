@@ -58,7 +58,10 @@ const T = PF.target || {};
 const U = s => String(s || '').trim().toUpperCase();
 const CT = (+T.shiro_castle_pct > 0) ? +T.shiro_castle_pct : 50;
 const WN = Object.fromEntries(Object.entries(T.ami_weights || {}).map(([k, v]) => [U(k), +v]));
-const SAMEOF = {}; for (const k in (T.ami_same_index || {})) for (const a of (T.ami_same_index[k] || [])) SAMEOF[U(a)] = U(k);
+// 同じ区分に数える本＝同じ指数の本（ami_same_index・QQQM）と同じ扱いの本（ami_same_bucket・XLK・v9.9.214）。門の ccfSameAll と同じ読み方
+const SAMEOF = {}, SKIND = {};
+for (const [src, kind] of [[T.ami_same_index || {}, 'idx'], [T.ami_same_bucket || {}, 'bucket']])
+  for (const k in src) if (Array.isArray(src[k])) for (const a of src[k]) { const A = U(a); if (A && A !== U(k) && !SAMEOF[A]) { SAMEOF[A] = U(k); SKIND[A] = kind; } }
 const NAMES = (T.ami_names || []).map(U);
 const ETF_EXP = NAMES.filter(t => (WN[t] || 0) > 0 && !SAMEOF[t]);            // 円グラフに出る ETF の区分（ami_names の順）
 const OB = (T.ami_other && T.ami_other.buy) ? U(T.ami_other.buy) : '';
@@ -105,7 +108,7 @@ const RANK = String(T.castle_weighting || '').toLowerCase() === 'rank' && Array.
     localStorage.setItem('pf:portfolio', JSON.stringify(o.pf));
     const pfJ = await (await fetch('portfolio.json?t=' + Date.now())).json();
     if (o.mut === 'sum') pfJ.target.shiro_castle_pct = +pfJ.target.shiro_castle_pct + 5;
-    if (o.mut === 'noOther') delete pfJ.target.ami_other;
+    if (o.mut === 'noOther') { delete pfJ.target.ami_other; delete pfJ.target.ami_same_bucket; }   // XLK をどの区分にも数えない形
     if (o.mut === 'equal') pfJ.target.castle_weighting = 'equal';
     if (o.mut === 'badRank') pfJ.target.castle_rank_weights = [5, 0, 'x'];
     if (o.mut === 'noSnap') pfJ.positions = [];
@@ -155,15 +158,19 @@ const RANK = String(T.castle_weighting || '').toLowerCase() === 'rank' && Array.
         const t = x.k.slice(2);
         ok(near(x.tw, WN[t], 1e-9) && near(x.now, nowEtf(t), 0.001), `${t}: 目標 ${x.tw}%・今 ${x.now.toFixed(2)}%（期待 ${nowEtf(t).toFixed(2)}%）`);
       }
-      const ndx = r.M.etf.find(x => SAMEOF.QQQM && x.k === 'n:' + SAMEOF.QQQM);
-      if (ndx) ok(/QQQM を含む/.test(ndx.sub), `同じ指数の本は区分に数える（${ndx.sub}）`);
+      for (const x of r.M.etf) {                                              // 区分に数えた保有は注記に名前が出る（同じ扱いの本は「（同じ扱い）」）
+        const t = x.k.slice(2), mem = heldNet.filter(a => SAMEOF[a] === t);
+        if (t === OB) heldNet.forEach(a => { if (!ETF_EXP.includes(a) && !SAMEOF[a]) mem.push(a); });
+        if (!mem.length) { ok(!/を含む/.test(x.sub), `${t}: 区分に数える保有が無ければ「を含む」と書かない（${x.sub}）`); continue; }
+        ok(mem.every(a => x.sub.includes(SKIND[a] === 'bucket' ? a + '（同じ扱い）' : a)) && /を含む/.test(x.sub), `${t}: 区分に数えた保有を注記に出す（${x.sub}）`);
+      }
       const oth = r.M.etf.find(x => x.k === 'n:' + OB);
-      if (OB && oth) ok(/XLK を含む/.test(oth.sub) && /その他/.test(oth.nm), `その他の区分は目標0%の保有を含む（${oth.nm}・${oth.sub}）`);
+      if (OB && oth) ok(/その他/.test(oth.nm), `その他の区分の名前（${oth.nm}）`);
       ok(near(r.M.etfNow + r.M.castleNow, 100, 1e-6) && near(r.M.castleNow, W('MSFT') + W('ASML'), 0.001), `ETF と個別株の今の合計100（個別株 ${r.M.castleNow.toFixed(2)}%）`);
       ok(r.M.etfExtra.length === 0, 'その他の区分があれば目標0%の ETF の行は出ない（区分に数えた）');
       const r2 = await model(p, { pf: base, led: ledAll, seats: SEATS10.slice(0, 5), fx: FX, pfRows, nmOf, mut: 'noOther' });
       const xk = r2.M.etfExtra.find(x => x.k === 'n:XLK');
-      ok(!!xk && xk.tw === 0 && near(xk.now, W('XLK'), 0.001) && r2.rows.some(q => q.k === 'n:XLK' && q.z), `その他の区分が無ければ XLK は目標0%の行（今 ${xk ? xk.now.toFixed(2) : '—'}%・売らずに持ち続ける）`);
+      ok(!!xk && xk.tw === 0 && near(xk.now, W('XLK'), 0.001) && r2.rows.some(q => q.k === 'n:XLK' && q.z), `その他の区分も同じ扱いの設定も無ければ XLK は目標0%の行（今 ${xk ? xk.now.toFixed(2) : '—'}%・売らずに持ち続ける）`);
     }
 
     console.log(`■ A3. 個別株の重み（${RANK ? 'castle_rank_weights ' + JSON.stringify(T.castle_rank_weights) : '順位の重みが無い→合計だけ'}）`);
@@ -226,9 +233,14 @@ const RANK = String(T.castle_weighting || '').toLowerCase() === 'rank' && Array.
       const COL = await p.evaluate(() => CCF_PFC_COLORS);
       const cur = {}; pfRows.slice().sort((a, b) => b.val - a.val).forEach((q, i) => { cur[q.t] = COL[i % COL.length]; });
       const col = Object.fromEntries(r.M.etf.concat(r.M.castle).map(x => [x.k, x.color]));
-      if (SAMEOF.QQQM) ok(col['n:' + SAMEOF.QQQM] === cur.QQQM, `NASDAQ100 の区分は QQQM と同じ色（${col['n:' + SAMEOF.QQQM]}）`);
-      if (OB) ok(col['n:' + OB] === cur.XLK, `その他の区分は中のいちばん大きい XLK の色（${col['n:' + OB]}）`);
-      ok(col['n:SMH'] === cur.SMH && col['c:MSFT'] === cur.MSFT && col['c:ASML'] === cur.ASML, 'SMH・MSFT・ASML は今のカードと同じ色');
+      for (const t of ETF_EXP) {                                               // 区分は中の保有のうち今いちばん大きい本の色（保有が無ければ残りの色）
+        const mem = [t].concat(heldNet.filter(a => SAMEOF[a] === t));
+        if (t === OB) heldNet.forEach(a => { if (!ETF_EXP.includes(a) && !SAMEOF[a]) mem.push(a); });
+        const big = mem.filter(a => VAL[a] > 0).sort((a, b) => VAL[b] - VAL[a])[0];
+        if (big) ok(col['n:' + t] === cur[big], `${t} の区分は中のいちばん大きい ${big} の色（${col['n:' + t]}）`);
+        else ok(!Object.values(cur).includes(col['n:' + t]), `${t} の区分は保有が無いので今のカードに無い色（${col['n:' + t]}）`);
+      }
+      ok(col['c:MSFT'] === cur.MSFT && col['c:ASML'] === cur.ASML, 'MSFT・ASML は今のカードと同じ色');
       ok(new Set(r.colors).size === r.colors.length, `円グラフの色に重複なし（${r.colors.length}色）`);
     }
 

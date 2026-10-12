@@ -407,7 +407,10 @@ async function boot(){
     ⚠**0% は「測って0」であって「未指定」ではない**——この画面は決めた値をそのまま並べるだけなので
     0 も 0 として出す（判定も正規化もしない）。 */
  const _T=(P.target||{});
- const TM=_T.ami_weights?{asof:'2026-09-18',src:'target.ami_weights'}:((_T.ami_mix)||{});
+ // 目標を決めた日＝いちばん新しい ami_mix_superseded_YYYY_MM_DD* の日（その日に今の重みへ置き換えた・旧の姿をその鍵に残す作法）。
+ //   日付を手で書かない——旧は '2026-09-18' を書き込んでいて、2026-10-12 の重みの横に古い日付が出ていた。
+ const _wAsof=Object.keys(_T).map(k=>(k.match(/^ami_mix_superseded_(\d{4})_(\d{2})_(\d{2})/)||[]).slice(1,4).join('-')).filter(Boolean).sort().pop()||'';
+ const TM=_T.ami_weights?{asof:_wAsof,src:'target.ami_weights'}:((_T.ami_mix)||{});
  const tmix=_T.ami_weights||((_T.ami_mix||{}).pct_of_total)||{};
  if(Object.keys(tmix).length){
   const miss=Object.keys(tmix).filter(t=>!etfs[t]);
