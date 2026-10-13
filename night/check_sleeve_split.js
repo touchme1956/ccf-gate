@@ -70,6 +70,15 @@ const srv = http.createServer((q, r) => {
     OVER = over;
     await pg.goto('http://localhost:' + PORT + '/index.html');
     await pg.waitForTimeout(1200);
+    // ⚠ v9.9.217〜: 台帳が空の端末では起動時に全パックを自動で取り込む。v9.9.218 からその最中の🛒買付順位は
+    //   「取り込み中」だけを出し注文書を作らない（欠けた台帳で選ばない）＝画面の文を読む前に取り込みの終わりを待つ。
+    //   同じページの中で台帳は残るので、待つのは最初の load だけ（約1分）
+    //   （取り込みが始まる前に読んで素通りしないよう、終わった〔done/fail〕か、台帳が既にあって取り込みが無い〔null〕まで待つ）
+    for (let i = 0; i < 180; i++) {
+      const r = await pg.evaluate(() => ({ st: window.__ccfAutoImp, n: Object.keys(localStorage).filter(k => k.indexOf('g7:') === 0).length }));
+      if (r.st === 'done' || r.st === 'fail' || (r.st === null && r.n > 0)) break;
+      await pg.waitForTimeout(1000);
+    }
     // ⚠ Ⅵ買付順位は**クリックされるまで描かれない**ので、renderPlan の中で置かれる
     //   window.__ccfSleeveTarget もそれまで null＝mode が 'unknown' へ倒れる。
     //   初版はここで躓いた（「測っていない」が「目標比で割った」に見える経路そのもの）。
