@@ -19605,4 +19605,6 @@ acqS5 の帯（7ビンテージの三分位の切れ目の中央値）と同じ�
 
 **今月の注文書**（門そのもの・正本の portfolio.json と state.json・全パック・入金20万円・変更の前と後を同じ道具で読んだ）: **金額は1円も変わらない**——前「NASDAQ100 ¥15,400 ／ SMH ¥0 ／ XLV ¥0 ／ FBT ¥0 ／ その他 ETF・投資信託 ¥0 ／ SHLD ¥0 ／ 個別株 ¥184,581」→ 後「… ／ ITA ¥0 ／ …」（CW・LRCX・GOOGL 各1株＝持っていない銘柄を先に・iFreeNEXT ¥15,400・合計 約¥199,981）。区分の目標と今の%（NASDAQ100 40・46.97／SMH 25・14.85／XLV・FBT・ITA・SHLD 各5・0／個別株 15・38.19）も同じ。注文書の文で変わったのは3か所だけ: 区分の比率の表の「◈ その他 ETF・投資信託（今は ITA で買う）」→「◈ ITA」・ITA の行の「（その他 ETF・投資信託の区分で買う本）」が消える・◈ ETF の目標の行の「ITA＝その他 ETF・投資信託 5%」→「ITA 5%」。盤に XLV・FBT・SHLD の値段がまだ無い日は3本が「価格未取得」（ITA は値段あり）。
 
+**検査**: check_sleeve_split 全項目（⑯⑰ は正本に ami_other が無いので設定のある形〔買う本 ITA〕を検査の中で作って見た・⑲〔新〕正本・入金17万で区分は NASDAQ100 / SMH / XLV / FBT / ITA / SHLD / 個別株・表「◈ ITA」・上の1行「… ／ ITA ¥0 ／ …」・🛒買付順位に「その他 ETF・投資信託」の文字なし・区分の外の行なし・「XLK（NASDAQ100 に数える）」）／check_pft_card 56・--full 61（区分の名前は NASDAQ100・SMH・XLV・FBT・ITA・SHLD・どれにも「その他」なし）／check_fund_trade・check_auto_import 全項目／check_gate_parity（Ω 376/376・投下可5社 ASML・CW・GOOGL・LRCX・MSFT が門と端末で一致）／check_mobile_fit／check_html・audit_docs・validate_state・check_frozen_dates・audit_todo。
+
 **戻し方**: portfolio.json の target.ami_other_superseded_2026_10_13 の label・buy を target.ami_other へ戻す（note は記録）。門のコードは残してあるので、それだけで「その他 ETF・投資信託（今は ITA で買う）」の区分に戻る。
