@@ -610,7 +610,11 @@ def run_engine(rows, chains, base_w, keys, np, R, CB, P, IX):
     return res
 
 
-def stage2():
+def stage2(src=None, dst=None, posthoc_on=True, jp_fallback_er=None):
+    """src: 第1段の JSON（既定 out/etfcand.json）・dst: 書き先（既定 src）・posthoc_on: 事後の点検 P1〜P5 を回すか・
+    jp_fallback_er: 東証の本で経費率が分からないときに置く値（既定 None＝etfcand のまま判定の外。etfcand_short は 0.005）"""
+    src = src or OUT
+    dst = dst or src
     import numpy as np
     import etf_forward_rank as R
     import etf_forward_combo as CB
@@ -619,7 +623,7 @@ def stage2():
     import bestpf_ext as X
     import bestpf_eval as E
     t0 = time.time()
-    doc = json.load(open(OUT))
+    doc = json.load(open(src))
     assert doc.get('stage') in (1, 2), '第1段を先に回す'
     log('① 既存の行（bestpf_ext.rank_result）')
     res = X.rank_result()
@@ -679,6 +683,9 @@ def stage2():
         av = load_av(rep['t'])
         if er is None and av is not None:
             er = av['er']
+        if er is None and not rep['us'] and jp_fallback_er is not None:
+            er = jp_fallback_er
+            info['経費率の置き値'] = f'ETFD.csv に無い東証の本 → {100 * jp_fallback_er:.2f}% と置いた（事前登録 etfcand_short）'
         er_known = er is not None
         er = er if er_known else 0.0          # 代理の相関は経費率で変わらない。経費率が分からない本は代理を確かめた後で判定の外にする
         hold = []
@@ -975,16 +982,17 @@ def stage2():
         mc = measure(wd)
         combo = dict(形=wd, 物差し=show(mc), 判定=judge(mc, base_m))
     # ───────────── 事後（判定に使わない・結果を見た後に足した点検）─────────────
-    posthoc = {}
-    try:
-        posthoc = run_posthoc(dict(rows=rows, chains=chains, assets=assets, idx=idx, measure=measure, judge=judge, show=show, vec=vec,
-                                   base_w=base_w, base_m=base_m, fam_rows=fam_rows, infos=infos, results=results, firm=firm,
-                                   gb0=gb0, gc0=gc0, R=R, X=X, CB=CB, P=P, IX=IX, bi=bi, k1=k1, k2=k2, new_asset=new_asset,
-                                   fbt_rep=fbt_rep, np=np, set_bc=None))
-    except Exception as e:  # noqa
-        import traceback
-        posthoc = {'失敗': traceback.format_exc()[-1500:]}
-        log('事後の点検が失敗', str(e)[:300])
+    posthoc = {'回していない': '事後の点検 P1〜P5 は etfcand（記録10年以上）のためのもの'}
+    if posthoc_on:
+        try:
+            posthoc = run_posthoc(dict(rows=rows, chains=chains, assets=assets, idx=idx, measure=measure, judge=judge, show=show, vec=vec,
+                                       base_w=base_w, base_m=base_m, fam_rows=fam_rows, infos=infos, results=results, firm=firm,
+                                       gb0=gb0, gc0=gc0, R=R, X=X, CB=CB, P=P, IX=IX, bi=bi, k1=k1, k2=k2, new_asset=new_asset,
+                                       fbt_rep=fbt_rep, np=np, set_bc=None))
+        except Exception as e:  # noqa
+            import traceback
+            posthoc = {'失敗': traceback.format_exc()[-1500:]}
+            log('事後の点検が失敗', str(e)[:300])
     if firm:
         concl = f"『堅い価値あり』{len(firm)}家族。勧めるのは {firm[0]['代表']}（家族 #{firm[0]['家族']}）"
     else:
@@ -996,9 +1004,10 @@ def stage2():
                          参考_bestpfの物差し=ref_pi, 参考_上位2本を5ずつ=combo, 結論=concl,
                          事後_判定に使わない=posthoc,
                          注='Δ＝候補の形 − 今の形（%pt）。判定の決まりは etf_ita_xlk と同じ。採否はユーザー', secs=round(time.time() - t0))
-    json.dump(doc, open(OUT, 'w'), ensure_ascii=False, indent=1)
+    json.dump(doc, open(dst, 'w'), ensure_ascii=False, indent=1)
     log('結論:', concl)
-    log('→', OUT, f'（{round(time.time() - t0)}秒）')
+    log('→', dst, f'（{round(time.time() - t0)}秒）')
+    return doc
 
 if __name__ == '__main__':
     cmd = sys.argv[1] if len(sys.argv) > 1 else 'stage1'
