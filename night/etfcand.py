@@ -47,6 +47,9 @@ W10 = (201610, 202609)
 SAME_BET = 0.95
 FAMILY = 0.95
 TOPK = 5
+# X3b（事前登録の追記 2026-10-13・候補の Δ を見る前）: Yahoo の東証の月足に桁や分割の誤り（−90%・+961%・−341% など）があった。
+# 米国上場の本の実際の最悪・最良の月は OIH −55.5%（2020-03）・FXN +61.7%（2020-04）なので、−60% 以下か +100% 以上の月は壊れた値と読む
+BROKEN_LO, BROKEN_HI = -0.60, 1.00
 
 
 def log(*a):
@@ -213,8 +216,18 @@ def stage1():
             first = min(ry) if ry else None
             x3.append(dict(t=d['t'], nm=d['nm'], why='X3 W10 の120か月がそろわない', first=first, missing=len(miss10)))
             continue
+        bad10 = [m for m in k10 if ry[m] <= BROKEN_LO or ry[m] >= BROKEN_HI]
+        if bad10:
+            x3.append(dict(t=d['t'], nm=d['nm'], why='X3b 値段が壊れている（W10 に月次 −60% 以下か +100% 以上の月）',
+                           months={m: round(100 * ry[m], 1) for m in bad10[:6]}))
+            continue
         d = dict(d, tax_k=k, tax_drag=drag, first=min(ry), ry=ry)
         d['w20'] = all(m in ry for m in k20)
+        if d['w20']:
+            bad20 = [m for m in k20 if ry[m] <= BROKEN_LO or ry[m] >= BROKEN_HI]
+            if bad20:
+                d['w20'] = False
+                d['w20_broken'] = {m: round(100 * ry[m], 1) for m in bad20[:6]}
         cands.append(d)
     log(f'記録の点検 → 候補 {len(cands)}（W20 もそろう {sum(c["w20"] for c in cands)}）・X3 で外す {len(x3)}')
 
