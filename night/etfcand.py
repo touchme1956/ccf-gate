@@ -610,9 +610,12 @@ def run_engine(rows, chains, base_w, keys, np, R, CB, P, IX):
     return res
 
 
-def stage2(src=None, dst=None, posthoc_on=True, jp_fallback_er=None):
+def stage2(src=None, dst=None, posthoc_on=True, jp_fallback_er=None, hook=None, extra_assets=()):
     """src: 第1段の JSON（既定 out/etfcand.json）・dst: 書き先（既定 src）・posthoc_on: 事後の点検 P1〜P5 を回すか・
-    jp_fallback_er: 東証の本で経費率が分からないときに置く値（既定 None＝etfcand のまま判定の外。etfcand_short は 0.005）"""
+    jp_fallback_er: 東証の本で経費率が分からないときに置く値（既定 None＝etfcand のまま判定の外。etfcand_short は 0.005）・
+    hook: 自己検問の後に道具一式（行・毎月の値・measure・judge・show ほか）を渡して呼ぶ関数。渡すと判定と書き込みをせず
+    hook の返り値を返す（castle10_check が同じ式で別の形を測るため・2026-10-13）・extra_assets: 組み合わせの道具に足す既存の行（例 VOO）。
+    hook と extra_assets を渡さなければ従来とまったく同じ"""
     src = src or OUT
     dst = dst or src
     import numpy as np
@@ -845,7 +848,9 @@ def stage2(src=None, dst=None, posthoc_on=True, jp_fallback_er=None):
         log('  新しい行', rep['t'], '代理', info.get('代理'), info.get('代理の相関'), 'A1', info['A1'], 'A2', info['A2'], 'B', info['B'], 'C', info['C'])
 
     # ── 組み合わせの道具（etf_forward_combo の式の写し）──
-    assets = list(dict.fromkeys(list(base_w) + list(fam_rows.values()) + ['QQQM', 'SMH', 'ITA']))
+    for c in extra_assets:
+        assert c in combinable, f'extra_assets の {c} は組み合わせに使える既存の行ではない'
+    assets = list(dict.fromkeys(list(base_w) + list(fam_rows.values()) + ['QQQM', 'SMH', 'ITA'] + list(extra_assets)))
     G1 = np.array([[chains[c][m] for m in k1] for c in assets])
     G2 = np.array([[chains[c][m] for m in k2] for c in assets])
     adj = np.array([rows[c]['A1'] - rows[c]['A1_gross'] for c in assets])
@@ -929,6 +934,10 @@ def stage2(src=None, dst=None, posthoc_on=True, jp_fallback_er=None):
     log('  自己検問（etf_ita_xlk の席A）', chk)
     if any(v['diff'] for v in chk.values()):
         raise SystemExit(f'自己検問が通らない: {chk}')
+    if hook is not None:
+        return hook(dict(rows=rows, chains=chains, assets=assets, measure=measure, judge=judge, show=show, vec=vec,
+                         base_w=base_w, fam_rows=fam_rows, infos=infos, outside=outside, self_check=chk, fbt_info=fbt_info,
+                         IX=IX, k1=k1, k2=k2))
 
     # ── 判定 ──
     base_m = measure(base_w)
