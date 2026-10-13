@@ -166,8 +166,11 @@ const RANK = String(T.castle_weighting || '').toLowerCase() === 'rank' && Array.
       }
       const oth = r.M.etf.find(x => x.k === 'n:' + OB);
       if (OB && oth) ok(/その他/.test(oth.nm), `その他の区分の名前（${oth.nm}）`);
+      // 2026-10-13 ユーザー明示指示「ITAはその他ETF投資信託はなくして」で正本から ami_other を外した——どの区分の名前にも「その他」が出ない
+      else if (!OB) ok(r.M.etf.every(x => !/その他/.test(String(x.nm) + String(x.label))), `その他の区分なし（正本に ami_other が無い）: 区分の名前は ${r.M.etf.map(x => x.label).join('・')}`);
       ok(near(r.M.etfNow + r.M.castleNow, 100, 1e-6) && near(r.M.castleNow, W('MSFT') + W('ASML'), 0.001), `ETF と個別株の今の合計100（個別株 ${r.M.castleNow.toFixed(2)}%）`);
-      ok(r.M.etfExtra.length === 0, 'その他の区分があれば目標0%の ETF の行は出ない（区分に数えた）');
+      ok(r.M.etfExtra.length === 0, OB ? 'その他の区分があれば目標0%の ETF の行は出ない（区分に数えた）'
+        : '目標0%で持つ ETF（QQQM・XLK）は同じ指数・同じ扱いで NASDAQ100 に数えた＝目標0%の行は出ない');
       const r2 = await model(p, { pf: base, led: ledAll, seats: SEATS10.slice(0, 5), fx: FX, pfRows, nmOf, mut: 'noOther' });
       const xk = r2.M.etfExtra.find(x => x.k === 'n:XLK');
       ok(!!xk && xk.tw === 0 && near(xk.now, W('XLK'), 0.001) && r2.rows.some(q => q.k === 'n:XLK' && q.z), `その他の区分も同じ扱いの設定も無ければ XLK は目標0%の行（今 ${xk ? xk.now.toFixed(2) : '—'}%・売らずに持ち続ける）`);

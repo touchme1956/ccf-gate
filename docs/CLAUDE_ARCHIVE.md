@@ -19592,3 +19592,17 @@ acqS5 の帯（7ビンテージの三分位の切れ目の中央値）と同じ�
 **検査**: check_sleeve_split・check_fund_trade・check_auto_import 全項目／check_pft_card 56・--full 61（円の数 11）／check_gate_parity（Ω 376/376・投下可5社 ASML・CW・GOOGL・LRCX・MSFT が門と端末で一致）／check_mobile_fit／check_html・audit_docs（--templates-only も）・check_frozen_dates・validate_state 通過。採点・四関門・席・割り方の式・売却規律・castle_rule の線は不変。
 
 **戻し方**: portfolio.json の ami_mix_superseded_2026_10_13b の姿へ（ami_weights の XLV 10・ITA 10・FBT と SHLD は0〔持っていれば名前は残す＝売らない・目標0%の本はその他の区分に数える〕・castle_rule_measure.sleeve を QQQM 40 : SMH 25 : ITA 10 : XLV 10）。
+
+## 2026-10-13 「その他 ETF・投資信託」の区分をなくした——ITA は SHLD・XLV・FBT と同じく自分の区分（5%）・数字と今月の注文は不変（ユーザー明示指示「ITAはその他ETF投資信託はなくして」）
+
+**流れ**: 「FBT5％SHLD5％でマージして」（:19562・PR #269 で main へ）の直後に「ITAはその他ETF投資信託はなくして」。読みは「ITA は〔そのまま〕・『その他 ETF・投資信託』〔という区分〕はなくして」——ITA を外す指示ではない（5% は不変）。
+
+**何だったか**: 2026-10-09（v9.9.206・「QQQ50% SMH20% 個別株15% その他ETF投資信託15%に変更して」）に XLK 15% の区分を「その他 ETF・投資信託」にし、NASDAQ100・SMH 以外の ETF・投資信託の保有（目標0%の本・目標に無い本）を全部その区分に数えて、中で買う本（buy）にだけ新しいお金を入れた（2026-10-10 に buy を XLK→ITA）。その後 ① 2026-10-12 に XLK を NASDAQ100 の区分に数えるようにし（ami_same_bucket）、② 2026-10-13 に XLV・FBT・SHLD が自分の区分を持ったので、この区分に数える他の本は0になっていた＝ITA の区分に「その他」の名前だけが残っていた。
+
+**変えたもの**: portfolio.json の target.ami_other を外し、旧の設定（label・buy・note）を target.ami_other_superseded_2026_10_13 へ／target.note・ami_same_bucket_note・castle_rule_measure.note・nisa.rule（「その他（ITA・2026-10-10 から）」→「ITA（2026-10-10 から）」）。**ami_weights・ami_names・castle_rule_measure.sleeve・割り方・席・採点は1字も変えていない。** index.html は配分の解説の文（見出し・ETF の行・区分の説明）と ccfNetRows の頭注だけ——門のコード（ccfNetRows の ami_other の道）は残した（設定を戻せば同じ動き）。
+
+**区分の外へ出る本の扱い（v9.9.203 までに戻る）**: 目標0%の本（GRID・NASA）や目標に無い本（ami_names に無い ETF・投資信託）を今後持てば、どの区分にも入らず注文書の「その他（目標0%で持ち続けている本：…）」の1行に出る＝新しいお金は回らない・総資産には数える。今の保有（MSFT・ASML・XLK・SMH・QQQM）では XLK は同じ扱い（ami_same_bucket）・QQQM は同じ指数（ami_same_index）で NASDAQ100 に数えるので、区分の外の本は0。⚠ ami_same_bucket を消すと XLK（約31%）はこの1行に出る（旧は「その他」＝ITA の区分へ入った）。
+
+**今月の注文書**（門そのもの・正本の portfolio.json と state.json・全パック・入金20万円・変更の前と後を同じ道具で読んだ）: **金額は1円も変わらない**——前「NASDAQ100 ¥15,400 ／ SMH ¥0 ／ XLV ¥0 ／ FBT ¥0 ／ その他 ETF・投資信託 ¥0 ／ SHLD ¥0 ／ 個別株 ¥184,581」→ 後「… ／ ITA ¥0 ／ …」（CW・LRCX・GOOGL 各1株＝持っていない銘柄を先に・iFreeNEXT ¥15,400・合計 約¥199,981）。区分の目標と今の%（NASDAQ100 40・46.97／SMH 25・14.85／XLV・FBT・ITA・SHLD 各5・0／個別株 15・38.19）も同じ。注文書の文で変わったのは3か所だけ: 区分の比率の表の「◈ その他 ETF・投資信託（今は ITA で買う）」→「◈ ITA」・ITA の行の「（その他 ETF・投資信託の区分で買う本）」が消える・◈ ETF の目標の行の「ITA＝その他 ETF・投資信託 5%」→「ITA 5%」。盤に XLV・FBT・SHLD の値段がまだ無い日は3本が「価格未取得」（ITA は値段あり）。
+
+**戻し方**: portfolio.json の target.ami_other_superseded_2026_10_13 の label・buy を target.ami_other へ戻す（note は記録）。門のコードは残してあるので、それだけで「その他 ETF・投資信託（今は ITA で買う）」の区分に戻る。

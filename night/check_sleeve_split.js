@@ -22,11 +22,17 @@
  *      注文書の行の「✓ 保有へ」で口座 こどもNISA のロットを🏦保有へ足す・bucket が空なら比率の外（旧の扱い）
  *   ⑯ その他 ETF・投資信託（v9.9.206）: target.ami_other の buy の本（2026-10-10 から ITA・それまで XLK）の区分に、目標0%の本と目標に無い本の保有も数える・
  *      区分の名前は「その他 ETF・投資信託」・設定を消せば v9.9.203 の姿（buy の本だけの区分＋区分の外の「その他」の1行）。
- *      実データの部分は buy の本を正本（portfolio.json）から読む——買う本を替えても検査を書き換えずに済む
+ *      実データの部分は buy の本を正本（portfolio.json）から読む——買う本を替えても検査を書き換えずに済む。
+ *      2026-10-13「ITAはその他ETF投資信託はなくして」で正本から ami_other を外した（コードの道は残す）——正本に無ければ
+ *      設定のある形（買う本 ITA）を検査の中で作って見続ける（正本は触らない）
  *   ⑰ 同じ扱いの本（v9.9.214・2026-10-12「XLKはQQQと同じ扱いに」）: target.ami_same_bucket の本（XLK）は QQQM と同じく目標の本（iFreeNEXT）の区分に数え、
- *      その他には数えない・表示は「同じ指数」でなく「同じ扱い」・設定を消せば XLK はその他へ戻る
+ *      その他には数えない・表示は「同じ指数」でなく「同じ扱い」・設定を消せば XLK はその他へ戻る（実データの部分も ⑯ と同じく、正本に
+ *      ami_other が無ければ設定のある形を作って見る）
  *   ⑱ 持っていない個別株を先に（v9.9.215・2026-10-12「個別株の持っていない銘柄を優先して」）: catIn._unownedFirst なら保有ゼロの個別株を
  *      区分の比率より先に1株ずつ（候補の規則・並びは従来のまま・入金で買えるだけ）・残りを区分の比率で・設定が無ければ旧の姿
+ *   ⑲ その他の区分をなくした（2026-10-13「ITAはその他ETF投資信託はなくして」）: 正本に ami_other が無ければ、ITA は SHLD・XLV・FBT と
+ *      同じく自分だけの区分（名前は ITA）・注文書のどこにも「その他 ETF・投資信託」が出ない・XLK は NASDAQ100 に数える・
+ *      今の保有では区分の外の「その他（目標0%…）」の行も出ない
  *
  * playwright が要るので CI には入れていない。使い方: node night/check_sleeve_split.js
  */
@@ -680,7 +686,10 @@ const srv = http.createServer((q, r) => {
     const ST2 = JSON.parse(JSON.stringify(ST)), P2 = JSON.parse(ST2.data['pf:portfolio'] || '{"positions":[]}');
     P2.positions.push({ t: 'GRID', nm: 'GRID', sleeve: 'net', kind: 'ETF', sh: 3, ccy: 'USD', npx: 179.79, bpx: 179.79, bjpy: 80000 });
     ST2.data['pf:portfolio'] = JSON.stringify(P2);
-    const BUY = (base.target.ami_other || {}).buy || 'XLK';   // 実データの「その他」の買う本（2026-10-10 から ITA）
+    // 実データの「その他」の買う本（2026-10-10 から ITA）。2026-10-13「ITAはその他ETF投資信託はなくして」で正本から ami_other を外した——
+    //   コードの道は残っているので、正本に無ければ設定のある形（買う本 ITA）を検査の中で作って見続ける（正本は触らない）
+    const AO16 = base.target.ami_other || { buy: 'ITA', label: 'その他 ETF・投資信託' };
+    const BUY = AO16.buy;
     const load16 = async (over) => {
       OVER = over;
       await pg.goto('http://localhost:' + PORT + '/index.html'); await pg.waitForTimeout(600);
@@ -697,7 +706,7 @@ const srv = http.createServer((q, r) => {
         return { x: C['n:' + BUY] || null, z: C._zero || null, tot: +C.tot || 0, rowTxt, zero, line, keys: ccfCatKeys(C) };
       }, BUY);
     };
-    const ao = withMode('cat');
+    const ao = withMode('cat'); ao.target.ami_other = AO16;
     const w16 = await load16(ao);
     const noAo = withMode('cat'); delete noAo.target.ami_other;
     const w16off = await load16(noAo);
@@ -754,7 +763,9 @@ const srv = http.createServer((q, r) => {
     // 実データ（state.json＋全パック・正本の portfolio.json）: XLK は NASDAQ100 の区分・その他（ITA）は0%から・注文書の「目標0%」の行は「XLK（NASDAQ100 に数える）」
     const SB = (base.target || {}).ami_same_bucket;
     if (SB && Array.isArray(SB['IFREE-NDX']) && SB['IFREE-NDX'].includes('XLK')) {
-      const OB = (base.target.ami_other || {}).buy || 'ITA';
+      // その他の区分との関係（XLK はその他でなく NASDAQ100 に数える）を見る検査なので、正本に ami_other が無ければ（2026-10-13〜）設定のある形を作る
+      const AO17 = base.target.ami_other || { buy: 'ITA', label: 'その他 ETF・投資信託' };
+      const OB = AO17.buy;
       const load17 = async (over) => {
         OVER = over;
         await pg.goto('http://localhost:' + PORT + '/index.html'); await pg.waitForTimeout(600);
@@ -771,8 +782,9 @@ const srv = http.createServer((q, r) => {
           return { ndx: C['n:IFREE-NDX'] || null, oth: C['n:' + OB] || null, ndxRow: ndx, zero: z };
         }, OB);
       };
-      const on = await load17(withMode('cat'));
-      const offC = withMode('cat'); delete offC.target.ami_same_bucket;
+      const onC = withMode('cat'); onC.target.ami_other = AO17;
+      const on = await load17(onC);
+      const offC = withMode('cat'); offC.target.ami_other = AO17; delete offC.target.ami_same_bucket;
       const off = await load17(offC);
       ok(on.ndx && off.ndx && on.oth && off.oth
          && Math.abs((on.ndx.now - off.ndx.now) - (off.oth.now - on.oth.now)) < 0.05 && (on.ndx.now - off.ndx.now) > 1
@@ -839,6 +851,33 @@ const srv = http.createServer((q, r) => {
          '⑱ 実データ（入金17万）: 先に買う個別株 ' + r1.tags.join('・') + '（個別株 ¥' + r1.castle + '・合計 ¥' + r1.total + '）／ false にすると個別株 ¥' + r0.castle);
     } else ok(true, '   （正本に castle_unowned_first が無いので実データの部分は飛ばす）');
   }
+
+  // ⑲ その他の区分をなくした（2026-10-13 ユーザー明示指示「ITAはその他ETF投資信託はなくして」）: 正本に target.ami_other が無ければ、
+  //   ITA は SHLD・XLV・FBT と同じく自分だけの区分（名前は ITA）・🛒買付順位のどこにも「その他 ETF・投資信託」が出ない・
+  //   XLK は NASDAQ100 に数える（ami_same_bucket）・今の保有（state.json）では区分の外の「その他（目標0%…）」の行も出ない
+  if (!(base.target || {}).ami_other) {
+    OVER = withMode('cat');
+    await pg.goto('http://localhost:' + PORT + '/index.html'); await pg.waitForTimeout(600);
+    await pg.evaluate(stt => { localStorage.clear(); for (const k in stt.data) localStorage.setItem(k, stt.data[k]);
+      localStorage.setItem('ccf:stateSavedAt', stt.savedAt); }, ST);
+    await pg.reload(); await pg.waitForTimeout(1500);
+    await pg.evaluate(() => ccfImportAllPacks()); await pg.waitForTimeout(1800);
+    await pg.evaluate(() => { localStorage.setItem('pf:monthly_total', '170000'); showPage(5); }); await pg.waitForTimeout(3200);
+    const q19 = await pg.evaluate(() => {
+      const C = window.__ccfCat || {}, txt = ((document.querySelector('#pg5') || {}).innerText || '');
+      const line = [...document.querySelectorAll('#pg5 div')].filter(d => /区分の比率が最優先・1株単位/.test(d.innerText) && d.innerText.length < 600).map(d => d.innerText).pop() || '';
+      const itaRow = ((document.querySelector('#pg5 .catrow[data-cat="n:ITA"]') || {}).innerText || '');
+      const zeroRow = ((document.querySelector('#pg5 .catrow[data-cat="zero"]') || {}).innerText || '');
+      const z = (txt.match(/[^\n]*目標0%（売らない・新規なし）[^\n]*/) || [''])[0];
+      return { ita: C['n:ITA'] || null, err: C._otherErr || '', zn: ((C._zero || {}).nm) || [], line, itaRow, zeroRow, z,
+        other: /その他 ETF・投資信託/.test(txt), keys: ccfCatKeys(C) };
+    });
+    ok(q19.ita && q19.ita.nm === 'ITA' && !q19.ita.other && !q19.err && / ／ ITA ¥[\d,]+/.test(q19.line) && !/その他/.test(q19.line)
+       && /^◈ ITA/.test(q19.itaRow.trim()) && !/その他/.test(q19.itaRow) && !q19.other && !q19.zeroRow && q19.zn.length === 0
+       && /XLK（NASDAQ100 に数える）/.test(q19.z) && q19.keys.includes('n:ITA'),
+       '⑲ 正本（その他の区分なし・入金17万）: 区分 ' + q19.keys.join(' / ') + '・表「' + q19.itaRow.split('\n')[0].slice(0, 40) + '」・上の1行「' + q19.line.trim().slice(0, 90)
+       + '」・「その他 ETF・投資信託」の文字なし・区分の外の行なし・「' + ((q19.z.match(/XLK（[^）]*）/) || [''])[0]) + '」');
+  } else ok(true, '   （正本に ami_other があるので ⑲ は飛ばす）');
 
   ok(errs.length === 0, 'pageerror 0件' + (errs.length ? '（' + errs[0].slice(0, 120) + '）' : ''));
   await pg.evaluate(() => localStorage.removeItem('pf:monthly_total'));
