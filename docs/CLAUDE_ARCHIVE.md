@@ -19558,3 +19558,37 @@ acqS5 の帯（7ビンテージの三分位の切れ目の中央値）と同じ�
 - 楽天に無い本: FHLC・IYH ≈ XLV／RSPH 13.0／XBI 14.5（ぶれ 28.6）／肥満症の薬（2年余り）OZEM 10.2 対 9.1%・HRTS 15.2 対 13.8%・THNR 0.9%。
 
 **読み**: 防衛は ITA のまま（記録の長い本で ITA を上回るのは楽天に無い XAR だけで、差は小さい）。上回って見える SHLD は記録3年＝その時期の追い風を写しているだけの可能性が大きい。ヘルスケアは XLV のまま（同じ費用で同じ中身の VHT と差が無い）。伸びを取りに行くならバイオ（FBT〔10/11 の決まりを満たした唯一の本〕・BBH）だが、守りの役は薄くなる。配分・門は変えていない（変えるならユーザーの明示指示）。
+
+## 2026-10-13 XLV の半分を FBT（バイオ）へ・ITA の半分を SHLD（防衛テック）へ——全体で NASDAQ100 40 / SMH 25 / その他（ITA）5 / SHLD 5 / XLV 5 / FBT 5 / 個別株 15（ユーザー明示指示「FBT5％SHLD5％でマージして」）
+
+**流れ**: 「NASDAQの変わりにXLV入れて」（:19497）→「今後の防衛バイオ薬品の未来を予測して」→「防衛ITAほかバイオ薬品XLV以外にもっといいETFや投資信託が出ているはず。探して」（:19546）→「SHLDの中身を教えて」→「バイオとヘルスケアの違いは？」→「XLVは5％あなたから片割れをどうする？」（私の勧めは FBT）→「分散はヘルスケア防衛のみがよい？？」（下げ方の違う相棒の比べ・下落をいちばん浅くするのは金）→「さっきの表のETFを過去のリターンを順番並べてリターンもだして」→「FBT5％SHLD5％でマージして」。**読み方**: XLV 10 を XLV 5＋FBT 5、その他の ITA 10 を ITA 5＋SHLD 5（合計は100のまま・XLV 5 は前の問いでユーザーが決めていた数字）。
+
+**変えたもの**: portfolio.json（ami_names に FBT〔XLV の後〕・SHLD〔ITA の後〕／ami_weights の XLV 10→5・FBT 5・ITA 10→5・SHLD 5／castle_rule_measure.sleeve を QQQM 40 : SMH 25 : ITA 5 : SHLD 5 : XLV 5 : FBT 5／nisa.rule・ami_other.note・note／旧の姿 ami_mix_superseded_2026_10_13b）・out/etf_profiles.json に FBT の中身（Alpha Vantage ETF_PROFILE・2026-10-09 の30社）・index.html の解説の配分の文（見出しの帯・ETF の行・物差しの袖・区分の文）・todo xlv_nisa_check を3本へ。**門のコードは不変**——FBT・SHLD は目標が0より大きい本なので ccfNetRows がそれぞれ自分の区分にする（その他〔ITA〕には数えない）。区分は ami_names の順に NASDAQ100 → SMH → XLV → FBT → その他（ITA）→ SHLD → 個別株 の7つ。
+
+**FBT と SHLD**:
+- FBT（First Trust NYSE Arca Biotechnology Index Fund・2006-06-19 設定・純資産 約30億ドル・経費率 0.55〜0.56%・配当ほぼ無し・売買回転 37%）: NYSE Arca Biotechnology Index＝米国上場のバイオ30社を同じ金額で持ち、四半期ごとに組み直す。2026-10-09 の上位は Halozyme 4.3%・NeoGenomics 3.9・Repligen 3.9・Corcept 3.8・Regeneron 3.7（ADR 4社: BeOne・argenx・Genmab・BioNTech）。
+- SHLD（Global X Defense Tech ETF・2023-09-11 設定・純資産 約65〜70億ドル・経費率 0.50%・51社）: 上位 RTX 9.5%・Palantir 9.3・General Dynamics 8.5（2026-08-24 の中身）・米国外 36.9%（BAE・Rheinmetall・Thales・Leonardo・Saab・Hanwha・Elbit・Kongsberg…）。
+
+**材料**（会話で測った・事後・円建て・配当込み・毎月組み直し・night/alt_etf_compare.py と同じやり方・ETF側だけ）:
+
+| 形（ETF側） | 窓 | 年率 | ぶれ | 最大下落 | 年率÷ぶれ |
+|---|---|---|---|---|---|
+| main の最終 QQQ50:SMH25:ITA10 | 2007-08〜（230か月） | 19.2 | 22.3 | −59.2 | 0.86 |
+| XLV 案 QQQ40:SMH25:ITA10:XLV10 | 同 | 18.7 | 21.3 | −57.4 | 0.88 |
+| FBT だけ QQQ40:SMH25:ITA10:XLV5:FBT5 | 同 | 18.9 | 21.6 | −57.4 | 0.88 |
+| main の最終 | 2023-10〜（36か月） | 40.2 | 21.9 | −16.1 | 1.83 |
+| XLV 案 | 同 | 38.2 | 20.3 | −15.5 | 1.88 |
+| FBT だけ | 同 | 39.1 | 20.5 | −15.8 | 1.90 |
+| **新 QQQ40:SMH25:ITA5:SHLD5:XLV5:FBT5** | 同 | **39.8** | **20.1** | **−14.4** | **1.98** |
+
+2022年（1〜12月）: main の最終 −18.3% ／ XLV 案 −14.5% ／ FBT だけ −14.6%（SHLD はまだ無い）。単体（2023-10〜）: SHLD 38.3%・QQQ 30.3・ITA 28.1・FBT 25.4・XLV 13.2・SMH 64.9。
+⇒ FBT の半分は XLV 案の代金（年 −0.5pt）のうち約0.2pt を取り戻し、長い窓の最大下落と2022年の守りはほぼ同じ。SHLD の半分は3年の数字だけが上で、その3年は欧州の再軍備と防衛テック（Palantir 等）の人気の時期——同じ中身を円で持つ 466A の直近10か月は −4.4%（ITA +2.5%）。:19546 の判定（防衛は ITA のまま・SHLD は記録3年）は変わっていない＝**SHLD 5% は人の判断**で、記録10年になる2033-09 の再検定（todo defense_alts_retest_2033）で見直す。
+集中（night/lookthrough.py --what-if・城は席5社×3%）: NVDA 9.0%・半導体の連鎖 41.7〜41.9%＝XLV 案と同じ（替えた4本はどれも半導体を持たない）。測れない分は 12.8%（SHLD の米国外の会社などティッカーの無い分）。
+
+**今月の注文書**（門そのもの・正本の portfolio.json と state.json・全パック・入金20万円・2026-10-13 の値段）: **変わらない**——CW・LRCX・GOOGL 各1株 ¥184,581（持っていない銘柄を先に）・iFreeNEXT ¥15,400・合計 約¥199,981。区分（今→買った後・目標）: NASDAQ100 47.0→44.1（40）／SMH 14.8→13.8（25）／XLV・FBT・その他（ITA）・SHLD 0→0（各5）／個別株 38.2→42.2（15）。XLV・FBT・SHLD の取り分は各 ¥2,467 で1株（XLV ¥27,216・FBT ¥41,760・SHLD ¥9,468＝2026-10-12 の終値を盤に足して試した値）の半分に届かない。⚠ **盤（out/dashboard.json）に XLV・FBT・SHLD の値段が入るのは main に入ったあとの market.yml から**（night/fetch_dashboard.py は ami_names の本を引く・3本ともティッカーの検問を通る）——それまで注文書は3本を「価格未取得」と出す。持っていない個別株を買い終えた翌月からは、新しいお金は不足の大きい SMH と4本（XLV・FBT・ITA・SHLD）へ回る。
+
+**NISA**: FBT・SHLD とも楽天の海外 ETF の一覧（ETFD.csv）にあり、レバレッジも毎月分配もない株式の指数 ETF だが、一覧に NISA の欄は無く、ウェブでも個別の確認はできなかった——最初に買う前にアプリの銘柄の画面で「NISA」の印を見る（todo xlv_nisa_check を XLV・FBT・SHLD の3本へ広げた）。
+
+**検査**: check_sleeve_split・check_fund_trade・check_auto_import 全項目／check_pft_card 56・--full 61（円の数 11）／check_gate_parity（Ω 376/376・投下可5社 ASML・CW・GOOGL・LRCX・MSFT が門と端末で一致）／check_mobile_fit／check_html・audit_docs（--templates-only も）・check_frozen_dates・validate_state 通過。採点・四関門・席・割り方の式・売却規律・castle_rule の線は不変。
+
+**戻し方**: portfolio.json の ami_mix_superseded_2026_10_13b の姿へ（ami_weights の XLV 10・ITA 10・FBT と SHLD は0〔持っていれば名前は残す＝売らない・目標0%の本はその他の区分に数える〕・castle_rule_measure.sleeve を QQQM 40 : SMH 25 : ITA 10 : XLV 10）。
