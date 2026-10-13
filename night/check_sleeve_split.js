@@ -911,7 +911,7 @@ const srv = http.createServer((q, r) => {
         { k: 'N4', g: 'n:TINY', tw: 0.2, pos: 0, jpy: 50000 }]; // 持っていないが不足（0.2%×210万＝4,200）が半株に届かない
       const run = (uf, T) => { const p = ccfCatSharePlan(items, T, TOT, mk(uf));
         const used = Object.values(p.buy).reduce((a, b) => a + b.cost, 0) + Object.values(p.frac).reduce((a, b) => a + b, 0) + p.rest;
-        return { first: Object.keys(p.first), wait: p.firstWait.map(w => w.k), buy: Object.keys(p.buy), sh: Object.fromEntries(Object.entries(p.buy).map(([k, b]) => [k, b.sh])),
+        return { first: Object.keys(p.first), wait: p.firstWait.map(w => w.k), big: p.big.map(w => w.k), buy: Object.keys(p.buy), sh: Object.fromEntries(Object.entries(p.buy).map(([k, b]) => [k, b.sh])),
           used, w4: p.wait.some(w => w.k === 'N4'), cf: Object.fromEntries(Object.entries(p.cat).map(([g, c]) => [g, c.first])) }; };
       return { a: run('all', 80000), b: run('all', 40000), c: run(true, 80000), d: run('castle', 80000), e: run(undefined, 80000) };
     });
@@ -919,8 +919,9 @@ const srv = http.createServer((q, r) => {
     ok(j(q20.a.first) === 'N3,N2,C1' && j(q20.a.wait) === 'C2' && ['N3', 'N2', 'C1'].every(k => q20.a.buy.includes(k)) && q20.a.used === 80000
        && q20.a.cf['n:SHLD'] === 9500 && q20.a.cf['n:XLV'] === 27000 && q20.a.cf.c === 8000,
        '⑳ 持っていない本を先に（all・入金8万）: ' + j(q20.a.first) + ' を1株ずつ（ETF 5% → 個別株 3%・同じ目標なら安い順）・C2 は入金が尽きて来月・区分ごとに先に買った円 SHLD ¥9,500／XLV ¥27,000／個別株 ¥8,000・合計 ¥' + q20.a.used.toLocaleString());
-    ok(j(q20.b.first) === 'N3,N2' && j(q20.b.wait) === 'C1,C2' && q20.b.used === 40000,
-       '   並びは目標の大きい順（入金4万）: ' + j(q20.b.first) + '・個別株の C1（¥8,000＝ETF より安い）は目標3%なので後ろ→今月の入金が尽きて ' + j(q20.b.wait) + ' は来月');
+    ok(j(q20.b.first) === 'N3,N2' && j(q20.b.wait) === 'C1' && q20.b.big.includes('C2') && !q20.b.first.includes('C2') && q20.b.used === 40000,
+       '   並びは目標の大きい順（入金4万）: ' + j(q20.b.first) + '・個別株の C1（¥8,000＝ETF より安い）は目標3%なので後ろ→今月の入金が尽きて ' + j(q20.b.wait)
+       + ' は来月・C2（1株 ¥50,000＞入金）は従来どおり候補にせず「入金の多い月に買う」（big）');
     ok(j(q20.c.first) === 'C1,C2' && j(q20.d.first) === 'C1,C2' && !q20.c.first.some(k => /^N/.test(k)) && !q20.e.first.length
        && [q20.a, q20.b, q20.c, q20.d, q20.e].every(x => !x.first.includes('N0') && !x.first.includes('N1') && !x.first.includes('N4') && !x.first.includes('C0')) && q20.a.w4,
        '   true／castle は個別株だけ（' + j(q20.c.first) + '）・設定なしは先に買わない・金額で買う本（N0）・持っている本（N1・C0）・不足が半株に届かない本（N4）はどの形でも候補にならない');
