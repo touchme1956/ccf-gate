@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* night/check_auto_import.js — 台帳が空の端末で🛒買付順位が空にならないかを実ブラウザで確かめる（v9.9.217）
+/* night/check_auto_import.js — 台帳が空の端末で🛒買付順位が空にならないかを実ブラウザで確かめる（v9.9.218）
  *
  * ■ なぜ要るか（実害から作った検査）
  *   2026-10-12、ユーザー「全然買付順位に出ない」。ホーム画面のアプリ（v9.9.216）は Safari と保存場所（localStorage）が別で、
@@ -11,10 +11,15 @@
  *      → 終わると買付順位に注文書が出る・赤い帯（未書き出し）は立たない・検証履歴に「自動取込」
  *   ② 自動取込の最中に「⭳ 全パック一括取込」を押す → 2本目は始めずに待つ（パックの取得は1回）
  *      → 台帳の各社がパックの数字のまま（取り込みが重なって別の社の数字で保存されていない）
- *   ③ 台帳に1件でもある → 自動では取り込まない（人が直した値を巻き戻さない）・未取込の帯を🛒買付順位にも出す
+ *   ③ 台帳がパックの半分以上あり印も無い → 自動では取り込まない（人が直した値を巻き戻さない）・未取込の帯を🛒買付順位にも出す
  *      → 買付順位の帯から押した取り込みはページを移動しない
- *   ④ v9.9.218: 自動取込が途中で止まった（「途中」の印 ccf:autoImpPending が残り、台帳が欠けている）→ 次に開いたとき台帳に無い社だけ取り込む
- *      → 台帳にある社は取り込み直さない・取り込み中は欠けた台帳で注文書を作らない・終われば印を消す・台帳がそろっていて印だけなら何も取らずに消す
+ *   ④ 自動取込が途中で終わった（印 ccf:autoImp が残る）→ 次に開くと台帳にまだ無い社だけを取り込む
+ *      → 取得は無かった社の数だけ・既にあったレコードは置き換えない・終わると印は消える（2026-10-13 ユーザー「投下可がなしになってるから直して」）
+ *   ⑤ 印が3回目まで残る → 続きはせず印を消し、🛒買付順位の帯で知らせる
+ *   ⑥ 取り込み中の🏦保有・📋今日・今月の買付プラン・目標ポートフォリオのカード → 「投下可なし」とだけ言わず理由と進み具合
+ *      → 台帳が半分の間も席を計算しない（席が欠けた注文書や「投下可なし」を出さない）
+ *   ⑦ 印は無いが台帳がパックの半分に届かない → 台帳にまだ無い社だけを続きから（置き換えない）
+ *   ⑤の続き: 台帳に入っていないパックがあれば🏦保有の投下可の下にも注記と「⭳ いま取り込む」
  *
  * playwright が要るので CI には入れていない（check_stale_bar.js / check_state_banner.js と同じ扱い）。
  *   使い方: NODE_PATH=$(npm root -g) node night/check_auto_import.js
@@ -68,10 +73,9 @@ const ok = (c, m) => { console.log((c ? '  ✓ ' : '  ✗ ') + m); if (!c) ng++;
     const startPage = await pg.evaluate(() => window.__ccfPage);
     await pg.evaluate(() => showPage(5)); await pg.waitForTimeout(1200);
     const mid = await pg.evaluate(() => ({ ai: window.__ccfAutoImp, pb: (document.getElementById('planBox') || {}).innerText || '',
-      bar5: (document.getElementById('packFreshBar5') || {}).innerText || '', pend: localStorage.getItem('ccf:autoImpPending') }));
+      bar5: (document.getElementById('packFreshBar5') || {}).innerText || '' }));
     ok(mid.ai && typeof mid.ai === 'object', '① 台帳が空 → 起動時に自動取込が始まる（' + JSON.stringify(mid.ai) + '）');
-    ok(!!mid.pend, '   取り込み中は「途中」の印（ccf:autoImpPending）が立つ（v9.9.218）');
-    ok(/台帳がまだ空です/.test(mid.pb) && /自動で取り込んでいます/.test(mid.pb), '   取り込み中の🛒買付順位は理由と進み具合を出す（「投下可なし」だけにしない）');
+    ok((/台帳がまだ空です/.test(mid.pb) && /自動で取り込んでいます/.test(mid.pb)) || /取り込んでいる途中です/.test(mid.pb), '   取り込み中の🛒買付順位は理由と進み具合を出す（「投下可なし」だけにしない）');
     ok(/自動で取り込んでいます/.test(mid.bar5) && !/いま取り込む/.test(mid.bar5), '   🛒買付順位の帯も「取り込み中」（押すボタンは出さない）');
     const st = await waitAuto(pg);
     await pg.waitForTimeout(2500);
@@ -82,12 +86,10 @@ const ok = (c, m) => { console.log((c ? '  ✓ ' : '  ✗ ') + m); if (!c) ng++;
         dirty: (window.ccfState && ccfState.isDirty) ? ccfState.isDirty() : null,
         sb: sb ? (sb.innerText || '').trim() : '',
         bar5: getComputedStyle(document.getElementById('packFreshBar5')).display,
-        logs: Object.keys(localStorage).filter(k => k.indexOf('g7log:') === 0).map(k => JSON.parse(localStorage.getItem(k)).title),
-        pend: localStorage.getItem('ccf:autoImpPending') };
+        logs: Object.keys(localStorage).filter(k => k.indexOf('g7log:') === 0).map(k => JSON.parse(localStorage.getItem(k)).title) };
     });
     const n = await ledgerN(pg);
     ok(st === 'done' && n === N, '   取り込み終了 ' + st + '・台帳 ' + n + '/' + N + '社');
-    ok(after.pend === null, '   終われば「途中」の印を消す');
     ok(startPage === 10 && after.page === 5, '   ページは移動しない（起動 ' + startPage + '・人が開いた 5 のまま → ' + after.page + '）');
     ok(after.order && !after.empty, '   終わると🛒買付順位に今月の注文書が出る（作り直しは自動）');
     ok(after.bar5 === 'none', '   未取込の帯は消える');
@@ -129,28 +131,31 @@ const ok = (c, m) => { console.log((c ? '  ✓ ' : '  ✗ ') + m); if (!c) ng++;
     ok(errs.length === 0, '   pageerror 0件' + (errs.length ? '（' + errs[0].slice(0, 120) + '）' : ''));
   }
 
-  // ③ 台帳に1件でもある → 自動では取り込まない・帯を🛒買付順位にも出す・そこから押してもページは移動しない
+  // ③ 台帳がパックの半分以上あり、印も無い（5社だけ無い）→ 自動では取り込まない（人が直した値を巻き戻さない）・帯を🛒買付順位にも出す
+  //    → そこから押した取り込みはページを移動しない
+  //    （v9.9.218 の続きで、半分に届かない台帳は「初めての取り込みが途中で終わった」とみなして台帳に無い社だけを自動で取り込む＝⑦。
+  //      旧版の③は「1件でもあれば自動では取り込まない」を1社の台帳で確かめていた）
   {
     const pg = await (await b.newContext({ viewport: { width: 390, height: 844 } })).newPage();
     const errs = []; pg.on('pageerror', e => errs.push(String(e)));
     PACK_DELAY = 0;
-    // 1社だけ入っている台帳を作る。⚠ 門を開くと（台帳が空なので）その場で自動取込が始まり前提が崩れる——
-    //   門を開かずに同じ出所の JSON を開いて保存場所だけ触る（鍵は門の safeKey と同じ規則＝取り込むと同じ鍵を上書きする）
-    const one = JSON.parse(fs.readFileSync(path.join(ROOT, 'out', IDX[0]), 'utf8'));
-    const od = one.data || one, nm = String(od.nm || IDX[0]);
-    const data = {}; Object.keys(od).forEach(k => { const v = od[k]; if (v !== null && v !== undefined && typeof v !== 'object') data[k] = String(v); });
-    data.nm = nm;
-    await pg.goto('http://localhost:' + PORT + '/out/packs_index.json');
-    await pg.evaluate(([k, data]) => { localStorage.clear(); localStorage.setItem(k, JSON.stringify({ data: data, r: {} })); },
-      ['g7:' + nm.replace(/[\s\/\\'"]+/g, '_'), data]);
+    await pg.goto(URL);
+    const s0 = await waitAuto(pg);                    // 台帳が空なので、まず全部が自動で入る
+    await pg.waitForTimeout(1500);
+    await pg.evaluate(() => {
+      const ks = Object.keys(localStorage).filter(k => k.indexOf('g7:') === 0).sort();
+      ks.slice(0, 5).forEach(k => localStorage.removeItem(k));
+      localStorage.removeItem('ccf:autoImp');
+    });
     packFetches = 0;
-    await pg.goto(URL); await pg.waitForTimeout(3000);
+    await pg.reload(); await pg.waitForTimeout(3000);
     const n0 = await ledgerN(pg);
     const st0 = await pg.evaluate(() => window.__ccfAutoImp);
     await pg.evaluate(() => showPage(5)); await pg.waitForTimeout(2500);
     const bar5 = await pg.evaluate(() => { const e = document.getElementById('packFreshBar5'); return { shown: getComputedStyle(e).display !== 'none', t: e.innerText }; });
-    ok(n0 === 1 && st0 === null && packFetches === 0, '③ 台帳に1件 → 自動では取り込まない（台帳 ' + n0 + '社・自動取込 ' + JSON.stringify(st0) + '・取得 ' + packFetches + '件）');
-    ok(bar5.shown && /台帳に入っていないパックが/.test(bar5.t) && /いま取り込む/.test(bar5.t) && /買付順位にも出ない/.test(bar5.t),
+    ok(s0 === 'done' && n0 === N - 5 && st0 === null && packFetches === 0,
+      '③ 台帳がパックの半分以上（5社だけ無い）・印なし → 自動では取り込まない（台帳 ' + n0 + '社・自動取込 ' + JSON.stringify(st0) + '・取得 ' + packFetches + '件）');
+    ok(bar5.shown && /台帳に入っていないパックが 5社/.test(bar5.t) && /いま取り込む/.test(bar5.t) && /買付順位にも出ない/.test(bar5.t),
       '   🛒買付順位にも未取込の帯（理由と「⭳ いま取り込む」）');
     await pg.evaluate(() => { const btn = document.querySelector('#packFreshBar5 button'); btn && btn.click(); });
     for (let i = 0; i < 120; i++) { await pg.waitForTimeout(1000); if ((await ledgerN(pg)) >= N && !(await pg.evaluate(() => window.__ccfImpRun))) break; }
@@ -162,48 +167,136 @@ const ok = (c, m) => { console.log((c ? '  ✓ ' : '  ✗ ') + m); if (!c) ng++;
     ok(errs.length === 0, '   pageerror 0件' + (errs.length ? '（' + errs[0].slice(0, 120) + '）' : ''));
   }
 
-  // ④ v9.9.218: 自動取込が途中で止まった → 次に開いたとき台帳に無い社だけ取り込む（台帳にある社は取り込み直さない）
+  // ④ 自動取込が途中で終わった（アプリを閉じた等）→ 次に開くと**台帳にまだ無い社だけ**を続きから取り込む
+  //    既にあるレコードは1件も置き換えない（人が直した値を巻き戻さない）・終わると印（ccf:autoImp）は消える
+  {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 } });
+    const pg = await ctx.newPage();
+    const errs = []; pg.on('pageerror', e => errs.push(String(e)));
+    PACK_DELAY = 0;
+    await pg.goto(URL);
+    const st0 = await waitAuto(pg);                    // 台帳が空なので、まず全部が自動で入る
+    await pg.waitForTimeout(1500);
+    const prep = await pg.evaluate(() => {
+      const ks = Object.keys(localStorage).filter(k => k.indexOf('g7:') === 0).sort();
+      const drop = ks.filter((k, i) => i % 3 === 1);   // 3社に1社を消す＝途中で終わった台帳
+      drop.forEach(k => localStorage.removeItem(k));
+      const keep = ks.filter((k, i) => i % 3 !== 1);
+      const k0 = keep[0], o = JSON.parse(localStorage.getItem(k0));
+      o.__probe = 'keep';                               // 置き換えられれば消える印（レコードごと書き直すと残らない）
+      localStorage.setItem(k0, JSON.stringify(o));
+      localStorage.setItem('ccf:autoImp', JSON.stringify({ at: new Date().toISOString(), tries: 1 }));
+      return { drop: drop.length, keep: keep.length, k0 };
+    });
+    PACK_DELAY = 25; packFetches = 0;
+    await pg.reload(); await pg.waitForTimeout(1500);
+    const mid = await pg.evaluate(() => ({ ai: window.__ccfAutoImp, today: (document.getElementById('pg10') || {}).innerText || '' }));
+    const st = await waitAuto(pg);
+    await pg.waitForTimeout(2000);
+    const after = await pg.evaluate(k0 => ({
+      n: Object.keys(localStorage).filter(k => k.indexOf('g7:') === 0).length,
+      probe: (JSON.parse(localStorage.getItem(k0) || '{}') || {}).__probe || null,
+      mark: localStorage.getItem('ccf:autoImp'),
+      logs: Object.keys(localStorage).filter(k => k.indexOf('g7log:') === 0).map(k => JSON.parse(localStorage.getItem(k)).title),
+      dirty: (window.ccfState && ccfState.isDirty) ? ccfState.isDirty() : null }), prep.k0);
+    ok(st0 === 'done' && prep.drop > 50, '④ 途中で終わった台帳を作る（' + prep.keep + '社が残り ' + prep.drop + '社が無い・印あり）');
+    ok(mid.ai && typeof mid.ai === 'object' && mid.ai.resume === true, '   次に開くと続きの自動取込が始まる（' + JSON.stringify(mid.ai) + '）');
+    ok(/前回の自動取込の続き/.test(mid.today) && !/自動では取り込みません/.test(mid.today), '   📋今日は「前回の自動取込の続き」と言う（「自動では取り込みません」と言わない）');
+    ok(st === 'done' && after.n === N, '   取り込み終了 ' + st + '・台帳 ' + after.n + '/' + N + '社');
+    ok(packFetches === prep.drop, '   取得したのは台帳に無かった社だけ（' + packFetches + '件＝無かった ' + prep.drop + '社）');
+    ok(after.probe === 'keep', '   既にあったレコードは置き換えない（人が直した印 __probe が残る）');
+    ok(after.mark === null, '   終わると印（ccf:autoImp）は消える');
+    ok(after.logs.some(t => /自動取込の続き/.test(t)), '   検証履歴に「自動取込の続き」');
+    ok(after.dirty === false, '   赤い帯（未書き出し）は立たない');
+    ok(errs.length === 0, '   pageerror 0件' + (errs.length ? '（' + errs[0].slice(0, 120) + '）' : ''));
+
+    // ⑤ 印が3回続けて残る（毎回終わらない）なら、諦めて印を消し、帯で知らせるだけにする
+    const prep2 = await pg.evaluate(() => {
+      const ks = Object.keys(localStorage).filter(k => k.indexOf('g7:') === 0).sort();
+      const drop = ks.slice(0, 5); drop.forEach(k => localStorage.removeItem(k));
+      localStorage.setItem('ccf:autoImp', JSON.stringify({ at: new Date().toISOString(), tries: 3 }));
+      return { drop: drop.length };
+    });
+    PACK_DELAY = 0; packFetches = 0;
+    await pg.reload(); await pg.waitForTimeout(3000);
+    await pg.evaluate(() => showPage(5)); await pg.waitForTimeout(2500);
+    const g = await pg.evaluate(() => ({ ai: window.__ccfAutoImp, mark: localStorage.getItem('ccf:autoImp'),
+      n: Object.keys(localStorage).filter(k => k.indexOf('g7:') === 0).length,
+      bar5: (document.getElementById('packFreshBar5') || {}).innerText || '' }));
+    ok(g.ai === null && packFetches === 0 && g.n === N - prep2.drop && g.mark === null,
+      '⑤ 印が3回目まで残っていたら続きはしない（自動取込 ' + JSON.stringify(g.ai) + '・取得 ' + packFetches + '件・印 ' + g.mark + '）');
+    ok(/台帳に入っていないパックが 5社/.test(g.bar5) && /いま取り込む/.test(g.bar5), '   代わりに🛒買付順位の帯で知らせる（' + prep2.drop + '社・「⭳ いま取り込む」）');
+    await pg.evaluate(() => showPage(6)); await pg.waitForTimeout(3000);
+    const note = await pg.evaluate(() => { const e = document.querySelector('#pg6 .packMissNote'); return e ? e.innerText : ''; });
+    ok(/台帳に入っていないパックが 5社/.test(note) && /いま取り込む/.test(note), '   🏦保有の投下可の下にも「台帳に入っていないパックが 5社」と「⭳ いま取り込む」');
+
+    // ⑦ 印は無いが台帳がパックの半分に届かない（印を置く前の版で押した一括取込を途中で閉じた等）→ 台帳にまだ無い社だけを続きから
+    const prep3 = await pg.evaluate(() => {
+      const ks = Object.keys(localStorage).filter(k => k.indexOf('g7:') === 0).sort();
+      const keep = ks.filter((k, i) => i % 3 === 0);   // 3社に1社だけ残す＝半分に届かない
+      const drop = ks.filter((k, i) => i % 3 !== 0); drop.forEach(k => localStorage.removeItem(k));
+      const k0 = keep[0], o = JSON.parse(localStorage.getItem(k0)); o.__probe = 'keep3'; localStorage.setItem(k0, JSON.stringify(o));
+      localStorage.removeItem('ccf:autoImp');
+      return { drop: drop.length, keep: keep.length, k0 };
+    });
+    packFetches = 0;
+    await pg.reload(); await pg.waitForTimeout(1200);
+    const ai7 = await pg.evaluate(() => window.__ccfAutoImp);
+    const st7 = await waitAuto(pg); await pg.waitForTimeout(1500);
+    const a7 = await pg.evaluate(k0 => ({ n: Object.keys(localStorage).filter(k => k.indexOf('g7:') === 0).length,
+      probe: (JSON.parse(localStorage.getItem(k0) || '{}') || {}).__probe || null, mark: localStorage.getItem('ccf:autoImp') }), prep3.k0);
+    ok(ai7 && (ai7 === 'done' || (typeof ai7 === 'object' && ai7.resume === true)) && st7 === 'done' && a7.n >= N,
+      '⑦ 印なし・台帳がパックの半分未満（' + prep3.keep + '社）→ 続きの自動取込（' + JSON.stringify(ai7) + '・台帳 ' + a7.n + '社）');
+    // 無かった社＝パックの数 − 残した社（⑤で消した5社も無いまま＝それも含めて取り込む）
+    ok(packFetches === N - prep3.keep && a7.probe === 'keep3' && a7.mark === null,
+      '   取得は無かった社だけ（' + packFetches + '件＝パック ' + N + ' − 残した ' + prep3.keep + '社）・既にあったレコードは置き換えない・印は残らない');
+  }
+
+  // ⑥ 取り込み中の🏦保有・📋今日・今月の買付プラン・目標ポートフォリオのカード——「投下可なし」とだけ言わない
   {
     const pg = await (await b.newContext({ viewport: { width: 390, height: 844 } })).newPage();
     const errs = []; pg.on('pageerror', e => errs.push(String(e)));
-    // 1社だけ入った台帳と「途中」の印を作る（③と同じく門を開かずに保存場所だけ触る）。その1社に印の値を足しておき、
-    //   取り込み直されたら消える＝人が✎採点機で直した値を巻き戻したかを見分ける
-    const one = JSON.parse(fs.readFileSync(path.join(ROOT, 'out', IDX[0]), 'utf8'));
-    const od = one.data || one, nm = String(od.nm || IDX[0]);
-    const data = {}; Object.keys(od).forEach(k => { const v = od[k]; if (v !== null && v !== undefined && typeof v !== 'object') data[k] = String(v); });
-    data.nm = nm; data.__keep = '人が直した値（取り込み直されたら消える）';
-    const key = 'g7:' + nm.replace(/[\s\/\\'"]+/g, '_');
-    await pg.goto('http://localhost:' + PORT + '/out/packs_index.json');
-    await pg.evaluate(([k, data]) => { localStorage.clear(); localStorage.setItem(k, JSON.stringify({ data: data, r: {} }));
-      localStorage.setItem('ccf:autoImpPending', '2026-10-13T00:00:00.000Z'); }, [key, data]);
-    PACK_DELAY = 30; packFetches = 0;
-    await pg.goto(URL); await pg.waitForTimeout(1500);
-    await pg.evaluate(() => showPage(5)); await pg.waitForTimeout(1200);
-    const mid = await pg.evaluate(() => ({ ai: window.__ccfAutoImp, pb: (document.getElementById('planBox') || {}).innerText || '',
-      bar5: (document.getElementById('packFreshBar5') || {}).innerText || '' }));
-    ok(mid.ai && typeof mid.ai === 'object' && mid.ai.resume === true, '④ 「途中」の印＋台帳1件 → 続きを自動で取り込む（' + JSON.stringify(mid.ai) + '）');
-    // ⚠ 注文書の有無は見出し「📋 今月の注文書」で見る（説明の文「…今月の注文書は出しません」にも同じ語がある）
-    const midOk = /途中で止まっていた/.test(mid.pb) && /出しません/.test(mid.pb) && !/📋 今月の注文書/.test(mid.pb);
-    ok(midOk, '   取り込み中の🛒買付順位は欠けた台帳で注文書を作らない（理由と進み具合だけ）' + (midOk ? '' : '〔' + mid.pb.replace(/\s+/g, ' ').slice(0, 300) + '〕'));
-    ok(/残りの \d+社/.test(mid.bar5) && !/いま取り込む/.test(mid.bar5), '   帯は「残りの N社を取り込んでいます」（押すボタンは出さない）');
+    PACK_DELAY = 45; packFetches = 0;
+    await pg.goto(URL); await pg.waitForTimeout(2500);
+    const today = await pg.evaluate(() => (document.getElementById('pg10') || {}).innerText || '');
+    await pg.evaluate(() => showPage(6)); await pg.waitForTimeout(2500);
+    const hold = await pg.evaluate(() => ({ t: (document.getElementById('pg6') || {}).innerText || '',
+      pft: (document.getElementById('pftCard') || {}).innerText || '' }));
+    await pg.evaluate(() => showPage(5)); await pg.waitForTimeout(2000);
+    const plan = await pg.evaluate(() => (document.getElementById('planBox') || {}).innerText || '');
+    ok(/自動で取り込んでいます/.test(today) && !/自動では取り込みません/.test(today), '⑥ 📋今日: 「自動で取り込んでいます」（「自動では取り込みません」と言わない）');
+    ok(/台帳がまだ空です|取り込んでいる途中です/.test(hold.t) && !/投下可なし/.test(hold.t), '   🏦保有の投下可: 台帳が空・取り込み中の理由と進み具合（「投下可なし」と言わない）');
+    ok(/取り込んでいる途中なので席を出せない/.test(hold.pft), '   目標ポートフォリオのカード: 席を出せない理由に「取り込んでいる途中」');
+    ok(/台帳を自動で取り込んでいる途中のため/.test(plan) && !/🟢投下可なし/.test(plan) && !/📋 今月の注文書/.test(plan),
+      '   🛒買付順位: 途中の台帳で席を計算しない（「🟢投下可はまだ出せません——取り込んでいる途中のため」・注文書は終わってから）');
+    // 取込の段（台帳が半分だけ入った状態）まで待ってから、もう一度🏦保有と🛒買付順位を見る
+    let half = null;
+    for (let i = 0; i < 120; i++) {
+      const ai = await pg.evaluate(() => window.__ccfAutoImp);
+      if (ai && typeof ai === 'object' && ai.st === '取込' && ai.done >= 60) { half = ai; break; }
+      if (ai === 'done' || ai === 'fail') break;
+      await pg.waitForTimeout(500);
+    }
+    if (half) {
+      await pg.evaluate(() => showPage(6)); await pg.waitForTimeout(2000);
+      const h = await pg.evaluate(() => ({ t: (document.getElementById('pg6') || {}).innerText || '',
+        n: Object.keys(localStorage).filter(k => k.indexOf('g7:') === 0).length, seats: ((window.__pftData || {}).castle || []).filter(c => c.k !== 'c:_rest' && c.tw > 0).length }));
+      await pg.evaluate(() => showPage(5)); await pg.waitForTimeout(2000);
+      const pl = await pg.evaluate(() => (document.getElementById('planBox') || {}).innerText || '');
+      ok(h.n > 0 && /取り込んでいる途中です/.test(h.t) && !/投下可なし/.test(h.t) && h.seats === 0,
+        '   台帳が半分（' + h.n + '社）の間も🏦保有は席を計算しない（「取り込んでいる途中です」・席 ' + h.seats + '社）');
+      ok(/取り込んでいる途中/.test(pl) && !/📋 今月の注文書/.test(pl) && !/🟢投下可なし/.test(pl), '   同じく🛒買付順位も途中の台帳では注文書を出さない');
+    } else ok(false, '   取込の段の途中を捕まえられなかった（' + JSON.stringify(half) + '）');
     const st = await waitAuto(pg);
-    await pg.waitForTimeout(2500);
-    const after = await pg.evaluate(k => ({ page: window.__ccfPage, order: /📋 今月の注文書/.test((document.querySelector('#pg5') || {}).innerText || ''),
-      pend: localStorage.getItem('ccf:autoImpPending'), keep: (JSON.parse(localStorage.getItem(k) || '{}').data || {}).__keep || null,
-      logs: Object.keys(localStorage).filter(x => x.indexOf('g7log:') === 0).map(x => JSON.parse(localStorage.getItem(x)).title) }), key);
-    const n = await ledgerN(pg);
-    ok(st === 'done' && n === N && packFetches === N - 1, '   取り込み終了 ' + st + '・台帳 ' + n + '/' + N + '社・取得 ' + packFetches + '件（台帳に無い ' + (N - 1) + '社だけ）');
-    ok(!!after.keep, '   台帳にあった社は取り込み直さない（人が直した値が残る）');
-    ok(after.pend === null, '   終われば「途中」の印を消す');
-    ok(after.page === 5 && after.order, '   ページは🛒買付順位のまま・終わると注文書が出る（page ' + after.page + '）');
-    ok(after.logs.length === 1 && /自動取込（前回の続き）/.test(after.logs[0]), '   検証履歴に「自動取込（前回の続き）」が1件（' + after.logs.join(' / ') + '）');
-    // 台帳はそろっていて印だけ残っている（最後の社を書いた直後に閉じた場合）→ 何も取り込まずに印を消す
-    await pg.evaluate(() => localStorage.setItem('ccf:autoImpPending', '2026-10-13T00:00:00.000Z'));
-    PACK_DELAY = 0; packFetches = 0;
-    await pg.reload(); const st2 = await waitAuto(pg); await pg.waitForTimeout(800);
-    const pend2 = await pg.evaluate(() => localStorage.getItem('ccf:autoImpPending'));
-    ok(st2 === 'done' && packFetches === 0 && pend2 === null && (await ledgerN(pg)) === N,
-      '   台帳がそろっていて印だけ → 取得 ' + packFetches + '件・印を消す（' + st2 + '）');
+    await pg.evaluate(() => showPage(6)); await pg.waitForTimeout(3000);
+    const hold2 = await pg.evaluate(() => {
+      const t = (document.getElementById('pg6') || {}).innerText || '';
+      const M = window.__pftData || {};
+      return { empty: /台帳がまだ空です|台帳が空/.test(t), none: /投下可なし/.test(t),
+        seats: (M.castle || []).filter(c => c.k !== 'c:_rest' && c.tw > 0).length };
+    });
+    ok(st === 'done' && !hold2.empty && !hold2.none && hold2.seats >= 1,
+      '   終わると🏦保有に投下可と目標の席が出る（席 ' + hold2.seats + '社・「台帳が空」「投下可なし」は消える）');
     ok(errs.length === 0, '   pageerror 0件' + (errs.length ? '（' + errs[0].slice(0, 120) + '）' : ''));
   }
 
