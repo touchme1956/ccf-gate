@@ -21,7 +21,7 @@ OUT = os.path.join(L.BASE, 'out', 'longrun1990_posthoc.json')
 
 
 def row(rS, rB, rf=None):
-    out = {k: L.stats(rS, rB, a, z) for k, (a, z) in L.PERIODS.items()}
+    out = {k: L.stats(rS, rB, a, z, rf) for k, (a, z) in L.PERIODS.items()}
     out['tail'] = L.tails(rS, rB, rf)
     return out
 
@@ -50,8 +50,8 @@ def main():
             hi, lo, c, dr = L.jkp_side(key, r)
             for bw in ('vw', 'vw_cap'):
                 res['weighting_reconciliation'][f'JKP {key} 高い側 {w} 対 市場 {bw}'] = {
-                    k: L.stats(r[hi], mk[bw], a, z) for k, (a, z) in L.PERIODS.items()}
-    res['weighting_reconciliation']['市場 vw_cap 対 市場 vw'] = {k: L.stats(mk['vw_cap'], mk['vw'], a, z) for k, (a, z) in L.PERIODS.items()}
+                    k: L.stats(r[hi], mk[bw], a, z, rf) for k, (a, z) in L.PERIODS.items()}
+    res['weighting_reconciliation']['市場 vw_cap 対 市場 vw'] = {k: L.stats(mk['vw_cap'], mk['vw'], a, z, rf) for k, (a, z) in L.PERIODS.items()}
     out = {'generated': datetime.date.today().isoformat(), 'tool': 'night/longrun1990_posthoc.py', 'prereg_commit': '4dc44296', **res}
     json.dump(out, open(OUT, 'w'), ensure_ascii=False, indent=1)
     for sec in ('profitability_other_measures', 'weighting_reconciliation'):

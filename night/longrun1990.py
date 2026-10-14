@@ -16,11 +16,13 @@
 import datetime
 import gzip
 import hashlib
+import io
 import json
 import math
 import os
 import statistics as S
 import sys
+import zipfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import mw_common as C  # noqa: E402
@@ -104,25 +106,62 @@ def pick(tables, kind):
     return hits[0], v
 
 
+USED_RAW = set()   # この測定が実際に読んだキャッシュの名前（raw_sha256 はこれだけを出す）
+
+
+def table_shape(name, title, ncols):
+    """生の CSV で、表の各行の値の数が列名の数と同じかを確かめる。
+    2026-10-14 の独立の検算で見つけた穴: French の 6_Portfolios_ME_Prior_12_2・6_Portfolios_ME_Prior_60_13 の
+    『Average Equal Weighted Returns -- Monthly』は列名が6つなのに各行の値が8つ（12_2 は2025年から7つの行も）で、
+    mw_common.french_tables は先頭の6つを黙って列名に当てていた（列がずれて別の群になる）。
+    mw_common は前向きの検定の凍結の閉包に入っているので直さず、ここで止める。"""
+    b = C.get(C.FR.format(name), name=f'fr_{name}.zip')
+    z = zipfile.ZipFile(io.BytesIO(b))
+    lines = z.read(z.namelist()[0]).decode('latin-1').splitlines()
+    for i, l in enumerate(lines):
+        if l.strip().strip(',') == title and i + 1 < len(lines) and lines[i + 1].startswith(','):
+            bad, n = {}, 0
+            for row in lines[i + 2:]:
+                cells = [c.strip() for c in row.split(',')]
+                if not cells[0].isdigit():
+                    break
+                k = sum(1 for c in cells[1:] if c != '')
+                n += 1
+                if k != ncols:
+                    bad[k] = bad.get(k, 0) + 1
+            return {'rows': n, 'bad_rows_by_value_count': bad}
+    return {'rows': 0, 'note': '表題が生の CSV に見つからない'}
+
+
 def french_parts(name):
-    """{'vw': {列: {ym: r}}, 'ew': …, 'n': {列: {ym: 数}}, 's': {列: {ym: 平均の時価}}}（r は小数）"""
+    """{'vw': {列: {ym: r}}, 'ew': …, 'n': {列: {ym: 数}}, 's': {列: {ym: 平均の時価}}}（r は小数）。
+    行の値の数が列名の数と合わない表は使わない（その種類は None・理由は '{種類}_bad'）"""
     tb = C.french_tables(name)
+    USED_RAW.add(f'fr_{name}.zip')
     out = {}
     for kind in ('vw', 'ew', 'n', 's'):
         title, v = pick(tb, kind)
+        out[kind + '_title'] = title
+        shp = table_shape(name, title, len(v['cols']))
+        if shp.get('bad_rows_by_value_count') or not shp.get('rows'):
+            out[kind] = None
+            out[kind + '_bad'] = dict(shp, cols=len(v['cols']),
+                                      why='表の行の値の数が列名の数と合わない（列がずれる）ので使わない＝測れない')
+            continue
         d = {c: {} for c in v['cols']}
         for m, row in v['data'].items():
             for c, x in zip(v['cols'], row):
                 if x is not None:
                     d[c][m] = x / 100 if kind in ('vw', 'ew') else x
         out[kind] = d
-        out[kind + '_title'] = title
     return out
 
 
 def french_universe(fp, part, w):
     """分け切る群を、等ウェイトなら銘柄数・時価加重なら銘柄数×平均の時価で重み付けた『全部』"""
     r = fp[w]
+    if r is None or fp['n'] is None or (w == 'vw' and fp['s'] is None):
+        return None, None
     out, dropped = {}, 0
     ms = set.union(*[set(r[c]) for c in part])
     for m in sorted(ms):
@@ -148,6 +187,7 @@ def french_universe(fp, part, w):
 def jkp_terciles(key, w):
     """{'1.0': {ym: r}, '2.0': …, '3.0': …}（超過）と {'1.0': {ym: n}, …}"""
     r, n = {}, {}
+    USED_RAW.add(f'jkp_portfolios_usa_{key}_{w}_monthly.zip')
     for x in C.jkp_rows('usa', key, 'portfolios', w):
         if x['ret'] in ('', 'NA', 'na'):
             continue
@@ -167,6 +207,7 @@ def jkp_allfactors():
     global _ALLF
     if _ALLF is None:
         f, dirn = {}, {}
+        USED_RAW.add('jkp_factor_usa_all_factors_vw_cap_monthly.zip')
         for x in C.jkp_rows('usa', 'all_factors', 'factor', 'vw_cap'):
             dirn[x['name']] = int(float(x['direction']))
             if x['ret'] not in ('', 'NA', 'na'):
@@ -199,14 +240,18 @@ def mdd_of(rs):
 
 
 def stats(rS, rB, a, z, rf=None):
-    """期間 [a, z] の d の要約。rf を渡すと（JKP の超過→総リターン）裾の計算に足す"""
-    ms = [m for m in months(a, z) if m in rS and m in rB]
+    """期間 [a, z] の d の要約。rf を渡すと（JKP の超過→総リターン）geo_ann を総リターンで出す
+    （d と t は差なので rf に依らない）。2026-10-14 の独立の検算の指摘で、事前登録の『年率は総リターンに戻す』に合わせた"""
+    if rS is None or rB is None:
+        return {'note': '測れない（表が使えない）'}
+    ms = [m for m in months(a, z) if m in rS and m in rB and (rf is None or m in rf)]
     exp = len(months(a, z))
     if len(ms) < 24:
         return {'months': len(ms), 'expected_months': exp, 'note': '月数不足'}
     d = [rS[m] - rB[m] for m in ms]
     t, p = nw(d)
-    g = math.fsum(math.log1p(rS[m]) - math.log1p(rB[m]) for m in ms)
+    f = (lambda r, m: r[m] + rf[m]) if rf is not None else (lambda r, m: r[m])
+    g = math.fsum(math.log1p(f(rS, m)) - math.log1p(f(rB, m)) for m in ms)
     return {'months': len(ms), 'expected_months': exp, 'mean_ann_pct': round(12 * S.mean(d) * 100, 3),
             't': round(t, 3) if t is not None else None, 'p': p,
             'geo_ann_pct': round((math.exp(g * 12 / len(ms)) - 1) * 100, 3)}
@@ -214,6 +259,8 @@ def stats(rS, rB, a, z, rf=None):
 
 def tails(rS, rB, rf=None):
     """P0 の裾（総リターン）と 13年の窓の勝ち・最悪"""
+    if rS is None or rB is None:
+        return {'note': '測れない（表が使えない）'}
     tot = (lambda r, m: r[m] + rf[m]) if rf is not None else (lambda r, m: r[m])
     ms = [m for m in months(START, END) if m in rS and m in rB and (rf is None or m in rf)]
     msset = set(ms)
@@ -283,6 +330,7 @@ def link(v):
 # ───────────── A ─────────────
 def part_a():
     ff = C.ff_factors()
+    USED_RAW.add('fr_F-F_Research_Data_Factors.zip')
     rf, mkt = ff['rf'], ff['mkt']
     fcache = {}
 
@@ -298,6 +346,7 @@ def part_a():
     g1 = {'corr': round(C.corr([uni_me[m] for m in ms], [mkt[m] for m in ms]), 5),
           'mean_diff_pct_per_month': round(S.mean(uni_me[m] - mkt[m] for m in ms) * 100, 4), 'months': len(ms)}
     g1['ok'] = g1['corr'] >= 0.995 and abs(g1['mean_diff_pct_per_month']) <= 0.05
+    USED_RAW.add('jkp_factor_usa_mkt_vw_monthly.zip')
     jm = {C._ym(x['date']): float(x['ret']) for x in C.jkp_rows('usa', 'mkt', 'factor', 'vw') if x['ret'] not in ('', 'NA', 'na')}
     ms = [m for m in months(START, END) if m in jm and m in mkt and m in rf]
     g2 = {'corr': round(C.corr([jm[m] + rf[m] for m in ms], [mkt[m] for m in ms]), 5),
@@ -330,14 +379,17 @@ def part_a():
                 rfx = rf
             else:
                 fp = fparts(T['file'])
-                rS = fp[w][T['col']]
+                rS = fp[w][T['col']] if fp[w] is not None else None
                 rB, nb_drop = french_universe(fp, T['part'], w)
                 row['series'][w] = {'source': f'French {T["file"]} の {T["col"]}（{w}）', 'table': fp[w + '_title'],
                                     'benchmark': f'分け切る群 {T["part"]} の{"銘柄数×平均の時価" if w == "vw" else "銘柄数"}で重み付けた平均',
                                     'benchmark_dropped_months': nb_drop}
+                bad = {k: fp[k + '_bad'] for k in (w, 'n', 's') if fp.get(k + '_bad')}
+                if bad:
+                    row['series'][w]['table_bad'] = bad
                 rfx = None
-            stt = {k: stats(rS, rB, a, z) for k, (a, z) in PERIODS.items()}
-            if T['src'] == 'French':
+            stt = {k: stats(rS, rB, a, z, rfx) for k, (a, z) in PERIODS.items()}
+            if T['src'] == 'French' and rS is not None and rB is not None:
                 last = max(m for m in rS if m in rB)
                 stt['latest_French'] = dict(stats(rS, rB, START, last), end=last)
             stt['tail'] = tails(rS, rB, rfx)
@@ -346,12 +398,15 @@ def part_a():
             fp = fparts(T['big'][0])
             out = {}
             for w in ('vw', 'ew'):
-                rS = fp[w][T['big'][1]]
+                rS = fp[w][T['big'][1]] if fp[w] is not None else None
                 rB, nb_drop = french_universe(fp, T['big'][2], w)
                 stt = {k: stats(rS, rB, a, z) for k, (a, z) in PERIODS.items()}
                 stt['tail'] = tails(rS, rB, None)
                 out[w] = {'source': f'French {T["big"][0]} の {T["big"][1]}（{w}）', 'table': fp[w + '_title'],
                           'benchmark': f'大型の3群 {T["big"][2]}', 'benchmark_dropped_months': nb_drop, 'stats': stt}
+                bad = {k: fp[k + '_bad'] for k in (w, 'n', 's') if fp.get(k + '_bad')}
+                if bad:
+                    out[w]['table_bad'] = bad
             row['big'] = out
         res[tid] = row
 
@@ -376,8 +431,7 @@ def part_a():
     for tid in res:
         res[tid]['verdict'] = res[tid]['series']['vw']['verdict']
         res[tid]['link_to_2013'] = res[tid]['series']['vw']['link_to_2013']
-    hashes = {fn: sha_file(os.path.join(C.CACHE, fn)) for fn in sorted(os.listdir(C.CACHE))
-              if (fn.startswith('fr_') or fn.startswith('jkp_')) and fn.endswith('.zip')}
+    hashes = {fn: sha_file(os.path.join(C.CACHE, fn)) for fn in sorted(USED_RAW)}
     return {'guards': {'G1': g1, 'G2': g2}, 'tests': res, 'raw_sha256': hashes}
 
 
