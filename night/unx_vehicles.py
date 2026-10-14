@@ -42,7 +42,6 @@ OUT = os.path.join(BASE, 'out', 'unx_vehicles.json')
 PREREG = 'out/unexplored_prereg.json（6f534c92）'
 END = 20260930                 # 事前登録 common.data_cutoff: 月次は 2026-09 まで
 UA = {'User-Agent': 'Mozilla/5.0 (ccf-gate research)'}
-SCOUT = '/tmp/claude-0/-home-user-ccf-gate/9d311d2b-9e37-5d72-ab9f-e5499ad3d31c/scratchpad/discovery'
 GIW_URL = 'https://indexes.nasdaqomx.com/Index/HistoryData'
 XSOX_CSV = 'https://indexes.nasdaqomx.com/docs/AdditionalData_XSOX.csv'
 SOX_METH = 'https://indexes.nasdaqomx.com/docs/Methodology_SOX.pdf'
@@ -286,7 +285,7 @@ def fx_daily():
         fx = fred_daily('DEXJPUS')
         return fx, 'FRED DEXJPUS https://fred.stlouisfed.org/graph/fredgraph.csv?id=DEXJPUS（この実行で取得）'
     except Exception as e:  # noqa
-        cands = [os.path.join(BASE, 'out', '_gaps_cache', 'fred_DEXJPUS.csv'), os.path.join(SCOUT, 'tse-us-index', 'data', 'fred_DEXJPUS_new.csv')]
+        cands = [os.path.join(BASE, 'out', '_gaps_cache', 'fred_DEXJPUS.csv')] + ([os.environ['UNX_FX_FALLBACK']] if os.environ.get('UNX_FX_FALLBACK') else [])
         best = None
         for p in cands:
             if os.path.exists(p):
@@ -397,10 +396,14 @@ def etfd_er():
 def vaneck_smh_er():
     try:
         t = fetch(VANECK_SMH, 'vaneck_smh.html', max_age_days=7, cookie=True).decode('utf-8', 'replace')
-        txt = re.sub(r'\s+', ' ', re.sub(r'<[^>]+>', ' ', t))
-        m = re.search(r'Expense Ratio\s*((?:\S+\s+){0,12}?)(\d+\.\d+)%', txt)
+        m = re.search(r'"feesAndCommissionsSpecification":"(\d+\.\d+)%"', t)
         if m:
-            return float(m.group(2)), f'VanEck の SMH のページ {VANECK_SMH}（「Expense Ratio」の数字）'
+            return float(m.group(1)), f'VanEck の SMH のページ {VANECK_SMH}（ページの構造化データ feesAndCommissionsSpecification）'
+        txt = re.sub(r'\s+', ' ', re.sub(r'<[^>]+>', ' ', re.sub(r'<svg.*?</svg>', '', t, flags=re.S)))
+        m = re.search(r'Expense Ratio.{0,1500}?(\d+\.\d+)\s*%\s*Inception Date', txt)
+        if m:
+            return float(m.group(1)), f'VanEck の SMH のページ {VANECK_SMH}（「Expense Ratio」の欄）'
+        DEV.append('VanEck の SMH のページから経費率を読めなかった＝楽天の海外 ETF 一覧の経費率を使った')
     except Exception as e:  # noqa
         DEV.append(f'VanEck の SMH のページが取れなかった（{e}）＝楽天の海外 ETF 一覧の経費率を使った')
     return None, None
@@ -692,10 +695,14 @@ def main():
         by.setdefault(e['bet'], []).append(e)
     D_out = {}
     for bet, lst in by.items():
-        ranked = sorted([x for x in lst if x.get('nisa_cost') is not None], key=lambda x: x['nisa_cost'])
+        # SOX の賭けの SMH・SOXX は指数が XSOX と違う＝「費用」ではないので並びに入れない（index_difference_not_cost に別に出す）
+        ranked = sorted([x for x in lst if x.get('nisa_cost') is not None and not (bet == 'SOX' and x['kind'] == 'us')], key=lambda x: x['nisa_cost'])
         ranking = [{'rank': i + 1, 'vehicle': x['vehicle'], 'window': x['primary_window'], 'nisa_cost': x['nisa_cost'],
                     'real_cost_roll': x['real_cost'], 'real_cost_slope': x['real_cost_slope'], 'stated_fee': x.get('stated_fee_incl_tax'),
-                    'tsumitate': x.get('tsumitate'), 'growth': x.get('growth'), 'rakuten': x.get('rakuten')} for i, x in enumerate(ranked)]
+                    'same_window_2y_roll': r3(x['windows']['2y']['roll'] + x.get('nisa_add_pct', 0)) if '2y' in x['windows'] else None,
+                    'same_window_2y_slope': r3(x['windows']['2y']['slope'] + x.get('nisa_add_pct', 0)) if '2y' in x['windows'] and x['windows']['2y']['slope'] is not None else None,
+                    'tsumitate': x.get('tsumitate'), 'growth': x.get('growth'), 'rakuten': x.get('rakuten'),
+                    **({'data_note': '市場価格の代わり（基準価額ではない・市場の上乗せと割引を含む）'} if x['kind'] == 'tse_px' else {})} for i, x in enumerate(ranked)]
         named, cmp_rows = [], []
         for label, cur_nm, frame in CURRENT.get(bet, []):
             cur = next((x for x in lst if x['vehicle'] == cur_nm), None)
@@ -793,6 +800,17 @@ def main():
         return {'from': wk[0], 'to': wk[-1], 'n': len(ra), 'months': round(yrs * 12, 1), 'corr': round(c, 4), 'te_pct': round(100 * te, 2),
                 'cagr_a_pct': round(100 * ga, 2), 'cagr_b_pct': round(100 * gb, 2), 'gap_pct': round(100 * (ga - gb), 2)}
 
+    def cal_years(a, b, y0, y1):
+        out = {}
+        for y in range(y0, y1 + 1):
+            ks = sorted(k for k in set(a) & set(b) if k <= min(END, y * 10000 + 1231))
+            k0 = max((k for k in ks if k < y * 10000 + 101), default=None)
+            k1 = max((k for k in ks if k // 10000 == y), default=None)
+            if k0 and k1:
+                out[str(y) if k1 % 10000 >= 1220 else f'{y}（〜{k1}）'] = {'a_pct': round(100 * (a[k1] / a[k0] - 1), 1), 'b_pct': round(100 * (b[k1] / b[k0] - 1), 1),
+                                                                         'diff_pt': round(100 * (a[k1] / a[k0] - b[k1] / b[k0]), 1)}
+        return out
+
     ce_ = max(k for k in set(smh) & set(xsox) if k <= END)
     f_corr = {'2012-01〜2026-09（主）': corr_te(smh, xsox, 20120101, END),
               '直近24か月': corr_te(smh, xsox, iymd(datetime.date(ymd(ce_).year - 2, ymd(ce_).month, ymd(ce_).day)), END),
@@ -831,6 +849,7 @@ def main():
         'smh_er': {'value_pct': smh_er, 'src': smh_src or '楽天の海外 ETF 一覧（2026-10-11）'},
         'smh_vs_xsox_usd': f_corr,
         'smh_vs_xsox_note': 'SMH＝Yahoo の調整後終値（経費0.35%を引いた後）・XSOX＝指数（費用なし）。週＝ISO 週の最後の取引日。gap は SMH − XSOX の年率',
+        'smh_vs_xsox_calendar_years（a=SMH・b=XSOX・参考）': cal_years(smh, xsox, 2012, 2026),
         'sox_funds_real_cost': f_rows,
         'condition_cost': f'SOX の投信の実際の費用（3年・無ければ2年・1年ごとの差の平均）≤ SMH の経費率 {smh_er}%＋0.10pt＝{r3(smh_er + 0.10)}%',
         'condition_corr': 'SMH と XSOX の週次の相関 ≥ 0.98（24か月以上＝主は 2012-01〜2026-09）',
@@ -858,7 +877,12 @@ def main():
             if re.search(pat, line):
                 lines.append({'file': fn, 'line': i, 'text': line.strip()[:200]})
     G1 = {'what': 'SOXX の配当込み（Yahoo の調整後終値）と XSOX（指数）・主は日次の相関（同じ米国の終値どうし）と年率の差（SOXX − XSOX・SOXX の経費 0.34% を含む）',
-          'measure': g1, 'condition': '年率の差の大きさ > 0.5pt か 相関 < 0.995（主の窓・日次）', 'triggered': trig}
+          'measure': g1, 'condition': '年率の差の大きさ > 0.5pt か 相関 < 0.995（主の窓・日次）', 'triggered': trig,
+          'calendar_years（a=SOXX・b=XSOX・参考）': cal_years(soxx, xsox, 2015, 2026),
+          'reading': (f"主の窓の年率の差 {main_d['gap_pct']}pt は線 0.5 をわずかに超えた（SOXX の経費 0.34% を足し戻すと {round(main_d['gap_pct'] + 0.34, 2)}pt）。"
+                      f"乗り換え前（2015-01〜2021-06-18）の差 {g1['参考 2015-01〜2021-06-18（乗り換え前）']['d']['gap_pct']}pt のほうが大きい＝5年の年率では指数の乗り換えは差に出ていない。"
+                      f"出ているのは追従のずれ（日次の追従誤差 {main_d['te_pct']}%/年 対 乗り換え前 {g1['参考 2015-01〜2021-06-18（乗り換え前）']['d']['te_pct']}%/年・月次の相関 "
+                      f"{g1['2021-07〜2026-09（主）']['m']['corr']} 対 {g1['参考 2015-01〜2021-06-18（乗り換え前）']['m']['corr']}）と暦年の差（下の表）。判定は事前登録の文どおり（差の大きさ > 0.5）")}
     if trig:
         G1['named_non_SOX_after_2021_06'] = [l for l in lines if 'bestfund.py' not in l['file']]
         G1['also_noticed_post_hoc'] = [dict(l, why='bestfund の世界 B は SEMI_SOX を SOXX の保有の業種で作る（事前登録 G1 の外・事後の気づき・直していない）') for l in lines if 'bestfund.py' in l['file']]
@@ -905,6 +929,7 @@ def main():
         '日本1か月は全銀協 日本円 TIBOR 1か月（銀行間の無担保）・米国1か月は米国債1か月（無リスク）＝同じ種類の金利ではない（TIBOR のほうが信用の上乗せの分だけ高い＝ヘッジの費用の近似が小さめ＝ヘッジつきの器の実際の費用が大きめに出る向き）。無料で取れる日本の1か月の日次はこれだけ',
         '東証の市場価格の代わり（1540・1326）で、Yahoo が数日だけ別の単位の値を返す日（1326.T: 2025-12-23・2026-01-13〜16 にドル建ての値）を見つけた＝分割の検査に「元へ戻る跳びは値の誤りとして落とす」を足した（初回の実行がこの値で 1326 の1年の費用 −27% などを出したのを見て直した・データの誤りの是正で、規則・候補・線は変えていない）',
         'SMH の実際の費用は自分の指数（MVIS US Listed Semiconductor 25）の日次が無料で取れない（marketvector.com は 403）ので測れない＝SOX の賭けの今の器の費用は表の経費率＋外国税＋両替で置いた',
+        'この道具は4回回した（4回目は予備の為替の置き場所〔FRED が取れないときだけ使う〕の書き換えだけで、結果は3回目と同じ。1回目は JSON の書き出しで落ちた〔numpy の真偽値〕が、その記録で Yahoo の 1326.T の悪い値を見つけて落とす検査を足した。2回目は完走したが VanEck の経費率の読み取りの失敗〔楽天の一覧の 0.35% に落ちていた・同じ値〕と、SOX の並びに SMH・SOXX〔指数が違う〕が入る表示の誤りを直し、暦年の表と同じ2年の窓の列を足した。3回目で数字が固まった）。規則・線・候補・データの選び方は変えていない',
         '2632・2569・2087（NASDAQ100 の円ヘッジの東証 ETF）は探索役が名前を挙げて測らなかった本。事前登録の一覧（2841）と同じ賭けとして測った（並びだけ・今の器なし）',
     ]
     doc['caveats'] = [
