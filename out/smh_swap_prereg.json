@@ -1,0 +1,40 @@
+{
+ "name": "smh_swap（SHLD を SMH に変えるのは？）",
+ "date": "2026-10-14",
+ "question": "ユーザー「SHLD→SMHは？」——SHLD 5% を SMH へ回すと、今の配分と比べて何が変わるか（直前の ndx_swap〔ITA か SHLD を NASDAQ100 へ〕の続き）",
+ "status": "測る前に固定した（このファイルをコミットしてから night/smh_swap_check.py を書いて回す）",
+ "scope": "読むだけ。門・採点・配分（portfolio.json）・注文書には触れない。結果がどう出ても配分は変えない（変えるのはユーザーの明示指示のときだけ）",
+ "machinery": "out/ndx_swap_prereg.json（fae26ca3）と同じ——night/unx_assets.measure（5つの世界・π）・楽天・プラス・SOX は SMH の写し − 年0.7pt（SOX_F）・SHLD の 2023-09 以前は ITA のつなぎ・ETF 側だけ。部品は night/ndx_swap_check.py の variants・judge・chips_adj・reading をそのまま使う（同じ式）",
+ "forms_etf_side_percent_of_total": {
+  "F_cur（今・2026-10-14〜）": {"QQQM": 40, "SMH": 15, "SOX_F": 10, "ITA": 5, "SHLD": 5, "XLV": 5, "FBT": 5},
+  "E_SHLD→SMH（SHLD 5 を SMH へ）": {"QQQM": 40, "SMH": 20, "SOX_F": 10, "ITA": 5, "XLV": 5, "FBT": 5},
+  "参考 B_SHLD→NDX（直前の ndx_swap の B）": {"QQQM": 45, "SMH": 15, "SOX_F": 10, "ITA": 5, "XLV": 5, "FBT": 5},
+  "参考 F_ITA→SMH（ITA 5 を SMH へ・模型では SHLD≒ITA なので同じ問いの裏）": {"QQQM": 40, "SMH": 20, "SOX_F": 10, "SHLD": 5, "XLV": 5, "FBT": 5}
+ },
+ "comparisons": {
+  "主": "SHLD の価値（SMH と比べる）＝ F_cur − E（Δ＝今 − 案・ndx_swap と同じ向き）",
+  "参考（判定に使わない）": ["SMH と NASDAQ100 のどちらへ回すか＝ E − B（SMH へ回した形 − NASDAQ100 へ回した形）", "ITA の価値（SMH と比べる）＝ F_cur − F"]
+ },
+ "verdict_rule": "ndx_swap と同じ: etf_ita_xlk.verdict を感度5本（主・A2を外す・半導体の基礎率〔B・C・D〕・分散の上乗せなし・共分散を A2 の窓から）に当て etf_ita_xlk.summarize でまとめる。主の枠 USD・崩れあり 2000-09〜、確かめの枠 USD・ドットコム級なし 2002-11〜 と 円・崩れあり。保険の3条件（unx_final.conds）を今を案（E）と比べて当てる",
+ "upside_rule": "upside_check（65a1f711）の R2・R3 をそのまま E − F_cur に当てる: ΔP20（道の束）≥ +1.0pt かつ 最悪の世界・P5π・最大下落がどれも悪くならない → 『ただの上振れ（代金なし）』／ΔP20 ≥ +1.0 だが悪くなるものがある → 『代金つきの上振れ』／ΔP20 < +1.0 → 『上振れは増えない』。ΔP20 ≥ +1.0 で A2 を外した ΔP20 < +1.0 なら『直近15年の流れが続く世界に頼る』。3つの枠（USD・崩れあり／USD・ドットコム級なし／円・崩れあり）で出す",
+ "reading_rules_fixed_before_measuring": {
+  "R1〜R5": "ndx_swap と同じ（R1 堅い価値あり→今のまま／R2 堅い価値なし〜小さい→主が価値なしなら SMH へ替えるほうが測りでは良い・差が小さいならどちらでもよい／R3 前提しだい＋保険の3条件を満たす→今のまま／R4 前提しだい＋満たさない→決まりでは今のまま・好みの差／R5 確かめの枠が主と違えば『窓・通貨で割れる』）",
+  "R6": "上振れの読みが主の枠で『ただの上振れ（代金なし）』なのに R1・R3・R4 の読み（今のまま）なら、両方を並べて書く（『替えると上振れが増え、主の窓で測った代金は無い。ただし決まりの読みは今のまま』）——どちらを取るかはユーザーの判断",
+  "R7": "どの結果でも配分は変えない（報告するだけ）"
+ },
+ "reported_not_judged": [
+  "上振れ（P20・P25・内部収益率の90%点・95%点・10%点）・P0",
+  "過去の転がる20年・15年の積立（USD・2000-09〜2026-09）",
+  "100年の代用（ETF 側だけ・全体の形）——SMH は Chips・SHLD は Aero＋Guns",
+  "SHLD が本物の窓（2023-10〜2026-09）と ITA が本物の窓（2006-05〜）・下げの局面（2000-09〜2002-10・2007-11〜2009-02・2020-01〜03・2022-01〜09）",
+  "中身の集中（night/lookthrough.py --what-if・城は席5社×3%）: NVDA・半導体の連鎖",
+  "注文書: 今月（入金20万円）と12か月（night/shadow_seats.js --weights・席10・値段は一定）"
+ ],
+ "known_before_measuring": [
+  "半導体（SMH＋楽天・プラス・SOX）は今25%→案では30%。2026-10-14 の upside_check では NASDAQ100 から10を半導体へ回す形（LA 半導体35）が主の窓で『ただの上振れ』だったが、その差は雑音の中で、SOX の引く分0・ドットコム級なし・本物の ITA の窓・円・業種の基礎率では『代金つき』に変わった",
+  "SMH は今 14.8%（目標15%）——目標を20%にすると不足が出て新しいお金が入る",
+  "SHLD の 2023-09 以前は ITA のつなぎ（相関 0.58 で門を通らない）＝模型では SHLD と ITA をほぼ区別できない",
+  "半導体は業種の基礎率が警告する側（過去10年の1位の業種は次の10年に市場に勝ったのが26%〔out/tech_persist.json〕・比重は100年で最大〔out/industry_peak.json〕）——K4 の感度がそれを B・C・D に当てる"
+ ],
+ "outputs": ["out/smh_swap_check.json", "night/smh_swap_check.py"]
+}
