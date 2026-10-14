@@ -213,17 +213,19 @@
    ]
   },
   "reviewed_notes": {
-   "night/fetch_tsumitate_funds.py": "投信協会（toushin-lib.fwg.ne.jp）へ。Lib の opener の既定の見出しと検索の Request の両方。fetch_dashboard.fund_quotes（market.yml・平日毎日）と fetch_returns.fund_series（market.yml・returns.yml）がこの Lib を使う＝CI が毎営業日送っている",
-   "market_fetch.py": "Alpha Vantage・FMP（鍵つき）と SEC。ops.yml が AV_KEY のある月に回す",
-   "kessan_calendar.py": "Alpha Vantage（鍵があれば）と SEC。ops.yml が毎月回す",
-   "kessan_check_jp.py": "EDINET（api.edinet-fsa.go.jp・disclosure2dl）。ops.yml（鍵があれば）",
-   "night/watch_events.py": "EDINET API と SEC。events.yml（平日毎日）",
-   "night/watch_exceptions.py": "SEC（UA にメール）。Alpha Vantage は \"ccf-gate\"（メールなし）——要確認の対象外",
+   "night/fetch_tsumitate_funds.py": "投信協会（toushin-lib.fwg.ne.jp）へ。Lib の opener の既定の見出し（L56）と検索の Request（L65）の両方。fetch_dashboard.fund_quotes（market.yml・平日毎日）と fetch_returns.fund_series（market.yml・returns.yml）がこの Lib を使う＝CI が毎営業日送っている。同じ協会へ送る nx_jpfunds_data.Lib・mw_jp_nisa_bridge・mw_investable_valmom・mw_own_exposure は mw_common/nx_common の UA（メールなし）",
+   "market_fetch.py": "_get が Alpha Vantage・FMP（鍵つき）と SEC に同じ見出し。ops.yml が AV_KEY のある月に回す。market_fetch_free.py・market_fetch_sec.py は _get を SEC にだけ使う",
+   "kessan_calendar.py": "get が Alpha Vantage（鍵があれば）にも同じ見出し。ops.yml が毎月回す",
+   "kessan_check_jp.py": "EDINET（api.edinet-fsa.go.jp・disclosure2dl.edinet-fsa.go.jp）。ops.yml（鍵があれば）",
+   "night/watch_events.py": "_fetch が EDINET API（鍵つき）にも同じ見出し（SEC と共用）。events.yml（平日毎日）",
    "night/audit_wacc_stale.py": "FRED（fred.stlouisfed.org）。ops.yml（毎月）",
    "night/fetch_logos.py": "parqet（assets.parqet.com）・FMP の画像。ops.yml（毎月）",
    "night/beat_spy_rule.py": "Yahoo（query1.finance.yahoo.com）。CI では回っていない（手で回す道具）",
-   "night/backtest_core.py": "SEC と Yahoo（同じ HDRS で両方へ）。gate0.yml（年1回）",
-   "night/industry_trends.py": "SEC と Ken French（mba.tuck.dartmouth.edu）——同じ HDRS を使う取得の関数を共有しているか確かめる対象"
+   "night/backtest_core.py": "get が SEC と Yahoo の両方に同じ見出し。gate0.yml（年1回）",
+   "night/industry_trends.py": "get が SEC と Ken French（mba.tuck.dartmouth.edu）の両方に同じ見出し。ops.yml（毎月）。industry_exposure.py は get を SEC にだけ使う",
+   "night/irr70_dossier.py": "irr85_extract.UA（メールつき）で EDINET の有報 PDF（disclosure2dl.edinet-fsa.go.jp）も取る。CI では回っていない",
+   "night/unx_assets.py": "★この事前登録の別の実装（未コミット）が fetch_tsumitate_funds.Lib を import している＝その道具を回すと協会へメールつきの UA が送られる（リードへ）",
+   "解けなかった3か所（ホスト不明）": "bestpf_ext.py L211（SEC_UA・SEC の URL を引数で受ける）・gaps_delisted_irr.py L113（retro_read_helper.HD・SEC の提出書類）・retro_read_helper.py L32（plain(url)・SEC の提出書類）＝手で読んで SEC だけと確かめた"
   },
   "n_send_sites_with_email": 84,
   "n_sec_only": 71,
@@ -261,6 +263,7 @@
   "tools": [
    {
     "file": "night/alt_etf_compare.py",
+    "in_flight_this_study": false,
     "tse_codes_literal": [
      "1621",
      "2639",
@@ -285,6 +288,7 @@
    },
    {
     "file": "night/bestfund_data.py",
+    "in_flight_this_study": false,
     "tse_codes_literal": [
      "1306",
      "1321"
@@ -312,6 +316,7 @@
    },
    {
     "file": "night/castle_correlation.py",
+    "in_flight_this_study": false,
     "tse_codes_literal": [],
     "builds_dot_T_dynamically": true,
     "yahoo_fetch_seen": true,
@@ -334,6 +339,7 @@
    },
    {
     "file": "night/defense_alts.py",
+    "in_flight_this_study": false,
     "tse_codes_literal": [
      "466A",
      "513A"
@@ -360,6 +366,7 @@
    },
    {
     "file": "night/estimate_bd.py",
+    "in_flight_this_study": false,
     "tse_codes_literal": [],
     "builds_dot_T_dynamically": true,
     "yahoo_fetch_seen": true,
@@ -378,6 +385,7 @@
    },
    {
     "file": "night/etf_jp.py",
+    "in_flight_this_study": false,
     "tse_codes_literal": [
      "1305",
      "1321",
@@ -412,6 +420,7 @@
    },
    {
     "file": "night/etf_jp_defense.py",
+    "in_flight_this_study": false,
     "tse_codes_literal": [
      "466A",
      "498A",
@@ -438,6 +447,7 @@
    },
    {
     "file": "night/fetch_dashboard.py",
+    "in_flight_this_study": false,
     "tse_codes_literal": [],
     "builds_dot_T_dynamically": false,
     "yahoo_fetch_seen": true,
@@ -462,6 +472,7 @@
    },
    {
     "file": "night/fetch_divs.py",
+    "in_flight_this_study": false,
     "tse_codes_literal": [],
     "builds_dot_T_dynamically": true,
     "yahoo_fetch_seen": true,
@@ -485,6 +496,7 @@
    },
    {
     "file": "night/fetch_logos.py",
+    "in_flight_this_study": false,
     "tse_codes_literal": [],
     "builds_dot_T_dynamically": true,
     "yahoo_fetch_seen": false,
@@ -505,6 +517,7 @@
    },
    {
     "file": "night/fetch_returns.py",
+    "in_flight_this_study": false,
     "tse_codes_literal": [],
     "builds_dot_T_dynamically": true,
     "yahoo_fetch_seen": true,
@@ -533,6 +546,7 @@
    },
    {
     "file": "night/mw_forward.py",
+    "in_flight_this_study": false,
     "tse_codes_literal": [],
     "builds_dot_T_dynamically": true,
     "yahoo_fetch_seen": true,
@@ -559,6 +573,7 @@
    },
    {
     "file": "night/mw_holdable_breakeven.py",
+    "in_flight_this_study": false,
     "tse_codes_literal": [
      "1306",
      "1489"
@@ -597,8 +612,26 @@
    },
    {
     "file": "night/mw_industry.py",
+    "in_flight_this_study": false,
     "tse_codes_literal": [
-     "1308"
+     "1308",
+     "1617",
+     "1618",
+     "1619",
+     "1620",
+     "1621",
+     "1622",
+     "1623",
+     "1624",
+     "1625",
+     "1626",
+     "1627",
+     "1628",
+     "1629",
+     "1630",
+     "1631",
+     "1632",
+     "1633"
     ],
     "builds_dot_T_dynamically": true,
     "yahoo_fetch_seen": true,
@@ -627,6 +660,7 @@
    },
    {
     "file": "night/mw_japan.py",
+    "in_flight_this_study": false,
     "tse_codes_literal": [
      "1305",
      "1306",
@@ -666,6 +700,7 @@
    },
    {
     "file": "night/mw_jp_nisa_bridge.py",
+    "in_flight_this_study": false,
     "tse_codes_literal": [
      "1399",
      "1478",
@@ -705,6 +740,7 @@
    },
    {
     "file": "night/nx_brand_data.py",
+    "in_flight_this_study": false,
     "tse_codes_literal": [
      "6752",
      "6758",
@@ -737,6 +773,7 @@
    },
    {
     "file": "night/unx_vehicles.py",
+    "in_flight_this_study": true,
     "tse_codes_literal": [
      "1326",
      "1540"
@@ -761,7 +798,14 @@
      "unx_vehicles.json",
      "wholeshare_buy.json"
     ],
-    "reviewed": null
+    "reviewed": {
+     "series": "1540・1326（金）",
+     "helper": "道具の中の 'tse_px'",
+     "outputs": [
+      "out/unx_vehicles.json（この事前登録の別の実装・未コミット）"
+     ],
+     "uses": "★1326.T の Yahoo は壊れている（G2_instruments.etfs.1326）——リードへ"
+    }
    }
   ],
   "not_yahoo_but_checked": {
@@ -17385,16 +17429,29 @@
    "1306",
    "1308",
    "1321",
-   "1326",
    "1348",
    "1399",
    "1478",
    "1489",
    "1494",
-   "1540",
    "1577",
+   "1617",
+   "1618",
+   "1619",
+   "1620",
    "1621",
+   "1622",
+   "1623",
+   "1624",
    "1625",
+   "1626",
+   "1627",
+   "1628",
+   "1629",
+   "1630",
+   "1631",
+   "1632",
+   "1633",
    "1651",
    "1698",
    "200A",
@@ -17408,6 +17465,10 @@
    "513A",
    "610A"
   ],
+  "used_by_in_flight_unx_tools": [
+   "1326",
+   "1540"
+  ],
   "scout_codes_not_used_via_yahoo": [
    "1545",
    "2840",
@@ -17416,14 +17477,136 @@
    "2559",
    "2631",
    "2632",
+   "1540",
+   "1326",
    "2621"
   ]
  },
  "G2_impact": {
-  "etf_jp": {
-   "error": "TypeError: type complex doesn't define __round__ method",
-   "trace": "Traceback (most recent call last):\n  File \"/home/user/ccf-gate/night/unx_datafix.py\", line 1151, in main\n    rows.append({'file': fp, 'key': key, 'metric': metric, 'old_stored': old_s, 'old_recomputed': old_r, 'corrected': cor,\n                  ^^^^^^^^\n  File \"/home/user/ccf-gate/night/unx_datafix.py\", line 577, in impact_etf_jp\n    old = EJ.st(fixed, a, b)\n          ^^^^^^^^^^^^^^^^^^\n  File \"/home/user/ccf-gate/night/etf_jp.py\", line 113, in st\n    return {\"cagr\": round((v[ks[-1]] / v[ks[0]]) ** (1 / y) - 1, 4),\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: type complex doesn't define __round__ method\n"
-  },
+  "etf_jp": [
+   {
+    "file": "out/etf_jp.json",
+    "key": "rows[2644.T].jpy",
+    "window": "2021-09〜2026-08",
+    "old_stored": {
+     "cagr_pct": 28.63,
+     "maxdd_pct": -40.93
+    },
+    "old_recomputed": {
+     "cagr_pct": 28.68,
+     "maxdd_pct": -40.93,
+     "repair_found": [
+      {
+       "month": "2024-10",
+       "ratio": 0.5299,
+       "as": "1:2"
+      }
+     ]
+    },
+    "corrected": {
+     "cagr_pct": 29.01,
+     "maxdd_pct": -40.86
+    },
+    "delta_cagr_pt_vs_recomputed": 0.33,
+    "note": "rows[].vs[].diff_jpy_pt・diff_fxneutral_pt（米国 ETF との差）は同じ幅だけ動く"
+   },
+   {
+    "file": "out/etf_jp.json",
+    "key": "rows[200A.T].jpy",
+    "window": "2024-06〜2026-08",
+    "old_stored": {
+     "cagr_pct": 42.47,
+     "maxdd_pct": -33.47
+    },
+    "old_recomputed": {
+     "cagr_pct": 42.76,
+     "maxdd_pct": -33.47,
+     "repair_found": []
+    },
+    "corrected": {
+     "cagr_pct": 42.84,
+     "maxdd_pct": -33.39
+    },
+    "delta_cagr_pt_vs_recomputed": 0.08,
+    "note": "rows[].vs[].diff_jpy_pt・diff_fxneutral_pt（米国 ETF との差）は同じ幅だけ動く"
+   },
+   {
+    "file": "out/etf_jp.json",
+    "key": "rows[2243.T].jpy",
+    "window": "2023-04〜2026-08",
+    "old_stored": {
+     "cagr_pct": 58.97,
+     "maxdd_pct": -32.03
+    },
+    "old_recomputed": {
+     "cagr_pct": 58.13,
+     "maxdd_pct": -32.03,
+     "repair_found": []
+    },
+    "corrected": {
+     "cagr_pct": 58.07,
+     "maxdd_pct": -32.11
+    },
+    "delta_cagr_pt_vs_recomputed": -0.06,
+    "note": "rows[].vs[].diff_jpy_pt・diff_fxneutral_pt（米国 ETF との差）は同じ幅だけ動く"
+   },
+   {
+    "file": "out/etf_jp.json",
+    "key": "rows[1625.T].jpy",
+    "window": "2008-03〜2026-08",
+    "old_stored": {
+     "cagr_pct": 9.91,
+     "maxdd_pct": -56.04
+    },
+    "old_recomputed": {
+     "cagr_pct": 10.06,
+     "maxdd_pct": -56.04,
+     "repair_found": []
+    },
+    "corrected": {
+     "cagr_pct": 10.51,
+     "maxdd_pct": -54.87
+    },
+    "delta_cagr_pt_vs_recomputed": 0.45,
+    "note": "rows[].vs[].diff_jpy_pt・diff_fxneutral_pt（米国 ETF との差）は同じ幅だけ動く"
+   },
+   {
+    "file": "out/etf_jp.json",
+    "key": "rows[1321.T].jpy",
+    "window": "2009-01〜2026-08",
+    "old_stored": {
+     "cagr_pct": 14.2,
+     "maxdd_pct": -24.33
+    },
+    "old_recomputed": "etf_jp.st が計算できない（TypeError）——今の Yahoo の調整後終値に負の値: 2009-01 -0.004, 2009-02 -0.003, 2009-03 -0.004, 2009-04 -0.004, 2009-05 -0.004, 2009-06 -0.005, 2009-07 -0.005, 2009-08 -0.005, 2009-09 -0.005, 2009-10 -0.005, 2009-11 -0.004, 2009-12 -0.005, 2010-01 -0.005, 2010-02 -0.005, 2010-03 -0.005, 2010-04 -0.005, 2010-05 -0.004, 2010-06 -0.004, 2010-07 -0.0",
+    "corrected": {
+     "cagr_pct": 11.7,
+     "maxdd_pct": -28.19
+    },
+    "delta_cagr_pt_vs_recomputed": null,
+    "note": "rows[].vs[].diff_jpy_pt・diff_fxneutral_pt（米国 ETF との差）は同じ幅だけ動く"
+   },
+   {
+    "file": "out/etf_jp.json",
+    "key": "rows[1305.T].jpy",
+    "window": "2008-01〜2026-08",
+    "old_stored": {
+     "cagr_pct": 7.74,
+     "maxdd_pct": -49.17
+    },
+    "old_recomputed": {
+     "cagr_pct": 7.93,
+     "maxdd_pct": -49.17,
+     "repair_found": []
+    },
+    "corrected": {
+     "cagr_pct": 8.48,
+     "maxdd_pct": -45.96
+    },
+    "delta_cagr_pt_vs_recomputed": 0.55,
+    "note": "rows[].vs[].diff_jpy_pt・diff_fxneutral_pt（米国 ETF との差）は同じ幅だけ動く"
+   }
+  ],
   "etf_jp_defense": [
    {
     "file": "out/etf_jp_defense.json",
@@ -18546,5 +18729,3155 @@
    "8136"
   ]
  },
- "runtime_sec": 206
+ "results": {
+  "G3_files_sending_email_to_non_sec": {
+   "kessan_calendar.py": {
+    "lines": [
+     31
+    ],
+    "non_sec_hosts": [
+     "www.alphavantage.co"
+    ],
+    "ci": [
+     "ops.yml"
+    ],
+    "header_text": "req = urllib.request.Request(url, headers=HDRS)"
+   },
+   "kessan_check_jp.py": {
+    "lines": [
+     104
+    ],
+    "non_sec_hosts": [
+     "api.edinet-fsa.go.jp",
+     "disclosure2dl.edinet-fsa.go.jp"
+    ],
+    "ci": [
+     "ops.yml"
+    ],
+    "header_text": "return urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=timeout).read()"
+   },
+   "market_fetch.py": {
+    "lines": [
+     36
+    ],
+    "non_sec_hosts": [
+     "financialmodelingprep.com",
+     "www.alphavantage.co"
+    ],
+    "ci": [
+     "market.yml",
+     "ops.yml"
+    ],
+    "header_text": "with urllib.request.urlopen(urllib.request.Request(url, headers=HDR), timeout=timeout) as r:"
+   },
+   "night/audit_wacc_stale.py": {
+    "lines": [
+     54
+    ],
+    "non_sec_hosts": [
+     "fred.stlouisfed.org"
+    ],
+    "ci": [
+     "ops.yml"
+    ],
+    "header_text": "req = urllib.request.Request(FRED, headers={\"User-Agent\": \"ccf-gate <email>\"})"
+   },
+   "night/backtest_core.py": {
+    "lines": [
+     59
+    ],
+    "non_sec_hosts": [
+     "query1.finance.yahoo.com"
+    ],
+    "ci": [
+     "gate0.yml"
+    ],
+    "header_text": "req = urllib.request.Request(url, headers=HDRS)"
+   },
+   "night/beat_spy_rule.py": {
+    "lines": [
+     59
+    ],
+    "non_sec_hosts": [
+     "query1.finance.yahoo.com"
+    ],
+    "ci": [],
+    "header_text": "urllib.request.Request(url, headers=HD), timeout=60).read())"
+   },
+   "night/fetch_logos.py": {
+    "lines": [
+     62
+    ],
+    "non_sec_hosts": [
+     "assets.parqet.com",
+     "financialmodelingprep.com"
+    ],
+    "ci": [
+     "ops.yml"
+    ],
+    "header_text": "r = urllib.request.urlopen(urllib.request.Request(tmpl.format(q=q), headers=HD), timeout=25)"
+   },
+   "night/fetch_tsumitate_funds.py": {
+    "lines": [
+     56,
+     65
+    ],
+    "non_sec_hosts": [
+     "toushin-lib.fwg.ne.jp"
+    ],
+    "ci": [],
+    "header_text": "self.op.addheaders = [(\"User-Agent\", UA)]"
+   },
+   "night/industry_trends.py": {
+    "lines": [
+     61
+    ],
+    "non_sec_hosts": [
+     "mba.tuck.dartmouth.edu"
+    ],
+    "ci": [
+     "ops.yml"
+    ],
+    "header_text": "return urllib.request.urlopen(urllib.request.Request(url, headers=HDRS), timeout=90).read()"
+   },
+   "night/irr70_dossier.py": {
+    "lines": [
+     143,
+     156
+    ],
+    "non_sec_hosts": [
+     "disclosure2dl.edinet-fsa.go.jp"
+    ],
+    "ci": [],
+    "header_text": "b = urllib.request.urlopen(urllib.request.Request(u, headers=EX.UA), timeout=120).read()"
+   },
+   "night/watch_events.py": {
+    "lines": [
+     251
+    ],
+    "non_sec_hosts": [
+     "api.edinet-fsa.go.jp"
+    ],
+    "ci": [
+     "events.yml"
+    ],
+    "header_text": "req = urllib.request.Request(url, headers=HDRS)"
+   },
+   "night/fetch_dashboard.py": {
+    "via": "from fetch_tsumitate_funds import Lib",
+    "line": 373,
+    "non_sec_hosts": [
+     "toushin-lib.fwg.ne.jp"
+    ],
+    "ci": [
+     "market.yml"
+    ]
+   },
+   "night/fetch_returns.py": {
+    "via": "from fetch_tsumitate_funds import Lib",
+    "line": 159,
+    "non_sec_hosts": [
+     "toushin-lib.fwg.ne.jp"
+    ],
+    "ci": [
+     "market.yml",
+     "returns.yml"
+    ]
+   },
+   "night/unx_assets.py": {
+    "via": "from fetch_tsumitate_funds import Lib",
+    "line": 384,
+    "non_sec_hosts": [
+     "toushin-lib.fwg.ne.jp"
+    ],
+    "ci": []
+   }
+  },
+  "G2_affected_instruments": [
+   {
+    "code": "1305",
+    "used_by_tools": true,
+    "used_by_in_flight_unx_tools": false,
+    "unrecorded_splits": [],
+    "glitch_days": [],
+    "distribution_status": {
+     "ok": 14,
+     "too_small": 0,
+     "missing": 5,
+     "too_large": 0
+    },
+    "distribution_years_off": {
+     "2008": {
+      "jita": 1.616,
+      "yahoo_adj": 0.0,
+      "missed": 1.616
+     },
+     "2009": {
+      "jita": 3.054,
+      "yahoo_adj": 0.0,
+      "missed": 3.054
+     },
+     "2010": {
+      "jita": 1.56,
+      "yahoo_adj": 0.0,
+      "missed": 1.56
+     },
+     "2011": {
+      "jita": 1.736,
+      "yahoo_adj": 0.0,
+      "missed": 1.736
+     },
+     "2012": {
+      "jita": 2.023,
+      "yahoo_adj": 0.0,
+      "missed": 2.023
+     },
+     "2022": {
+      "jita": 2.394,
+      "yahoo_adj": 2.451,
+      "missed": -0.057
+     }
+    },
+    "monthly": {
+     "window": "200802〜202609（224か月）",
+     "cagr_yahoo_as_used_pct": 7.89,
+     "cagr_corrected_pct": 8.43,
+     "cagr_gap_pt": -0.55,
+     "n_months_gap_gt_2pct": 1
+    }
+   },
+   {
+    "code": "1306",
+    "used_by_tools": true,
+    "used_by_in_flight_unx_tools": false,
+    "unrecorded_splits": [
+     "20150105 1:10（口数の分割）（終値×0.0994・調整後も跳ぶ=True・協会の水準の比 0.9954）"
+    ],
+    "glitch_days": [
+     "20260330（37.63999938964844 ← 前 382.70001220703125）",
+     "20260331（37.13999938964844 ← 前 382.70001220703125）"
+    ],
+    "distribution_status": {
+     "ok": 13,
+     "too_small": 0,
+     "missing": 4,
+     "too_large": 1
+    },
+    "distribution_years_off": {
+     "2009": {
+      "jita": 2.137,
+      "yahoo_adj": 0.0,
+      "missed": 2.137
+     },
+     "2010": {
+      "jita": 1.854,
+      "yahoo_adj": 0.0,
+      "missed": 1.854
+     },
+     "2011": {
+      "jita": 2.357,
+      "yahoo_adj": 0.0,
+      "missed": 2.357
+     },
+     "2012": {
+      "jita": 1.976,
+      "yahoo_adj": 0.0,
+      "missed": 1.976
+     },
+     "2015": {
+      "jita": 1.427,
+      "yahoo_adj": 16.667,
+      "missed": -15.24
+     },
+     "2016": {
+      "jita": 2.222,
+      "yahoo_adj": 2.276,
+      "missed": -0.054
+     },
+     "2022": {
+      "jita": 2.384,
+      "yahoo_adj": 2.442,
+      "missed": -0.058
+     }
+    },
+    "monthly": {
+     "window": "200902〜202609（212か月）",
+     "cagr_yahoo_as_used_pct": -1.25,
+     "cagr_corrected_pct": 12.11,
+     "cagr_gap_pt": -13.35,
+     "n_months_gap_gt_2pct": 6
+    }
+   },
+   {
+    "code": "1308",
+    "used_by_tools": true,
+    "used_by_in_flight_unx_tools": false,
+    "unrecorded_splits": [],
+    "glitch_days": [],
+    "distribution_status": {
+     "ok": 14,
+     "too_small": 0,
+     "missing": 5,
+     "too_large": 0
+    },
+    "distribution_years_off": {
+     "2008": {
+      "jita": 2.798,
+      "yahoo_adj": 0.0,
+      "missed": 2.798
+     },
+     "2009": {
+      "jita": 2.743,
+      "yahoo_adj": 0.0,
+      "missed": 2.743
+     },
+     "2010": {
+      "jita": 1.448,
+      "yahoo_adj": 0.0,
+      "missed": 1.448
+     },
+     "2011": {
+      "jita": 1.856,
+      "yahoo_adj": 0.0,
+      "missed": 1.856
+     },
+     "2012": {
+      "jita": 1.698,
+      "yahoo_adj": 0.0,
+      "missed": 1.698
+     },
+     "2022": {
+      "jita": 2.426,
+      "yahoo_adj": 2.495,
+      "missed": -0.069
+     },
+     "2025": {
+      "jita": 2.422,
+      "yahoo_adj": 2.487,
+      "missed": -0.065
+     }
+    },
+    "monthly": {
+     "window": "200802〜202609（224か月）",
+     "cagr_yahoo_as_used_pct": 7.87,
+     "cagr_corrected_pct": 8.45,
+     "cagr_gap_pt": -0.58,
+     "n_months_gap_gt_2pct": 2
+    }
+   },
+   {
+    "code": "1321",
+    "used_by_tools": true,
+    "used_by_in_flight_unx_tools": false,
+    "unrecorded_splits": [],
+    "glitch_days": [
+     "20261005（7.2789998054504395 ← 前 710.4000244140625）",
+     "20261006（7.35099983215332 ← 前 710.4000244140625）"
+    ],
+    "distribution_status": {
+     "ok": 1,
+     "too_small": 0,
+     "missing": 6,
+     "too_large": 6
+    },
+    "distribution_years_off": {
+     "2014": {
+      "jita": 1.28,
+      "yahoo_adj": 0.0,
+      "missed": 1.28
+     },
+     "2015": {
+      "jita": 1.145,
+      "yahoo_adj": 3282.336,
+      "missed": -3281.191
+     },
+     "2016": {
+      "jita": 1.75,
+      "yahoo_adj": 0.0,
+      "missed": 1.75
+     },
+     "2017": {
+      "jita": 1.407,
+      "yahoo_adj": 237.369,
+      "missed": -235.962
+     },
+     "2018": {
+      "jita": 1.573,
+      "yahoo_adj": 0.0,
+      "missed": 1.573
+     },
+     "2019": {
+      "jita": 1.859,
+      "yahoo_adj": 107.48,
+      "missed": -105.621
+     },
+     "2020": {
+      "jita": 1.693,
+      "yahoo_adj": 0.0,
+      "missed": 1.693
+     },
+     "2021": {
+      "jita": 1.266,
+      "yahoo_adj": 476.411,
+      "missed": -475.145
+     },
+     "2022": {
+      "jita": 1.829,
+      "yahoo_adj": 0.0,
+      "missed": 1.829
+     },
+     "2023": {
+      "jita": 1.73,
+      "yahoo_adj": 66.271,
+      "missed": -64.541
+     },
+     "2024": {
+      "jita": 1.469,
+      "yahoo_adj": 0.0,
+      "missed": 1.469
+     },
+     "2025": {
+      "jita": 1.767,
+      "yahoo_adj": 177.328,
+      "missed": -175.561
+     }
+    },
+    "monthly": {
+     "window": "201308〜202609（86か月）",
+     "cagr_yahoo_as_used_pct": 80.98,
+     "cagr_corrected_pct": 11.77,
+     "cagr_gap_pt": 69.21,
+     "n_months_gap_gt_2pct": 6
+    }
+   },
+   {
+    "code": "1326",
+    "used_by_tools": false,
+    "used_by_in_flight_unx_tools": true,
+    "unrecorded_splits": [
+     "20090105 100:1（口数の併合）（終値×92.6835・調整後も跳ぶ=True・協会の水準の比 None）"
+    ],
+    "glitch_days": [
+     "20080704（9850.0 ← 前 92.06999969482422）",
+     "20080901（8900.0 ← 前 82.05999755859375）",
+     "20081127（7660.0 ← 前 79.95999908447266）",
+     "20081225（7540.0 ← 前 82.31999969482422）",
+     "20090921（97.80000305175781 ← 前 9070.0）",
+     "20131029（130.2167205810547 ← 前 12720.0）",
+     "20131031（127.77616119384766 ← 前 12750.0）",
+     "20170717（117.3456802368164 ← 前 13140.0）",
+     "20251223（409.1669616699219 ← 前 63680.0）",
+     "20260113（425.04534912109375 ← 前 63920.0）",
+     "20260114（423.5188903808594 ← 前 63920.0）",
+     "20260115（423.91424560546875 ← 前 63920.0）",
+     "20260116（423.927978515625 ← 前 63920.0）"
+    ],
+    "distribution_status": null,
+    "distribution_years_off": null,
+    "monthly": {
+     "window": "200802〜202609（224か月）",
+     "cagr_yahoo_as_used_pct": 41.57,
+     "cagr_corrected_pct": 10.62,
+     "cagr_gap_pt": 30.95,
+     "n_months_gap_gt_2pct": 19
+    }
+   },
+   {
+    "code": "1348",
+    "used_by_tools": true,
+    "used_by_in_flight_unx_tools": false,
+    "unrecorded_splits": [],
+    "glitch_days": [],
+    "distribution_status": {
+     "ok": 28,
+     "too_small": 0,
+     "missing": 6,
+     "too_large": 0
+    },
+    "distribution_years_off": {
+     "2010": {
+      "jita": 1.712,
+      "yahoo_adj": 0.0,
+      "missed": 1.712
+     },
+     "2011": {
+      "jita": 1.426,
+      "yahoo_adj": 0.0,
+      "missed": 1.426
+     },
+     "2012": {
+      "jita": 2.111,
+      "yahoo_adj": 0.0,
+      "missed": 2.111
+     }
+    },
+    "monthly": {
+     "window": "200906〜202609（208か月）",
+     "cagr_yahoo_as_used_pct": 11.21,
+     "cagr_corrected_pct": 11.53,
+     "cagr_gap_pt": -0.32,
+     "n_months_gap_gt_2pct": 0
+    }
+   },
+   {
+    "code": "1399",
+    "used_by_tools": true,
+    "used_by_in_flight_unx_tools": false,
+    "unrecorded_splits": [],
+    "glitch_days": [],
+    "distribution_status": {
+     "ok": 42,
+     "too_small": 0,
+     "missing": 0,
+     "too_large": 1
+    },
+    "distribution_years_off": {
+     "2016": {
+      "jita": 2.434,
+      "yahoo_adj": 2.489,
+      "missed": -0.055
+     },
+     "2020": {
+      "jita": 2.732,
+      "yahoo_adj": 2.816,
+      "missed": -0.084
+     },
+     "2023": {
+      "jita": 2.992,
+      "yahoo_adj": 3.293,
+      "missed": -0.301
+     },
+     "2025": {
+      "jita": 3.158,
+      "yahoo_adj": 3.247,
+      "missed": -0.089
+     }
+    },
+    "monthly": {
+     "window": "201512〜202609（130か月）",
+     "cagr_yahoo_as_used_pct": 10.45,
+     "cagr_corrected_pct": 10.38,
+     "cagr_gap_pt": 0.07,
+     "n_months_gap_gt_2pct": 0
+    }
+   },
+   {
+    "code": "1489",
+    "used_by_tools": true,
+    "used_by_in_flight_unx_tools": false,
+    "unrecorded_splits": [],
+    "glitch_days": [
+     "20240117（70.5999984741211 ← 前 2080.333251953125）",
+     "20240118（69.26667022705078 ← 前 2080.333251953125）"
+    ],
+    "distribution_status": {
+     "ok": 36,
+     "too_small": 0,
+     "missing": 0,
+     "too_large": 3
+    },
+    "distribution_years_off": {
+     "2019": {
+      "jita": 4.012,
+      "yahoo_adj": 4.075,
+      "missed": -0.063
+     },
+     "2020": {
+      "jita": 4.206,
+      "yahoo_adj": 4.33,
+      "missed": -0.124
+     },
+     "2023": {
+      "jita": 4.313,
+      "yahoo_adj": 15.605,
+      "missed": -11.292
+     },
+     "2024": {
+      "jita": 3.445,
+      "yahoo_adj": 5.225,
+      "missed": -1.78
+     }
+    },
+    "monthly": {
+     "window": "201703〜202609（115か月）",
+     "cagr_yahoo_as_used_pct": 17.95,
+     "cagr_corrected_pct": 16.39,
+     "cagr_gap_pt": 1.55,
+     "n_months_gap_gt_2pct": 1
+    }
+   },
+   {
+    "code": "1545",
+    "used_by_tools": false,
+    "used_by_in_flight_unx_tools": false,
+    "unrecorded_splits": [
+     "20260522 1:200（口数の分割）（終値×0.0051・調整後も跳ぶ=True・協会の水準の比 1.0038）"
+    ],
+    "glitch_days": [
+     "20260525（1.2335000038146973 ← 前 239.39999389648438）"
+    ],
+    "distribution_status": {
+     "ok": 4,
+     "too_small": 0,
+     "missing": 12,
+     "too_large": 0
+    },
+    "distribution_years_off": {
+     "2011": {
+      "jita": 0.214,
+      "yahoo_adj": 0.0,
+      "missed": 0.214
+     },
+     "2012": {
+      "jita": 0.324,
+      "yahoo_adj": 0.0,
+      "missed": 0.324
+     },
+     "2016": {
+      "jita": 0.614,
+      "yahoo_adj": 0.003,
+      "missed": 0.611
+     },
+     "2017": {
+      "jita": 0.485,
+      "yahoo_adj": 0.002,
+      "missed": 0.483
+     },
+     "2018": {
+      "jita": 0.294,
+      "yahoo_adj": 0.001,
+      "missed": 0.293
+     },
+     "2019": {
+      "jita": 0.763,
+      "yahoo_adj": 0.004,
+      "missed": 0.759
+     },
+     "2020": {
+      "jita": 0.113,
+      "yahoo_adj": 0.001,
+      "missed": 0.112
+     },
+     "2021": {
+      "jita": 0.053,
+      "yahoo_adj": 0.0,
+      "missed": 0.053
+     },
+     "2022": {
+      "jita": 0.32,
+      "yahoo_adj": 0.002,
+      "missed": 0.318
+     },
+     "2023": {
+      "jita": 0.592,
+      "yahoo_adj": 0.003,
+      "missed": 0.589
+     },
+     "2024": {
+      "jita": 0.481,
+      "yahoo_adj": 0.002,
+      "missed": 0.479
+     },
+     "2025": {
+      "jita": 0.409,
+      "yahoo_adj": 0.002,
+      "missed": 0.407
+     }
+    },
+    "monthly": {
+     "window": "201009〜202609（193か月）",
+     "cagr_yahoo_as_used_pct": -10.63,
+     "cagr_corrected_pct": 24.59,
+     "cagr_gap_pt": -35.23,
+     "n_months_gap_gt_2pct": 1
+    }
+   },
+   {
+    "code": "1577",
+    "used_by_tools": true,
+    "used_by_in_flight_unx_tools": false,
+    "unrecorded_splits": [],
+    "glitch_days": [],
+    "distribution_status": {
+     "ok": 49,
+     "too_small": 0,
+     "missing": 0,
+     "too_large": 5
+    },
+    "distribution_years_off": {
+     "2019": {
+      "jita": 3.657,
+      "yahoo_adj": 3.713,
+      "missed": -0.056
+     },
+     "2020": {
+      "jita": 3.867,
+      "yahoo_adj": 3.975,
+      "missed": -0.108
+     },
+     "2023": {
+      "jita": 3.967,
+      "yahoo_adj": 4.361,
+      "missed": -0.394
+     },
+     "2024": {
+      "jita": 3.301,
+      "yahoo_adj": 6.448,
+      "missed": -3.147
+     }
+    },
+    "monthly": {
+     "window": "201304〜202609（162か月）",
+     "cagr_yahoo_as_used_pct": 14.37,
+     "cagr_corrected_pct": 14.05,
+     "cagr_gap_pt": 0.33,
+     "n_months_gap_gt_2pct": 0
+    }
+   },
+   {
+    "code": "1617",
+    "used_by_tools": true,
+    "used_by_in_flight_unx_tools": false,
+    "unrecorded_splits": [],
+    "glitch_days": [],
+    "distribution_status": {
+     "ok": 14,
+     "too_small": 0,
+     "missing": 5,
+     "too_large": 0
+    },
+    "distribution_years_off": {
+     "2008": {
+      "jita": 0.273,
+      "yahoo_adj": 0.0,
+      "missed": 0.273
+     },
+     "2009": {
+      "jita": 1.261,
+      "yahoo_adj": 0.0,
+      "missed": 1.261
+     },
+     "2010": {
+      "jita": 2.676,
+      "yahoo_adj": 0.0,
+      "missed": 2.676
+     },
+     "2011": {
+      "jita": 2.136,
+      "yahoo_adj": 0.0,
+      "missed": 2.136
+     },
+     "2012": {
+      "jita": 1.693,
+      "yahoo_adj": 0.0,
+      "missed": 1.693
+     },
+     "2014": {
+      "jita": 4.796,
+      "yahoo_adj": 5.081,
+      "missed": -0.285
+     },
+     "2015": {
+      "jita": 1.329,
+      "yahoo_adj": 1.384,
+      "missed": -0.055
+     },
+     "2018": {
+      "jita": 2.378,
+      "yahoo_adj": 2.441,
+      "missed": -0.063
+     },
+     "2019": {
+      "jita": 2.166,
+      "yahoo_adj": 2.218,
+      "missed": -0.052
+     },
+     "2020": {
+      "jita": 2.196,
+      "yahoo_adj": 2.27,
+      "missed": -0.074
+     },
+     "2025": {
+      "jita": 2.508,
+      "yahoo_adj": 2.572,
+      "missed": -0.064
+     }
+    },
+    "monthly": {
+     "window": "200804〜202609（222か月）",
+     "cagr_yahoo_as_used_pct": 7.04,
+     "cagr_corrected_pct": 7.46,
+     "cagr_gap_pt": -0.42,
+     "n_months_gap_gt_2pct": 2
+    }
+   },
+   {
+    "code": "1618",
+    "used_by_tools": true,
+    "used_by_in_flight_unx_tools": false,
+    "unrecorded_splits": [],
+    "glitch_days": [],
+    "distribution_status": {
+     "ok": 15,
+     "too_small": 0,
+     "missing": 4,
+     "too_large": 0
+    },
+    "distribution_years_off": {
+     "2009": {
+      "jita": 4.022,
+      "yahoo_adj": 0.0,
+      "missed": 4.022
+     },
+     "2010": {
+      "jita": 2.676,
+      "yahoo_adj": 0.0,
+      "missed": 2.676
+     },
+     "2011": {
+      "jita": 1.831,
+      "yahoo_adj": 0.0,
+      "missed": 1.831
+     },
+     "2012": {
+      "jita": 1.283,
+      "yahoo_adj": 0.0,
+      "missed": 1.283
+     },
+     "2014": {
+      "jita": 2.617,
+      "yahoo_adj": 2.69,
+      "missed": -0.073
+     },
+     "2015": {
+      "jita": 9.954,
+      "yahoo_adj": 11.051,
+      "missed": -1.097
+     },
+     "2017": {
+      "jita": 3.455,
+      "yahoo_adj": 3.605,
+      "missed": -0.15
+     },
+     "2018": {
+      "jita": 2.398,
+      "yahoo_adj": 2.449,
+      "missed": -0.051
+     },
+     "2019": {
+      "jita": 2.251,
+      "yahoo_adj": 2.306,
+      "missed": -0.055
+     },
+     "2020": {
+      "jita": 3.768,
+      "yahoo_adj": 3.997,
+      "missed": -0.229
+     },
+     "2022": {
+      "jita": 4.191,
+      "yahoo_adj": 4.313,
+      "missed": -0.122
+     },
+     "2025": {
+      "jita": 3.235,
+      "yahoo_adj": 3.331,
+      "missed": -0.096
+     },
+     "2026": {
+      "jita": 2.282,
+      "yahoo_adj": 2.373,
+      "missed": -0.091
+     }
+    },
+    "monthly": {
+     "window": "200804〜202609（222か月）",
+     "cagr_yahoo_as_used_pct": 6.85,
+     "cagr_corrected_pct": 7.3,
+     "cagr_gap_pt": -0.45,
+     "n_months_gap_gt_2pct": 3
+    }
+   },
+   {
+    "code": "1619",
+    "used_by_tools": true,
+    "used_by_in_flight_unx_tools": false,
+    "unrecorded_splits": [],
+    "glitch_days": [],
+    "distribution_status": {
+     "ok": 14,
+     "too_small": 0,
+     "missing": 5,
+     "too_large": 0
+    },
+    "distribution_years_off": {
+     "2008": {
+      "jita": 0.316,
+      "yahoo_adj": 0.0,
+      "missed": 0.316
+     },
+     "2009": {
+      "jita": 1.684,
+      "yahoo_adj": 0.0,
+      "missed": 1.684
+     },
+     "2010": {
+      "jita": 3.52,
+      "yahoo_adj": 0.0,
+      "missed": 3.52
+     },
+     "2011": {
+      "jita": 1.724,
+      "yahoo_adj": 0.0,
+      "missed": 1.724
+     },
+     "2012": {
+      "jita": 1.879,
+      "yahoo_adj": 0.0,
+      "missed": 1.879
+     },
+     "2013": {
+      "jita": 2.981,
+      "yahoo_adj": 3.083,
+      "missed": -0.102
+     },
+     "2015": {
+      "jita": 12.576,
+      "yahoo_adj": 14.502,
+      "missed": -1.926
+     },
+     "2017": {
+      "jita": 2.118,
+      "yahoo_adj": 2.181,
+      "missed": -0.063
+     },
+     "2019": {
+      "jita": 3.577,
+      "yahoo_adj": 3.716,
+      "missed": -0.139
+     },
+     "2020": {
+      "jita": 4.039,
+      "yahoo_adj": 4.273,
+      "missed": -0.234
+     },
+     "2022": {
+      "jita": 3.428,
+      "yahoo_adj": 3.525,
+      "missed": -0.097
+     },
+     "2023": {
+      "jita": 3.406,
+      "yahoo_adj": 3.521,
+      "missed": -0.115
+     },
+     "2024": {
+      "jita": 2.503,
+      "yahoo_adj": 2.556,
+      "missed": -0.053
+     },
+     "2025": {
+      "jita": 3.029,
+      "yahoo_adj": 3.105,
+      "missed": -0.076
+     },
+     "2026": {
+      "jita": 1.652,
+      "yahoo_adj": 1.703,
+      "missed": -0.051
+     }
+    },
+    "monthly": {
+     "window": "200804〜202609（222か月）",
+     "cagr_yahoo_as_used_pct": 9.38,
+     "cagr_corrected_pct": 9.75,
+     "cagr_gap_pt": -0.37,
+     "n_months_gap_gt_2pct": 1
+    }
+   },
+   {
+    "code": "1620",
+    "used_by_tools": true,
+    "used_by_in_flight_unx_tools": false,
+    "unrecorded_splits": [],
+    "glitch_days": [],
+    "distribution_status": {
+     "ok": 14,
+     "too_small": 0,
+     "missing": 5,
+     "too_large": 0
+    },
+    "distribution_years_off": {
+     "2008": {
+      "jita": 0.318,
+      "yahoo_adj": 0.0,
+      "missed": 0.318
+     },
+     "2009": {
+      "jita": 8.734,
+      "yahoo_adj": 0.0,
+      "missed": 8.734
+     },
+     "2010": {
+      "jita": 1.566,
+      "yahoo_adj": 0.0,
+      "missed": 1.566
+     },
+     "2011": {
+      "jita": 1.722,
+      "yahoo_adj": 0.0,
+      "missed": 1.722
+     },
+     "2012": {
+      "jita": 2.244,
+      "yahoo_adj": 0.0,
+      "missed": 2.244
+     },
+     "2014": {
+      "jita": 3.216,
+      "yahoo_adj": 3.362,
+      "missed": -0.146
+     },
+     "2019": {
+      "jita": 2.597,
+      "yahoo_adj": 2.675,
+      "missed": -0.078
+     },
+     "2025": {
+      "jita": 2.787,
+      "yahoo_adj": 2.864,
+      "missed": -0.077
+     }
+    },
+    "monthly": {
+     "window": "200804〜202609（222か月）",
+     "cagr_yahoo_as_used_pct": 6.96,
+     "cagr_corrected_pct": 7.75,
+     "cagr_gap_pt": -0.79,
+     "n_months_gap_gt_2pct": 2
+    }
+   },
+   {
+    "code": "1621",
+    "used_by_tools": true,
+    "used_by_in_flight_unx_tools": false,
+    "unrecorded_splits": [],
+    "glitch_days": [],
+    "distribution_status": {
+     "ok": 14,
+     "too_small": 0,
+     "missing": 5,
+     "too_large": 0
+    },
+    "distribution_years_off": {
+     "2008": {
+      "jita": 0.316,
+      "yahoo_adj": 0.0,
+      "missed": 0.316
+     },
+     "2009": {
+      "jita": 2.967,
+      "yahoo_adj": 0.0,
+      "missed": 2.967
+     },
+     "2010": {
+      "jita": 3.897,
+      "yahoo_adj": 0.0,
+      "missed": 3.897
+     },
+     "2011": {
+      "jita": 3.593,
+      "yahoo_adj": 0.0,
+      "missed": 3.593
+     },
+     "2012": {
+      "jita": 3.22,
+      "yahoo_adj": 0.0,
+      "missed": 3.22
+     },
+     "2014": {
+      "jita": 7.273,
+      "yahoo_adj": 7.89,
+      "missed": -0.617
+     },
+     "2020": {
+      "jita": 3.611,
+      "yahoo_adj": 3.778,
+      "missed": -0.167
+     },
+     "2025": {
+      "jita": 2.128,
+      "yahoo_adj": 2.193,
+      "missed": -0.065
+     }
+    },
+    "monthly": {
+     "window": "200804〜202609（222か月）",
+     "cagr_yahoo_as_used_pct": 6.75,
+     "cagr_corrected_pct": 7.49,
+     "cagr_gap_pt": -0.73,
+     "n_months_gap_gt_2pct": 4
+    }
+   },
+   {
+    "code": "1622",
+    "used_by_tools": true,
+    "used_by_in_flight_unx_tools": false,
+    "unrecorded_splits": [],
+    "glitch_days": [],
+    "distribution_status": {
+     "ok": 14,
+     "too_small": 0,
+     "missing": 5,
+     "too_large": 0
+    },
+    "distribution_years_off": {
+     "2008": {
+      "jita": 0.208,
+      "yahoo_adj": 0.0,
+      "missed": 0.208
+     },
+     "2009": {
+      "jita": 1.616,
+      "yahoo_adj": 0.0,
+      "missed": 1.616
+     },
+     "2010": {
+      "jita": 2.256,
+      "yahoo_adj": 0.0,
+      "missed": 2.256
+     },
+     "2011": {
+      "jita": 1.054,
+      "yahoo_adj": 0.0,
+      "missed": 1.054
+     },
+     "2012": {
+      "jita": 1.511,
+      "yahoo_adj": 0.0,
+      "missed": 1.511
+     },
+     "2014": {
+      "jita": 2.117,
+      "yahoo_adj": 2.173,
+      "missed": -0.056
+     },
+     "2015": {
+      "jita": 4.538,
+      "yahoo_adj": 4.784,
+      "missed": -0.246
+     },
+     "2016": {
+      "jita": 4.211,
+      "yahoo_adj": 4.551,
+      "missed": -0.34
+     },
+     "2017": {
+      "jita": 2.096,
+      "yahoo_adj": 2.155,
+      "missed": -0.059
+     },
+     "2019": {
+      "jita": 3.168,
+      "yahoo_adj": 3.287,
+      "missed": -0.119
+     },
+     "2020": {
+      "jita": 4.305,
+      "yahoo_adj": 4.601,
+      "missed": -0.296
+     },
+     "2021": {
+      "jita": 4.312,
+      "yahoo_adj": 4.44,
+      "missed": -0.128
+     },
+     "2023": {
+      "jita": 5.589,
+      "yahoo_adj": 5.915,
+      "missed": -0.326
+     },
+     "2025": {
+      "jita": 2.892,
+      "yahoo_adj": 2.963,
+      "missed": -0.071
+     }
+    },
+    "monthly": {
+     "window": "200804〜202609（222か月）",
+     "cagr_yahoo_as_used_pct": 6.89,
+     "cagr_corrected_pct": 7.17,
+     "cagr_gap_pt": -0.28,
+     "n_months_gap_gt_2pct": 1
+    }
+   },
+   {
+    "code": "1623",
+    "used_by_tools": true,
+    "used_by_in_flight_unx_tools": false,
+    "unrecorded_splits": [],
+    "glitch_days": [],
+    "distribution_status": {
+     "ok": 14,
+     "too_small": 0,
+     "missing": 5,
+     "too_large": 0
+    },
+    "distribution_years_off": {
+     "2008": {
+      "jita": 0.35,
+      "yahoo_adj": 0.0,
+      "missed": 0.35
+     },
+     "2009": {
+      "jita": 7.407,
+      "yahoo_adj": 0.0,
+      "missed": 7.407
+     },
+     "2010": {
+      "jita": 0.338,
+      "yahoo_adj": 0.0,
+      "missed": 0.338
+     },
+     "2011": {
+      "jita": 1.629,
+      "yahoo_adj": 0.0,
+      "missed": 1.629
+     },
+     "2012": {
+      "jita": 2.941,
+      "yahoo_adj": 0.0,
+      "missed": 2.941
+     },
+     "2017": {
+      "jita": 19.341,
+      "yahoo_adj": 24.299,
+      "missed": -4.958
+     },
+     "2019": {
+      "jita": 8.492,
+      "yahoo_adj": 9.305,
+      "missed": -0.813
+     },
+     "2020": {
+      "jita": 1.411,
+      "yahoo_adj": 1.471,
+      "missed": -0.06
+     },
+     "2022": {
+      "jita": 4.173,
+      "yahoo_adj": 4.334,
+      "missed": -0.161
+     },
+     "2023": {
+      "jita": 2.578,
+      "yahoo_adj": 2.651,
+      "missed": -0.073
+     },
+     "2025": {
+      "jita": 3.288,
+      "yahoo_adj": 3.427,
+      "missed": -0.139
+     }
+    },
+    "monthly": {
+     "window": "200804〜202609（222か月）",
+     "cagr_yahoo_as_used_pct": 6.81,
+     "cagr_corrected_pct": 7.21,
+     "cagr_gap_pt": -0.4,
+     "n_months_gap_gt_2pct": 3
+    }
+   },
+   {
+    "code": "1624",
+    "used_by_tools": true,
+    "used_by_in_flight_unx_tools": false,
+    "unrecorded_splits": [],
+    "glitch_days": [],
+    "distribution_status": {
+     "ok": 14,
+     "too_small": 0,
+     "missing": 5,
+     "too_large": 0
+    },
+    "distribution_years_off": {
+     "2008": {
+      "jita": 0.153,
+      "yahoo_adj": 0.0,
+      "missed": 0.153
+     },
+     "2009": {
+      "jita": 7.515,
+      "yahoo_adj": 0.0,
+      "missed": 7.515
+     },
+     "2010": {
+      "jita": 0.94,
+      "yahoo_adj": 0.0,
+      "missed": 0.94
+     },
+     "2011": {
+      "jita": 1.179,
+      "yahoo_adj": 0.0,
+      "missed": 1.179
+     },
+     "2012": {
+      "jita": 1.789,
+      "yahoo_adj": 0.0,
+      "missed": 1.789
+     },
+     "2015": {
+      "jita": 2.782,
+      "yahoo_adj": 2.852,
+      "missed": -0.07
+     },
+     "2016": {
+      "jita": 2.882,
+      "yahoo_adj": 3.044,
+      "missed": -0.162
+     },
+     "2020": {
+      "jita": 4.109,
+      "yahoo_adj": 4.406,
+      "missed": -0.297
+     },
+     "2022": {
+      "jita": 2.278,
+      "yahoo_adj": 2.328,
+      "missed": -0.05
+     },
+     "2025": {
+      "jita": 4.45,
+      "yahoo_adj": 4.659,
+      "missed": -0.209
+     }
+    },
+    "monthly": {
+     "window": "200804〜202609（222か月）",
+     "cagr_yahoo_as_used_pct": 9.15,
+     "cagr_corrected_pct": 9.76,
+     "cagr_gap_pt": -0.61,
+     "n_months_gap_gt_2pct": 1
+    }
+   },
+   {
+    "code": "1625",
+    "used_by_tools": true,
+    "used_by_in_flight_unx_tools": false,
+    "unrecorded_splits": [],
+    "glitch_days": [],
+    "distribution_status": {
+     "ok": 14,
+     "too_small": 0,
+     "missing": 5,
+     "too_large": 0
+    },
+    "distribution_years_off": {
+     "2008": {
+      "jita": 0.198,
+      "yahoo_adj": 0.0,
+      "missed": 0.198
+     },
+     "2009": {
+      "jita": 1.931,
+      "yahoo_adj": 0.0,
+      "missed": 1.931
+     },
+     "2010": {
+      "jita": 2.477,
+      "yahoo_adj": 0.0,
+      "missed": 2.477
+     },
+     "2011": {
+      "jita": 1.334,
+      "yahoo_adj": 0.0,
+      "missed": 1.334
+     },
+     "2012": {
+      "jita": 1.852,
+      "yahoo_adj": 0.0,
+      "missed": 1.852
+     },
+     "2020": {
+      "jita": 2.312,
+      "yahoo_adj": 2.408,
+      "missed": -0.096
+     }
+    },
+    "monthly": {
+     "window": "200804〜202609（222か月）",
+     "cagr_yahoo_as_used_pct": 10.06,
+     "cagr_corrected_pct": 10.51,
+     "cagr_gap_pt": -0.45,
+     "n_months_gap_gt_2pct": 2
+    }
+   },
+   {
+    "code": "1626",
+    "used_by_tools": true,
+    "used_by_in_flight_unx_tools": false,
+    "unrecorded_splits": [],
+    "glitch_days": [],
+    "distribution_status": {
+     "ok": 14,
+     "too_small": 0,
+     "missing": 5,
+     "too_large": 0
+    },
+    "distribution_years_off": {
+     "2008": {
+      "jita": 0.712,
+      "yahoo_adj": 0.0,
+      "missed": 0.712
+     },
+     "2009": {
+      "jita": 2.189,
+      "yahoo_adj": 0.0,
+      "missed": 2.189
+     },
+     "2010": {
+      "jita": 4.054,
+      "yahoo_adj": 0.0,
+      "missed": 4.054
+     },
+     "2011": {
+      "jita": 1.928,
+      "yahoo_adj": 0.0,
+      "missed": 1.928
+     },
+     "2012": {
+      "jita": 2.247,
+      "yahoo_adj": 0.0,
+      "missed": 2.247
+     },
+     "2015": {
+      "jita": 3.251,
+      "yahoo_adj": 3.396,
+      "missed": -0.145
+     },
+     "2020": {
+      "jita": 2.096,
+      "yahoo_adj": 2.173,
+      "missed": -0.077
+     }
+    },
+    "monthly": {
+     "window": "200804〜202609（222か月）",
+     "cagr_yahoo_as_used_pct": 9.51,
+     "cagr_corrected_pct": 10.13,
+     "cagr_gap_pt": -0.63,
+     "n_months_gap_gt_2pct": 3
+    }
+   },
+   {
+    "code": "1627",
+    "used_by_tools": true,
+    "used_by_in_flight_unx_tools": false,
+    "unrecorded_splits": [],
+    "glitch_days": [],
+    "distribution_status": {
+     "ok": 15,
+     "too_small": 0,
+     "missing": 4,
+     "too_large": 0
+    },
+    "distribution_years_off": {
+     "2009": {
+      "jita": 2.198,
+      "yahoo_adj": 0.0,
+      "missed": 2.198
+     },
+     "2010": {
+      "jita": 3.801,
+      "yahoo_adj": 0.0,
+      "missed": 3.801
+     },
+     "2011": {
+      "jita": 1.212,
+      "yahoo_adj": 0.0,
+      "missed": 1.212
+     },
+     "2012": {
+      "jita": 4.217,
+      "yahoo_adj": 0.0,
+      "missed": 4.217
+     },
+     "2020": {
+      "jita": 2.312,
+      "yahoo_adj": 2.404,
+      "missed": -0.092
+     },
+     "2023": {
+      "jita": 3.122,
+      "yahoo_adj": 3.221,
+      "missed": -0.099
+     }
+    },
+    "monthly": {
+     "window": "200804〜202609（222か月）",
+     "cagr_yahoo_as_used_pct": 0.83,
+     "cagr_corrected_pct": 1.42,
+     "cagr_gap_pt": -0.59,
+     "n_months_gap_gt_2pct": 3
+    }
+   },
+   {
+    "code": "1628",
+    "used_by_tools": true,
+    "used_by_in_flight_unx_tools": false,
+    "unrecorded_splits": [],
+    "glitch_days": [],
+    "distribution_status": {
+     "ok": 14,
+     "too_small": 0,
+     "missing": 5,
+     "too_large": 0
+    },
+    "distribution_years_off": {
+     "2008": {
+      "jita": 0.142,
+      "yahoo_adj": 0.0,
+      "missed": 0.142
+     },
+     "2009": {
+      "jita": 1.288,
+      "yahoo_adj": 0.0,
+      "missed": 1.288
+     },
+     "2010": {
+      "jita": 2.317,
+      "yahoo_adj": 0.0,
+      "missed": 2.317
+     },
+     "2011": {
+      "jita": 2.072,
+      "yahoo_adj": 0.0,
+      "missed": 2.072
+     },
+     "2012": {
+      "jita": 1.399,
+      "yahoo_adj": 0.0,
+      "missed": 1.399
+     },
+     "2020": {
+      "jita": 8.009,
+      "yahoo_adj": 8.892,
+      "missed": -0.883
+     },
+     "2022": {
+      "jita": 2.515,
+      "yahoo_adj": 2.584,
+      "missed": -0.069
+     },
+     "2023": {
+      "jita": 2.515,
+      "yahoo_adj": 2.574,
+      "missed": -0.059
+     },
+     "2025": {
+      "jita": 3.46,
+      "yahoo_adj": 3.517,
+      "missed": -0.057
+     },
+     "2026": {
+      "jita": 3.11,
+      "yahoo_adj": 3.223,
+      "missed": -0.113
+     }
+    },
+    "monthly": {
+     "window": "200804〜202609（222か月）",
+     "cagr_yahoo_as_used_pct": 3.91,
+     "cagr_corrected_pct": 4.24,
+     "cagr_gap_pt": -0.34,
+     "n_months_gap_gt_2pct": 2
+    }
+   },
+   {
+    "code": "1629",
+    "used_by_tools": true,
+    "used_by_in_flight_unx_tools": false,
+    "unrecorded_splits": [],
+    "glitch_days": [
+     "20260330（0.5676000118255615 ← 前 288.6000061035156）",
+     "20260331（0.5497999787330627 ← 前 288.6000061035156）"
+    ],
+    "distribution_status": {
+     "ok": 11,
+     "too_small": 0,
+     "missing": 0,
+     "too_large": 0
+    },
+    "distribution_years_off": {
+     "2016": {
+      "jita": 4.761,
+      "yahoo_adj": 5.07,
+      "missed": -0.309
+     },
+     "2017": {
+      "jita": 2.997,
+      "yahoo_adj": 3.092,
+      "missed": -0.095
+     },
+     "2020": {
+      "jita": 3.851,
+      "yahoo_adj": 4.099,
+      "missed": -0.248
+     },
+     "2021": {
+      "jita": 5.312,
+      "yahoo_adj": 5.534,
+      "missed": -0.222
+     },
+     "2025": {
+      "jita": 3.357,
+      "yahoo_adj": 3.42,
+      "missed": -0.063
+     }
+    },
+    "monthly": {
+     "window": "201508〜202609（134か月）",
+     "cagr_yahoo_as_used_pct": 18.31,
+     "cagr_corrected_pct": 18.2,
+     "cagr_gap_pt": 0.11,
+     "n_months_gap_gt_2pct": 2
+    }
+   },
+   {
+    "code": "1630",
+    "used_by_tools": true,
+    "used_by_in_flight_unx_tools": false,
+    "unrecorded_splits": [],
+    "glitch_days": [],
+    "distribution_status": {
+     "ok": 14,
+     "too_small": 0,
+     "missing": 4,
+     "too_large": 0
+    },
+    "distribution_years_off": {
+     "2009": {
+      "jita": 1.563,
+      "yahoo_adj": 0.0,
+      "missed": 1.563
+     },
+     "2010": {
+      "jita": 3.977,
+      "yahoo_adj": 0.0,
+      "missed": 3.977
+     },
+     "2011": {
+      "jita": 1.629,
+      "yahoo_adj": 0.0,
+      "missed": 1.629
+     },
+     "2012": {
+      "jita": 1.694,
+      "yahoo_adj": 0.0,
+      "missed": 1.694
+     },
+     "2015": {
+      "jita": 5.388,
+      "yahoo_adj": 5.724,
+      "missed": -0.336
+     }
+    },
+    "monthly": {
+     "window": "200804〜202609（222か月）",
+     "cagr_yahoo_as_used_pct": 8.12,
+     "cagr_corrected_pct": 8.6,
+     "cagr_gap_pt": -0.48,
+     "n_months_gap_gt_2pct": 1
+    }
+   },
+   {
+    "code": "1631",
+    "used_by_tools": true,
+    "used_by_in_flight_unx_tools": false,
+    "unrecorded_splits": [],
+    "glitch_days": [],
+    "distribution_status": {
+     "ok": 14,
+     "too_small": 0,
+     "missing": 5,
+     "too_large": 0
+    },
+    "distribution_years_off": {
+     "2008": {
+      "jita": 0.053,
+      "yahoo_adj": 0.0,
+      "missed": 0.053
+     },
+     "2009": {
+      "jita": 8.319,
+      "yahoo_adj": 0.0,
+      "missed": 8.319
+     },
+     "2010": {
+      "jita": 2.179,
+      "yahoo_adj": 0.0,
+      "missed": 2.179
+     },
+     "2011": {
+      "jita": 2.821,
+      "yahoo_adj": 0.0,
+      "missed": 2.821
+     },
+     "2012": {
+      "jita": 2.995,
+      "yahoo_adj": 0.0,
+      "missed": 2.995
+     },
+     "2014": {
+      "jita": 3.895,
+      "yahoo_adj": 4.093,
+      "missed": -0.198
+     },
+     "2016": {
+      "jita": 2.611,
+      "yahoo_adj": 2.796,
+      "missed": -0.185
+     },
+     "2017": {
+      "jita": 2.321,
+      "yahoo_adj": 2.374,
+      "missed": -0.053
+     },
+     "2018": {
+      "jita": 3.169,
+      "yahoo_adj": 3.284,
+      "missed": -0.115
+     },
+     "2019": {
+      "jita": 6.905,
+      "yahoo_adj": 7.434,
+      "missed": -0.529
+     },
+     "2020": {
+      "jita": 14.379,
+      "yahoo_adj": 16.561,
+      "missed": -2.182
+     },
+     "2025": {
+      "jita": 3.997,
+      "yahoo_adj": 4.174,
+      "missed": -0.177
+     },
+     "2026": {
+      "jita": 1.855,
+      "yahoo_adj": 1.923,
+      "missed": -0.068
+     }
+    },
+    "monthly": {
+     "window": "200804〜202609（222か月）",
+     "cagr_yahoo_as_used_pct": 8.84,
+     "cagr_corrected_pct": 9.59,
+     "cagr_gap_pt": -0.75,
+     "n_months_gap_gt_2pct": 4
+    }
+   },
+   {
+    "code": "1632",
+    "used_by_tools": true,
+    "used_by_in_flight_unx_tools": false,
+    "unrecorded_splits": [],
+    "glitch_days": [],
+    "distribution_status": {
+     "ok": 14,
+     "too_small": 0,
+     "missing": 5,
+     "too_large": 0
+    },
+    "distribution_years_off": {
+     "2008": {
+      "jita": 0.08,
+      "yahoo_adj": 0.0,
+      "missed": 0.08
+     },
+     "2009": {
+      "jita": 1.731,
+      "yahoo_adj": 0.0,
+      "missed": 1.731
+     },
+     "2010": {
+      "jita": 2.297,
+      "yahoo_adj": 0.0,
+      "missed": 2.297
+     },
+     "2011": {
+      "jita": 1.046,
+      "yahoo_adj": 0.0,
+      "missed": 1.046
+     },
+     "2012": {
+      "jita": 2.216,
+      "yahoo_adj": 0.0,
+      "missed": 2.216
+     },
+     "2014": {
+      "jita": 3.506,
+      "yahoo_adj": 3.728,
+      "missed": -0.222
+     },
+     "2015": {
+      "jita": 4.814,
+      "yahoo_adj": 5.038,
+      "missed": -0.224
+     },
+     "2016": {
+      "jita": 2.25,
+      "yahoo_adj": 2.41,
+      "missed": -0.16
+     },
+     "2017": {
+      "jita": 2.417,
+      "yahoo_adj": 2.499,
+      "missed": -0.082
+     },
+     "2018": {
+      "jita": 3.695,
+      "yahoo_adj": 3.883,
+      "missed": -0.188
+     },
+     "2019": {
+      "jita": 5.107,
+      "yahoo_adj": 5.395,
+      "missed": -0.288
+     },
+     "2020": {
+      "jita": 3.852,
+      "yahoo_adj": 4.043,
+      "missed": -0.191
+     },
+     "2021": {
+      "jita": 3.76,
+      "yahoo_adj": 3.855,
+      "missed": -0.095
+     },
+     "2025": {
+      "jita": 2.515,
+      "yahoo_adj": 2.589,
+      "missed": -0.074
+     },
+     "2026": {
+      "jita": 2.607,
+      "yahoo_adj": 2.709,
+      "missed": -0.102
+     }
+    },
+    "monthly": {
+     "window": "200804〜202609（222か月）",
+     "cagr_yahoo_as_used_pct": 8.57,
+     "cagr_corrected_pct": 8.9,
+     "cagr_gap_pt": -0.33,
+     "n_months_gap_gt_2pct": 4
+    }
+   },
+   {
+    "code": "1633",
+    "used_by_tools": true,
+    "used_by_in_flight_unx_tools": false,
+    "unrecorded_splits": [],
+    "glitch_days": [],
+    "distribution_status": {
+     "ok": 14,
+     "too_small": 0,
+     "missing": 4,
+     "too_large": 0
+    },
+    "distribution_years_off": {
+     "2009": {
+      "jita": 4.897,
+      "yahoo_adj": 0.0,
+      "missed": 4.897
+     },
+     "2010": {
+      "jita": 0.995,
+      "yahoo_adj": 0.0,
+      "missed": 0.995
+     },
+     "2011": {
+      "jita": 0.686,
+      "yahoo_adj": 0.0,
+      "missed": 0.686
+     },
+     "2012": {
+      "jita": 0.948,
+      "yahoo_adj": 0.0,
+      "missed": 0.948
+     },
+     "2020": {
+      "jita": 1.987,
+      "yahoo_adj": 2.089,
+      "missed": -0.102
+     },
+     "2023": {
+      "jita": 2.734,
+      "yahoo_adj": 2.804,
+      "missed": -0.07
+     },
+     "2025": {
+      "jita": 2.92,
+      "yahoo_adj": 2.971,
+      "missed": -0.051
+     }
+    },
+    "monthly": {
+     "window": "200804〜202609（222か月）",
+     "cagr_yahoo_as_used_pct": 4.69,
+     "cagr_corrected_pct": 5.09,
+     "cagr_gap_pt": -0.4,
+     "n_months_gap_gt_2pct": 1
+    }
+   },
+   {
+    "code": "1698",
+    "used_by_tools": true,
+    "used_by_in_flight_unx_tools": false,
+    "unrecorded_splits": [],
+    "glitch_days": [],
+    "distribution_status": {
+     "ok": 55,
+     "too_small": 0,
+     "missing": 10,
+     "too_large": 1
+    },
+    "distribution_years_off": {
+     "2010": {
+      "jita": 1.263,
+      "yahoo_adj": 0.0,
+      "missed": 1.263
+     },
+     "2011": {
+      "jita": 2.606,
+      "yahoo_adj": 0.0,
+      "missed": 2.606
+     },
+     "2012": {
+      "jita": 3.214,
+      "yahoo_adj": 0.0,
+      "missed": 3.214
+     },
+     "2019": {
+      "jita": 3.322,
+      "yahoo_adj": 3.372,
+      "missed": -0.05
+     },
+     "2023": {
+      "jita": 3.619,
+      "yahoo_adj": 4.789,
+      "missed": -1.17
+     },
+     "2025": {
+      "jita": 3.53,
+      "yahoo_adj": 3.592,
+      "missed": -0.062
+     }
+    },
+    "monthly": {
+     "window": "201006〜202609（196か月）",
+     "cagr_yahoo_as_used_pct": 12.17,
+     "cagr_corrected_pct": 12.56,
+     "cagr_gap_pt": -0.39,
+     "n_months_gap_gt_2pct": 0
+    }
+   },
+   {
+    "code": "2243",
+    "used_by_tools": true,
+    "used_by_in_flight_unx_tools": false,
+    "unrecorded_splits": [],
+    "glitch_days": [],
+    "distribution_status": {
+     "ok": 6,
+     "too_small": 0,
+     "missing": 0,
+     "too_large": 1
+    },
+    "distribution_years_off": {
+     "2024": {
+      "jita": 0.229,
+      "yahoo_adj": 0.347,
+      "missed": -0.118
+     }
+    },
+    "monthly": {
+     "window": "202305〜202609（41か月）",
+     "cagr_yahoo_as_used_pct": 59.35,
+     "cagr_corrected_pct": 59.3,
+     "cagr_gap_pt": 0.06,
+     "n_months_gap_gt_2pct": 0
+    }
+   },
+   {
+    "code": "2529",
+    "used_by_tools": true,
+    "used_by_in_flight_unx_tools": false,
+    "unrecorded_splits": [],
+    "glitch_days": [],
+    "distribution_status": {
+     "ok": 26,
+     "too_small": 0,
+     "missing": 0,
+     "too_large": 3
+    },
+    "distribution_years_off": {
+     "2020": {
+      "jita": 2.944,
+      "yahoo_adj": 3.031,
+      "missed": -0.087
+     },
+     "2022": {
+      "jita": 3.252,
+      "yahoo_adj": 3.195,
+      "missed": 0.057
+     },
+     "2023": {
+      "jita": 3.44,
+      "yahoo_adj": 3.879,
+      "missed": -0.439
+     },
+     "2024": {
+      "jita": 2.888,
+      "yahoo_adj": 4.175,
+      "missed": -1.287
+     },
+     "2025": {
+      "jita": 3.184,
+      "yahoo_adj": 3.31,
+      "missed": -0.126
+     }
+    },
+    "monthly": {
+     "window": "201905〜202609（89か月）",
+     "cagr_yahoo_as_used_pct": 16.21,
+     "cagr_corrected_pct": 15.91,
+     "cagr_gap_pt": 0.29,
+     "n_months_gap_gt_2pct": 0
+    }
+   },
+   {
+    "code": "2558",
+    "used_by_tools": false,
+    "used_by_in_flight_unx_tools": false,
+    "unrecorded_splits": [
+     "20260605 1:10（口数の分割）（終値×0.0996・調整後も跳ぶ=True・協会の水準の比 1.0046）"
+    ],
+    "glitch_days": [
+     "20260608（340.3999938964844 ← 前 3477.0）"
+    ],
+    "distribution_status": {
+     "ok": 1,
+     "too_small": 7,
+     "missing": 5,
+     "too_large": 0
+    },
+    "distribution_years_off": {
+     "2020": {
+      "jita": 0.846,
+      "yahoo_adj": 0.086,
+      "missed": 0.76
+     },
+     "2021": {
+      "jita": 0.736,
+      "yahoo_adj": 0.074,
+      "missed": 0.662
+     },
+     "2022": {
+      "jita": 1.122,
+      "yahoo_adj": 0.113,
+      "missed": 1.009
+     },
+     "2023": {
+      "jita": 1.377,
+      "yahoo_adj": 0.137,
+      "missed": 1.24
+     },
+     "2024": {
+      "jita": 0.975,
+      "yahoo_adj": 0.097,
+      "missed": 0.878
+     },
+     "2025": {
+      "jita": 0.992,
+      "yahoo_adj": 0.099,
+      "missed": 0.893
+     }
+    },
+    "monthly": {
+     "window": "202002〜202609（80か月）",
+     "cagr_yahoo_as_used_pct": -14.9,
+     "cagr_corrected_pct": 21.2,
+     "cagr_gap_pt": -36.09,
+     "n_months_gap_gt_2pct": 1
+    }
+   },
+   {
+    "code": "2559",
+    "used_by_tools": false,
+    "used_by_in_flight_unx_tools": false,
+    "unrecorded_splits": [
+     "20260605 1:10（口数の分割）（終値×0.1003・調整後も跳ぶ=True・協会の水準の比 1.0023）"
+    ],
+    "glitch_days": [
+     "20260608（299.6000061035156 ← 前 3065.0）"
+    ],
+    "distribution_status": {
+     "ok": 1,
+     "too_small": 4,
+     "missing": 8,
+     "too_large": 0
+    },
+    "distribution_years_off": {
+     "2020": {
+      "jita": 1.0,
+      "yahoo_adj": 0.1,
+      "missed": 0.9
+     },
+     "2021": {
+      "jita": 1.169,
+      "yahoo_adj": 0.116,
+      "missed": 1.053
+     },
+     "2022": {
+      "jita": 1.583,
+      "yahoo_adj": 0.158,
+      "missed": 1.425
+     },
+     "2023": {
+      "jita": 1.745,
+      "yahoo_adj": 0.173,
+      "missed": 1.572
+     },
+     "2024": {
+      "jita": 1.449,
+      "yahoo_adj": 0.145,
+      "missed": 1.304
+     },
+     "2025": {
+      "jita": 1.42,
+      "yahoo_adj": 0.142,
+      "missed": 1.278
+     }
+    },
+    "monthly": {
+     "window": "202002〜202609（80か月）",
+     "cagr_yahoo_as_used_pct": -16.76,
+     "cagr_corrected_pct": 18.92,
+     "cagr_gap_pt": -35.68,
+     "n_months_gap_gt_2pct": 1
+    }
+   },
+   {
+    "code": "2639",
+    "used_by_tools": true,
+    "used_by_in_flight_unx_tools": false,
+    "unrecorded_splits": [],
+    "glitch_days": [],
+    "distribution_status": {
+     "ok": 5,
+     "too_small": 0,
+     "missing": 0,
+     "too_large": 5
+    },
+    "distribution_years_off": {
+     "2022": {
+      "jita": 0.778,
+      "yahoo_adj": 1.589,
+      "missed": -0.811
+     },
+     "2023": {
+      "jita": 0.695,
+      "yahoo_adj": 1.209,
+      "missed": -0.514
+     },
+     "2024": {
+      "jita": 0.667,
+      "yahoo_adj": 1.354,
+      "missed": -0.687
+     },
+     "2026": {
+      "jita": 3.291,
+      "yahoo_adj": 3.403,
+      "missed": -0.112
+     }
+    },
+    "monthly": {
+     "window": "202107〜202609（63か月）",
+     "cagr_yahoo_as_used_pct": 0.12,
+     "cagr_corrected_pct": -0.28,
+     "cagr_gap_pt": 0.4,
+     "n_months_gap_gt_2pct": 0
+    }
+   },
+   {
+    "code": "2644",
+    "used_by_tools": true,
+    "used_by_in_flight_unx_tools": false,
+    "unrecorded_splits": [
+     "20241009 1:2（口数の分割）（終値×0.509・調整後も跳ぶ=True・協会の水準の比 1.0177）"
+    ],
+    "glitch_days": [],
+    "distribution_status": {
+     "ok": 4,
+     "too_small": 5,
+     "missing": 0,
+     "too_large": 0
+    },
+    "distribution_years_off": {
+     "2022": {
+      "jita": 1.302,
+      "yahoo_adj": 0.66,
+      "missed": 0.642
+     },
+     "2023": {
+      "jita": 0.999,
+      "yahoo_adj": 0.496,
+      "missed": 0.503
+     },
+     "2024": {
+      "jita": 0.72,
+      "yahoo_adj": 0.568,
+      "missed": 0.152
+     }
+    },
+    "monthly": {
+     "window": "202110〜202609（60か月）",
+     "cagr_yahoo_as_used_pct": 12.83,
+     "cagr_corrected_pct": 29.93,
+     "cagr_gap_pt": -17.1,
+     "n_months_gap_gt_2pct": 1
+    }
+   },
+   {
+    "code": "2840",
+    "used_by_tools": false,
+    "used_by_in_flight_unx_tools": false,
+    "unrecorded_splits": [
+     "20241218 1:16（口数の分割）（終値×0.0621・調整後も跳ぶ=True・協会の水準の比 0.9923）"
+    ],
+    "glitch_days": [],
+    "distribution_status": {
+     "ok": 4,
+     "too_small": 0,
+     "missing": 5,
+     "too_large": 0
+    },
+    "distribution_years_off": {
+     "2022": {
+      "jita": 0.24,
+      "yahoo_adj": 0.015,
+      "missed": 0.225
+     },
+     "2023": {
+      "jita": 0.407,
+      "yahoo_adj": 0.026,
+      "missed": 0.381
+     },
+     "2024": {
+      "jita": 0.514,
+      "yahoo_adj": 0.033,
+      "missed": 0.481
+     }
+    },
+    "monthly": {
+     "window": "202202〜202609（56か月）",
+     "cagr_yahoo_as_used_pct": -31.52,
+     "cagr_corrected_pct": 24.34,
+     "cagr_gap_pt": -55.86,
+     "n_months_gap_gt_2pct": 1
+    }
+   },
+   {
+    "code": "2841",
+    "used_by_tools": false,
+    "used_by_in_flight_unx_tools": false,
+    "unrecorded_splits": [
+     "20241218 1:10（口数の分割）（終値×0.0998・調整後も跳ぶ=True・協会の水準の比 0.9951）"
+    ],
+    "glitch_days": [],
+    "distribution_status": {
+     "ok": 4,
+     "too_small": 2,
+     "missing": 3,
+     "too_large": 0
+    },
+    "distribution_years_off": {
+     "2022": {
+      "jita": 0.176,
+      "yahoo_adj": 0.017,
+      "missed": 0.159
+     },
+     "2023": {
+      "jita": 0.369,
+      "yahoo_adj": 0.037,
+      "missed": 0.332
+     },
+     "2024": {
+      "jita": 0.415,
+      "yahoo_adj": 0.042,
+      "missed": 0.373
+     }
+    },
+    "monthly": {
+     "window": "202202〜202609（56か月）",
+     "cagr_yahoo_as_used_pct": -32.02,
+     "cagr_corrected_pct": 11.55,
+     "cagr_gap_pt": -43.57,
+     "n_months_gap_gt_2pct": 1
+    }
+   }
+  ],
+  "G2_clean_instruments": [
+   "1478",
+   "1494",
+   "1540",
+   "1651",
+   "200A",
+   "2564",
+   "2621",
+   "2631",
+   "2632",
+   "466A",
+   "498A",
+   "513A",
+   "610A"
+  ],
+  "G2_yahoo_monthly_impossible_now（今の Yahoo の月次に −95% 以下・+300% 以上の月）": {
+   "1306": [
+    "202604 Yahoo 961.12% / 直した 2.98%"
+   ],
+   "1321": [
+    "201407 Yahoo -471.28% / 直した 2.7%",
+    "202407 Yahoo -309.08% / 直した 5.11%",
+    "201807 Yahoo -274.41% / 直した -1.42%",
+    "202007 Yahoo -241.0% / 直した 2.76%",
+    "201607 Yahoo -242.94% / 直した -2.03%",
+    "202207 Yahoo -224.9% / 直した 0.59%"
+   ],
+   "1326": [
+    "201601 Yahoo 12544.57% / 直した 4.13%",
+    "201501 Yahoo 12296.23% / 直した 3.93%",
+    "201401 Yahoo 10506.5% / 直した 0.16%",
+    "201605 Yahoo 10401.27% / 直した -1.15%",
+    "201311 Yahoo 9502.73% / 直した -3.76%",
+    "200901 Yahoo 9230.2% / 直した -7.2%"
+   ],
+   "1545": [
+    "202605 Yahoo -99.45% / 直した 10.62%"
+   ],
+   "1629": [
+    "202604 Yahoo 49208.84% / 直した -6.06%",
+    "202603 Yahoo -99.81% / 直した -1.7%"
+   ]
+  },
+  "G2_errors": {},
+  "G2_stocks_with_unrecorded_jumps": {
+   "etf_jp の検算（REF）": [],
+   "nx_brand_data の日本のブランド（nx_brand・nx_forward が値段を引く）": []
+  },
+  "G2_output_deltas_sorted": [
+   {
+    "file": "out/alt_etf_compare.json",
+    "key": "群.ヘルスケア[1621.T]",
+    "metric": "単体.最大下落",
+    "old_stored": -39.8,
+    "old_recomputed": -39.8,
+    "corrected": -34.0,
+    "delta_vs_recomputed": 5.8
+   },
+   {
+    "file": "out/etf_jp.json",
+    "key": "rows[1321.T].jpy",
+    "metric": "maxdd_pct",
+    "old_stored": -24.33,
+    "old_recomputed": null,
+    "corrected": -28.19,
+    "delta_vs_recomputed": -3.86
+   },
+   {
+    "file": "out/etf_jp.json",
+    "key": "rows[1305.T].jpy",
+    "metric": "maxdd_pct",
+    "old_stored": -49.17,
+    "old_recomputed": -49.17,
+    "corrected": -45.96,
+    "delta_vs_recomputed": 3.21
+   },
+   {
+    "file": "out/etf_jp.json",
+    "key": "rows[1321.T].jpy",
+    "metric": "cagr_pct",
+    "old_stored": 14.2,
+    "old_recomputed": null,
+    "corrected": 11.7,
+    "delta_vs_recomputed": -2.5
+   },
+   {
+    "file": "out/mw_japan.json",
+    "key": "tested[E5_1489.T].full（相手 1305.T）",
+    "metric": "cagr_s",
+    "old_stored": 17.79,
+    "old_recomputed": 18.2,
+    "corrected": 16.39,
+    "delta_vs_recomputed": -1.81
+   },
+   {
+    "file": "out/mw_jp_nisa_bridge.json",
+    "key": "tested[1489.T].full",
+    "metric": "cagr_s（Δ法）",
+    "old_stored": 18.2,
+    "old_recomputed": null,
+    "corrected": 16.63,
+    "delta_vs_recomputed": -1.57
+   },
+   {
+    "file": "out/mw_japan.json",
+    "key": "tested[E5_1489.T].full（相手 1305.T）",
+    "metric": "ex_ann",
+    "old_stored": 4.26,
+    "old_recomputed": 4.33,
+    "corrected": 2.85,
+    "delta_vs_recomputed": -1.48
+   },
+   {
+    "file": "out/mw_jp_nisa_bridge.json",
+    "key": "tested[1489.T].full",
+    "metric": "ex_ann（Δ法）",
+    "old_stored": 3.94,
+    "old_recomputed": null,
+    "corrected": 2.5,
+    "delta_vs_recomputed": -1.44
+   },
+   {
+    "file": "out/etf_jp.json",
+    "key": "rows[1625.T].jpy",
+    "metric": "maxdd_pct",
+    "old_stored": -56.04,
+    "old_recomputed": -56.04,
+    "corrected": -54.87,
+    "delta_vs_recomputed": 1.17
+   },
+   {
+    "file": "out/mw_japan.json",
+    "key": "tested[E5_2564.T].full（相手 1305.T）",
+    "metric": "cagr_s",
+    "old_stored": 20.13,
+    "old_recomputed": 21.16,
+    "corrected": 20.23,
+    "delta_vs_recomputed": -0.93
+   },
+   {
+    "file": "out/alt_etf_compare.json",
+    "key": "群.ヘルスケア[1621.T]",
+    "metric": "単体.年率",
+    "old_stored": 6.8,
+    "old_recomputed": 6.8,
+    "corrected": 7.5,
+    "delta_vs_recomputed": 0.7
+   },
+   {
+    "file": "out/mw_japan.json",
+    "key": "tested[E5_2529.T].full（相手 1305.T）",
+    "metric": "cagr_s",
+    "old_stored": 15.93,
+    "old_recomputed": 16.55,
+    "corrected": 15.91,
+    "delta_vs_recomputed": -0.64
+   },
+   {
+    "file": "out/alt_etf_compare.json",
+    "key": "群.ヘルスケア[2639.T]",
+    "metric": "単体.最大下落",
+    "old_stored": -23.8,
+    "old_recomputed": -23.8,
+    "corrected": -24.4,
+    "delta_vs_recomputed": -0.6
+   },
+   {
+    "file": "out/etf_jp.json",
+    "key": "rows[1305.T].jpy",
+    "metric": "cagr_pct",
+    "old_stored": 7.74,
+    "old_recomputed": 7.93,
+    "corrected": 8.48,
+    "delta_vs_recomputed": 0.55
+   },
+   {
+    "file": "out/etf_jp.json",
+    "key": "rows[1625.T].jpy",
+    "metric": "cagr_pct",
+    "old_stored": 9.91,
+    "old_recomputed": 10.06,
+    "corrected": 10.51,
+    "delta_vs_recomputed": 0.45
+   },
+   {
+    "file": "out/mw_japan.json",
+    "key": "tested[E5_2564.T].full（相手 1305.T）",
+    "metric": "ex_ann",
+    "old_stored": 0.77,
+    "old_recomputed": 1.02,
+    "corrected": 0.57,
+    "delta_vs_recomputed": -0.45
+   },
+   {
+    "file": "out/mw_japan.json",
+    "key": "tested[E5_1577.T].full（相手 1305.T）",
+    "metric": "cagr_s",
+    "old_stored": 14.24,
+    "old_recomputed": 14.47,
+    "corrected": 14.05,
+    "delta_vs_recomputed": -0.42
+   },
+   {
+    "file": "out/mw_jp_nisa_bridge.json",
+    "key": "tested[1489.T].capture",
+    "metric": "capture_ratio（Δ法）",
+    "old_stored": 1.03,
+    "old_recomputed": null,
+    "corrected": 0.62,
+    "delta_vs_recomputed": -0.41
+   },
+   {
+    "file": "out/alt_etf_compare.json",
+    "key": "群.ヘルスケア[2639.T]",
+    "metric": "単体.年率",
+    "old_stored": 0.1,
+    "old_recomputed": 0.1,
+    "corrected": -0.3,
+    "delta_vs_recomputed": -0.4
+   },
+   {
+    "file": "out/mw_holdable_breakeven.json",
+    "key": "fits.JMKT（1306 − French の日本〔円〕）",
+    "metric": "mean_ann",
+    "old_stored": -0.531,
+    "old_recomputed": -0.531,
+    "corrected": -0.13,
+    "delta_vs_recomputed": 0.4
+   },
+   {
+    "file": "out/mw_jp_nisa_bridge.json",
+    "key": "tested[1698.T].full",
+    "metric": "cagr_s（Δ法）",
+    "old_stored": 12.35,
+    "old_recomputed": null,
+    "corrected": 12.74,
+    "delta_vs_recomputed": 0.39
+   },
+   {
+    "file": "out/mw_industry.json",
+    "key": "tested[J3_topix17_mom12_state].hold",
+    "metric": "cagr_diff",
+    "old_stored": 0.35,
+    "old_recomputed": 0.49,
+    "corrected": 0.83,
+    "delta_vs_recomputed": 0.34
+   },
+   {
+    "file": "out/etf_jp.json",
+    "key": "rows[2644.T].jpy",
+    "metric": "cagr_pct",
+    "old_stored": 28.63,
+    "old_recomputed": 28.68,
+    "corrected": 29.01,
+    "delta_vs_recomputed": 0.33
+   },
+   {
+    "file": "out/mw_japan.json",
+    "key": "tested[E5_1494.T].full（相手 1305.T）",
+    "metric": "cagr_s",
+    "old_stored": 13.3,
+    "old_recomputed": 13.68,
+    "corrected": 13.35,
+    "delta_vs_recomputed": -0.33
+   },
+   {
+    "file": "out/mw_jp_nisa_bridge.json",
+    "key": "tested[1577.T].full",
+    "metric": "cagr_s（Δ法）",
+    "old_stored": 14.47,
+    "old_recomputed": null,
+    "corrected": 14.14,
+    "delta_vs_recomputed": -0.33
+   },
+   {
+    "file": "out/mw_jp_nisa_bridge.json",
+    "key": "tested[1698.T].full",
+    "metric": "ex_ann（Δ法）",
+    "old_stored": -0.24,
+    "old_recomputed": null,
+    "corrected": 0.09,
+    "delta_vs_recomputed": 0.33
+   },
+   {
+    "file": "out/mw_japan.json",
+    "key": "tested[E5_2529.T].full（相手 1305.T）",
+    "metric": "ex_ann",
+    "old_stored": 0.12,
+    "old_recomputed": 0.23,
+    "corrected": -0.09,
+    "delta_vs_recomputed": -0.32
+   },
+   {
+    "file": "out/mw_holdable_breakeven.json",
+    "key": "fits.JMKT（1306 − French の日本〔円〕）",
+    "metric": "sd_ann",
+    "old_stored": 2.176,
+    "old_recomputed": 2.176,
+    "corrected": 1.865,
+    "delta_vs_recomputed": -0.31
+   },
+   {
+    "file": "out/mw_jp_nisa_bridge.json",
+    "key": "tested[2529.T].full",
+    "metric": "cagr_s（Δ法）",
+    "old_stored": 16.55,
+    "old_recomputed": null,
+    "corrected": 16.25,
+    "delta_vs_recomputed": -0.3
+   },
+   {
+    "file": "out/mw_jp_nisa_bridge.json",
+    "key": "tested[1577.T].full",
+    "metric": "ex_ann（Δ法）",
+    "old_stored": 1.04,
+    "old_recomputed": null,
+    "corrected": 0.75,
+    "delta_vs_recomputed": -0.29
+   },
+   {
+    "file": "out/mw_japan.json",
+    "key": "tested[E5_1399.T].full（相手 1305.T）",
+    "metric": "cagr_s",
+    "old_stored": 10.38,
+    "old_recomputed": 10.66,
+    "corrected": 10.38,
+    "delta_vs_recomputed": -0.28
+   },
+   {
+    "file": "out/mw_japan.json",
+    "key": "tested[E5_1651.T].full（相手 1305.T）",
+    "metric": "cagr_s",
+    "old_stored": 16.65,
+    "old_recomputed": 17.06,
+    "corrected": 16.8,
+    "delta_vs_recomputed": -0.26
+   },
+   {
+    "file": "out/mw_jp_nisa_bridge.json",
+    "key": "tested[2529.T].full",
+    "metric": "ex_ann（Δ法）",
+    "old_stored": -0.19,
+    "old_recomputed": null,
+    "corrected": -0.45,
+    "delta_vs_recomputed": -0.26
+   },
+   {
+    "file": "out/mw_industry.json",
+    "key": "tested[J1_topix17_mom12].hold",
+    "metric": "cagr_diff",
+    "old_stored": -1.07,
+    "old_recomputed": -0.96,
+    "corrected": -0.7,
+    "delta_vs_recomputed": 0.26
+   },
+   {
+    "file": "out/mw_japan.json",
+    "key": "tested[E5_1577.T].full（相手 1305.T）",
+    "metric": "ex_ann",
+    "old_stored": 1.15,
+    "old_recomputed": 1.15,
+    "corrected": 0.9,
+    "delta_vs_recomputed": -0.25
+   },
+   {
+    "file": "out/mw_japan.json",
+    "key": "tested[E5_1478.T].full（相手 1305.T）",
+    "metric": "cagr_s",
+    "old_stored": 12.75,
+    "old_recomputed": 13.06,
+    "corrected": 12.82,
+    "delta_vs_recomputed": -0.24
+   },
+   {
+    "file": "out/mw_industry.json",
+    "key": "tested[J3_topix17_mom12_state].hold",
+    "metric": "ex_ann",
+    "old_stored": 0.66,
+    "old_recomputed": 0.78,
+    "corrected": 1.02,
+    "delta_vs_recomputed": 0.24
+   },
+   {
+    "file": "out/mw_industry.json",
+    "key": "tested[J1_topix17_mom12].hold",
+    "metric": "ex_ann",
+    "old_stored": -0.53,
+    "old_recomputed": -0.43,
+    "corrected": -0.21,
+    "delta_vs_recomputed": 0.22
+   },
+   {
+    "file": "out/mw_japan.json",
+    "key": "tested[E5_1698.T].full（相手 1305.T）",
+    "metric": "cagr_s",
+    "old_stored": 12.09,
+    "old_recomputed": 12.35,
+    "corrected": 12.56,
+    "delta_vs_recomputed": 0.21
+   },
+   {
+    "file": "out/mw_japan.json",
+    "key": "tested[E5_1494.T].full（相手 1305.T）",
+    "metric": "ex_ann",
+    "old_stored": 0.05,
+    "old_recomputed": 0.09,
+    "corrected": -0.04,
+    "delta_vs_recomputed": -0.13
+   },
+   {
+    "file": "out/mw_jp_nisa_bridge.json",
+    "key": "tested[1698.T].capture",
+    "metric": "capture_ratio（Δ法）",
+    "old_stored": -0.02,
+    "old_recomputed": null,
+    "corrected": 0.11,
+    "delta_vs_recomputed": 0.13
+   },
+   {
+    "file": "out/mw_japan.json",
+    "key": "tested[E5_1399.T].full（相手 1305.T）",
+    "metric": "ex_ann",
+    "old_stored": -1.1,
+    "old_recomputed": -1.08,
+    "corrected": -1.2,
+    "delta_vs_recomputed": -0.12
+   },
+   {
+    "file": "out/mw_industry.json",
+    "key": "tested[J2_topix17_mom6].hold",
+    "metric": "ex_ann",
+    "old_stored": -2.06,
+    "old_recomputed": -2.06,
+    "corrected": -1.95,
+    "delta_vs_recomputed": 0.11
+   },
+   {
+    "file": "out/alt_etf_compare.json",
+    "key": "群.ヘルスケア[1621.T]",
+    "metric": "替えた形.年率",
+    "old_stored": 20.6,
+    "old_recomputed": 20.6,
+    "corrected": 20.7,
+    "delta_vs_recomputed": 0.1
+   },
+   {
+    "file": "out/alt_etf_compare.json",
+    "key": "群.ヘルスケア[2639.T]",
+    "metric": "替えた形.年率",
+    "old_stored": 27.1,
+    "old_recomputed": 27.1,
+    "corrected": 27.0,
+    "delta_vs_recomputed": -0.1
+   },
+   {
+    "file": "out/mw_jp_nisa_bridge.json",
+    "key": "tested[1577.T].capture",
+    "metric": "capture_ratio（Δ法）",
+    "old_stored": 0.33,
+    "old_recomputed": null,
+    "corrected": 0.23,
+    "delta_vs_recomputed": -0.1
+   },
+   {
+    "file": "out/mw_jp_nisa_bridge.json",
+    "key": "tested[2564.T].full",
+    "metric": "cagr_s（Δ法）",
+    "old_stored": 21.16,
+    "old_recomputed": null,
+    "corrected": 21.07,
+    "delta_vs_recomputed": -0.09
+   },
+   {
+    "file": "out/mw_industry.json",
+    "key": "tested[J2_topix17_mom6].hold",
+    "metric": "cagr_diff",
+    "old_stored": -2.5,
+    "old_recomputed": -2.51,
+    "corrected": -2.42,
+    "delta_vs_recomputed": 0.09
+   },
+   {
+    "file": "out/etf_jp.json",
+    "key": "rows[200A.T].jpy",
+    "metric": "cagr_pct",
+    "old_stored": 42.47,
+    "old_recomputed": 42.76,
+    "corrected": 42.84,
+    "delta_vs_recomputed": 0.08
+   },
+   {
+    "file": "out/etf_jp.json",
+    "key": "rows[200A.T].jpy",
+    "metric": "maxdd_pct",
+    "old_stored": -33.47,
+    "old_recomputed": -33.47,
+    "corrected": -33.39,
+    "delta_vs_recomputed": 0.08
+   },
+   {
+    "file": "out/etf_jp.json",
+    "key": "rows[2243.T].jpy",
+    "metric": "maxdd_pct",
+    "old_stored": -32.03,
+    "old_recomputed": -32.03,
+    "corrected": -32.11,
+    "delta_vs_recomputed": -0.08
+   },
+   {
+    "file": "out/etf_jp.json",
+    "key": "rows[2644.T].jpy",
+    "metric": "maxdd_pct",
+    "old_stored": -40.93,
+    "old_recomputed": -40.93,
+    "corrected": -40.86,
+    "delta_vs_recomputed": 0.07
+   },
+   {
+    "file": "out/mw_japan.json",
+    "key": "tested[E5_1478.T].full（相手 1305.T）",
+    "metric": "ex_ann",
+    "old_stored": 0.91,
+    "old_recomputed": 0.95,
+    "corrected": 0.88,
+    "delta_vs_recomputed": -0.07
+   },
+   {
+    "file": "out/mw_jp_nisa_bridge.json",
+    "key": "tested[2564.T].full",
+    "metric": "ex_ann（Δ法）",
+    "old_stored": 0.74,
+    "old_recomputed": null,
+    "corrected": 0.67,
+    "delta_vs_recomputed": -0.07
+   },
+   {
+    "file": "out/mw_jp_nisa_bridge.json",
+    "key": "tested[1399.T].full",
+    "metric": "cagr_s（Δ法）",
+    "old_stored": 10.66,
+    "old_recomputed": null,
+    "corrected": 10.59,
+    "delta_vs_recomputed": -0.07
+   },
+   {
+    "file": "out/etf_jp.json",
+    "key": "rows[2243.T].jpy",
+    "metric": "cagr_pct",
+    "old_stored": 58.97,
+    "old_recomputed": 58.13,
+    "corrected": 58.07,
+    "delta_vs_recomputed": -0.06
+   },
+   {
+    "file": "out/mw_jp_nisa_bridge.json",
+    "key": "tested[1494.T].full",
+    "metric": "cagr_s（Δ法）",
+    "old_stored": 13.68,
+    "old_recomputed": null,
+    "corrected": 13.62,
+    "delta_vs_recomputed": -0.06
+   },
+   {
+    "file": "out/mw_jp_nisa_bridge.json",
+    "key": "tested[1399.T].full",
+    "metric": "ex_ann（Δ法）",
+    "old_stored": -1.33,
+    "old_recomputed": null,
+    "corrected": -1.39,
+    "delta_vs_recomputed": -0.06
+   },
+   {
+    "file": "out/mw_japan.json",
+    "key": "tested[E5_1651.T].full（相手 1305.T）",
+    "metric": "ex_ann",
+    "old_stored": 3.49,
+    "old_recomputed": 3.54,
+    "corrected": 3.49,
+    "delta_vs_recomputed": -0.05
+   },
+   {
+    "file": "out/mw_jp_nisa_bridge.json",
+    "key": "tested[1494.T].full",
+    "metric": "ex_ann（Δ法）",
+    "old_stored": -0.36,
+    "old_recomputed": null,
+    "corrected": -0.41,
+    "delta_vs_recomputed": -0.05
+   },
+   {
+    "file": "out/mw_japan.json",
+    "key": "tested[E5_1698.T].full（相手 1305.T）",
+    "metric": "ex_ann",
+    "old_stored": 0.09,
+    "old_recomputed": 0.16,
+    "corrected": 0.12,
+    "delta_vs_recomputed": -0.04
+   },
+   {
+    "file": "out/mw_jp_nisa_bridge.json",
+    "key": "tested[1651.T].full",
+    "metric": "ex_ann（Δ法）",
+    "old_stored": 3.0,
+    "old_recomputed": null,
+    "corrected": 2.96,
+    "delta_vs_recomputed": -0.04
+   },
+   {
+    "file": "out/mw_jp_nisa_bridge.json",
+    "key": "tested[1651.T].full",
+    "metric": "cagr_s（Δ法）",
+    "old_stored": 17.06,
+    "old_recomputed": null,
+    "corrected": 17.02,
+    "delta_vs_recomputed": -0.04
+   },
+   {
+    "file": "out/mw_jp_nisa_bridge.json",
+    "key": "tested[2529.T].capture",
+    "metric": "capture_ratio（Δ法）",
+    "old_stored": 0.01,
+    "old_recomputed": null,
+    "corrected": -0.03,
+    "delta_vs_recomputed": -0.04
+   },
+   {
+    "file": "out/mw_jp_nisa_bridge.json",
+    "key": "tested[1478.T].full",
+    "metric": "ex_ann（Δ法）",
+    "old_stored": 0.73,
+    "old_recomputed": null,
+    "corrected": 0.7,
+    "delta_vs_recomputed": -0.03
+   },
+   {
+    "file": "out/mw_jp_nisa_bridge.json",
+    "key": "tested[1478.T].full",
+    "metric": "cagr_s（Δ法）",
+    "old_stored": 13.06,
+    "old_recomputed": null,
+    "corrected": 13.03,
+    "delta_vs_recomputed": -0.03
+   },
+   {
+    "file": "out/mw_jp_nisa_bridge.json",
+    "key": "tested[1399.T].capture",
+    "metric": "capture_ratio（Δ法）",
+    "old_stored": -0.31,
+    "old_recomputed": null,
+    "corrected": -0.33,
+    "delta_vs_recomputed": -0.02
+   },
+   {
+    "file": "out/mw_jp_nisa_bridge.json",
+    "key": "tested[1651.T].capture",
+    "metric": "capture_ratio（Δ法）",
+    "old_stored": 0.67,
+    "old_recomputed": null,
+    "corrected": 0.66,
+    "delta_vs_recomputed": -0.01
+   },
+   {
+    "file": "out/mw_jp_nisa_bridge.json",
+    "key": "tested[1494.T].capture",
+    "metric": "capture_ratio（Δ法）",
+    "old_stored": 0.15,
+    "old_recomputed": null,
+    "corrected": 0.14,
+    "delta_vs_recomputed": -0.01
+   },
+   {
+    "file": "out/mw_jp_nisa_bridge.json",
+    "key": "tested[2564.T].capture",
+    "metric": "capture_ratio（Δ法）",
+    "old_stored": 0.27,
+    "old_recomputed": null,
+    "corrected": 0.26,
+    "delta_vs_recomputed": -0.01
+   },
+   {
+    "file": "out/etf_jp_defense.json",
+    "key": "候補[466A.T].円建て.累積",
+    "metric": "累積%",
+    "old_stored": 11.9,
+    "old_recomputed": 7.22,
+    "corrected": 7.22,
+    "delta_vs_recomputed": 0.0
+   },
+   {
+    "file": "out/etf_jp_defense.json",
+    "key": "候補[513A.T].円建て.累積",
+    "metric": "累積%",
+    "old_stored": -15.81,
+    "old_recomputed": -17.08,
+    "corrected": -17.08,
+    "delta_vs_recomputed": 0.0
+   },
+   {
+    "file": "out/etf_jp_defense.json",
+    "key": "候補[498A.T].円建て.累積",
+    "metric": "累積%",
+    "old_stored": 2.02,
+    "old_recomputed": -2.78,
+    "corrected": -2.78,
+    "delta_vs_recomputed": 0.0
+   },
+   {
+    "file": "out/etf_jp_defense.json",
+    "key": "候補[610A.T].円建て.累積",
+    "metric": "累積%",
+    "old_stored": 10.63,
+    "old_recomputed": 1.08,
+    "corrected": 1.08,
+    "delta_vs_recomputed": 0.0
+   },
+   {
+    "file": "out/alt_etf_compare.json",
+    "key": "群.防衛[466A.T]",
+    "metric": "単体.年率",
+    "old_stored": -4.4,
+    "old_recomputed": -4.4,
+    "corrected": -4.4,
+    "delta_vs_recomputed": 0.0
+   },
+   {
+    "file": "out/alt_etf_compare.json",
+    "key": "群.防衛[466A.T]",
+    "metric": "単体.最大下落",
+    "old_stored": -19.2,
+    "old_recomputed": -19.2,
+    "corrected": -19.2,
+    "delta_vs_recomputed": 0.0
+   },
+   {
+    "file": "out/alt_etf_compare.json",
+    "key": "群.防衛[466A.T]",
+    "metric": "替えた形.年率",
+    "old_stored": 39.4,
+    "old_recomputed": 39.4,
+    "corrected": 39.4,
+    "delta_vs_recomputed": 0.0
+   },
+   {
+    "file": "out/alt_etf_compare.json",
+    "key": "群.防衛[513A.T]",
+    "metric": "単体.年率",
+    "old_stored": -29.1,
+    "old_recomputed": -29.1,
+    "corrected": -29.1,
+    "delta_vs_recomputed": 0.0
+   },
+   {
+    "file": "out/alt_etf_compare.json",
+    "key": "群.防衛[513A.T]",
+    "metric": "単体.最大下落",
+    "old_stored": -18.2,
+    "old_recomputed": -18.2,
+    "corrected": -18.2,
+    "delta_vs_recomputed": 0.0
+   },
+   {
+    "file": "out/alt_etf_compare.json",
+    "key": "群.防衛[513A.T]",
+    "metric": "替えた形.年率",
+    "old_stored": 45.5,
+    "old_recomputed": 45.5,
+    "corrected": 45.5,
+    "delta_vs_recomputed": 0.0
+   },
+   {
+    "file": "out/defense_alts.json",
+    "key": "A' 円建ての短い記録.466A",
+    "metric": "累積",
+    "old_stored": -3.7,
+    "old_recomputed": -3.7,
+    "corrected": -3.7,
+    "delta_vs_recomputed": 0.0
+   },
+   {
+    "file": "out/defense_alts.json",
+    "key": "A' 円建ての短い記録.466A",
+    "metric": "最大下落",
+    "old_stored": -19.2,
+    "old_recomputed": -19.2,
+    "corrected": -19.2,
+    "delta_vs_recomputed": 0.0
+   },
+   {
+    "file": "out/defense_alts.json",
+    "key": "A' 円建ての短い記録.513A",
+    "metric": "累積",
+    "old_stored": -18.2,
+    "old_recomputed": -18.2,
+    "corrected": -18.2,
+    "delta_vs_recomputed": 0.0
+   },
+   {
+    "file": "out/defense_alts.json",
+    "key": "A' 円建ての短い記録.513A",
+    "metric": "最大下落",
+    "old_stored": -18.2,
+    "old_recomputed": -18.2,
+    "corrected": -18.2,
+    "delta_vs_recomputed": 0.0
+   },
+   {
+    "file": "out/mw_jp_nisa_bridge.json",
+    "key": "tested[1478.T].capture",
+    "metric": "capture_ratio（Δ法）",
+    "old_stored": 0.29,
+    "old_recomputed": null,
+    "corrected": 0.29,
+    "delta_vs_recomputed": 0.0
+   }
+  ],
+  "G2_stored_window_differs（保存の窓が今の作り方と1か月ずれる）": [
+   "out/mw_japan.json tested[E5_1489.T].full（相手 1305.T）: 保存 201702〜202609 / 今の作り方 201703〜202608",
+   "out/mw_japan.json tested[E5_1577.T].full（相手 1305.T）: 保存 201303〜202609 / 今の作り方 201304〜202608",
+   "out/mw_japan.json tested[E5_1698.T].full（相手 1305.T）: 保存 201005〜202609 / 今の作り方 201006〜202608",
+   "out/mw_japan.json tested[E5_2529.T].full（相手 1305.T）: 保存 201904〜202609 / 今の作り方 201905〜202608",
+   "out/mw_japan.json tested[E5_1478.T].full（相手 1305.T）: 保存 201510〜202609 / 今の作り方 201511〜202608",
+   "out/mw_japan.json tested[E5_1399.T].full（相手 1305.T）: 保存 201511〜202609 / 今の作り方 201512〜202608",
+   "out/mw_japan.json tested[E5_1651.T].full（相手 1305.T）: 保存 201709〜202609 / 今の作り方 201710〜202608",
+   "out/mw_japan.json tested[E5_1494.T].full（相手 1305.T）: 保存 201705〜202609 / 今の作り方 201706〜202608",
+   "out/mw_japan.json tested[E5_2564.T].full（相手 1305.T）: 保存 202008〜202609 / 今の作り方 202009〜202608",
+   "out/mw_industry.json tested[J1_topix17_mom12].hold: 保存 200903〜202608 / 今の作り方 200904〜202608",
+   "out/mw_industry.json tested[J2_topix17_mom6].hold: 保存 200809〜202608 / 今の作り方 200810〜202608",
+   "out/mw_industry.json tested[J3_topix17_mom12_state].hold: 保存 201101〜202608 / 今の作り方 201102〜202608"
+  ],
+  "G2_impact_errors": {},
+  "live_gate_affected": false,
+  "live_gate_note": "保有・ETF 側の目標の本・席・門外例外に東証の本は無い（投資信託は協会の基準価額で Yahoo ではない）。盤（fetch_dashboard）と fetch_divs は監視リストの日本株の今日の値段・直近の分配を Yahoo から取る＝系列ではなく、分割の日の前日比だけがずれうる"
+ },
+ "decision": "報告のみ（事前登録 G2・G3 どおり）。どの道具も直していない——直すか・どれから直すかはユーザーに確かめる",
+ "deviations": [
+  "事前登録の G2 は「Yahoo の東証の系列を使う道具を一覧にし、分割・分配金の抜けでずれた出力を名指しする（ずれの大きさつき）」だけを決めていて、点検の線は決めていない。線は道具を書くときに決めた（1日の終値の跳び ×1.6 超＝etf_jp.repair の幅／整数比の近さ |log(比×k)|<0.12／5営業日以内に ±15% へ戻れば壊れた値／分配の一致は Yahoo の割り戻しが協会の分配の利回りの ±30%〔0.05pt 未満の差は一致〕）。最初の試しで Yahoo の割り戻しの利回りの符号を逆に取っていた純粋な誤りを直した（線は変えていない）",
+  "分配の基準は協会の CSV の分配金（決算日の行・基準価額は分配落ち後）。市場価格の権利落ちの日は「決算日の前の Yahoo の営業日」で近似した（月をまたぐのは決算日が月初のときだけ）",
+  "mw_jp_nisa_bridge は相手（MSCI Japan gross・1306 の基準価額）を取り直さない Δ法: 相手は Yahoo の東証の系列ではないので、超過の算術平均は器の月次の差の平均だけ、cagr_s は器の年率の差だけ動く（t値・β・4因子は計算し直していない）",
+  "old_recomputed は 2026-10-14 に取り直した Yahoo の値で作った（道具と同じ作り方）。Yahoo は調整後終値をさかのぼって直すので、出力を作った日の値（old_stored）と食い違うことがある＝両方を並べた",
+  "探索役が挙げた東証の本のうち、どの道具も Yahoo で使っていない本（1545・2840 ほか）も点検した（データの危うさの記録）。影響の計算には入らない"
+ ],
+ "caveats": [
+  "直した系列の確かさは、協会の基準価額の総リターンとの年率の差（G2_instruments.etfs[].monthly.jita_nav_check）で確かめた。残る差は市場価格と基準価額の乖離の分",
+  "株（etf_jp の検算5社・nx_brand の日本の9社）は分割の跳びと壊れた値だけを見た。株の配当には独立の基準が無い（測れない）",
+  "G3 は静的な走査: 送る相手は同じ関数（URL を引数で受ける関数は呼ぶ所へ最大4段）の文字列と URL 定数から推した。実行時に組む URL・別ファイルから渡す URL は取りこぼしうる＝reviewed_notes で確かめた。*.py だけ（index.html・シェル・workflow は対象外）",
+  "ずれの大きさは各出力の窓・各出力の作り方で計算し直した数字で、判定（格付け）は計算し直していない（直すときは各道具を回し直す）",
+  "mw_japan.json・mw_industry.json は 2026-09-28 の mw_common.yahoo の月の切り方の直し（東証の月足が1か月前に付いていた）より前に作られた形跡がある（保存の窓が今の作り方より1か月前にずれる＝G2_stored_window_differs）。相手も東証の本なので比べ方への効きは小さいが、old_stored と old_recomputed の差の一部はこれ",
+  "分割を Yahoo が「記録した」本でも壊れることがある: 1321.T は 2026-10-05 の 100:1 を記録して終値をさかのぼって 1/100 にしたが、過去の分配金（187〜723円）は割っていない→ 調整後終値が負になる（今の Yahoo では etf_jp.st が計算できない）。etf_jp.json（2026-08-19）はその前に作られた",
+  "Yahoo の分配の割り戻しが協会の分配の約2倍の本がある（1577・2639・1489 ほか＝status too_large）: Yahoo の金額÷終値は協会と合うのに調整後終値の比が2倍動く＝割り戻しの二重かけ。2013 年より前は東証の ETF の分配を Yahoo が持っていない（status missing）＝長い窓の年率を低く出す"
+ ],
+ "runtime_sec": 66
 }

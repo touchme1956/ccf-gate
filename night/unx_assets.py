@@ -1146,6 +1146,7 @@ def century_parts():
     return _CENT
 
 
+DMD_Y0 = 1928                     # common.century: Damodaran の年次（1928〜2025）
 ANNUAL_MAP = {'EDV': 'TBOND', 'TLT': 'TBOND', 'TIP': 'TBOND', 'UST_HEDGED_2621': 'TBOND', 'GLDM': 'GOLD', 'YEN_CASH': 'TBILL'}
 MONTHLY_OK = {'QQQM', 'SMH', 'ITA', 'VOO', 'XLV', 'FBT', 'SHLD', 'SHLD_EU', 'GDX', 'XLU'}
 
@@ -1176,7 +1177,7 @@ def century_monthly(f):
                 v.append((y, a / b))
         xs = sorted(x for _, x in v)
         d[lab] = {'窓': len(xs), '中央値': round(S.median(xs), 3), '下位10%点': round(_q(xs, 0.10), 3), '最悪': round(xs[0], 3),
-                  '市場に勝った割合': round(sum(x > 1 for x in xs) / len(xs), 2), '_med': S.median(xs), '_p10': _q(xs, 0.10)}
+                  '市場に勝った割合': round(sum(x > 1 for x in xs) / len(xs), 2), '_med': S.median(xs), '_p10': _q(xs, 0.10), '_v': dict(v)}
     return d
 
 
@@ -1195,7 +1196,7 @@ def century_annual(f):
         else:
             return None
     tw = sum(f.values())
-    years = sorted(y for y in am if all(y in ann[keys[k]] for k in keys))
+    years = sorted(y for y in am if y >= DMD_Y0 and all(y in ann[keys[k]] for k in keys))   # Damodaran の年（1928〜）にそろえる
     r = {y: sum(f[k] / tw * ann[keys[k]][y] for k in keys) for y in years}
     d = {}
     for n, lab in ((30, '30年の積立（年次・年1回）'), (20, '20年の積立（年次・年1回）')):
@@ -1213,7 +1214,8 @@ def century_annual(f):
             d[lab] = None
             continue
         d[lab] = {'窓': len(xs), '起点': f'{v[0][0]}〜{v[-1][0]}', '中央値': round(S.median(xs), 3), '下位10%点': round(_q(xs, 0.10), 3),
-                  '最悪': round(xs[0], 3), '市場に勝った割合': round(sum(x > 1 for x in xs) / len(xs), 2), '_med': S.median(xs), '_p10': _q(xs, 0.10)}
+                  '最悪': round(xs[0], 3), '市場に勝った割合': round(sum(x > 1 for x in xs) / len(xs), 2), '_med': S.median(xs), '_p10': _q(xs, 0.10),
+                  '_v': dict(v)}
     return d
 
 
@@ -1226,7 +1228,11 @@ def cond3(cf, cb):
         a, b = cf.get(lab), cb.get(lab)
         if a is None or b is None:
             return None
-        ok = ok and a['_med'] >= b['_med'] and a['_p10'] > b['_p10']
+        common = sorted(set(a['_v']) & set(b['_v']))          # 同じ起点どうしで比べる（窓の数が違えば共通の起点だけ）
+        xa = sorted(a['_v'][y] for y in common); xb = sorted(b['_v'][y] for y in common)
+        if not common:
+            return None
+        ok = ok and S.median(xa) >= S.median(xb) and _q(xa, 0.10) > _q(xb, 0.10)
     return bool(ok)
 
 

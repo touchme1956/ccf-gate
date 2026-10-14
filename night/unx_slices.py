@@ -118,6 +118,17 @@ def main():
         tab_mf = U.measure(mf_forms, rows, ch_jpy, Dmap=Dmap, mega=mega, windows=wins, a2=(201110, last))
         tab_mf_usd = U.measure(mf_forms, rows, chains, Dmap=Dmap, mega=mega, windows=wins, a2=(201110, last))
 
+    # ── 感度: GDX の世界B を事前登録どおりの全期間の Gold の上乗せ（時価総額の下限なし＝_b_raw・_c_raw）で ──
+    gdx_sens = None
+    if 'GDX' in rows:
+        rows_g = dict(rows)
+        rows_g['GDX'] = dict(rows['GDX'], B=rows['GDX']['_b_raw'], C=rows['GDX']['_c_raw'])
+        Dmap_g = dict(Dmap, GDX=rows['GDX']['_c_raw'])
+        gf = {k: f for k, f in usable.items() if k == 'BASE（F_now）' or k.startswith('GDX|')}
+        tab_g = U.measure(gf, rows_g, ch_jpy, Dmap=Dmap_g, mega=mega)
+        gdx_sens = dict(note='GDX の B＝R株＋0.5×Gold の全期間の上乗せ（' + f"{100 * rows['GDX']['B_X_raw']:.2f}" + '%/年・時価総額の下限なし）・C は同じ B で',
+                        B=round(100 * rows['GDX']['_b_raw'], 3), C=round(100 * rows['GDX']['_c_raw'], 3), table=tab_g)
+
     # ── 100年の代用 ──
     U.log('100年の代用')
     cc, seats, cpct = U.castle_copy()
@@ -162,6 +173,14 @@ def main():
             usd_labels[k] = lu
             detail[k]['USD（感度）'] = ru
             detail[k]['ラベル（USD・感度）'] = lu
+    if gdx_sens:
+        gl = {}
+        for k in gdx_sens['table'][W_CRASH]:
+            if k == base_k:
+                continue
+            gl[k] = conds(gdx_sens['table'], k, base_k, cent[k]['c3'])[0]
+        gdx_sens['labels'] = gl
+        gdx_sens['table'] = U.strip_raw(gdx_sens['table'])
     cand_table = {}
     for k, lab in labels.items():
         c, nm = meta[k]
@@ -206,7 +225,7 @@ def main():
                  '参考_MF_REF（窓を縮めた・USD）': U.strip_raw(tab_mf_usd) if tab_mf else None,
                  '100年の代用': {'土台（全体の形）': {'月次': U.strip_century(base_m), '年次': U.strip_century(base_a)},
                               '土台（ETF側だけ）': {'月次': U.strip_century(base_m_etf), '年次': U.strip_century(base_a_etf)}, '形ごと': cent},
-                 '判定の中身': detail},
+                 '判定の中身': detail, '感度_GDX の世界B を全期間の Gold の上乗せで（円）': gdx_sens},
         decision={'ラベル（円・主・候補×形）': cand_table, 'FX18 でラベルが変わる形': flips or 'なし',
                   'ラベル（USD・感度）': usd_labels, '参考の本（ラベルなし）': ['MF_REF', 'GOLDPLUS_REF'],
                   'note': '勧めるかは結果を見た人の判断（配分は変えない）'},

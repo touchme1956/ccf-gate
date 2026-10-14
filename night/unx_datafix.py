@@ -501,10 +501,16 @@ def inventory():
                                    ('px_guard（短い応答を採らない）', r'PXG\.vet'), ('協会の基準価額で照合', r'csv-file-download|jita_|ita_monthly|fund_series'))
                   if re.search(pat, s)]
         outs = sorted(set((m.group(0) if m.group(0).startswith('out/') else m.group(1)) for m in rx_out.finditer(s)))
-        rows.append({'file': os.path.relpath(p, BASE), 'tse_codes_literal': codes, 'builds_dot_T_dynamically': dyn,
+        rel = os.path.relpath(p, BASE)
+        codes = sorted(set(codes) | set(DYNAMIC_USE.get(rel, [])))
+        rows.append({'file': rel, 'in_flight_this_study': os.path.basename(p).startswith('unx_'),
+                     'tse_codes_literal': codes, 'builds_dot_T_dynamically': dyn,
                      'yahoo_fetch_seen': bool(rx_yh.search(s)), 'guards_found': guards, 'json_paths_named': outs[:30]})
     return rows
 
+
+# 記号を組み立てて渡す道具（文字列の '1617.T' が無い）: mw_industry は f'{x}.T' で 1617〜1633
+DYNAMIC_USE = {'night/mw_industry.py': [str(x) for x in range(1617, 1634)] + ['1308']}
 
 # 手で確かめた注記（静的な走査が拾った各道具を読んで、何を Yahoo の東証の系列から作るか）
 TOOL_NOTES = {
@@ -534,6 +540,8 @@ TOOL_NOTES = {
     'night/castle_correlation.py': {'series': '席・門外例外の日本株があれば', 'helper': '道具の中の取得', 'outputs': ['out/castle_correlation.json'], 'uses': '城の相関'},
     'night/mw_forward.py': {'series': '城の日本株があれば', 'helper': 'mw_forward.yh_daily', 'outputs': ['out/mw_forward.json'], 'uses': '前向きの検定'},
     'night/fetch_logos.py': {'series': '日本株のロゴ', 'helper': '値段ではない', 'outputs': ['out/logos/index.json'], 'uses': '影響なし'},
+    'night/unx_vehicles.py': {'series': '1540・1326（金）', 'helper': "道具の中の 'tse_px'", 'outputs': ['out/unx_vehicles.json（この事前登録の別の実装・未コミット）'],
+                              'uses': '★1326.T の Yahoo は壊れている（G2_instruments.etfs.1326）——リードへ'},
     'night/nx_brand_data.py': {'series': '日本のブランド9社（株）', 'helper': '記号の表（値段は nx_brand.py・nx_forward.py が引く）', 'outputs': ['out/nx_brand.json・out/nx_forward.json'],
                                'uses': 'ブランドの組（日本の社は株＝分割の点検だけ）'},
 }
@@ -1108,6 +1116,12 @@ CAVEATS = [
     'G3 は静的な走査: 送る相手は同じ関数（URL を引数で受ける関数は呼ぶ所へ最大4段）の文字列と URL 定数から推した。実行時に組む URL・別ファイルから渡す URL は取りこぼしうる＝reviewed_notes で確かめた。'
     '*.py だけ（index.html・シェル・workflow は対象外）',
     'ずれの大きさは各出力の窓・各出力の作り方で計算し直した数字で、判定（格付け）は計算し直していない（直すときは各道具を回し直す）',
+    'mw_japan.json・mw_industry.json は 2026-09-28 の mw_common.yahoo の月の切り方の直し（東証の月足が1か月前に付いていた）より前に作られた形跡がある'
+    '（保存の窓が今の作り方より1か月前にずれる＝G2_stored_window_differs）。相手も東証の本なので比べ方への効きは小さいが、old_stored と old_recomputed の差の一部はこれ',
+    '分割を Yahoo が「記録した」本でも壊れることがある: 1321.T は 2026-10-05 の 100:1 を記録して終値をさかのぼって 1/100 にしたが、過去の分配金（187〜723円）は割っていない'
+    '→ 調整後終値が負になる（今の Yahoo では etf_jp.st が計算できない）。etf_jp.json（2026-08-19）はその前に作られた',
+    'Yahoo の分配の割り戻しが協会の分配の約2倍の本がある（1577・2639・1489 ほか＝status too_large）: Yahoo の金額÷終値は協会と合うのに調整後終値の比が2倍動く＝割り戻しの二重かけ。'
+    '2013 年より前は東証の ETF の分配を Yahoo が持っていない（status missing）＝長い窓の年率を低く出す',
 ]
 
 
@@ -1138,11 +1152,17 @@ def summarize(out):
         d = r.get('distributions')
         sc = d['status_counts'] if isinstance(d, dict) else None
         inst.append({'code': c, 'used_by_tools': c in out['G2_instruments']['used_by_tools'],
+                     'used_by_in_flight_unx_tools': c in out['G2_instruments']['used_by_in_flight_unx_tools'],
                      'unrecorded_splits': [f"{x['date']} {x['as']}（終値×{x['close_ratio']}・調整後も跳ぶ={x['adjclose_also_jumps']}・協会の水準の比 {x['jita_tr_ratio_same_days']}）" for x in r.get('unrecorded_splits') or []],
                      'glitch_days': [f"{g['date']}（{g['close']} ← 前 {g['prev_close']}）" for g in r.get('glitch_days') or []],
                      'distribution_status': sc,
                      'distribution_years_off': {y: v for y, v in (d.get('yearly_pct') or {}).items() if abs(v['missed']) >= 0.05} if isinstance(d, dict) else None,
                      'monthly': {k: (r.get('monthly') or {}).get(k) for k in ('window', 'cagr_yahoo_as_used_pct', 'cagr_corrected_pct', 'cagr_gap_pt', 'n_months_gap_gt_2pct')}})
+    broken = {}
+    for c, r in out['G2_instruments']['etfs'].items():
+        bm = [x for x in ((r.get('monthly') or {}).get('months_gap_gt_2pct') or []) if x['yahoo_as_used_pct'] <= -95 or x['yahoo_as_used_pct'] >= 300]
+        if bm:
+            broken[c] = [f"{x['month']} Yahoo {x['yahoo_as_used_pct']}% / 直した {x['corrected_pct']}%" for x in bm[:6]]
     ok = [c for c, r in out['G2_instruments']['etfs'].items() if 'error' not in r and not r.get('affected')]
     err = {c: r.get('error') for c, r in out['G2_instruments']['etfs'].items() if 'error' in r}
     st_aff = {g: [x['code'] for x in v if x.get('affected')] for g, v in out['G2_instruments']['stocks'].items()}
@@ -1159,7 +1179,8 @@ def summarize(out):
     for x in imp.get('etf_jp') or []:
         if isinstance(x, dict) and x.get('corrected'):
             for m in ('cagr_pct', 'maxdd_pct'):
-                add(x['file'], x['key'], m, x['old_stored'].get(m), (x.get('old_recomputed') or {}).get(m), x['corrected'].get(m))
+                orc = x.get('old_recomputed')
+                add(x['file'], x['key'], m, x['old_stored'].get(m), orc.get(m) if isinstance(orc, dict) else None, x['corrected'].get(m))
     for x in imp.get('etf_jp_defense') or []:
         if isinstance(x, dict):
             add(x['file'], x['key'], '累積%', x.get('old_stored_pct'), x.get('old_recomputed_pct'), x.get('corrected_pct'))
@@ -1191,11 +1212,19 @@ def summarize(out):
             for m in ('mean_ann', 'sd_ann'):
                 add(x['file'], x['key'], m, (x.get('old_stored') or {}).get(m), (x.get('old_recomputed') or {}).get(m), x['corrected'].get(m))
     rows.sort(key=lambda r: -abs(r['delta_vs_recomputed'] or 0))
+    shifted = []
+    for k in ('mw_japan', 'mw_industry'):
+        for x in imp.get(k) or []:
+            if isinstance(x, dict) and x.get('old_stored') and x.get('old_recomputed') and \
+                    (x['old_stored'].get('from'), x['old_stored'].get('to')) != (x['old_recomputed'].get('from'), x['old_recomputed'].get('to')):
+                shifted.append(f"{x['file']} {x['key']}: 保存 {x['old_stored'].get('from')}〜{x['old_stored'].get('to')} / 今の作り方 {x['old_recomputed'].get('from')}〜{x['old_recomputed'].get('to')}")
     lg = out['G2_live_gate']
     return {
         'G3_files_sending_email_to_non_sec': files,
-        'G2_affected_instruments': inst, 'G2_clean_instruments': ok, 'G2_errors': err, 'G2_stocks_with_unrecorded_jumps': st_aff,
+        'G2_affected_instruments': inst, 'G2_clean_instruments': ok,
+        'G2_yahoo_monthly_impossible_now（今の Yahoo の月次に −95% 以下・+300% 以上の月）': broken, 'G2_errors': err, 'G2_stocks_with_unrecorded_jumps': st_aff,
         'G2_output_deltas_sorted': rows,
+        'G2_stored_window_differs（保存の窓が今の作り方と1か月ずれる）': shifted,
         'G2_impact_errors': {k: v.get('error') for k, v in imp.items() if isinstance(v, dict) and v.get('error')},
         'live_gate_affected': bool(lg['holdings_tse'] or lg['ami_names_tse'] or lg['seats_tse'] or lg['gate_exceptions_tse']),
         'live_gate_note': '保有・ETF 側の目標の本・席・門外例外に東証の本は無い（投資信託は協会の基準価額で Yahoo ではない）。'
@@ -1259,8 +1288,9 @@ def main():
     for grp, cs in STOCKS.items():
         stocks[grp] = [check_stock(c) for c in cs]
     out['G2_instruments'] = {'etfs': checks, 'stocks': stocks,
-                             'used_by_tools': sorted({c for r in inv for c in r['tse_codes_literal'] if c in TSE}),
-                             'scout_codes_not_used_via_yahoo': [c for c in SCOUT_CODES if not any(c in r['tse_codes_literal'] for r in inv)]}
+                             'used_by_tools': sorted({c for r in inv for c in r['tse_codes_literal'] if c in TSE and not r['in_flight_this_study']}),
+                             'used_by_in_flight_unx_tools': sorted({c for r in inv for c in r['tse_codes_literal'] if c in TSE and r['in_flight_this_study']}),
+                             'scout_codes_not_used_via_yahoo': [c for c in SCOUT_CODES if not any(c in r['tse_codes_literal'] for r in inv if not r['in_flight_this_study'])]}
     # ── G2 (c)
     imp = {}
     for nm, fn in (('etf_jp', impact_etf_jp), ('etf_jp_defense', impact_etf_jp_defense), ('alt_etf_compare', impact_alt_etf),
