@@ -33,6 +33,10 @@
  *   ⑲ その他の区分をなくした（2026-10-13「ITAはその他ETF投資信託はなくして」）: 正本に ami_other が無ければ、ITA は SHLD・XLV・FBT と
  *      同じく自分だけの区分（名前は ITA）・注文書のどこにも「その他 ETF・投資信託」が出ない・XLK は NASDAQ100 に数える・
  *      今の保有では区分の外の「その他（目標0%…）」の行も出ない
+ *   ⑳ 持っていない本を先に・ETF も（2026-10-13「個別株優先やめて持ってないやつ優先」）: catIn._unownedFirst==='all' なら、保有ゼロの
+ *      ETF・投資信託の1株で買う本も個別株と一緒に区分の比率より先に1株ずつ（目標の大きい順→1株の安い順・金額で買う本と
+ *      不足が半株に届かない本は候補にしない）・true/'castle' は個別株だけ（⑱）。実データは盤に値段の無い本（XLV・FBT・SHLD・
+ *      main に入るまで）へ検査の中で値段を足して見る（盤に値段があればそちらを使う）。⑱ の実データの部分は 'castle' を検査の中で作って見る
  *
  * playwright が要るので CI には入れていない。使い方: node night/check_sleeve_split.js
  */
@@ -42,10 +46,16 @@ const ROOT = path.dirname(__dirname), PORT = 8795;
 const CHROME = process.env.CHROME_PATH || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
 
 let OVER = null;                      // portfolio.json を差し替えて配る（正本は触らない）
+let DASHX = null;                     // ⑳: out/dashboard.json の quotes に無い本だけ値段を足して配る（盤にまだ値段の無い本・正本は触らない）
 const srv = http.createServer((q, r) => {
   const rel = decodeURIComponent(q.url.split('?')[0]);
   if (OVER && rel.endsWith('/portfolio.json')) {
     r.writeHead(200, { 'Content-Type': 'application/json' }); r.end(JSON.stringify(OVER)); return;
+  }
+  if (DASHX && rel.endsWith('/out/dashboard.json')) {
+    try { const j = JSON.parse(fs.readFileSync(path.join(ROOT, 'out/dashboard.json'), 'utf8')); j.quotes = j.quotes || {};
+      for (const t in DASHX) if (!(j.quotes[t] && +j.quotes[t].px > 0)) j.quotes[t] = DASHX[t];
+      r.writeHead(200, { 'Content-Type': 'application/json' }); r.end(JSON.stringify(j)); return; } catch (e) { /* 読めなければ元のまま */ }
   }
   let f = path.join(ROOT, rel);
   if (f.endsWith('/')) f += 'index.html';
@@ -825,8 +835,9 @@ const srv = http.createServer((q, r) => {
        '   設定が無ければ旧の姿: 個別株の区分が目標超過で個別株は今月なし（C1 も catfull）・ETF へ ¥' + (170000 - off.cat.c.spent).toLocaleString());
     ok(ks(low.first) === 'C1,C5' && low.firstWait.length === 1 && low.firstWait[0].k === 'C2' && q18.sLow === 100000,
        '   入金10万: C1・C5 を買い、C2（¥90,000）は入金が先の銘柄で尽きて来月（firstWait）・合計 ¥' + q18.sLow.toLocaleString());
-    // 実データ（正本・割り方 cat）: 正本に castle_unowned_first があれば、注文書に「持っていない銘柄を先に」の行と上の1行の注記が出る
-    if ((base.target || {}).castle_unowned_first === true) {
+    // 実データ（正本の保有と全パック・割り方 cat）: v9.9.215 の形（個別株だけ）を検査の中で作って見る——注文書に「持っていない銘柄を先に」の行と
+    //   上の1行の注記が出る。正本は 2026-10-13 から unowned_first:'all'（⑳）なので、'castle' と false を明示する（正本は触らない）
+    {
       const load18 = async (over) => {
         OVER = over;
         await pg.goto('http://localhost:' + PORT + '/index.html'); await pg.waitForTimeout(600);
@@ -843,13 +854,14 @@ const srv = http.createServer((q, r) => {
           return { tags, line, note: !!document.querySelector('#pg5 .first-note'), total: sum[1] || '', castle: sum[2] || '' };
         });
       };
-      const r1 = await load18(withMode('cat'));
-      const offU = withMode('cat'); offU.target.castle_unowned_first = false;
+      const c18 = withMode('cat'); c18.target.unowned_first = 'castle';
+      const r1 = await load18(c18);
+      const offU = withMode('cat'); offU.target.unowned_first = false; delete offU.target.castle_unowned_first;
       const r0 = await load18(offU);
       ok(r1.tags.length >= 1 && /持っていない個別株を先に/.test(r1.line) && r1.note && r1.castle && r1.castle !== '0'
          && !r0.tags.length && !/持っていない個別株を先に/.test(r0.line) && !r0.note && r0.castle === '0',
          '⑱ 実データ（入金17万）: 先に買う個別株 ' + r1.tags.join('・') + '（個別株 ¥' + r1.castle + '・合計 ¥' + r1.total + '）／ false にすると個別株 ¥' + r0.castle);
-    } else ok(true, '   （正本に castle_unowned_first が無いので実データの部分は飛ばす）');
+    }
   }
 
   // ⑲ その他の区分をなくした（2026-10-13 ユーザー明示指示「ITAはその他ETF投資信託はなくして」）: 正本に target.ami_other が無ければ、
@@ -878,6 +890,74 @@ const srv = http.createServer((q, r) => {
        '⑲ 正本（その他の区分なし・入金17万）: 区分 ' + q19.keys.join(' / ') + '・表「' + q19.itaRow.split('\n')[0].slice(0, 40) + '」・上の1行「' + q19.line.trim().slice(0, 90)
        + '」・「その他 ETF・投資信託」の文字なし・区分の外の行なし・「' + ((q19.z.match(/XLK（[^）]*）/) || [''])[0]) + '」');
   } else ok(true, '   （正本に ami_other があるので ⑲ は飛ばす）');
+
+  // ⑳ 持っていない本を先に・ETF も（2026-10-13 ユーザー明示指示「個別株優先やめて持ってないやつ優先」）:
+  //   catIn._unownedFirst==='all' なら、保有ゼロの ETF・投資信託の1株で買う本も個別株と一緒に区分の比率より先に1株ずつ。
+  //   並びは目標の大きい順→1株の安い順（⑱ と同じ）・金額で買う本（frac）と不足が半株に届かない本は候補にしない・true/'castle' は個別株だけ
+  {
+    await pg.goto('http://localhost:' + PORT + '/index.html'); await pg.waitForTimeout(600);
+    const q20 = await pg.evaluate(() => {
+      const TOT = 2000000, mk = (uf) => Object.assign({ tot: TOT, 'n:IFREE-NDX': { t: 40, now: 47, nm: 'NASDAQ100', fund: true },
+        'n:SMH': { t: 25, now: 15, nm: 'SMH' }, 'n:XLV': { t: 5, now: 0, nm: 'XLV' }, 'n:SHLD': { t: 5, now: 0, nm: 'SHLD' },
+        'n:TINY': { t: 0.2, now: 0, nm: 'TINY' }, c: { t: 24.8, now: 38, nm: '個別株' } }, uf !== undefined ? { _unownedFirst: uf } : {});
+      const items = [
+        { k: 'C0', g: 'c', tw: 3, pos: 20, jpy: 60000 },        // 持っている個別株
+        { k: 'C1', g: 'c', tw: 3, pos: 0, jpy: 8000 },          // 持っていない個別株・ETF のどれより安い
+        { k: 'C2', g: 'c', tw: 3, pos: 0, jpy: 50000 },         // 持っていない個別株
+        { k: 'N0', g: 'n:IFREE-NDX', tw: 40, pos: 47, jpy: 5.8, frac: true },   // 金額で買う本（候補にしない）
+        { k: 'N1', g: 'n:SMH', tw: 25, pos: 15, jpy: 95000 },   // 持っている ETF
+        { k: 'N2', g: 'n:XLV', tw: 5, pos: 0, jpy: 27000 },     // 持っていない ETF
+        { k: 'N3', g: 'n:SHLD', tw: 5, pos: 0, jpy: 9500 },     // 持っていない ETF・安い
+        { k: 'N4', g: 'n:TINY', tw: 0.2, pos: 0, jpy: 50000 }]; // 持っていないが不足（0.2%×210万＝4,200）が半株に届かない
+      const run = (uf, T) => { const p = ccfCatSharePlan(items, T, TOT, mk(uf));
+        const used = Object.values(p.buy).reduce((a, b) => a + b.cost, 0) + Object.values(p.frac).reduce((a, b) => a + b, 0) + p.rest;
+        return { first: Object.keys(p.first), wait: p.firstWait.map(w => w.k), big: p.big.map(w => w.k), buy: Object.keys(p.buy), sh: Object.fromEntries(Object.entries(p.buy).map(([k, b]) => [k, b.sh])),
+          used, w4: p.wait.some(w => w.k === 'N4'), cf: Object.fromEntries(Object.entries(p.cat).map(([g, c]) => [g, c.first])) }; };
+      return { a: run('all', 80000), b: run('all', 40000), c: run(true, 80000), d: run('castle', 80000), e: run(undefined, 80000) };
+    });
+    const j = a => a.join(',');
+    ok(j(q20.a.first) === 'N3,N2,C1' && j(q20.a.wait) === 'C2' && ['N3', 'N2', 'C1'].every(k => q20.a.buy.includes(k)) && q20.a.used === 80000
+       && q20.a.cf['n:SHLD'] === 9500 && q20.a.cf['n:XLV'] === 27000 && q20.a.cf.c === 8000,
+       '⑳ 持っていない本を先に（all・入金8万）: ' + j(q20.a.first) + ' を1株ずつ（ETF 5% → 個別株 3%・同じ目標なら安い順）・C2 は入金が尽きて来月・区分ごとに先に買った円 SHLD ¥9,500／XLV ¥27,000／個別株 ¥8,000・合計 ¥' + q20.a.used.toLocaleString());
+    ok(j(q20.b.first) === 'N3,N2' && j(q20.b.wait) === 'C1' && q20.b.big.includes('C2') && !q20.b.first.includes('C2') && q20.b.used === 40000,
+       '   並びは目標の大きい順（入金4万）: ' + j(q20.b.first) + '・個別株の C1（¥8,000＝ETF より安い）は目標3%なので後ろ→今月の入金が尽きて ' + j(q20.b.wait)
+       + ' は来月・C2（1株 ¥50,000＞入金）は従来どおり候補にせず「入金の多い月に買う」（big）');
+    ok(j(q20.c.first) === 'C1,C2' && j(q20.d.first) === 'C1,C2' && !q20.c.first.some(k => /^N/.test(k)) && !q20.e.first.length
+       && [q20.a, q20.b, q20.c, q20.d, q20.e].every(x => !x.first.includes('N0') && !x.first.includes('N1') && !x.first.includes('N4') && !x.first.includes('C0')) && q20.a.w4,
+       '   true／castle は個別株だけ（' + j(q20.c.first) + '）・設定なしは先に買わない・金額で買う本（N0）・持っている本（N1・C0）・不足が半株に届かない本（N4）はどの形でも候補にならない');
+    // 実データ（正本の保有と全パック・割り方 cat・入金17万）: 盤に値段の無い本は検査の中で値段を足す（盤にあればそちらを使う）
+    if ((base.target || {}).unowned_first === 'all') {
+      DASHX = { XLV: { px: 171.99, prev: 171.99, chg: 0, chgPct: 0, src: 'check' }, FBT: { px: 263.90, prev: 263.90, chg: 0, chgPct: 0, src: 'check' },
+                SHLD: { px: 59.83, prev: 59.83, chg: 0, chgPct: 0, src: 'check' } };
+      const load20 = async (over) => {
+        OVER = over;
+        await pg.goto('http://localhost:' + PORT + '/index.html'); await pg.waitForTimeout(600);
+        await pg.evaluate(stt => { localStorage.clear(); for (const k in stt.data) localStorage.setItem(k, stt.data[k]);
+          localStorage.setItem('ccf:stateSavedAt', stt.savedAt); }, ST);
+        await pg.reload(); await pg.waitForTimeout(1500);
+        await pg.evaluate(() => ccfImportAllPacks()); await pg.waitForTimeout(1800);
+        await pg.evaluate(() => { localStorage.setItem('pf:monthly_total', '170000'); showPage(5); }); await pg.waitForTimeout(3200);
+        return pg.evaluate(() => {
+          const pg5 = document.querySelector('#pg5'), txt = (pg5 || {}).innerText || '';
+          const tagged = [...document.querySelectorAll('#pg5 .first-tag')].map(e => ((e.closest('.planrow') || {}).innerText || '').split('\n')[0].trim());
+          const line = [...document.querySelectorAll('#pg5 div')].filter(d => /区分の比率が最優先/.test(d.innerText) && /1株単位/.test(d.innerText) && d.innerText.length < 600).map(d => d.innerText).pop() || '';
+          const note = ((document.querySelector('#pg5 .first-note') || {}).innerText || '');
+          const sum = (txt.match(/合計 約¥([\d,]+)（個別株 ¥([\d,]+)／/) || []);
+          return { tagged, line, note, total: +(sum[1] || '0').replace(/,/g, ''), castle: +(sum[2] || '0').replace(/,/g, '') };
+        });
+      };
+      const r20 = await load20(withMode('cat'));
+      const c20 = withMode('cat'); c20.target.unowned_first = 'castle';
+      const r20c = await load20(c20);
+      DASHX = null;
+      const ETF4 = ['XLV', 'FBT', 'ITA', 'SHLD'], has = (L, t) => L.some(x => x.includes(t));
+      ok(ETF4.every(t => has(r20.tagged, t)) && /持っていない本を先に/.test(r20.line) && /持っていない本（ETF・個別株）/.test(r20.note)
+         && r20.total >= 169000 && r20.total <= 170000
+         && !ETF4.some(t => has(r20c.tagged, t)) && r20c.tagged.length >= 1 && /持っていない個別株を先に/.test(r20c.line),
+         '⑳ 実データ（入金17万）: 先に買う本 ' + r20.tagged.join('・') + '（個別株 ¥' + r20.castle.toLocaleString() + '・合計 ¥' + r20.total.toLocaleString()
+         + '）／ castle なら ' + r20c.tagged.join('・') + '（個別株 ¥' + r20c.castle.toLocaleString() + '）');
+    } else ok(true, '   （正本の unowned_first が all でないので ⑳ の実データの部分は飛ばす）');
+  }
 
   ok(errs.length === 0, 'pageerror 0件' + (errs.length ? '（' + errs[0].slice(0, 120) + '）' : ''));
   await pg.evaluate(() => localStorage.removeItem('pf:monthly_total'));

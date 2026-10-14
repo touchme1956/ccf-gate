@@ -50,6 +50,13 @@ jobs:
         run: python3 market_merge.py || true
       - name: 実測価格をパックへ反映（基準保存式・投下可の出入りを検出）
         run: python3 night/apply_prices.py --write
+      # ── パック索引の指紋を作り直す（2026-10-14・ユーザーの問い「門の個別銘柄が入れ替わった場合はきちんと入れ替わる？」）──
+      #   門（ブラウザ）は out/packs_index.json の指紋（fp）と台帳の記録に写した指紋を比べ、
+      #   **新しくなったパックだけを開いたときに自動で取り込み直す**（v9.9.219）。上の apply_prices が
+      #   毎営業日 per/perF/mcap/shy を書き換えるので、ここで作り直さないと門は今日のパックに気づかない。
+      #   ⚠ 下の git add に out/packs_index.json を入れ忘れると「毎営業日 作り直して捨てる」型になる。
+      - name: パック索引の指紋を作り直す（門が新しくなったパックに気づくため）
+        run: python3 night/packs_index.py --write
       # E[r]の予実台帳（2026-08-03新設）。**月初の営業日だけ**観測を封じる。
       #   毎日だと20年で5000件に膨らむが、年率リターンの検証に日次の分解能は要らない。
       #   月1回なら20年で240件——これで「E[r]が何%と言った銘柄が実際どうだったか」が測れる。
@@ -107,7 +114,7 @@ jobs:
           #   ここは今日は全パス実在するが、`out/gate_history.jsonl` / `out/gate_state.json` は
           #   gate_history.py が初回に作るまで存在しない＝**新しい環境では全滅する**形だった。
           . night/git_add_safe.sh
-          ccf_git_add market_data.json out/dashboard.json out/holdings_div.json out/returns.json out/returns_series.json 'out/*_gate_pack.json' out/score_all.json out/er_ledger.json out/validate_fail.json out/gate_history.jsonl out/gate_state.json
+          ccf_git_add market_data.json out/dashboard.json out/holdings_div.json out/returns.json out/returns_series.json 'out/*_gate_pack.json' out/packs_index.json out/score_all.json out/er_ledger.json out/validate_fail.json out/gate_history.jsonl out/gate_state.json
           git diff --staged --quiet || git commit -m "$MSG"
           # ⚠2026-08-18: 素の `git push` は remote が進んだだけで弾かれ、
           #   **作ったコミットがまるごと捨てられる**（market.yml が2営業日連続で70ファイル失った）。
