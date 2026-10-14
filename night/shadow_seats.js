@@ -20,6 +20,9 @@
  *             区分に数える分（iDeCo と、2026-10-08「比率に数えて」からのこどもNISA＝門の catIn.pre）は毎月その区分の保有に足す
  *             （⚠ 12か月の途中で開始月をまたぐ切り替えは模していない——今日の状態で12か月を回す）
  *   --out     結果の書き先（既定: out/shadow_seats.json）
+ *   --weights 配信する portfolio.json の target.ami_weights を差し替える（例 'IFREE-NDX=45,ITA=0'・正本のファイルには触らない）
+ *             2026-10-14 ユーザー「ITAかSHLDをNASDAQに変えるのは？」（night/ndx_swap_check.py が呼ぶ）。無ければ今の目標のまま＝既定は不変。
+ *             ami_weights に無い鍵は止める（門が読まない鍵で『変えたつもり』にしない）
  */
 const { chromium } = require('playwright');
 const http = require('http'), fs = require('fs'), path = require('path');
@@ -42,10 +45,23 @@ if (!MONTHLY) {
 }
 if (!MONTHLY) { console.error('✗ 毎月の入金額が読めない（--monthly で渡す）'); process.exit(1); }
 const OUT = arg('--out') || path.join(ROOT, 'out', 'shadow_seats.json');
+const PF0 = JSON.parse(fs.readFileSync(path.join(ROOT, 'portfolio.json'), 'utf8'));
+let WEIGHTS = null;
+if (arg('--weights')) {
+  WEIGHTS = {};
+  for (const kv of arg('--weights').split(',')) {
+    const [k, v] = kv.split('=').map(x => (x || '').trim());
+    if (!k || !isFinite(+v)) { console.error('✗ --weights の形が読めない: ' + kv); process.exit(1); }
+    if (!((PF0.target || {}).ami_weights || {}).hasOwnProperty(k)) { console.error('✗ --weights の鍵 ' + k + ' は portfolio.json の target.ami_weights に無い'); process.exit(1); }
+    WEIGHTS[k] = +v;
+  }
+}
+const PFX = WEIGHTS ? (() => { const o = JSON.parse(JSON.stringify(PF0)); Object.assign(o.target.ami_weights, WEIGHTS); return o; })() : null;
 
 let SEATS = NOW;
 const srv = http.createServer((q, r) => {
   const rel = decodeURIComponent(q.url.split('?')[0]);
+  if (PFX && rel.endsWith('/portfolio.json')) { r.writeHead(200, { 'Content-Type': 'application/json' }); r.end(JSON.stringify(PFX)); return; }
   let f = path.join(ROOT, rel); if (f.endsWith('/')) f += 'index.html';
   try {
     let b = fs.readFileSync(f);
@@ -75,7 +91,9 @@ const srv = http.createServer((q, r) => {
   }
   console.log(`■ 席の数を変えたら（night/shadow_seats.js・影の計測）  台帳 ${prev}件 / 入金 ¥${MONTHLY.toLocaleString()}（${MONTHLY_SRC}）`);
 
-  const out = { asof: new Date().toISOString(), monthly: MONTHLY, monthly_src: MONTHLY_SRC, seats_now: NOW, runs: {} };
+  const out = { asof: new Date().toISOString(), monthly: MONTHLY, monthly_src: MONTHLY_SRC, seats_now: NOW, runs: {},
+                weights_override: WEIGHTS, ami_weights: (PFX || PF0).target.ami_weights };
+  if (WEIGHTS) console.log('  目標を差し替えて配信: ' + JSON.stringify(WEIGHTS) + ' → ami_weights ' + JSON.stringify(out.ami_weights));
   let bad = 0;
   for (const N of SEATS_LIST) {
     SEATS = N;
