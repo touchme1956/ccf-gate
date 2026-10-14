@@ -166,6 +166,8 @@ def main():
     doc.update(
         frames={'USD': 'night/bestpf_check.py と同じ（ドル建て）', '円': f'月次のドル建ての値に FRED DEXJPUS の月末の比を掛けた（{fx_url}）・B/C/D はドルの値のまま（為替の期待変化0）'},
         forms={nm: f for nm, f in allf.items()},
+        forms_note=('results の F_now は SHLD を門を通らない ITA つなぎ（2023-09 以前＝ITA）のまま置いた形＝事前登録どおりの F_now ではない（decision・deviations を見よ）'
+                    if shld_failed else 'F_now は事前登録どおり'),
         inputs={'X.rank_result（R の25本＋R7）': 'night/bestpf_ext.py（写しはこの道具のキャッシュへ）',
                 'π': 'out/bestpf_calibration.json の pi_main（bestpf_eval.load_pi）', 'D': 'out/bestpf_cma_2026.json（bestpf_eval.load_D・無い本は C）',
                 '新しい本の代理の門': {c: info['gates'][c] for c in ('FBT', 'SHLD', 'SHLD_EU') if c in info['gates']},
