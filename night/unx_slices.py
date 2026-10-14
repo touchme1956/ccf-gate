@@ -110,7 +110,7 @@ def main():
     usd_forms = {k: f for k, f in allp.items() if not any(a in U.YEN_ASSETS for a in f)}
     U.log('USD の枠（ドル建ての本だけ）', len(usd_forms))
     tab_u = U.measure(usd_forms, rows, chains, Dmap=Dmap, mega=mega)
-    tab_mf = tab_mf_fx = None
+    tab_mf = tab_mf_usd = None
     if mf_forms:
         last = rows[mf]['trunc_to']
         wins = REF_TRUNC_WIN(last)

@@ -574,7 +574,12 @@ def impact_etf_jp(DATA):
         lv = yh_monthly_levels_etfjp(t)
         fixed, found = EJ.repair(lv)
         a, b = row['first'], '2026-08'
-        old = EJ.st(fixed, a, b)
+        try:
+            old = EJ.st(fixed, a, b)
+            old_err = None
+        except Exception as e:  # noqa  （今の Yahoo の調整後終値が負・0 だと etf_jp.st 自体が計算できない）
+            old, old_err = None, f'etf_jp.st が計算できない（{type(e).__name__}）——今の Yahoo の調整後終値に負の値: ' + \
+                ', '.join(f'{k} {v:.3f}' for k, v in sorted(lv.items()) if v <= 0)[:300]
         cm = DATA[code]['corr_m']
         me = {}
         lvl = 1.0
@@ -588,7 +593,7 @@ def impact_etf_jp(DATA):
                 'maxdd': mdd_of({k: me[k] / me[p] - 1 for p, k in zip(kk, kk[1:])}, ks_r) if ks_r else None}
         res.append({'file': 'out/etf_jp.json', 'key': f'rows[{t}].jpy', 'window': f'{a}〜{b}',
                     'old_stored': {'cagr_pct': r2(100 * row['jpy']['cagr']), 'maxdd_pct': r2(100 * row['jpy']['maxdd'])},
-                    'old_recomputed': None if not old else {'cagr_pct': r2(100 * old['cagr']), 'maxdd_pct': r2(100 * old['maxdd']),
+                    'old_recomputed': old_err if not old else {'cagr_pct': r2(100 * old['cagr']), 'maxdd_pct': r2(100 * old['maxdd']),
                                                             'repair_found': found},
                     'corrected': {'cagr_pct': r2(100 * corr['cagr']) if corr['cagr'] is not None else None,
                                   'maxdd_pct': r2(100 * corr['maxdd']) if corr['maxdd'] is not None else None},
