@@ -19842,6 +19842,6 @@ SMH（25社・NVDA 19.8%・VanEck の 2026-10-12 の全量）に無いのは COH
 
 **物差し**: `castle_rule_measure.sleeve` の SOX は同じ指数の米国 ETF の SOXQ（Invesco PHLX Semiconductor ETF・経費率0.19%）で代える——楽天・プラス・SOX は Yahoo に無い。起点 2026-09-25 からの全期間を新しい比で測り直す（規則が判定するのは2029年9月）。
 
-**検査**: 下の追記。
+**検査**（実ブラウザ・正本の portfolio.json と state.json）: check_sleeve_split 96項目（㉑ 新: 計画の端数と使い残し ¥199,900 を取り分の比 ¥92,309 : ¥61,538 で NASDAQ100 ¥120,000・SOX ¥79,900／実データで SMH の15を NASDAQ100 へ移した形〔2本ともお金を受ける〕は2本の行が「残りの円は投資信託へ（2本の取り分の比で分ける）」・「全部ここへ」は無し／旧の組み方〔割り方 gap〕は「＋端数」が1本だけ・合計 ¥990,778＝入金100万を超えない）・check_fund_trade・check_pft_card 59・--full 64・check_hold_detail 82・check_pfc_card 67・check_auto_import・check_gate_parity（門と端末は同じことを言っている）・check_mobile_fit 通過／check_html・audit_docs・check_frozen_dates・validate_state 通過／night/net_plan.py が読む鍵（inc・aum・er・h）が RPLUS-SOX の中身にそろっている（aum が無いと KeyError で止まるので、純資産 605.3億円を 158円で割ったドル換算を入れた）。⚠ ETF の門（ami.html）の「設定3年」の線には楽天・プラス・SOX 自体は届かない（2024-01-30 設定＝2.7年）——次に net_plan.py が回ると◈ETF の一覧に⛔「設定から 2.7年 < 3年」が出る（表示だけ・注文には効かない・2027-01-30 に消える）。
 
 **戻し方**: portfolio.json の `ami_mix_superseded_2026_10_14` の姿へ（`ami_weights` の SMH 25・RPLUS-SOX 0〔持っていれば ami_names と ami_funds の設定は残す＝売らない・目標0%の本は区分の外の「その他（目標0%で持ち続けている本）」の1行に出る〕・`castle_rule_measure.sleeve` を QQQM 40 : SMH 25 : ITA 5 : SHLD 5 : XLV 5 : FBT 5）。コードの3か所は投資信託が1本でも同じ動き＝戻さなくてよい。
