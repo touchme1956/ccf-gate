@@ -206,31 +206,33 @@ def lookthrough(f):
 ORDER_RUNS = {'F_cur': None, 'A': 'IFREE-NDX=45,ITA=0', 'B': 'IFREE-NDX=45,SHLD=0', 'C': 'IFREE-NDX=50,ITA=0,SHLD=0', 'D': 'ITA=10,SHLD=0'}
 
 
-def run_orders():
-    """5通りの注文書を門そのもので（shadow_seats.js --weights・席10・入金20万円・12か月）"""
-    os.makedirs(ORD, exist_ok=True)
+def run_orders(runs=None, ordir=None):
+    """5通りの注文書を門そのもので（shadow_seats.js --weights・席10・入金20万円・12か月）。runs・ordir は smh_swap_check が渡す（既定は ndx_swap）"""
+    runs, ordir = runs or ORDER_RUNS, ordir or ORD
+    os.makedirs(ordir, exist_ok=True)
     env = dict(os.environ)
     try:
         env['NODE_PATH'] = subprocess.run(['npm', 'root', '-g'], capture_output=True, text=True, timeout=60).stdout.strip()
     except Exception:  # noqa
         pass
-    for k, w in ORDER_RUNS.items():
-        cmd = ['node', os.path.join(BASE, 'night', 'shadow_seats.js'), '--seats', '10', '--monthly', '200000', '--out', os.path.join(ORD, f'orders_{k}.json')]
+    for k, w in runs.items():
+        cmd = ['node', os.path.join(BASE, 'night', 'shadow_seats.js'), '--seats', '10', '--monthly', '200000', '--out', os.path.join(ordir, f'orders_{k}.json')]
         if w:
             cmd += ['--weights', w]
         U.log('注文書', k, w or '（今の目標）')
-        with open(os.path.join(ORD, f'orders_{k}.log'), 'w') as fh:
+        with open(os.path.join(ordir, f'orders_{k}.log'), 'w') as fh:
             r = subprocess.run(cmd, stdout=fh, stderr=subprocess.STDOUT, cwd=BASE, env=env, timeout=1800)
         if r.returncode:
-            raise SystemExit(f'shadow_seats が失敗した（{k}）: out/_nx_cache/ndx_swap/orders_{k}.log')
+            raise SystemExit(f'shadow_seats が失敗した（{k}）: {os.path.relpath(ordir, BASE)}/orders_{k}.log')
 
 
-def orders():
+def orders(keys=None, ordir=None):
+    keys, ordir = keys or tuple(ORDER_RUNS), ordir or ORD
     out = {}
-    for k in ('F_cur', 'A', 'B', 'C', 'D'):
-        p = os.path.join(ORD, f'orders_{k}.json')
+    for k in keys:
+        p = os.path.join(ordir, f'orders_{k}.json')
         if not os.path.exists(p):
-            out[k] = '未取得（out/_nx_cache/ndx_swap/run_orders.sh を回す）'
+            out[k] = '未取得（--orders を付けて回す）'
             continue
         d = json.load(open(p))
         run = (d.get('runs') or {}).get('10')
