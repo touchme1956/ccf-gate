@@ -386,13 +386,15 @@ def check_instrument(code, kind='etf'):
             # Yahoo の割り戻し: 決算日の10日前〜3日後の窓の前後で 調整後÷終値 の比がどれだけ変わったか
             lo = bisect.bisect_left(gd, int((ymd(d) - datetime.timedelta(days=12)).strftime('%Y%m%d'))) - 1
             hi = bisect.bisect_right(gd, int((ymd(d) + datetime.timedelta(days=3)).strftime('%Y%m%d'))) - 1
-            y_y = ratio[gd[max(lo, 0)]] / ratio[gd[hi]] - 1 if hi > max(lo, 0) else None
+            # 割り戻しの前は 調整後÷終値 が m＝(1−分配÷前日の終値) 倍に縮む → 後÷前 − 1 ＝ 1/m − 1 ≈ 分配の利回り
+            y_y = ratio[gd[hi]] / ratio[gd[max(lo, 0)]] - 1 if hi > max(lo, 0) else None
             ev = [(k, v) for k, v in yd['divs'].items() if -12 <= (ymd(k) - ymd(d)).days <= 3]
             amt = ev[0][1] if ev else None
             # Yahoo の金額を Yahoo のその日の終値で割った利回り（金額だけ縮んでいる＝分割の倍率で割られている を見る）
             y_amt = (amt / dict((dd, cc) for dd, cc, _ in good).get(gd[i], float('nan'))) if amt is not None else None
             st = 'ok' if (y_y is not None and abs(y_y - y_j) <= max(0.3 * y_j, 0.0005)) else \
                  ('missing' if (y_y is None or y_y < 0.1 * y_j) else ('too_small' if y_y < y_j else 'too_large'))
+            # 0.1 倍未満＝抜け・0.1〜0.7 倍＝小さすぎ（例: 分割の倍率で割られた金額）・1.3 倍超＝大きすぎ（例: 桁違いの金額）
             dist_audit.append({'date': d, 'ex_date_used': ex, 'jita_yield_pct': round(100 * y_j, 3),
                                'yahoo_adj_yield_pct': None if y_y is None else round(100 * y_y, 3),
                                'yahoo_event': None if amt is None else {'date': ev[0][0], 'amount': amt,
@@ -448,8 +450,8 @@ def check_instrument(code, kind='etf'):
             'months_gap_gt_2pct': [{'month': k, 'yahoo_as_used_pct': round(100 * used[k], 2), 'corrected_pct': round(100 * corr_m[k], 2),
                                     'gap_pt': round(100 * v, 2)} for k, v in big[:15]],
             'n_months_gap_gt_2pct': len(big)}
-    affected = bool(unrec or glitches or (isinstance(out['distributions'], dict)
-                                         and (out['distributions']['status_counts']['missing'] + out['distributions']['status_counts']['too_small']) > 0))
+    sc = out['distributions']['status_counts'] if isinstance(out['distributions'], dict) else {}
+    affected = bool(unrec or glitches or sc.get('missing') or sc.get('too_small') or sc.get('too_large'))
     out['affected'] = affected
     return out, {'corr_m': corr_m, 'used_m': used, 'jit_m': jit_m, 'tr': tr}
 
@@ -838,41 +840,70 @@ def live_gate():
 SEC_HOST = re.compile(r'(^|\.)sec\.gov$')
 
 
+class _Src:
+    """ast.get_source_segment は呼ぶたびに全文を割るので遅い。行の頭の位置を先に持って切り出す"""
+    def __init__(self, s):
+        self.s = s
+        self.off = [0]
+        for line in s.splitlines(keepends=True):
+            self.off.append(self.off[-1] + len(line))
+        self.lines = s.splitlines()
+
+    def seg(self, n):
+        try:
+            a = self.off[n.lineno - 1] + len(self.s[self.off[n.lineno - 1]:].encode('utf-8')[:n.col_offset].decode('utf-8', 'ignore'))
+            b = self.off[n.end_lineno - 1] + len(self.s[self.off[n.end_lineno - 1]:].encode('utf-8')[:n.end_col_offset].decode('utf-8', 'ignore'))
+            return self.s[a:b]
+        except Exception:
+            return ''
+
+
 def g3_scan():
     """メールの入った見出しを作る名前と、それを使って送る呼び出し・送る相手のホストを ast で拾う"""
     files = py_files()
-    mod_email_names = {}      # module → {name}
-    srcs, trees = {}, {}
-    for p in files:
-        s = open(p, encoding='utf-8', errors='replace').read()
-        srcs[p] = s
-        try:
-            trees[p] = ast.parse(s)
-        except SyntaxError:
-            continue
     modname = lambda p: os.path.splitext(os.path.basename(p))[0]
-    # 1) 名前（どの範囲でも）: 値の式にメールの文字列か、メールの名前を含むもの → 固定点まで
-    for p, tr in trees.items():
-        names = set()
-        changed = True
-        assigns = [n for n in ast.walk(tr) if isinstance(n, ast.Assign)]
+    srcs = {p: open(p, encoding='utf-8', errors='replace').read() for p in files}
+    # 1) メールの名前を定義しうるファイル（メールの文字列か hachimon_fetch の EMAIL を読む）
+    mod_email_names, trees, S_ = {}, {}, {}
+
+    def parse(p):
+        if p not in trees:
+            try:
+                trees[p] = ast.parse(srcs[p]); S_[p] = _Src(srcs[p])
+            except SyntaxError:
+                trees[p] = None
+        return trees[p]
+    for p, s in srcs.items():
+        if not (EMAIL_RE.search(s) or re.search(r'\bEMAIL\b', s)):
+            continue
+        tr = parse(p)
+        if tr is None:
+            continue
+        names, changed = set(), True
+        assigns = [(n, S_[p].seg(n.value)) for n in ast.walk(tr) if isinstance(n, ast.Assign)]
+        assigns = [(n, v) for n, v in assigns if v]
         while changed:
             changed = False
-            for n in assigns:
-                seg = ast.get_source_segment(srcs[p], n.value) or ''
+            for n, seg in assigns:
                 hit = bool(EMAIL_RE.search(seg)) or any(re.search(rf'\b{re.escape(x)}\b', seg) for x in names)
-                if not hit and re.search(r'open\(.*hachimon_fetch\.py', seg) and 'EMAIL' in seg:
-                    hit = True
                 if hit:
                     for t in n.targets:
                         for nm in ([t] if not isinstance(t, ast.Tuple) else t.elts):
                             if isinstance(nm, ast.Name) and nm.id not in names:
                                 names.add(nm.id); changed = True
-        mod_email_names[modname(p)] = names
+        if names:
+            mod_email_names[modname(p)] = names
+    all_names = set().union(*mod_email_names.values()) if mod_email_names else set()
+    name_rx = re.compile(r'\b(' + '|'.join(sorted(map(re.escape, all_names))) + r')\b') if all_names else None
     host_rx = re.compile(r'https?://([A-Za-z0-9.-]+)')
     findings = []
-    for p, tr in trees.items():
-        s = srcs[p]
+    for p, s in srcs.items():
+        if not (EMAIL_RE.search(s) or (name_rx and name_rx.search(s))):
+            continue
+        tr = parse(p)
+        if tr is None:
+            continue
+        SS = S_[p]
         local = set(mod_email_names.get(modname(p), set()))
         aliases = {}
         for n in ast.walk(tr):
@@ -883,7 +914,6 @@ def g3_scan():
             if isinstance(n, ast.Import):
                 for a in n.names:
                     aliases[a.asname or a.name] = a.name
-        # 送る場所: Request(... headers=X) / addheaders = [...] / urlopen(Request) — 見出しの式にメールの名前・文字列・別モジュールのメールの名前
         parents = {}
         for n in ast.walk(tr):
             for c in ast.iter_child_nodes(n):
@@ -897,12 +927,11 @@ def g3_scan():
             return tr
 
         def hdr_has_email(expr):
-            seg = ast.get_source_segment(s, expr) or ''
+            seg = SS.seg(expr)
             if EMAIL_RE.search(seg):
                 return True
-            for x in local:
-                if re.search(rf'\b{re.escape(x)}\b', seg):
-                    return True
+            if any(re.search(rf'\b{re.escape(x)}\b', seg) for x in local):
+                return True
             for al, mod in aliases.items():
                 for x in mod_email_names.get(mod, set()):
                     if re.search(rf'\b{re.escape(al)}\.{re.escape(x)}\b', seg):
@@ -911,7 +940,7 @@ def g3_scan():
         sites = []
         for n in ast.walk(tr):
             if isinstance(n, ast.Call):
-                fn = ast.get_source_segment(s, n.func) or ''
+                fn = SS.seg(n.func)
                 if fn.endswith('Request'):
                     hk = [k.value for k in n.keywords if k.arg == 'headers']
                     if hk and hdr_has_email(hk[0]):
@@ -920,45 +949,108 @@ def g3_scan():
                 for t in n.targets:
                     if isinstance(t, ast.Attribute) and t.attr == 'addheaders' and hdr_has_email(n.value):
                         sites.append((n, n.value))
+        if not sites:
+            continue
+        # モジュールの URL 定数（BASE + '/x' のように別の定数を足したものも、固定点までたどる）
+        mod_assign = {}
+        for m in tr.body:
+            if isinstance(m, ast.Assign) and len(m.targets) == 1 and isinstance(m.targets[0], ast.Name):
+                mod_assign[m.targets[0].id] = SS.seg(m.value)
+        mod_hosts = {k: set(host_rx.findall(v)) for k, v in mod_assign.items()}
+        changed = True
+        while changed:
+            changed = False
+            for k, v in mod_assign.items():
+                for nm, hs in list(mod_hosts.items()):
+                    if hs and nm != k and re.search(rf'\b{re.escape(nm)}\b', v) and not hs <= mod_hosts[k]:
+                        mod_hosts[k] |= hs; changed = True
+
+        def hosts_of(seg):
+            hs = set(host_rx.findall(seg))
+            for nm, h2 in mod_hosts.items():
+                if h2 and re.search(rf'\b{re.escape(nm)}\b', seg):
+                    hs |= h2
+            return hs
+        calls = [m for m in ast.walk(tr) if isinstance(m, ast.Call)]
+
+        def params(fn):
+            return [x.arg for x in fn.args.posonlyargs + fn.args.args]
+
+        def resolve(url_expr, scope, depth, how):
+            """URL の式 → ホストの集合（引数で受けた URL は呼ぶ所へ最大4段さかのぼる）"""
+            if url_expr is None:
+                how.append('scope'); return hosts_of(SS.seg(scope) if scope is not tr else '')
+            seg = SS.seg(url_expr)
+            hs = hosts_of(seg)
+            if isinstance(url_expr, ast.Name) and isinstance(scope, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                pr = params(scope)
+                if url_expr.id in pr:
+                    if depth >= 4:
+                        how.append('depth'); return hs
+                    idx = pr.index(url_expr.id) - (1 if pr and pr[0] in ('self', 'cls') else 0)
+                    for m in calls:
+                        if SS.seg(m.func).split('.')[-1] != scope.name:
+                            continue
+                        arg = None
+                        for k in m.keywords:
+                            if k.arg == url_expr.id:
+                                arg = k.value
+                        if arg is None and 0 <= idx < len(m.args):
+                            arg = m.args[idx]
+                        if arg is not None:
+                            how.append(f'caller L{m.lineno}')
+                            hs |= resolve(arg, encl(m), depth + 1, how)
+                    return hs
+                local = [n for n in ast.walk(scope) if isinstance(n, ast.Assign)
+                         and any(isinstance(t, ast.Name) and t.id == url_expr.id for t in n.targets)]
+                for n in local:
+                    hs |= hosts_of(SS.seg(n.value))
+                for n in ast.walk(scope):   # for u in [...] の形
+                    if isinstance(n, ast.For) and isinstance(n.target, ast.Name) and n.target.id == url_expr.id:
+                        hs |= hosts_of(SS.seg(n.iter))
+            if not hs:
+                how.append('scope_fallback')
+                hs = hosts_of(SS.seg(scope) if scope is not tr else s)
+            return hs
+
+        def outer(n):
+            """モジュールの直下の def・class の名前（別のファイルが import するときの名前）"""
+            top = None
+            while n in parents:
+                n = parents[n]
+                if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)) and parents.get(n) is tr:
+                    top = n.name
+            return top or '<module>'
         for n, h in sites:
             scope = encl(n)
-            seg_scope = ast.get_source_segment(s, scope) if scope is not tr else s
-            # その範囲の文字列のホスト＋範囲の中で参照する モジュールの文字列の名前のホスト
-            hosts = set(host_rx.findall(seg_scope or ''))
-            mod_consts = {}
-            for m in tr.body:
-                if isinstance(m, ast.Assign) and len(m.targets) == 1 and isinstance(m.targets[0], ast.Name):
-                    v = ast.get_source_segment(s, m.value) or ''
-                    hs = host_rx.findall(v)
-                    if hs:
-                        mod_consts[m.targets[0].id] = hs
-            for nm, hs in mod_consts.items():
-                if re.search(rf'\b{re.escape(nm)}\b', seg_scope or ''):
-                    hosts |= set(hs)
-            # URL を引数で受ける関数なら、同じファイルでその関数を呼ぶ所の文字列のホストも
-            if isinstance(scope, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                for m in ast.walk(tr):
-                    if isinstance(m, ast.Call) and (ast.get_source_segment(s, m.func) or '').split('.')[-1] == scope.name:
-                        sc = encl(m)
-                        seg2 = ast.get_source_segment(s, sc) if sc is not tr else (ast.get_source_segment(s, m) or '')
-                        hosts |= set(host_rx.findall(seg2 or ''))
-                        for nm, hs in mod_consts.items():
-                            if re.search(rf'\b{re.escape(nm)}\b', seg2 or ''):
-                                hosts |= set(hs)
+            how = []
+            if isinstance(n, ast.Call):
+                url_expr = n.args[0] if n.args else next((k.value for k in n.keywords if k.arg in ('url', 'fullurl')), None)
+                hosts = resolve(url_expr, scope, 0, how)
+            else:   # opener.addheaders: その class（無ければ関数）の中の URL・参照する定数
+                cl = scope
+                while cl in parents and not isinstance(cl, ast.ClassDef):
+                    cl = parents[cl]
+                cl = cl if isinstance(cl, ast.ClassDef) else scope
+                hosts = hosts_of(SS.seg(cl) if cl is not tr else s)
+                how.append('opener: class の中')
             non_sec = sorted(h_ for h_ in hosts if not SEC_HOST.search(h_))
-            line = n.lineno
-            hdr_line = EMAIL_RE.sub('<email>', (s.splitlines()[h.lineno - 1]).strip())[:200]
-            findings.append({'file': os.path.relpath(p, BASE), 'line': line, 'scope': getattr(scope, 'name', '<module>'),
-                             'header_expr_line': h.lineno, 'header_text': hdr_line,
-                             'hosts_in_scope': sorted(hosts), 'non_sec_hosts': non_sec})
+            findings.append({'file': os.path.relpath(p, BASE), 'line': n.lineno, 'scope': getattr(scope, 'name', '<module>'), 'outer': outer(n),
+                             'header_expr_line': h.lineno, 'header_text': EMAIL_RE.sub('<email>', SS.lines[h.lineno - 1].strip())[:200],
+                             'hosts': sorted(hosts), 'non_sec_hosts': non_sec, 'resolved_by': sorted(set(how))[:6]})
     # 別のファイルの「メールを送るクラス・関数」を使う所（例: fetch_tsumitate_funds.Lib）
     senders = {}
     for f in findings:
-        if f['non_sec_hosts'] and f['scope'] != '<module>':
-            senders.setdefault(modname(f['file']), set()).add(f['scope'])
+        if f['non_sec_hosts'] and f['outer'] != '<module>':
+            senders.setdefault(modname(f['file']), set()).add(f['outer'])
     users = []
-    for p, tr in trees.items():
-        s = srcs[p]
+    rx_s = re.compile(r'\b(' + '|'.join(map(re.escape, senders)) + r')\b') if senders else None
+    for p, s in srcs.items():
+        if not (rx_s and rx_s.search(s)):
+            continue
+        tr = parse(p)
+        if tr is None:
+            continue
         for n in ast.walk(tr):
             if isinstance(n, ast.ImportFrom) and n.module in senders:
                 got = [a.name for a in n.names if a.name in senders[n.module]]
@@ -976,19 +1068,133 @@ def g3_scan():
 
 # 手で確かめた G3 の注記（ast の結果を読んで、実際にどこへ送るかを確かめた・2026-10-14）
 G3_REVIEW = {
-    'night/fetch_tsumitate_funds.py': '投信協会（toushin-lib.fwg.ne.jp）へ。Lib の opener の既定の見出しと検索の Request の両方。'
-                                      'fetch_dashboard.fund_quotes（market.yml・平日毎日）と fetch_returns.fund_series（market.yml・returns.yml）がこの Lib を使う＝CI が毎営業日送っている',
-    'market_fetch.py': 'Alpha Vantage・FMP（鍵つき）と SEC。ops.yml が AV_KEY のある月に回す',
-    'kessan_calendar.py': 'Alpha Vantage（鍵があれば）と SEC。ops.yml が毎月回す',
-    'kessan_check_jp.py': 'EDINET（api.edinet-fsa.go.jp・disclosure2dl）。ops.yml（鍵があれば）',
-    'night/watch_events.py': 'EDINET API と SEC。events.yml（平日毎日）',
-    'night/watch_exceptions.py': 'SEC（UA にメール）。Alpha Vantage は "ccf-gate"（メールなし）——要確認の対象外',
+    'night/fetch_tsumitate_funds.py': '投信協会（toushin-lib.fwg.ne.jp）へ。Lib の opener の既定の見出し（L56）と検索の Request（L65）の両方。'
+                                      'fetch_dashboard.fund_quotes（market.yml・平日毎日）と fetch_returns.fund_series（market.yml・returns.yml）がこの Lib を使う＝CI が毎営業日送っている。'
+                                      '同じ協会へ送る nx_jpfunds_data.Lib・mw_jp_nisa_bridge・mw_investable_valmom・mw_own_exposure は mw_common/nx_common の UA（メールなし）',
+    'market_fetch.py': '_get が Alpha Vantage・FMP（鍵つき）と SEC に同じ見出し。ops.yml が AV_KEY のある月に回す。market_fetch_free.py・market_fetch_sec.py は _get を SEC にだけ使う',
+    'kessan_calendar.py': 'get が Alpha Vantage（鍵があれば）にも同じ見出し。ops.yml が毎月回す',
+    'kessan_check_jp.py': 'EDINET（api.edinet-fsa.go.jp・disclosure2dl.edinet-fsa.go.jp）。ops.yml（鍵があれば）',
+    'night/watch_events.py': '_fetch が EDINET API（鍵つき）にも同じ見出し（SEC と共用）。events.yml（平日毎日）',
     'night/audit_wacc_stale.py': 'FRED（fred.stlouisfed.org）。ops.yml（毎月）',
     'night/fetch_logos.py': 'parqet（assets.parqet.com）・FMP の画像。ops.yml（毎月）',
     'night/beat_spy_rule.py': 'Yahoo（query1.finance.yahoo.com）。CI では回っていない（手で回す道具）',
-    'night/backtest_core.py': 'SEC と Yahoo（同じ HDRS で両方へ）。gate0.yml（年1回）',
-    'night/industry_trends.py': 'SEC と Ken French（mba.tuck.dartmouth.edu）——同じ HDRS を使う取得の関数を共有しているか確かめる対象',
+    'night/backtest_core.py': 'get が SEC と Yahoo の両方に同じ見出し。gate0.yml（年1回）',
+    'night/industry_trends.py': 'get が SEC と Ken French（mba.tuck.dartmouth.edu）の両方に同じ見出し。ops.yml（毎月）。industry_exposure.py は get を SEC にだけ使う',
+    'night/irr70_dossier.py': 'irr85_extract.UA（メールつき）で EDINET の有報 PDF（disclosure2dl.edinet-fsa.go.jp）も取る。CI では回っていない',
+    'night/unx_assets.py': '★この事前登録の別の実装（未コミット）が fetch_tsumitate_funds.Lib を import している＝その道具を回すと協会へメールつきの UA が送られる（リードへ）',
+    '解けなかった3か所（ホスト不明）': 'bestpf_ext.py L211（SEC_UA・SEC の URL を引数で受ける）・gaps_delisted_irr.py L113（retro_read_helper.HD・SEC の提出書類）・'
+                                    'retro_read_helper.py L32（plain(url)・SEC の提出書類）＝手で読んで SEC だけと確かめた',
 }
+
+
+DEVIATIONS = [
+    '事前登録の G2 は「Yahoo の東証の系列を使う道具を一覧にし、分割・分配金の抜けでずれた出力を名指しする（ずれの大きさつき）」だけを決めていて、'
+    '点検の線は決めていない。線は道具を書くときに決めた（1日の終値の跳び ×1.6 超＝etf_jp.repair の幅／整数比の近さ |log(比×k)|<0.12／5営業日以内に ±15% へ戻れば壊れた値／'
+    '分配の一致は Yahoo の割り戻しが協会の分配の利回りの ±30%〔0.05pt 未満の差は一致〕）。最初の試しで Yahoo の割り戻しの利回りの符号を逆に取っていた純粋な誤りを直した（線は変えていない）',
+    '分配の基準は協会の CSV の分配金（決算日の行・基準価額は分配落ち後）。市場価格の権利落ちの日は「決算日の前の Yahoo の営業日」で近似した（月をまたぐのは決算日が月初のときだけ）',
+    'mw_jp_nisa_bridge は相手（MSCI Japan gross・1306 の基準価額）を取り直さない Δ法: 相手は Yahoo の東証の系列ではないので、超過の算術平均は器の月次の差の平均だけ、'
+    'cagr_s は器の年率の差だけ動く（t値・β・4因子は計算し直していない）',
+    'old_recomputed は 2026-10-14 に取り直した Yahoo の値で作った（道具と同じ作り方）。Yahoo は調整後終値をさかのぼって直すので、出力を作った日の値（old_stored）と食い違うことがある＝両方を並べた',
+    '探索役が挙げた東証の本のうち、どの道具も Yahoo で使っていない本（1545・2840 ほか）も点検した（データの危うさの記録）。影響の計算には入らない',
+]
+CAVEATS = [
+    '直した系列の確かさは、協会の基準価額の総リターンとの年率の差（G2_instruments.etfs[].monthly.jita_nav_check）で確かめた。残る差は市場価格と基準価額の乖離の分',
+    '株（etf_jp の検算5社・nx_brand の日本の9社）は分割の跳びと壊れた値だけを見た。株の配当には独立の基準が無い（測れない）',
+    'G3 は静的な走査: 送る相手は同じ関数（URL を引数で受ける関数は呼ぶ所へ最大4段）の文字列と URL 定数から推した。実行時に組む URL・別ファイルから渡す URL は取りこぼしうる＝reviewed_notes で確かめた。'
+    '*.py だけ（index.html・シェル・workflow は対象外）',
+    'ずれの大きさは各出力の窓・各出力の作り方で計算し直した数字で、判定（格付け）は計算し直していない（直すときは各道具を回し直す）',
+]
+
+
+# ═══════════════════════════════ まとめ ═══════════════════════════════
+def summarize(out):
+    """結果からまとめを作る（判定の線は足さない＝数字を並べるだけ。直すかはユーザーに確かめる）"""
+    wf = {}
+    for f in sorted(os.listdir(os.path.join(BASE, '.github', 'workflows'))):
+        wf[f] = open(os.path.join(BASE, '.github', 'workflows', f), encoding='utf-8').read()
+
+    def in_ci(path):
+        nm = os.path.basename(path)
+        return [w for w, t in wf.items() if re.search(rf'\b{re.escape(nm)}\b', t)]
+    # G3
+    g3 = out['G3_ua']
+    files = {}
+    for fpath, sites in g3['non_sec_with_email_by_file'].items():
+        hosts = sorted({h for x in sites for h in x['non_sec_hosts']})
+        files[fpath] = {'lines': [x['line'] for x in sites], 'non_sec_hosts': hosts, 'ci': in_ci(fpath),
+                        'header_text': sites[0]['header_text']}
+    for u in g3['toushin_lib_users（そのクラスを使う道具）']:
+        files.setdefault(u['file'], {'via': u['imports'], 'line': u['line'], 'non_sec_hosts': ['toushin-lib.fwg.ne.jp'], 'ci': in_ci(u['file'])})
+    # G2 銘柄
+    inst = []
+    for c, r in out['G2_instruments']['etfs'].items():
+        if not r.get('affected'):
+            continue
+        d = r.get('distributions')
+        sc = d['status_counts'] if isinstance(d, dict) else None
+        inst.append({'code': c, 'used_by_tools': c in out['G2_instruments']['used_by_tools'],
+                     'unrecorded_splits': [f"{x['date']} {x['as']}（終値×{x['close_ratio']}・調整後も跳ぶ={x['adjclose_also_jumps']}・協会の水準の比 {x['jita_tr_ratio_same_days']}）" for x in r.get('unrecorded_splits') or []],
+                     'glitch_days': [f"{g['date']}（{g['close']} ← 前 {g['prev_close']}）" for g in r.get('glitch_days') or []],
+                     'distribution_status': sc,
+                     'distribution_years_off': {y: v for y, v in (d.get('yearly_pct') or {}).items() if abs(v['missed']) >= 0.05} if isinstance(d, dict) else None,
+                     'monthly': {k: (r.get('monthly') or {}).get(k) for k in ('window', 'cagr_yahoo_as_used_pct', 'cagr_corrected_pct', 'cagr_gap_pt', 'n_months_gap_gt_2pct')}})
+    ok = [c for c, r in out['G2_instruments']['etfs'].items() if 'error' not in r and not r.get('affected')]
+    err = {c: r.get('error') for c, r in out['G2_instruments']['etfs'].items() if 'error' in r}
+    st_aff = {g: [x['code'] for x in v if x.get('affected')] for g, v in out['G2_instruments']['stocks'].items()}
+    # G2 出力ごとのずれ（並べるだけ）
+    rows = []
+
+    def add(fp, key, metric, old_s, old_r, cor):
+        if cor is None:
+            return
+        base = old_r if old_r is not None else old_s
+        rows.append({'file': fp, 'key': key, 'metric': metric, 'old_stored': old_s, 'old_recomputed': old_r, 'corrected': cor,
+                     'delta_vs_recomputed': None if base is None else round(cor - base, 2)})
+    imp = out['G2_impact']
+    for x in imp.get('etf_jp') or []:
+        if isinstance(x, dict) and x.get('corrected'):
+            for m in ('cagr_pct', 'maxdd_pct'):
+                add(x['file'], x['key'], m, x['old_stored'].get(m), (x.get('old_recomputed') or {}).get(m), x['corrected'].get(m))
+    for x in imp.get('etf_jp_defense') or []:
+        if isinstance(x, dict):
+            add(x['file'], x['key'], '累積%', x.get('old_stored_pct'), x.get('old_recomputed_pct'), x.get('corrected_pct'))
+    for x in imp.get('alt_etf_compare') or []:
+        if isinstance(x, dict):
+            for blk, m in (('単体', '年率'), ('単体', '最大下落'), ('替えた形', '年率')):
+                add(x['file'], x['key'], f'{blk}.{m}', x['old_stored'][blk][m], x['old_recomputed'][blk][m], x['corrected'][blk][m])
+    for x in imp.get('defense_alts') or []:
+        if isinstance(x, dict):
+            for m in ('累積', '最大下落'):
+                add(x['file'], x['key'], m, x['old_stored'][m], x['old_recomputed'][m], x['corrected'][m])
+    for x in imp.get('mw_japan') or []:
+        if isinstance(x, dict) and x.get('corrected'):
+            for m in ('ex_ann', 'cagr_s'):
+                add(x['file'], x['key'], m, (x.get('old_stored') or {}).get(m), (x.get('old_recomputed') or {}).get(m), x['corrected'].get(m))
+    for x in imp.get('mw_jp_nisa_bridge') or []:
+        if isinstance(x, dict):
+            f_ = x.get('full') or {}
+            add(x['file'], x['key'] + '.full', 'ex_ann（Δ法）', f_.get('ex_ann_stored'), None, f_.get('ex_ann_corrected'))
+            add(x['file'], x['key'] + '.full', 'cagr_s（Δ法）', f_.get('cagr_s_stored'), None, f_.get('cagr_s_corrected'))
+            c_ = x.get('capture') or {}
+            add(x['file'], x['key'] + '.capture', 'capture_ratio（Δ法）', c_.get('capture_ratio_stored'), None, c_.get('capture_ratio_corrected'))
+    for x in imp.get('mw_industry') or []:
+        if isinstance(x, dict) and x.get('corrected'):
+            for m in ('ex_ann', 'cagr_diff'):
+                add(x['file'], x['key'], m, (x.get('old_stored') or {}).get(m), (x.get('old_recomputed') or {}).get(m), x['corrected'].get(m))
+    for x in imp.get('mw_holdable_breakeven') or []:
+        if isinstance(x, dict) and x.get('corrected'):
+            for m in ('mean_ann', 'sd_ann'):
+                add(x['file'], x['key'], m, (x.get('old_stored') or {}).get(m), (x.get('old_recomputed') or {}).get(m), x['corrected'].get(m))
+    rows.sort(key=lambda r: -abs(r['delta_vs_recomputed'] or 0))
+    lg = out['G2_live_gate']
+    return {
+        'G3_files_sending_email_to_non_sec': files,
+        'G2_affected_instruments': inst, 'G2_clean_instruments': ok, 'G2_errors': err, 'G2_stocks_with_unrecorded_jumps': st_aff,
+        'G2_output_deltas_sorted': rows,
+        'G2_impact_errors': {k: v.get('error') for k, v in imp.items() if isinstance(v, dict) and v.get('error')},
+        'live_gate_affected': bool(lg['holdings_tse'] or lg['ami_names_tse'] or lg['seats_tse'] or lg['gate_exceptions_tse']),
+        'live_gate_note': '保有・ETF 側の目標の本・席・門外例外に東証の本は無い（投資信託は協会の基準価額で Yahoo ではない）。'
+                          '盤（fetch_dashboard）と fetch_divs は監視リストの日本株の今日の値段・直近の分配を Yahoo から取る＝系列ではなく、分割の日の前日比だけがずれうる'}
 
 
 # ═══════════════════════════════ 本体 ═══════════════════════════════
@@ -1063,6 +1269,10 @@ def main():
         print(f'  impact {nm}: {"エラー" if isinstance(imp[nm], dict) else len(imp[nm])}', flush=True)
     out['G2_impact'] = imp
     out['G2_live_gate'] = live_gate()
+    out['results'] = summarize(out)
+    out['decision'] = '報告のみ（事前登録 G2・G3 どおり）。どの道具も直していない——直すか・どれから直すかはユーザーに確かめる'
+    out['deviations'] = DEVIATIONS
+    out['caveats'] = CAVEATS
     out['runtime_sec'] = round(time.time() - t0)
     tmp = OUT + '.tmp'
     json.dump(out, open(tmp, 'w'), ensure_ascii=False, indent=1)

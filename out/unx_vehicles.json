@@ -1,0 +1,3738 @@
+{
+ "generated": "2026-10-14",
+ "tool": "night/unx_vehicles.py",
+ "prereg": "out/unexplored_prereg.json（6f534c92）",
+ "question": "同じ賭けの器の実際に引かれた費用（D）・SMH と SOX の投信の取り換え（F）・SOXX と XSOX（G1）",
+ "scope": "読むだけ。門の採点・四関門・席・売却規律・配分・注文書には触れない",
+ "inputs": {
+  "XNDX": "https://indexes.nasdaqomx.com/Index/HistoryData（POST id=XNDX・EOD・2015-01-01〜）",
+  "XSOX": "https://indexes.nasdaqomx.com/docs/AdditionalData_XSOX.csv（2001-06-29〜2009-12-21）＋ https://indexes.nasdaqomx.com/Index/HistoryData（2009-12-22〜）",
+  "XSOX_splice": {
+   "csv_rows": 2132,
+   "csv_last": 20091221,
+   "giw_first": 20091222,
+   "giw_last": 20261013,
+   "splice_day_return_pct": 0.587,
+   "overlap_days": 0
+  },
+  "GOLD_index": "Yahoo GLD の調整後終値＋0.40%/年（1営業日あたり 0.40%/252）",
+  "UST20_index": "Yahoo TLT の調整後終値＋0.15%/年（同上）",
+  "hedge": "円ヘッジ＝毎日 −（米国1か月 − 日本1か月）×日数/365（前の日の金利）。米国1か月: FRED DGS1MO https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS1MO。日本1か月: 全銀協 日本円 TIBOR 1か月 https://www.jbatibor.or.jp/rate/pdf/JAPANESEYENYYYY.pdf（年ごとの PDF・読めた日数 [(2019, 183), (2020, 243), (2021, 245), (2022, 244), (2023, 246), (2024, 245), (2025, 243), (2026, 180)]）",
+  "FX": "FRED DEXJPUS https://fred.stlouisfed.org/graph/fredgraph.csv?id=DEXJPUS（この実行で取得）（日本の器の日 d には d より前の最後の値）",
+  "JITA_NAV": "投資信託協会 投信総合検索ライブラリー /FdsWeb/FDST030000/csv-file-download（nx_jpfunds_data.Lib・トップを読んでから）",
+  "JITA_list": "out/_nx_cache/newfunds/jita_full.json（基準日 2026-10-09 00:00:00・信託報酬・NISA の印・楽天の取扱）",
+  "JPX": "https://www.jpx.co.jp/equities/products/etfs/issues/01.html",
+  "Rakuten_US_ETF_list": "out/_nx_cache/newfunds/etfd.csv（2026-10-11）",
+  "Rakuten_iDeCo": {
+   "url": "https://dc.rakuten-sec.co.jp/service/product/",
+   "found_fund_names": [
+    "ステートストリート・ゴールドファンド(為替ヘッジあり)",
+    "ステート・ストリート・ゴールド・オープン(為替ヘッジなし)",
+    "楽天・プラス・NASDAQ-100インデックス・ファンド"
+   ],
+   "keyword_hits": {
+    "NASDAQ100": [
+     "NASDAQ-100インデックス・ファンド",
+     "NASDAQ100楽天DC"
+    ],
+    "SOX・半導体": [],
+    "金": [
+     "ゴールドファンド(為替ヘッジあり)",
+     "ゴールド・オープン(為替ヘッジなし)",
+     "ゴールド為替Hあり楽天DC",
+     "ゴールド為替Hなし楽天DC"
+    ]
+   }
+  },
+  "Yahoo": "query1.finance.yahoo.com v8 chart（mw_common.yahoo・日次）",
+  "bestfund": "out/_mw_cache/bf_chains.json・out/bestfund.json・out/bestfund_persist.json（読むだけ）"
+ },
+ "conventions": {
+  "実際の費用（roll）": "直近 N 年の中の『1年ごとの差』（器 − 指数の対数の年率）を毎日ずらして平均し、−(exp(平均)−1)（bestfund_vehicles._rolling_td と同じ。1年の窓は1つの差）",
+  "実際の費用（slope）": "log(器 ÷ 指数) を時間（年）に当てた最小二乗の傾き × −1（newfunds._slope）",
+  "nisa_cost": "主の窓（3年・無ければ2年）の roll。米国 ETF は取り戻せない配当の外国税（k×dy）と両替 0.02% を足す＝日本の器（基準価額に外国税が入っている）と同じ土俵",
+  "判定に使う費用": "事前登録は2つの物差しを挙げ並べ方は1つ＝主は roll（repo の bestfund_vehicles・newfunds と同じ物差し）、slope は名指しの所に並べて食い違いを示す（測る前に決めた・deviations に記録）",
+  "表の費用": "日本の投信＝投資信託協会の信託報酬（税抜×1.1）／東証 ETF＝JPX の一覧（税抜×1.1・外国 ETF はそのまま）／米国 ETF＝楽天の一覧の経費率（SMH は VanEck のページ）",
+  "同じ枠": "つみたて＝協会の nisaFlg=1／成長＝協会の nisaGrowthFlg=1（東証 ETF は JPX の NISA の印）・米国 ETF は楽天の一覧にあること／iDeCo＝楽天の iDeCo の商品のページに名前がある本",
+  "窓をそろえる": "今の器と候補は同じ長さの窓（両方にあれば3年、無ければ2年）で比べる"
+ },
+ "D": {
+  "bets": {
+   "NDX": {
+    "current_basis_tsumitate": "実際の費用（1年ごとの差の平均）＋米国 ETF は取り戻せない外国税と両替",
+    "current_basis_growth": "実際の費用（1年ごとの差の平均）＋米国 ETF は取り戻せない外国税と両替",
+    "current_basis_ideco": "実際の費用（1年ごとの差の平均）＋米国 ETF は取り戻せない外国税と両替",
+    "ideco_note": "楽天の iDeCo の商品のページで NASDAQ100 の本は「楽天・プラス・NASDAQ-100インデックス・ファンド」だけ（ページで見つかった名前 ['ステートストリート・ゴールドファンド(為替ヘッジあり)', 'ステート・ストリート・ゴールド・オープン(為替ヘッジなし)', '楽天・プラス・NASDAQ-100インデックス・ファンド']）＝同じ枠の比べる相手が無い",
+    "index": "XNDX（NASDAQ-100 トータルリターン・ドル）× DEXJPUS",
+    "ranking": [
+     {
+      "rank": 1,
+      "vehicle": "QQQM",
+      "window": "3y",
+      "nisa_cost": 0.217,
+      "real_cost_roll": 0.151,
+      "real_cost_slope": 0.147,
+      "stated_fee": 0.15,
+      "tsumitate": null,
+      "growth": true,
+      "rakuten": {
+       "sold": true,
+       "note": "楽天の海外 ETF 一覧（2026-10-11）にあるか"
+      }
+     },
+     {
+      "rank": 2,
+      "vehicle": "ニッセイNASDAQ100インデックスファンド",
+      "window": "3y",
+      "nisa_cost": 0.293,
+      "real_cost_roll": 0.293,
+      "real_cost_slope": 0.288,
+      "stated_fee": 0.2035,
+      "tsumitate": false,
+      "growth": true,
+      "rakuten": {
+       "sold": true,
+       "sales_fee_pct": 0.0
+      }
+     },
+     {
+      "rank": 3,
+      "vehicle": "楽天・プラス・NASDAQ-100インデックス・ファンド",
+      "window": "2y",
+      "nisa_cost": 0.349,
+      "real_cost_roll": 0.349,
+      "real_cost_slope": 0.353,
+      "stated_fee": 0.198,
+      "tsumitate": false,
+      "growth": true,
+      "rakuten": {
+       "sold": true,
+       "sales_fee_pct": 0.0
+      }
+     },
+     {
+      "rank": 4,
+      "vehicle": "eMAXIS NASDAQ100インデックス",
+      "window": "3y",
+      "nisa_cost": 0.377,
+      "real_cost_roll": 0.377,
+      "real_cost_slope": 0.377,
+      "stated_fee": 0.2035,
+      "tsumitate": false,
+      "growth": true,
+      "rakuten": {
+       "sold": true,
+       "sales_fee_pct": 0.0
+      }
+     },
+     {
+      "rank": 5,
+      "vehicle": "東証 1545 NEXT FUNDS NASDAQ-100（為替ヘッジなし）",
+      "window": "3y",
+      "nisa_cost": 0.42,
+      "real_cost_roll": 0.42,
+      "real_cost_slope": 0.419,
+      "stated_fee": 0.22,
+      "tsumitate": false,
+      "growth": true,
+      "rakuten": {
+       "sold": true,
+       "note": "東証 ETF＝国内株として楽天で売買できる"
+      }
+     },
+     {
+      "rank": 6,
+      "vehicle": "東証 2631 MAXISナスダック100上場投信",
+      "window": "3y",
+      "nisa_cost": 0.459,
+      "real_cost_roll": 0.459,
+      "real_cost_slope": 0.457,
+      "stated_fee": 0.22,
+      "tsumitate": false,
+      "growth": true,
+      "rakuten": {
+       "sold": true,
+       "note": "東証 ETF＝国内株として楽天で売買できる"
+      }
+     },
+     {
+      "rank": 7,
+      "vehicle": "東証 2568 上場インデックスファンド米国株式（NASDAQ100）為替ヘッジなし",
+      "window": "3y",
+      "nisa_cost": 0.506,
+      "real_cost_roll": 0.506,
+      "real_cost_slope": 0.503,
+      "stated_fee": 0.275,
+      "tsumitate": false,
+      "growth": true,
+      "rakuten": {
+       "sold": true,
+       "note": "東証 ETF＝国内株として楽天で売買できる"
+      }
+     },
+     {
+      "rank": 8,
+      "vehicle": "東証 2840 iFreeETF NASDAQ100（為替ヘッジなし）",
+      "window": "3y",
+      "nisa_cost": 0.575,
+      "real_cost_roll": 0.575,
+      "real_cost_slope": 0.578,
+      "stated_fee": 0.11,
+      "tsumitate": false,
+      "growth": true,
+      "rakuten": {
+       "sold": true,
+       "note": "東証 ETF＝国内株として楽天で売買できる"
+      }
+     },
+     {
+      "rank": 9,
+      "vehicle": "SBI・インベスコQQQ・NASDAQ100インデックス・ファンド",
+      "window": "3y",
+      "nisa_cost": 0.585,
+      "real_cost_roll": 0.585,
+      "real_cost_slope": 0.588,
+      "stated_fee": 0.2438,
+      "tsumitate": false,
+      "growth": true,
+      "rakuten": {
+       "sold": false
+      }
+     },
+     {
+      "rank": 10,
+      "vehicle": "iFreeNEXT NASDAQ100インデックス",
+      "window": "3y",
+      "nisa_cost": 0.638,
+      "real_cost_roll": 0.638,
+      "real_cost_slope": 0.634,
+      "stated_fee": 0.495,
+      "tsumitate": true,
+      "growth": true,
+      "rakuten": {
+       "sold": true,
+       "sales_fee_pct": 0.0
+      }
+     },
+     {
+      "rank": 11,
+      "vehicle": "インデックスファンドNASDAQ100（アメリカ株式）〔アモーヴァ〕",
+      "window": "3y",
+      "nisa_cost": 0.669,
+      "real_cost_roll": 0.669,
+      "real_cost_slope": 0.668,
+      "stated_fee": 0.484,
+      "tsumitate": true,
+      "growth": true,
+      "rakuten": {
+       "sold": true,
+       "sales_fee_pct": 2.0
+      }
+     },
+     {
+      "rank": 12,
+      "vehicle": "NZAM・ベータNASDAQ100",
+      "window": "3y",
+      "nisa_cost": 0.736,
+      "real_cost_roll": 0.736,
+      "real_cost_slope": 0.729,
+      "stated_fee": 0.44,
+      "tsumitate": false,
+      "growth": true,
+      "rakuten": {
+       "sold": true,
+       "sales_fee_pct": 0.0
+      }
+     },
+     {
+      "rank": 13,
+      "vehicle": "たわらノーロードNASDAQ100",
+      "window": "2y",
+      "nisa_cost": 1.193,
+      "real_cost_roll": 1.193,
+      "real_cost_slope": 1.225,
+      "stated_fee": 0.44,
+      "tsumitate": false,
+      "growth": true,
+      "rakuten": {
+       "sold": true,
+       "sales_fee_pct": 0.0
+      }
+     }
+    ],
+    "vs_current": [
+     {
+      "frame": "つみたて投資枠（今・こどもNISA も予定）",
+      "current": "iFreeNEXT NASDAQ100インデックス",
+      "candidate": "インデックスファンドNASDAQ100（アメリカ株式）〔アモーヴァ〕",
+      "window": "3y",
+      "current_cost": 0.638,
+      "candidate_cost": 0.669,
+      "candidate_cost_slope": 0.668,
+      "cheaper_by": -0.031,
+      "rakuten_sold": true,
+      "rakuten_sales_fee_pct": 2.0
+     },
+     {
+      "frame": "成長投資枠（つみたて枠を超えた分）",
+      "current": "QQQM",
+      "candidate": "iFreeNEXT NASDAQ100インデックス",
+      "window": "3y",
+      "current_cost": 0.217,
+      "candidate_cost": 0.638,
+      "candidate_cost_slope": 0.634,
+      "cheaper_by": -0.421,
+      "rakuten_sold": true,
+      "rakuten_sales_fee_pct": 0.0
+     },
+     {
+      "frame": "成長投資枠（つみたて枠を超えた分）",
+      "current": "QQQM",
+      "candidate": "インデックスファンドNASDAQ100（アメリカ株式）〔アモーヴァ〕",
+      "window": "3y",
+      "current_cost": 0.217,
+      "candidate_cost": 0.669,
+      "candidate_cost_slope": 0.668,
+      "cheaper_by": -0.452,
+      "rakuten_sold": true,
+      "rakuten_sales_fee_pct": 2.0
+     },
+     {
+      "frame": "成長投資枠（つみたて枠を超えた分）",
+      "current": "QQQM",
+      "candidate": "eMAXIS NASDAQ100インデックス",
+      "window": "3y",
+      "current_cost": 0.217,
+      "candidate_cost": 0.377,
+      "candidate_cost_slope": 0.377,
+      "cheaper_by": -0.16,
+      "rakuten_sold": true,
+      "rakuten_sales_fee_pct": 0.0
+     },
+     {
+      "frame": "成長投資枠（つみたて枠を超えた分）",
+      "current": "QQQM",
+      "candidate": "ニッセイNASDAQ100インデックスファンド",
+      "window": "3y",
+      "current_cost": 0.217,
+      "candidate_cost": 0.293,
+      "candidate_cost_slope": 0.288,
+      "cheaper_by": -0.076,
+      "rakuten_sold": true,
+      "rakuten_sales_fee_pct": 0.0
+     },
+     {
+      "frame": "成長投資枠（つみたて枠を超えた分）",
+      "current": "QQQM",
+      "candidate": "楽天・プラス・NASDAQ-100インデックス・ファンド",
+      "window": "2y",
+      "current_cost": 0.216,
+      "candidate_cost": 0.349,
+      "candidate_cost_slope": 0.353,
+      "cheaper_by": -0.133,
+      "rakuten_sold": true,
+      "rakuten_sales_fee_pct": 0.0
+     },
+     {
+      "frame": "成長投資枠（つみたて枠を超えた分）",
+      "current": "QQQM",
+      "candidate": "たわらノーロードNASDAQ100",
+      "window": "2y",
+      "current_cost": 0.216,
+      "candidate_cost": 1.193,
+      "candidate_cost_slope": 1.225,
+      "cheaper_by": -0.977,
+      "rakuten_sold": true,
+      "rakuten_sales_fee_pct": 0.0
+     },
+     {
+      "frame": "成長投資枠（つみたて枠を超えた分）",
+      "current": "QQQM",
+      "candidate": "NZAM・ベータNASDAQ100",
+      "window": "3y",
+      "current_cost": 0.217,
+      "candidate_cost": 0.736,
+      "candidate_cost_slope": 0.729,
+      "cheaper_by": -0.519,
+      "rakuten_sold": true,
+      "rakuten_sales_fee_pct": 0.0
+     },
+     {
+      "frame": "成長投資枠（つみたて枠を超えた分）",
+      "current": "QQQM",
+      "candidate": "SBI・インベスコQQQ・NASDAQ100インデックス・ファンド",
+      "window": "3y",
+      "current_cost": 0.217,
+      "candidate_cost": 0.585,
+      "candidate_cost_slope": 0.588,
+      "cheaper_by": -0.368,
+      "rakuten_sold": false,
+      "rakuten_sales_fee_pct": null
+     },
+     {
+      "frame": "成長投資枠（つみたて枠を超えた分）",
+      "current": "QQQM",
+      "candidate": "東証 2840 iFreeETF NASDAQ100（為替ヘッジなし）",
+      "window": "3y",
+      "current_cost": 0.217,
+      "candidate_cost": 0.575,
+      "candidate_cost_slope": 0.578,
+      "cheaper_by": -0.358,
+      "rakuten_sold": true,
+      "rakuten_sales_fee_pct": null
+     },
+     {
+      "frame": "成長投資枠（つみたて枠を超えた分）",
+      "current": "QQQM",
+      "candidate": "東証 1545 NEXT FUNDS NASDAQ-100（為替ヘッジなし）",
+      "window": "3y",
+      "current_cost": 0.217,
+      "candidate_cost": 0.42,
+      "candidate_cost_slope": 0.419,
+      "cheaper_by": -0.203,
+      "rakuten_sold": true,
+      "rakuten_sales_fee_pct": null
+     },
+     {
+      "frame": "成長投資枠（つみたて枠を超えた分）",
+      "current": "QQQM",
+      "candidate": "東証 2631 MAXISナスダック100上場投信",
+      "window": "3y",
+      "current_cost": 0.217,
+      "candidate_cost": 0.459,
+      "candidate_cost_slope": 0.457,
+      "cheaper_by": -0.242,
+      "rakuten_sold": true,
+      "rakuten_sales_fee_pct": null
+     },
+     {
+      "frame": "成長投資枠（つみたて枠を超えた分）",
+      "current": "QQQM",
+      "candidate": "東証 2568 上場インデックスファンド米国株式（NASDAQ100）為替ヘッジなし",
+      "window": "3y",
+      "current_cost": 0.217,
+      "candidate_cost": 0.506,
+      "candidate_cost_slope": 0.503,
+      "cheaper_by": -0.289,
+      "rakuten_sold": true,
+      "rakuten_sales_fee_pct": null
+     }
+    ],
+    "named_cheaper_by_0.10pt_same_frame": [],
+    "note": null
+   },
+   "NDX_H": {
+    "index": "XNDX の円ヘッジの近似（−（米国1か月 − 日本1か月））",
+    "ranking": [
+     {
+      "rank": 1,
+      "vehicle": "東証 2569 上場インデックスファンド米国株式（NASDAQ100）為替ヘッジあり",
+      "window": "3y",
+      "nisa_cost": 0.642,
+      "real_cost_roll": 0.642,
+      "real_cost_slope": 0.656,
+      "stated_fee": 0.275,
+      "tsumitate": false,
+      "growth": true,
+      "rakuten": {
+       "sold": true,
+       "note": "東証 ETF＝国内株として楽天で売買できる"
+      }
+     },
+     {
+      "rank": 2,
+      "vehicle": "東証 2087 NZAM 上場投信 NASDAQ100（為替ヘッジあり）",
+      "window": "3y",
+      "nisa_cost": 0.653,
+      "real_cost_roll": 0.653,
+      "real_cost_slope": 0.685,
+      "stated_fee": 0.22,
+      "tsumitate": false,
+      "growth": true,
+      "rakuten": {
+       "sold": true,
+       "note": "東証 ETF＝国内株として楽天で売買できる"
+      }
+     },
+     {
+      "rank": 3,
+      "vehicle": "東証 2841 iFreeETF NASDAQ100（為替ヘッジあり）",
+      "window": "3y",
+      "nisa_cost": 0.665,
+      "real_cost_roll": 0.665,
+      "real_cost_slope": 0.689,
+      "stated_fee": 0.11,
+      "tsumitate": false,
+      "growth": true,
+      "rakuten": {
+       "sold": true,
+       "note": "東証 ETF＝国内株として楽天で売買できる"
+      }
+     },
+     {
+      "rank": 4,
+      "vehicle": "東証 2632 MAXISナスダック100上場投信（為替ヘッジあり）",
+      "window": "3y",
+      "nisa_cost": 0.679,
+      "real_cost_roll": 0.679,
+      "real_cost_slope": 0.694,
+      "stated_fee": 0.22,
+      "tsumitate": false,
+      "growth": true,
+      "rakuten": {
+       "sold": true,
+       "note": "東証 ETF＝国内株として楽天で売買できる"
+      }
+     }
+    ],
+    "vs_current": [],
+    "named_cheaper_by_0.10pt_same_frame": [],
+    "note": "今使っている器・予定の器が無い賭け＝0.10pt の名指しの対象なし（並びと表に出ない費用だけ）"
+   },
+   "SOX": {
+    "current_basis_growth": "SMH の自分の指数（MVIS US Listed Semiconductor 25）の日次は無料で取れない（marketvector.com は 403）＝表の経費率 0.35%＋0.035% を使う",
+    "index": "XSOX（PHLX SOX トータルリターン・ドル）× DEXJPUS",
+    "ranking": [
+     {
+      "rank": 1,
+      "vehicle": "SMH（指数は MVIS US Listed Semiconductor 25＝SOX ではない）",
+      "window": "3y",
+      "nisa_cost": -3.5,
+      "real_cost_roll": -3.535,
+      "real_cost_slope": -3.5,
+      "stated_fee": 0.35,
+      "tsumitate": null,
+      "growth": true,
+      "rakuten": {
+       "sold": true,
+       "note": "楽天の海外 ETF 一覧（2026-10-11）にあるか"
+      }
+     },
+     {
+      "rank": 2,
+      "vehicle": "ニッセイSOX指数インデックスファンド（米国半導体株）",
+      "window": "3y",
+      "nisa_cost": 0.817,
+      "real_cost_roll": 0.817,
+      "real_cost_slope": 0.841,
+      "stated_fee": 0.1815,
+      "tsumitate": false,
+      "growth": true,
+      "rakuten": {
+       "sold": true,
+       "sales_fee_pct": 0.0
+      }
+     },
+     {
+      "rank": 3,
+      "vehicle": "東証 2243 グローバルX 半導体 ETF",
+      "window": "3y",
+      "nisa_cost": 0.931,
+      "real_cost_roll": 0.931,
+      "real_cost_slope": 0.933,
+      "stated_fee": 0.4125,
+      "tsumitate": false,
+      "growth": true,
+      "rakuten": {
+       "sold": true,
+       "note": "東証 ETF＝国内株として楽天で売買できる"
+      }
+     },
+     {
+      "rank": 4,
+      "vehicle": "インデックスファンドSOX指数（米国上場半導体株式）〔アモーヴァ〕",
+      "window": "3y",
+      "nisa_cost": 1.093,
+      "real_cost_roll": 1.093,
+      "real_cost_slope": 1.09,
+      "stated_fee": 0.4785,
+      "tsumitate": false,
+      "growth": true,
+      "rakuten": {
+       "sold": true,
+       "sales_fee_pct": 0.0
+      }
+     },
+     {
+      "rank": 5,
+      "vehicle": "楽天・プラス・SOXインデックス・ファンド",
+      "window": "2y",
+      "nisa_cost": 1.11,
+      "real_cost_roll": 1.11,
+      "real_cost_slope": 1.017,
+      "stated_fee": 0.176,
+      "tsumitate": false,
+      "growth": true,
+      "rakuten": {
+       "sold": true,
+       "sales_fee_pct": 0.0
+      }
+     },
+     {
+      "rank": 6,
+      "vehicle": "SOXX（2021-06-21 から SOX ではない）",
+      "window": "3y",
+      "nisa_cost": 2.482,
+      "real_cost_roll": 2.441,
+      "real_cost_slope": 2.21,
+      "stated_fee": 0.34,
+      "tsumitate": null,
+      "growth": false,
+      "rakuten": {
+       "sold": false,
+       "note": "楽天の海外 ETF 一覧（2026-10-11）にあるか"
+      }
+     }
+    ],
+    "vs_current": [
+     {
+      "frame": "成長投資枠（今の半導体の器・ドル・1株単位）",
+      "current": "SMH（指数は MVIS US Listed Semiconductor 25＝SOX ではない）",
+      "candidate": "楽天・プラス・SOXインデックス・ファンド",
+      "window": "2y",
+      "current_cost": 0.385,
+      "candidate_cost": 1.11,
+      "candidate_cost_slope": 1.017,
+      "cheaper_by": -0.725,
+      "rakuten_sold": true,
+      "rakuten_sales_fee_pct": 0.0
+     },
+     {
+      "frame": "成長投資枠（今の半導体の器・ドル・1株単位）",
+      "current": "SMH（指数は MVIS US Listed Semiconductor 25＝SOX ではない）",
+      "candidate": "ニッセイSOX指数インデックスファンド（米国半導体株）",
+      "window": "3y",
+      "current_cost": 0.385,
+      "candidate_cost": 0.817,
+      "candidate_cost_slope": 0.841,
+      "cheaper_by": -0.432,
+      "rakuten_sold": true,
+      "rakuten_sales_fee_pct": 0.0
+     },
+     {
+      "frame": "成長投資枠（今の半導体の器・ドル・1株単位）",
+      "current": "SMH（指数は MVIS US Listed Semiconductor 25＝SOX ではない）",
+      "candidate": "インデックスファンドSOX指数（米国上場半導体株式）〔アモーヴァ〕",
+      "window": "3y",
+      "current_cost": 0.385,
+      "candidate_cost": 1.093,
+      "candidate_cost_slope": 1.09,
+      "cheaper_by": -0.708,
+      "rakuten_sold": true,
+      "rakuten_sales_fee_pct": 0.0
+     },
+     {
+      "frame": "成長投資枠（今の半導体の器・ドル・1株単位）",
+      "current": "SMH（指数は MVIS US Listed Semiconductor 25＝SOX ではない）",
+      "candidate": "東証 2243 グローバルX 半導体 ETF",
+      "window": "3y",
+      "current_cost": 0.385,
+      "candidate_cost": 0.931,
+      "candidate_cost_slope": 0.933,
+      "cheaper_by": -0.546,
+      "rakuten_sold": true,
+      "rakuten_sales_fee_pct": null
+     }
+    ],
+    "named_cheaper_by_0.10pt_same_frame": [],
+    "note": null
+   },
+   "GOLD": {
+    "current_basis_growth": "実際の費用（1年ごとの差の平均）＋米国 ETF は取り戻せない外国税と両替",
+    "index": "GLD の配当込み＋0.40%/年（ドル）× DEXJPUS",
+    "ranking": [
+     {
+      "rank": 1,
+      "vehicle": "GLDM",
+      "window": "3y",
+      "nisa_cost": 0.12,
+      "real_cost_roll": 0.1,
+      "real_cost_slope": 0.1,
+      "stated_fee": 0.1,
+      "tsumitate": null,
+      "growth": true,
+      "rakuten": {
+       "sold": true,
+       "note": "楽天の海外 ETF 一覧（2026-10-11）にあるか"
+      }
+     },
+     {
+      "rank": 2,
+      "vehicle": "東証 1540 純金上場信託（現物国内保管型）",
+      "window": "3y",
+      "nisa_cost": 0.128,
+      "real_cost_roll": 0.128,
+      "real_cost_slope": 0.33,
+      "stated_fee": 0.44,
+      "tsumitate": null,
+      "growth": true,
+      "rakuten": {
+       "sold": true,
+       "note": "東証上場＝国内株として楽天で売買できる"
+      }
+     },
+     {
+      "rank": 3,
+      "vehicle": "iシェアーズ ゴールドインデックス・ファンド（為替ヘッジなし）",
+      "window": "3y",
+      "nisa_cost": 1.072,
+      "real_cost_roll": 1.072,
+      "real_cost_slope": 1.06,
+      "stated_fee": 0.2585,
+      "tsumitate": false,
+      "growth": true,
+      "rakuten": {
+       "sold": true,
+       "sales_fee_pct": 0.0
+      }
+     },
+     {
+      "rank": 4,
+      "vehicle": "東証 1328 NEXT FUNDS 金価格連動型上場投信",
+      "window": "3y",
+      "nisa_cost": 1.644,
+      "real_cost_roll": 1.644,
+      "real_cost_slope": 1.634,
+      "stated_fee": 0.176,
+      "tsumitate": false,
+      "growth": true,
+      "rakuten": {
+       "sold": true,
+       "note": "東証 ETF＝国内株として楽天で売買できる"
+      }
+     },
+     {
+      "rank": 5,
+      "vehicle": "東証 1326 SPDR ゴールド・シェア",
+      "window": "3y",
+      "nisa_cost": 5.523,
+      "real_cost_roll": 5.523,
+      "real_cost_slope": 4.109,
+      "stated_fee": 0.4,
+      "tsumitate": null,
+      "growth": true,
+      "rakuten": {
+       "sold": true,
+       "note": "東証上場＝国内株として楽天で売買できる"
+      }
+     }
+    ],
+    "vs_current": [
+     {
+      "frame": "成長投資枠（今は持っていない・bestfund の器の表 VEH の GOLD の器）",
+      "current": "GLDM",
+      "candidate": "iシェアーズ ゴールドインデックス・ファンド（為替ヘッジなし）",
+      "window": "3y",
+      "current_cost": 0.12,
+      "candidate_cost": 1.072,
+      "candidate_cost_slope": 1.06,
+      "cheaper_by": -0.952,
+      "rakuten_sold": true,
+      "rakuten_sales_fee_pct": 0.0
+     },
+     {
+      "frame": "成長投資枠（今は持っていない・bestfund の器の表 VEH の GOLD の器）",
+      "current": "GLDM",
+      "candidate": "東証 1328 NEXT FUNDS 金価格連動型上場投信",
+      "window": "3y",
+      "current_cost": 0.12,
+      "candidate_cost": 1.644,
+      "candidate_cost_slope": 1.634,
+      "cheaper_by": -1.524,
+      "rakuten_sold": true,
+      "rakuten_sales_fee_pct": null
+     },
+     {
+      "frame": "成長投資枠（今は持っていない・bestfund の器の表 VEH の GOLD の器）",
+      "current": "GLDM",
+      "candidate": "東証 1540 純金上場信託（現物国内保管型）",
+      "window": "3y",
+      "current_cost": 0.12,
+      "candidate_cost": 0.128,
+      "candidate_cost_slope": 0.33,
+      "cheaper_by": -0.008,
+      "rakuten_sold": true,
+      "rakuten_sales_fee_pct": null
+     },
+     {
+      "frame": "成長投資枠（今は持っていない・bestfund の器の表 VEH の GOLD の器）",
+      "current": "GLDM",
+      "candidate": "東証 1326 SPDR ゴールド・シェア",
+      "window": "3y",
+      "current_cost": 0.12,
+      "candidate_cost": 5.523,
+      "candidate_cost_slope": 4.109,
+      "cheaper_by": -5.403,
+      "rakuten_sold": true,
+      "rakuten_sales_fee_pct": null
+     }
+    ],
+    "named_cheaper_by_0.10pt_same_frame": [],
+    "note": null
+   },
+   "UST20H": {
+    "index": "TLT の配当込み＋0.15%/年 の円ヘッジの近似（−（米国1か月 − 日本1か月））",
+    "ranking": [
+     {
+      "rank": 1,
+      "vehicle": "東証 183A MAXIS米国国債20年超上場投信（為替ヘッジあり）",
+      "window": "2y",
+      "nisa_cost": 0.642,
+      "real_cost_roll": 0.642,
+      "real_cost_slope": 0.692,
+      "stated_fee": 0.132,
+      "tsumitate": false,
+      "growth": true,
+      "rakuten": {
+       "sold": true,
+       "note": "東証 ETF＝国内株として楽天で売買できる"
+      }
+     },
+     {
+      "rank": 2,
+      "vehicle": "東証 2621 iシェアーズ 米国債20年超 ETF（為替ヘッジあり）",
+      "window": "3y",
+      "nisa_cost": 1.221,
+      "real_cost_roll": 1.221,
+      "real_cost_slope": 1.219,
+      "stated_fee": 0.154,
+      "tsumitate": false,
+      "growth": true,
+      "rakuten": {
+       "sold": true,
+       "note": "東証 ETF＝国内株として楽天で売買できる"
+      }
+     },
+     {
+      "rank": 3,
+      "vehicle": "東証 179A グローバルX 超長期米国債 ETF（為替ヘッジあり・ICE 25年超）",
+      "window": "2y",
+      "nisa_cost": 1.334,
+      "real_cost_roll": 1.334,
+      "real_cost_slope": 1.388,
+      "stated_fee": 0.1045,
+      "tsumitate": false,
+      "growth": true,
+      "rakuten": {
+       "sold": true,
+       "note": "東証 ETF＝国内株として楽天で売買できる"
+      }
+     }
+    ],
+    "vs_current": [],
+    "named_cheaper_by_0.10pt_same_frame": [],
+    "note": "今使っている器・予定の器が無い賭け＝0.10pt の名指しの対象なし（並びと表に出ない費用だけ）"
+   }
+  },
+  "hidden_cost_over_0.2pt": [
+   {
+    "vehicle": "たわらノーロードNASDAQ100",
+    "bet": "NDX",
+    "window": "2y",
+    "stated_fee": 0.44,
+    "real_cost_roll": 1.193,
+    "real_cost_slope": 1.225,
+    "hidden_roll": 0.753,
+    "hidden_slope": 0.785,
+    "slope_agrees": true
+   },
+   {
+    "vehicle": "NZAM・ベータNASDAQ100",
+    "bet": "NDX",
+    "window": "3y",
+    "stated_fee": 0.44,
+    "real_cost_roll": 0.736,
+    "real_cost_slope": 0.729,
+    "hidden_roll": 0.296,
+    "hidden_slope": 0.289,
+    "slope_agrees": true
+   },
+   {
+    "vehicle": "SBI・インベスコQQQ・NASDAQ100インデックス・ファンド",
+    "bet": "NDX",
+    "window": "3y",
+    "stated_fee": 0.2438,
+    "real_cost_roll": 0.585,
+    "real_cost_slope": 0.588,
+    "hidden_roll": 0.341,
+    "hidden_slope": 0.344,
+    "slope_agrees": true
+   },
+   {
+    "vehicle": "東証 2840 iFreeETF NASDAQ100（為替ヘッジなし）",
+    "bet": "NDX",
+    "window": "3y",
+    "stated_fee": 0.11,
+    "real_cost_roll": 0.575,
+    "real_cost_slope": 0.578,
+    "hidden_roll": 0.465,
+    "hidden_slope": 0.468,
+    "slope_agrees": true
+   },
+   {
+    "vehicle": "東証 2631 MAXISナスダック100上場投信",
+    "bet": "NDX",
+    "window": "3y",
+    "stated_fee": 0.22,
+    "real_cost_roll": 0.459,
+    "real_cost_slope": 0.457,
+    "hidden_roll": 0.239,
+    "hidden_slope": 0.237,
+    "slope_agrees": true
+   },
+   {
+    "vehicle": "東証 2568 上場インデックスファンド米国株式（NASDAQ100）為替ヘッジなし",
+    "bet": "NDX",
+    "window": "3y",
+    "stated_fee": 0.275,
+    "real_cost_roll": 0.506,
+    "real_cost_slope": 0.503,
+    "hidden_roll": 0.231,
+    "hidden_slope": 0.228,
+    "slope_agrees": true
+   },
+   {
+    "vehicle": "東証 2841 iFreeETF NASDAQ100（為替ヘッジあり）",
+    "bet": "NDX_H",
+    "window": "3y",
+    "stated_fee": 0.11,
+    "real_cost_roll": 0.665,
+    "real_cost_slope": 0.689,
+    "hidden_roll": 0.555,
+    "hidden_slope": 0.579,
+    "slope_agrees": true
+   },
+   {
+    "vehicle": "東証 2632 MAXISナスダック100上場投信（為替ヘッジあり）",
+    "bet": "NDX_H",
+    "window": "3y",
+    "stated_fee": 0.22,
+    "real_cost_roll": 0.679,
+    "real_cost_slope": 0.694,
+    "hidden_roll": 0.459,
+    "hidden_slope": 0.474,
+    "slope_agrees": true
+   },
+   {
+    "vehicle": "東証 2569 上場インデックスファンド米国株式（NASDAQ100）為替ヘッジあり",
+    "bet": "NDX_H",
+    "window": "3y",
+    "stated_fee": 0.275,
+    "real_cost_roll": 0.642,
+    "real_cost_slope": 0.656,
+    "hidden_roll": 0.367,
+    "hidden_slope": 0.381,
+    "slope_agrees": true
+   },
+   {
+    "vehicle": "東証 2087 NZAM 上場投信 NASDAQ100（為替ヘッジあり）",
+    "bet": "NDX_H",
+    "window": "3y",
+    "stated_fee": 0.22,
+    "real_cost_roll": 0.653,
+    "real_cost_slope": 0.685,
+    "hidden_roll": 0.433,
+    "hidden_slope": 0.465,
+    "slope_agrees": true
+   },
+   {
+    "vehicle": "楽天・プラス・SOXインデックス・ファンド",
+    "bet": "SOX",
+    "window": "2y",
+    "stated_fee": 0.176,
+    "real_cost_roll": 1.11,
+    "real_cost_slope": 1.017,
+    "hidden_roll": 0.934,
+    "hidden_slope": 0.841,
+    "slope_agrees": true
+   },
+   {
+    "vehicle": "ニッセイSOX指数インデックスファンド（米国半導体株）",
+    "bet": "SOX",
+    "window": "3y",
+    "stated_fee": 0.1815,
+    "real_cost_roll": 0.817,
+    "real_cost_slope": 0.841,
+    "hidden_roll": 0.635,
+    "hidden_slope": 0.659,
+    "slope_agrees": true
+   },
+   {
+    "vehicle": "インデックスファンドSOX指数（米国上場半導体株式）〔アモーヴァ〕",
+    "bet": "SOX",
+    "window": "3y",
+    "stated_fee": 0.4785,
+    "real_cost_roll": 1.093,
+    "real_cost_slope": 1.09,
+    "hidden_roll": 0.615,
+    "hidden_slope": 0.612,
+    "slope_agrees": true
+   },
+   {
+    "vehicle": "東証 2243 グローバルX 半導体 ETF",
+    "bet": "SOX",
+    "window": "3y",
+    "stated_fee": 0.4125,
+    "real_cost_roll": 0.931,
+    "real_cost_slope": 0.933,
+    "hidden_roll": 0.519,
+    "hidden_slope": 0.521,
+    "slope_agrees": true
+   },
+   {
+    "vehicle": "iシェアーズ ゴールドインデックス・ファンド（為替ヘッジなし）",
+    "bet": "GOLD",
+    "window": "3y",
+    "stated_fee": 0.2585,
+    "real_cost_roll": 1.072,
+    "real_cost_slope": 1.06,
+    "hidden_roll": 0.814,
+    "hidden_slope": 0.802,
+    "slope_agrees": true
+   },
+   {
+    "vehicle": "東証 1328 NEXT FUNDS 金価格連動型上場投信",
+    "bet": "GOLD",
+    "window": "3y",
+    "stated_fee": 0.176,
+    "real_cost_roll": 1.644,
+    "real_cost_slope": 1.634,
+    "hidden_roll": 1.468,
+    "hidden_slope": 1.458,
+    "slope_agrees": true
+   },
+   {
+    "vehicle": "東証 1326 SPDR ゴールド・シェア",
+    "bet": "GOLD",
+    "window": "3y",
+    "stated_fee": 0.4,
+    "real_cost_roll": 5.523,
+    "real_cost_slope": 4.109,
+    "hidden_roll": 5.123,
+    "hidden_slope": 3.709,
+    "slope_agrees": true
+   },
+   {
+    "vehicle": "東証 2621 iシェアーズ 米国債20年超 ETF（為替ヘッジあり）",
+    "bet": "UST20H",
+    "window": "3y",
+    "stated_fee": 0.154,
+    "real_cost_roll": 1.221,
+    "real_cost_slope": 1.219,
+    "hidden_roll": 1.067,
+    "hidden_slope": 1.065,
+    "slope_agrees": true
+   },
+   {
+    "vehicle": "東証 183A MAXIS米国国債20年超上場投信（為替ヘッジあり）",
+    "bet": "UST20H",
+    "window": "2y",
+    "stated_fee": 0.132,
+    "real_cost_roll": 0.642,
+    "real_cost_slope": 0.692,
+    "hidden_roll": 0.51,
+    "hidden_slope": 0.56,
+    "slope_agrees": true
+   },
+   {
+    "vehicle": "東証 179A グローバルX 超長期米国債 ETF（為替ヘッジあり・ICE 25年超）",
+    "bet": "UST20H",
+    "window": "2y",
+    "stated_fee": 0.1045,
+    "real_cost_roll": 1.334,
+    "real_cost_slope": 1.388,
+    "hidden_roll": 1.23,
+    "hidden_slope": 1.283,
+    "slope_agrees": true
+   }
+  ],
+  "index_difference_not_cost": [
+   {
+    "vehicle": "SMH（指数は MVIS US Listed Semiconductor 25＝SOX ではない）",
+    "why": "指数が XSOX と違う＝この「費用」は指数の差であって費用ではない",
+    "windows": {
+     "1y": {
+      "from": 20250929,
+      "to": 20260930,
+      "slope": 9.015,
+      "roll": 5.887,
+      "n_1y_diffs": 1
+     },
+     "2y": {
+      "from": 20240930,
+      "to": 20260930,
+      "slope": 1.689,
+      "roll": 1.63,
+      "n_1y_diffs": 253
+     },
+     "3y": {
+      "from": 20230928,
+      "to": 20260930,
+      "slope": -3.5,
+      "roll": -3.535,
+      "n_1y_diffs": 502
+     },
+     "5y": {
+      "from": 20210928,
+      "to": 20260930,
+      "slope": -5.67,
+      "roll": -5.058,
+      "n_1y_diffs": 1005
+     }
+    }
+   },
+   {
+    "vehicle": "SOXX（2021-06-21 から SOX ではない）",
+    "why": "指数が XSOX と違う＝この「費用」は指数の差であって費用ではない",
+    "windows": {
+     "1y": {
+      "from": 20250929,
+      "to": 20260930,
+      "slope": -6.196,
+      "roll": -5.419,
+      "n_1y_diffs": 1
+     },
+     "2y": {
+      "from": 20240930,
+      "to": 20260930,
+      "slope": -0.587,
+      "roll": -0.196,
+      "n_1y_diffs": 253
+     },
+     "3y": {
+      "from": 20230928,
+      "to": 20260930,
+      "slope": 2.21,
+      "roll": 2.441,
+      "n_1y_diffs": 502
+     },
+     "5y": {
+      "from": 20210928,
+      "to": 20260930,
+      "slope": 1.775,
+      "roll": 1.499,
+      "n_1y_diffs": 1005
+     }
+    }
+   }
+  ],
+  "vehicles": [
+   {
+    "bet": "NDX",
+    "vehicle": "iFreeNEXT NASDAQ100インデックス",
+    "kind": "jita",
+    "source": "事前登録",
+    "isin": "JP90C000GUN2",
+    "assoc": "04317188",
+    "jita_name": "iFreeNEXT NASDAQ100インデックス",
+    "established": "2018-08-31",
+    "tsumitate": true,
+    "growth_jita": true,
+    "rakuten": {
+     "sold": true,
+     "sales_fee_pct": 0.0
+    },
+    "fee_jita_ex_tax": 0.45,
+    "growth": true,
+    "stated_fee_incl_tax": 0.495,
+    "stated_fee_src": "投資信託協会の一覧 2026-10-09（trustReward 税抜×1.1）",
+    "data": "投資信託協会の基準価額＋分配金（東証 ETF も基準価額）",
+    "windows": {
+     "1y": {
+      "from": 20250929,
+      "to": 20260930,
+      "slope": 0.707,
+      "roll": 0.501,
+      "n_1y_diffs": 1
+     },
+     "2y": {
+      "from": 20240930,
+      "to": 20260930,
+      "slope": 0.663,
+      "roll": 0.661,
+      "n_1y_diffs": 244
+     },
+     "3y": {
+      "from": 20230928,
+      "to": 20260930,
+      "slope": 0.634,
+      "roll": 0.638,
+      "n_1y_diffs": 487
+     },
+     "5y": {
+      "from": 20210928,
+      "to": 20260930,
+      "slope": 0.644,
+      "roll": 0.65,
+      "n_1y_diffs": 979
+     }
+    },
+    "full_record_slope": {
+     "from": 20181002,
+     "to": 20260930,
+     "slope": 0.677,
+     "years": 8.08
+    },
+    "record": "20180831〜20260930",
+    "primary_window": "3y",
+    "real_cost": 0.638,
+    "real_cost_slope": 0.634,
+    "nisa_cost": 0.638,
+    "hidden_vs_stated": 0.143,
+    "hidden_vs_stated_slope": 0.139
+   },
+   {
+    "bet": "NDX",
+    "vehicle": "インデックスファンドNASDAQ100（アメリカ株式）〔アモーヴァ〕",
+    "kind": "jita",
+    "source": "探索役 kodomo-ndx-vehicles",
+    "isin": "JP90C000KNQ2",
+    "assoc": "02314208",
+    "jita_name": "インデックスファンドNASDAQ100(アメリカ株式)",
+    "established": "2020-08-31",
+    "tsumitate": true,
+    "growth_jita": true,
+    "rakuten": {
+     "sold": true,
+     "sales_fee_pct": 2.0
+    },
+    "fee_jita_ex_tax": 0.44,
+    "growth": true,
+    "stated_fee_incl_tax": 0.484,
+    "stated_fee_src": "投資信託協会の一覧 2026-10-09（trustReward 税抜×1.1）",
+    "data": "投資信託協会の基準価額＋分配金（東証 ETF も基準価額）",
+    "windows": {
+     "1y": {
+      "from": 20250929,
+      "to": 20260930,
+      "slope": 0.781,
+      "roll": 0.591,
+      "n_1y_diffs": 1
+     },
+     "2y": {
+      "from": 20240930,
+      "to": 20260930,
+      "slope": 0.707,
+      "roll": 0.707,
+      "n_1y_diffs": 244
+     },
+     "3y": {
+      "from": 20230928,
+      "to": 20260930,
+      "slope": 0.668,
+      "roll": 0.669,
+      "n_1y_diffs": 487
+     },
+     "5y": {
+      "from": 20210928,
+      "to": 20260930,
+      "slope": 0.707,
+      "roll": 0.713,
+      "n_1y_diffs": 979
+     }
+    },
+    "full_record_slope": {
+     "from": 20200930,
+     "to": 20260930,
+     "slope": 0.696,
+     "years": 6.08
+    },
+    "record": "20200831〜20260930",
+    "primary_window": "3y",
+    "real_cost": 0.669,
+    "real_cost_slope": 0.668,
+    "nisa_cost": 0.669,
+    "hidden_vs_stated": 0.185,
+    "hidden_vs_stated_slope": 0.184
+   },
+   {
+    "bet": "NDX",
+    "vehicle": "eMAXIS NASDAQ100インデックス",
+    "kind": "jita",
+    "source": "事前登録",
+    "isin": "JP90C000L9D2",
+    "assoc": "0331A211",
+    "jita_name": "eMAXIS NASDAQ100インデックス",
+    "established": "2021-01-29",
+    "tsumitate": false,
+    "growth_jita": true,
+    "rakuten": {
+     "sold": true,
+     "sales_fee_pct": 0.0
+    },
+    "fee_jita_ex_tax": 0.185,
+    "growth": true,
+    "stated_fee_incl_tax": 0.2035,
+    "stated_fee_src": "投資信託協会の一覧 2026-10-09（trustReward 税抜×1.1）",
+    "data": "投資信託協会の基準価額＋分配金（東証 ETF も基準価額）",
+    "windows": {
+     "1y": {
+      "from": 20250929,
+      "to": 20260930,
+      "slope": 0.42,
+      "roll": 0.217,
+      "n_1y_diffs": 1
+     },
+     "2y": {
+      "from": 20240930,
+      "to": 20260930,
+      "slope": 0.374,
+      "roll": 0.373,
+      "n_1y_diffs": 244
+     },
+     "3y": {
+      "from": 20230928,
+      "to": 20260930,
+      "slope": 0.377,
+      "roll": 0.377,
+      "n_1y_diffs": 487
+     },
+     "5y": {
+      "from": 20210928,
+      "to": 20260930,
+      "slope": 0.491,
+      "roll": 0.496,
+      "n_1y_diffs": 979
+     }
+    },
+    "full_record_slope": {
+     "from": 20210302,
+     "to": 20260930,
+     "slope": 0.504,
+     "years": 5.67
+    },
+    "record": "20210129〜20260930",
+    "primary_window": "3y",
+    "real_cost": 0.377,
+    "real_cost_slope": 0.377,
+    "nisa_cost": 0.377,
+    "hidden_vs_stated": 0.174,
+    "hidden_vs_stated_slope": 0.174
+   },
+   {
+    "bet": "NDX",
+    "vehicle": "ニッセイNASDAQ100インデックスファンド",
+    "kind": "jita",
+    "source": "事前登録",
+    "isin": "JP90C000PDY6",
+    "assoc": "29313233",
+    "jita_name": "ニッセイNASDAQ100インデックスファンド<購入・換金手数料なし>",
+    "established": "2023-03-31",
+    "tsumitate": false,
+    "growth_jita": true,
+    "rakuten": {
+     "sold": true,
+     "sales_fee_pct": 0.0
+    },
+    "fee_jita_ex_tax": 0.185,
+    "growth": true,
+    "stated_fee_incl_tax": 0.2035,
+    "stated_fee_src": "投資信託協会の一覧 2026-10-09（trustReward 税抜×1.1）",
+    "data": "投資信託協会の基準価額＋分配金（東証 ETF も基準価額）",
+    "windows": {
+     "1y": {
+      "from": 20250929,
+      "to": 20260930,
+      "slope": 0.395,
+      "roll": 0.211,
+      "n_1y_diffs": 1
+     },
+     "2y": {
+      "from": 20240930,
+      "to": 20260930,
+      "slope": 0.318,
+      "roll": 0.316,
+      "n_1y_diffs": 244
+     },
+     "3y": {
+      "from": 20230928,
+      "to": 20260930,
+      "slope": 0.288,
+      "roll": 0.293,
+      "n_1y_diffs": 487
+     }
+    },
+    "full_record_slope": {
+     "from": 20230428,
+     "to": 20260930,
+     "slope": 0.294,
+     "years": 3.5
+    },
+    "record": "20230331〜20260930",
+    "primary_window": "3y",
+    "real_cost": 0.293,
+    "real_cost_slope": 0.288,
+    "nisa_cost": 0.293,
+    "hidden_vs_stated": 0.089,
+    "hidden_vs_stated_slope": 0.084
+   },
+   {
+    "bet": "NDX",
+    "vehicle": "楽天・プラス・NASDAQ-100インデックス・ファンド",
+    "kind": "jita",
+    "source": "事前登録（iDeCo の器）",
+    "isin": "JP90C000QF22",
+    "assoc": "9I314241",
+    "jita_name": "楽天・プラス・NASDAQ-100インデックス・ファンド",
+    "established": "2024-01-30",
+    "tsumitate": false,
+    "growth_jita": true,
+    "rakuten": {
+     "sold": true,
+     "sales_fee_pct": 0.0
+    },
+    "fee_jita_ex_tax": 0.18,
+    "growth": true,
+    "stated_fee_incl_tax": 0.198,
+    "stated_fee_src": "投資信託協会の一覧 2026-10-09（trustReward 税抜×1.1）",
+    "data": "投資信託協会の基準価額＋分配金（東証 ETF も基準価額）",
+    "windows": {
+     "1y": {
+      "from": 20250929,
+      "to": 20260930,
+      "slope": 0.4,
+      "roll": 0.211,
+      "n_1y_diffs": 1
+     },
+     "2y": {
+      "from": 20240930,
+      "to": 20260930,
+      "slope": 0.353,
+      "roll": 0.349,
+      "n_1y_diffs": 244
+     }
+    },
+    "full_record_slope": {
+     "from": 20240229,
+     "to": 20260930,
+     "slope": 0.329,
+     "years": 2.67
+    },
+    "record": "20240130〜20260930",
+    "primary_window": "2y",
+    "real_cost": 0.349,
+    "real_cost_slope": 0.353,
+    "nisa_cost": 0.349,
+    "hidden_vs_stated": 0.151,
+    "hidden_vs_stated_slope": 0.155
+   },
+   {
+    "bet": "NDX",
+    "vehicle": "たわらノーロードNASDAQ100",
+    "kind": "jita",
+    "source": "探索役 kodomo-ndx-vehicles・wf-jp-funds-index",
+    "isin": "JP90C000Q7S9",
+    "assoc": "4731523C",
+    "jita_name": "たわらノーロードNASDAQ100",
+    "established": "2023-12-26",
+    "tsumitate": false,
+    "growth_jita": true,
+    "rakuten": {
+     "sold": true,
+     "sales_fee_pct": 0.0
+    },
+    "fee_jita_ex_tax": 0.4,
+    "growth": true,
+    "stated_fee_incl_tax": 0.44,
+    "stated_fee_src": "投資信託協会の一覧 2026-10-09（trustReward 税抜×1.1）",
+    "data": "投資信託協会の基準価額＋分配金（東証 ETF も基準価額）",
+    "windows": {
+     "1y": {
+      "from": 20250929,
+      "to": 20260930,
+      "slope": 1.675,
+      "roll": 1.338,
+      "n_1y_diffs": 1
+     },
+     "2y": {
+      "from": 20240930,
+      "to": 20260930,
+      "slope": 1.225,
+      "roll": 1.193,
+      "n_1y_diffs": 244
+     }
+    },
+    "full_record_slope": {
+     "from": 20240129,
+     "to": 20260930,
+     "slope": 1.097,
+     "years": 2.76
+    },
+    "record": "20231226〜20260930",
+    "primary_window": "2y",
+    "real_cost": 1.193,
+    "real_cost_slope": 1.225,
+    "nisa_cost": 1.193,
+    "hidden_vs_stated": 0.753,
+    "hidden_vs_stated_slope": 0.785
+   },
+   {
+    "bet": "NDX",
+    "vehicle": "NZAM・ベータNASDAQ100",
+    "kind": "jita",
+    "source": "探索役 kodomo-ndx-vehicles",
+    "isin": "JP90C000JYE7",
+    "assoc": "25316203",
+    "jita_name": "NZAM・ベータNASDAQ100",
+    "established": "2020-03-12",
+    "tsumitate": false,
+    "growth_jita": true,
+    "rakuten": {
+     "sold": true,
+     "sales_fee_pct": 0.0
+    },
+    "fee_jita_ex_tax": 0.4,
+    "growth": true,
+    "stated_fee_incl_tax": 0.44,
+    "stated_fee_src": "投資信託協会の一覧 2026-10-09（trustReward 税抜×1.1）",
+    "data": "投資信託協会の基準価額＋分配金（東証 ETF も基準価額）",
+    "windows": {
+     "1y": {
+      "from": 20250929,
+      "to": 20260930,
+      "slope": 0.627,
+      "roll": 0.45,
+      "n_1y_diffs": 1
+     },
+     "2y": {
+      "from": 20240930,
+      "to": 20260930,
+      "slope": 0.642,
+      "roll": 0.63,
+      "n_1y_diffs": 244
+     },
+     "3y": {
+      "from": 20230928,
+      "to": 20260930,
+      "slope": 0.729,
+      "roll": 0.736,
+      "n_1y_diffs": 487
+     },
+     "5y": {
+      "from": 20210928,
+      "to": 20260930,
+      "slope": 0.772,
+      "roll": 0.761,
+      "n_1y_diffs": 979
+     }
+    },
+    "full_record_slope": {
+     "from": 20200410,
+     "to": 20260930,
+     "slope": 0.851,
+     "years": 6.55
+    },
+    "record": "20200312〜20260930",
+    "primary_window": "3y",
+    "real_cost": 0.736,
+    "real_cost_slope": 0.729,
+    "nisa_cost": 0.736,
+    "hidden_vs_stated": 0.296,
+    "hidden_vs_stated_slope": 0.289
+   },
+   {
+    "bet": "NDX",
+    "vehicle": "SBI・インベスコQQQ・NASDAQ100インデックス・ファンド",
+    "kind": "jita",
+    "source": "探索役 kodomo-ndx-vehicles・tse-us-index",
+    "isin": "JP90C000PVT8",
+    "assoc": "89311238",
+    "jita_name": "SBI・インベスコQQQ・NASDAQ100インデックス・ファンド",
+    "established": "2023-08-23",
+    "tsumitate": false,
+    "growth_jita": true,
+    "rakuten": {
+     "sold": false
+    },
+    "fee_jita_ex_tax": 0.058,
+    "growth": true,
+    "stated_fee_incl_tax": 0.2438,
+    "stated_fee_src": "投資信託協会の信託報酬（税抜×1.1）＋中の QQQ の経費 0.18%（JPX の 587A＝QQQ と同じ値）",
+    "data": "投資信託協会の基準価額＋分配金（東証 ETF も基準価額）",
+    "windows": {
+     "1y": {
+      "from": 20250929,
+      "to": 20260930,
+      "slope": 0.702,
+      "roll": 0.456,
+      "n_1y_diffs": 1
+     },
+     "2y": {
+      "from": 20240930,
+      "to": 20260930,
+      "slope": 0.624,
+      "roll": 0.65,
+      "n_1y_diffs": 244
+     },
+     "3y": {
+      "from": 20230928,
+      "to": 20260930,
+      "slope": 0.588,
+      "roll": 0.585,
+      "n_1y_diffs": 487
+     }
+    },
+    "full_record_slope": {
+     "from": 20230921,
+     "to": 20260930,
+     "slope": 0.592,
+     "years": 3.1
+    },
+    "record": "20230823〜20260930",
+    "primary_window": "3y",
+    "real_cost": 0.585,
+    "real_cost_slope": 0.588,
+    "nisa_cost": 0.585,
+    "hidden_vs_stated": 0.341,
+    "hidden_vs_stated_slope": 0.344
+   },
+   {
+    "bet": "NDX",
+    "vehicle": "SBI NASDAQ100インデックス・ファンド",
+    "kind": "jita",
+    "source": "探索役 kodomo-ndx-vehicles",
+    "isin": "JP90C000SWF9",
+    "assoc": "89311265",
+    "jita_name": "SBI NASDAQ100インデックス・ファンド",
+    "established": "2026-05-21",
+    "tsumitate": false,
+    "growth_jita": false,
+    "rakuten": {
+     "sold": false
+    },
+    "fee_jita_ex_tax": 0.178,
+    "growth": false,
+    "stated_fee_incl_tax": 0.1958,
+    "stated_fee_src": "投資信託協会の一覧 2026-10-09（trustReward 税抜×1.1）",
+    "data": "投資信託協会の基準価額＋分配金（東証 ETF も基準価額）",
+    "windows": {},
+    "full_record_slope": {
+     "from": 20260618,
+     "to": 20260930,
+     "slope": 0.728,
+     "years": 0.36
+    },
+    "record": "20260521〜20260930",
+    "primary_window": null,
+    "real_cost": null,
+    "note_short": "記録が2年未満＝並びに入れない（1年の窓・設定来の傾きは参考）"
+   },
+   {
+    "bet": "NDX",
+    "vehicle": "Smart-i NASDAQ100インデックス",
+    "kind": "jita",
+    "source": "探索役 kodomo-ndx-vehicles",
+    "isin": "JP90C000T6E8",
+    "assoc": "AJ312269",
+    "jita_name": "Smart-i NASDAQ100インデックス",
+    "established": "2026-09-08",
+    "tsumitate": false,
+    "growth_jita": true,
+    "rakuten": {
+     "sold": true,
+     "sales_fee_pct": 0.0
+    },
+    "fee_jita_ex_tax": 0.3,
+    "growth": true,
+    "stated_fee_incl_tax": 0.33,
+    "stated_fee_src": "投資信託協会の一覧 2026-10-09（trustReward 税抜×1.1）",
+    "data": "投資信託協会の基準価額＋分配金（東証 ETF も基準価額）",
+    "windows": {},
+    "full_record_slope": null,
+    "record": null,
+    "primary_window": null,
+    "real_cost": null,
+    "note_short": "記録が2年未満＝並びに入れない（1年の窓・設定来の傾きは参考）"
+   },
+   {
+    "bet": "NDX",
+    "vehicle": "東証 2840 iFreeETF NASDAQ100（為替ヘッジなし）",
+    "kind": "jita_etf",
+    "source": "事前登録",
+    "isin": "JP3049460003",
+    "assoc": "04314221",
+    "jita_name": "iFreeETF NASDAQ100(為替ヘッジなし)",
+    "established": "2022-01-31",
+    "tsumitate": false,
+    "growth_jita": true,
+    "rakuten": {
+     "sold": true,
+     "note": "東証 ETF＝国内株として楽天で売買できる"
+    },
+    "fee_jita_ex_tax": 0.1,
+    "code": "2840",
+    "jpx": {
+     "index": "NASDAQ100指数（配当込み、円ベース）",
+     "name": "iFreeETF NASDAQ100（為替ヘッジなし） iNAV",
+     "issuer": "大和アセットマネジメント(13054)",
+     "fee": "0.1％以内",
+     "nisa": "●"
+    },
+    "stated_fee_incl_tax": 0.11,
+    "stated_fee_src": "JPX の ETF 一覧 https://www.jpx.co.jp/equities/products/etfs/issues/01.html（0.1％以内・税抜×1.1）",
+    "growth": true,
+    "data": "投資信託協会の基準価額＋分配金（東証 ETF も基準価額）",
+    "unit_events": [
+     "20241220 10:1"
+    ],
+    "windows": {
+     "1y": {
+      "from": 20250929,
+      "to": 20260930,
+      "slope": 0.533,
+      "roll": 0.323,
+      "n_1y_diffs": 1
+     },
+     "2y": {
+      "from": 20240930,
+      "to": 20260930,
+      "slope": 0.422,
+      "roll": 0.404,
+      "n_1y_diffs": 244
+     },
+     "3y": {
+      "from": 20230928,
+      "to": 20260930,
+      "slope": 0.578,
+      "roll": 0.575,
+      "n_1y_diffs": 487
+     }
+    },
+    "full_record_slope": {
+     "from": 20220302,
+     "to": 20260930,
+     "slope": 0.948,
+     "years": 4.66
+    },
+    "record": "20220131〜20260930",
+    "primary_window": "3y",
+    "real_cost": 0.575,
+    "real_cost_slope": 0.578,
+    "nisa_cost": 0.575,
+    "hidden_vs_stated": 0.465,
+    "hidden_vs_stated_slope": 0.468
+   },
+   {
+    "bet": "NDX",
+    "vehicle": "東証 1545 NEXT FUNDS NASDAQ-100（為替ヘッジなし）",
+    "kind": "jita_etf",
+    "source": "事前登録",
+    "isin": "JP3047240001",
+    "assoc": "01313108",
+    "jita_name": "NEXT FUNDS NASDAQ-100(為替ヘッジなし)連動型上場投信",
+    "established": "2010-08-13",
+    "tsumitate": false,
+    "growth_jita": true,
+    "rakuten": {
+     "sold": true,
+     "note": "東証 ETF＝国内株として楽天で売買できる"
+    },
+    "fee_jita_ex_tax": 0.2,
+    "code": "1545",
+    "jpx": {
+     "index": "NASDAQ－１００指数（税引前配当込み）",
+     "name": "ＮＥＸＴ ＦＵＮＤＳ ＮＡＳＤＡＱ－１００®（為替ヘッジなし）連動型上場投信 iNAV",
+     "issuer": "野村アセットマネジメント(13064)",
+     "fee": "0.20％以内",
+     "nisa": "●"
+    },
+    "stated_fee_incl_tax": 0.22,
+    "stated_fee_src": "JPX の ETF 一覧 https://www.jpx.co.jp/equities/products/etfs/issues/01.html（0.20％以内・税抜×1.1）",
+    "growth": true,
+    "data": "投資信託協会の基準価額＋分配金（東証 ETF も基準価額）",
+    "unit_events": [
+     "20260812 10:1"
+    ],
+    "windows": {
+     "1y": {
+      "from": 20250929,
+      "to": 20260930,
+      "slope": 0.521,
+      "roll": 0.292,
+      "n_1y_diffs": 1
+     },
+     "2y": {
+      "from": 20240930,
+      "to": 20260930,
+      "slope": 0.445,
+      "roll": 0.44,
+      "n_1y_diffs": 244
+     },
+     "3y": {
+      "from": 20230928,
+      "to": 20260930,
+      "slope": 0.419,
+      "roll": 0.42,
+      "n_1y_diffs": 488
+     },
+     "5y": {
+      "from": 20210928,
+      "to": 20260930,
+      "slope": 0.451,
+      "roll": 0.454,
+      "n_1y_diffs": 981
+     }
+    },
+    "full_record_slope": {
+     "from": 20150203,
+     "to": 20260930,
+     "slope": 0.565,
+     "years": 11.73
+    },
+    "record": "20150105〜20260930",
+    "primary_window": "3y",
+    "real_cost": 0.42,
+    "real_cost_slope": 0.419,
+    "nisa_cost": 0.42,
+    "hidden_vs_stated": 0.2,
+    "hidden_vs_stated_slope": 0.199
+   },
+   {
+    "bet": "NDX",
+    "vehicle": "東証 2631 MAXISナスダック100上場投信",
+    "kind": "jita_etf",
+    "source": "探索役 tse-us-index",
+    "isin": "JP3049190006",
+    "assoc": "03314212",
+    "jita_name": "MAXISナスダック100上場投信",
+    "established": "2021-02-24",
+    "tsumitate": false,
+    "growth_jita": true,
+    "rakuten": {
+     "sold": true,
+     "note": "東証 ETF＝国内株として楽天で売買できる"
+    },
+    "fee_jita_ex_tax": 0.2,
+    "code": "2631",
+    "jpx": {
+     "index": "ＮＡＳＤＡＱ１００指数（円換算ベース）",
+     "name": "ＭＡＸＩＳナスダック１００上場投信 iNAV",
+     "issuer": "三菱UFJアセットマネジメント(13444)",
+     "fee": "0.20％程度",
+     "nisa": "●"
+    },
+    "stated_fee_incl_tax": 0.22,
+    "stated_fee_src": "JPX の ETF 一覧 https://www.jpx.co.jp/equities/products/etfs/issues/01.html（0.20％程度・税抜×1.1）",
+    "growth": true,
+    "data": "投資信託協会の基準価額＋分配金（東証 ETF も基準価額）",
+    "windows": {
+     "1y": {
+      "from": 20250929,
+      "to": 20260930,
+      "slope": 0.533,
+      "roll": 0.328,
+      "n_1y_diffs": 1
+     },
+     "2y": {
+      "from": 20240930,
+      "to": 20260930,
+      "slope": 0.48,
+      "roll": 0.476,
+      "n_1y_diffs": 244
+     },
+     "3y": {
+      "from": 20230928,
+      "to": 20260930,
+      "slope": 0.457,
+      "roll": 0.459,
+      "n_1y_diffs": 489
+     },
+     "5y": {
+      "from": 20210928,
+      "to": 20260930,
+      "slope": 0.477,
+      "roll": 0.484,
+      "n_1y_diffs": 982
+     }
+    },
+    "full_record_slope": {
+     "from": 20210324,
+     "to": 20260930,
+     "slope": 0.474,
+     "years": 5.6
+    },
+    "record": "20210224〜20260930",
+    "primary_window": "3y",
+    "real_cost": 0.459,
+    "real_cost_slope": 0.457,
+    "nisa_cost": 0.459,
+    "hidden_vs_stated": 0.239,
+    "hidden_vs_stated_slope": 0.237
+   },
+   {
+    "bet": "NDX",
+    "vehicle": "東証 2568 上場インデックスファンド米国株式（NASDAQ100）為替ヘッジなし",
+    "kind": "jita_etf",
+    "source": "探索役 tse-us-index・wf-jp-funds-index",
+    "isin": "JP3049090008",
+    "assoc": "02313209",
+    "jita_name": "上場インデックスファンド米国株式(NASDAQ100)為替ヘッジなし",
+    "established": "2020-09-17",
+    "tsumitate": false,
+    "growth_jita": true,
+    "rakuten": {
+     "sold": true,
+     "note": "東証 ETF＝国内株として楽天で売買できる"
+    },
+    "fee_jita_ex_tax": 0.25,
+    "code": "2568",
+    "jpx": {
+     "index": "NASDAQ100指数（円換算ベース）",
+     "name": "上場インデックスファンド米国株式（NASDAQ100）為替ヘッジなし iNAV",
+     "issuer": "アモーヴァ・アセットマネジメント(13084)",
+     "fee": "0.25％以内",
+     "nisa": "●"
+    },
+    "stated_fee_incl_tax": 0.275,
+    "stated_fee_src": "JPX の ETF 一覧 https://www.jpx.co.jp/equities/products/etfs/issues/01.html（0.25％以内・税抜×1.1）",
+    "growth": true,
+    "data": "投資信託協会の基準価額＋分配金（東証 ETF も基準価額）",
+    "windows": {
+     "1y": {
+      "from": 20250929,
+      "to": 20260930,
+      "slope": 0.635,
+      "roll": 0.441,
+      "n_1y_diffs": 1
+     },
+     "2y": {
+      "from": 20240930,
+      "to": 20260930,
+      "slope": 0.545,
+      "roll": 0.543,
+      "n_1y_diffs": 244
+     },
+     "3y": {
+      "from": 20230928,
+      "to": 20260930,
+      "slope": 0.503,
+      "roll": 0.506,
+      "n_1y_diffs": 487
+     },
+     "5y": {
+      "from": 20210928,
+      "to": 20260930,
+      "slope": 0.547,
+      "roll": 0.555,
+      "n_1y_diffs": 982
+     }
+    },
+    "full_record_slope": {
+     "from": 20201019,
+     "to": 20260930,
+     "slope": 0.534,
+     "years": 6.03
+    },
+    "record": "20200917〜20260930",
+    "primary_window": "3y",
+    "real_cost": 0.506,
+    "real_cost_slope": 0.503,
+    "nisa_cost": 0.506,
+    "hidden_vs_stated": 0.231,
+    "hidden_vs_stated_slope": 0.228
+   },
+   {
+    "bet": "NDX",
+    "vehicle": "東証 534A NZAM 上場投信 NASDAQ100（為替ヘッジなし）",
+    "kind": "jita_etf",
+    "source": "探索役 tse-us-index",
+    "isin": "JP3051350001",
+    "assoc": "25313263",
+    "jita_name": "NZAM上場投信NASDAQ100(為替ヘッジなし)",
+    "established": "2026-03-18",
+    "tsumitate": false,
+    "growth_jita": true,
+    "rakuten": {
+     "sold": true,
+     "note": "東証 ETF＝国内株として楽天で売買できる"
+    },
+    "fee_jita_ex_tax": 0.1,
+    "code": "534A",
+    "jpx": {
+     "index": "NASDAQ100指数（配当込み、当社円換算ベース）",
+     "name": "NZAM 上場投信 NASDAQ100（為替ヘッジなし） iNAV",
+     "issuer": "農林中金全共連アセットマネジメント(15954)",
+     "fee": "0.10%以内",
+     "nisa": "●"
+    },
+    "stated_fee_incl_tax": 0.11,
+    "stated_fee_src": "JPX の ETF 一覧 https://www.jpx.co.jp/equities/products/etfs/issues/01.html（0.10%以内・税抜×1.1）",
+    "growth": true,
+    "data": "投資信託協会の基準価額＋分配金（東証 ETF も基準価額）",
+    "windows": {},
+    "full_record_slope": {
+     "from": 20260416,
+     "to": 20260930,
+     "slope": 0.817,
+     "years": 0.54
+    },
+    "record": "20260318〜20260930",
+    "primary_window": null,
+    "real_cost": null,
+    "note_short": "記録が2年未満＝並びに入れない（1年の窓・設定来の傾きは参考）"
+   },
+   {
+    "bet": "NDX",
+    "vehicle": "QQQM",
+    "kind": "us",
+    "source": "事前登録",
+    "ticker": "QQQM",
+    "growth": true,
+    "rakuten": {
+     "sold": true,
+     "note": "楽天の海外 ETF 一覧（2026-10-11）にあるか"
+    },
+    "stated_fee_incl_tax": 0.15,
+    "stated_fee_src": "楽天の海外 ETF 一覧の経費率（2026-10-11）",
+    "data": "Yahoo の調整後終値（配当は源泉なしで再投資）。指数と同じ米国の終値どうし＝円にしても同じドル円が両方に掛かり消える",
+    "windows": {
+     "1y": {
+      "from": 20250929,
+      "to": 20260930,
+      "slope": 0.157,
+      "roll": 0.122,
+      "n_1y_diffs": 1
+     },
+     "2y": {
+      "from": 20240930,
+      "to": 20260930,
+      "slope": 0.148,
+      "roll": 0.15,
+      "n_1y_diffs": 253
+     },
+     "3y": {
+      "from": 20230928,
+      "to": 20260930,
+      "slope": 0.147,
+      "roll": 0.151,
+      "n_1y_diffs": 502
+     },
+     "5y": {
+      "from": 20210928,
+      "to": 20260930,
+      "slope": 0.141,
+      "roll": 0.143,
+      "n_1y_diffs": 1005
+     }
+    },
+    "full_record_slope": {
+     "from": 20201111,
+     "to": 20260930,
+     "slope": 0.138,
+     "years": 5.96
+    },
+    "record": "20201014〜20260930",
+    "nisa_add_pct": 0.066,
+    "nisa_add_note": "取り戻せない配当の外国税 0.10×配当利回り 0.46%＋両替 0.02%（bestfund_data.VEH・FX_FEE）",
+    "primary_window": "3y",
+    "real_cost": 0.151,
+    "real_cost_slope": 0.147,
+    "nisa_cost": 0.217,
+    "hidden_vs_stated": 0.001,
+    "hidden_vs_stated_slope": -0.003
+   },
+   {
+    "bet": "NDX_H",
+    "vehicle": "東証 2841 iFreeETF NASDAQ100（為替ヘッジあり）",
+    "kind": "jita_etf",
+    "source": "事前登録",
+    "isin": "JP3049470002",
+    "assoc": "04313221",
+    "jita_name": "iFreeETF NASDAQ100(為替ヘッジあり)",
+    "established": "2022-01-31",
+    "tsumitate": false,
+    "growth_jita": true,
+    "rakuten": {
+     "sold": true,
+     "note": "東証 ETF＝国内株として楽天で売買できる"
+    },
+    "fee_jita_ex_tax": 0.1,
+    "code": "2841",
+    "jpx": {
+     "index": "NASDAQ100指数（配当込み、円建て、円ヘッジ）",
+     "name": "iFreeETF NASDAQ100（為替ヘッジあり） iNAV",
+     "issuer": "大和アセットマネジメント(13054)",
+     "fee": "0.1％以内",
+     "nisa": "●"
+    },
+    "stated_fee_incl_tax": 0.11,
+    "stated_fee_src": "JPX の ETF 一覧 https://www.jpx.co.jp/equities/products/etfs/issues/01.html（0.1％以内・税抜×1.1）",
+    "growth": true,
+    "data": "投資信託協会の基準価額＋分配金（東証 ETF も基準価額）",
+    "windows": {
+     "1y": {
+      "from": 20250929,
+      "to": 20260930,
+      "slope": 0.771,
+      "roll": 0.531,
+      "n_1y_diffs": 1
+     },
+     "2y": {
+      "from": 20240930,
+      "to": 20260930,
+      "slope": 0.472,
+      "roll": 0.405,
+      "n_1y_diffs": 244
+     },
+     "3y": {
+      "from": 20230928,
+      "to": 20260930,
+      "slope": 0.689,
+      "roll": 0.665,
+      "n_1y_diffs": 487
+     }
+    },
+    "full_record_slope": {
+     "from": 20220302,
+     "to": 20260930,
+     "slope": 1.058,
+     "years": 4.66
+    },
+    "record": "20220131〜20260930",
+    "primary_window": "3y",
+    "real_cost": 0.665,
+    "real_cost_slope": 0.689,
+    "nisa_cost": 0.665,
+    "hidden_vs_stated": 0.555,
+    "hidden_vs_stated_slope": 0.579
+   },
+   {
+    "bet": "NDX_H",
+    "vehicle": "東証 2632 MAXISナスダック100上場投信（為替ヘッジあり）",
+    "kind": "jita_etf",
+    "source": "探索役 tse-us-index（名前だけ・測らなかった本）",
+    "isin": "JP3049200003",
+    "assoc": "03315212",
+    "jita_name": "MAXISナスダック100上場投信(為替ヘッジあり)",
+    "established": "2021-02-24",
+    "tsumitate": false,
+    "growth_jita": true,
+    "rakuten": {
+     "sold": true,
+     "note": "東証 ETF＝国内株として楽天で売買できる"
+    },
+    "fee_jita_ex_tax": 0.2,
+    "code": "2632",
+    "jpx": {
+     "index": "ＮＡＳＤＡＱ１００指数（円ヘッジ・円換算ベース）",
+     "name": "ＭＡＸＩＳナスダック１００上場投信（為替ヘッジあり） iNAV",
+     "issuer": "三菱UFJアセットマネジメント(13444)",
+     "fee": "0.20％程度",
+     "nisa": "●"
+    },
+    "stated_fee_incl_tax": 0.22,
+    "stated_fee_src": "JPX の ETF 一覧 https://www.jpx.co.jp/equities/products/etfs/issues/01.html（0.20％程度・税抜×1.1）",
+    "growth": true,
+    "data": "投資信託協会の基準価額＋分配金（東証 ETF も基準価額）",
+    "windows": {
+     "1y": {
+      "from": 20250929,
+      "to": 20260930,
+      "slope": 0.947,
+      "roll": 0.789,
+      "n_1y_diffs": 1
+     },
+     "2y": {
+      "from": 20240930,
+      "to": 20260930,
+      "slope": 0.625,
+      "roll": 0.58,
+      "n_1y_diffs": 244
+     },
+     "3y": {
+      "from": 20230928,
+      "to": 20260930,
+      "slope": 0.694,
+      "roll": 0.679,
+      "n_1y_diffs": 489
+     },
+     "5y": {
+      "from": 20210928,
+      "to": 20260930,
+      "slope": 1.14,
+      "roll": 1.207,
+      "n_1y_diffs": 982
+     }
+    },
+    "full_record_slope": {
+     "from": 20210324,
+     "to": 20260930,
+     "slope": 1.242,
+     "years": 5.6
+    },
+    "record": "20210224〜20260930",
+    "primary_window": "3y",
+    "real_cost": 0.679,
+    "real_cost_slope": 0.694,
+    "nisa_cost": 0.679,
+    "hidden_vs_stated": 0.459,
+    "hidden_vs_stated_slope": 0.474
+   },
+   {
+    "bet": "NDX_H",
+    "vehicle": "東証 2569 上場インデックスファンド米国株式（NASDAQ100）為替ヘッジあり",
+    "kind": "jita_etf",
+    "source": "探索役 tse-us-index（同上）",
+    "isin": "JP3049100005",
+    "assoc": "02314209",
+    "jita_name": "上場インデックスファンド米国株式(NASDAQ100)為替ヘッジあり",
+    "established": "2020-09-17",
+    "tsumitate": false,
+    "growth_jita": true,
+    "rakuten": {
+     "sold": true,
+     "note": "東証 ETF＝国内株として楽天で売買できる"
+    },
+    "fee_jita_ex_tax": 0.25,
+    "code": "2569",
+    "jpx": {
+     "index": "NASDAQ100指数（円建て、円ヘッジ）",
+     "name": "上場インデックスファンド米国株式（NASDAQ100）為替ヘッジあり iNAV",
+     "issuer": "アモーヴァ・アセットマネジメント(13084)",
+     "fee": "0.25％以内",
+     "nisa": "●"
+    },
+    "stated_fee_incl_tax": 0.275,
+    "stated_fee_src": "JPX の ETF 一覧 https://www.jpx.co.jp/equities/products/etfs/issues/01.html（0.25％以内・税抜×1.1）",
+    "growth": true,
+    "data": "投資信託協会の基準価額＋分配金（東証 ETF も基準価額）",
+    "windows": {
+     "1y": {
+      "from": 20250929,
+      "to": 20260930,
+      "slope": 0.874,
+      "roll": 0.647,
+      "n_1y_diffs": 1
+     },
+     "2y": {
+      "from": 20240930,
+      "to": 20260930,
+      "slope": 0.74,
+      "roll": 0.717,
+      "n_1y_diffs": 244
+     },
+     "3y": {
+      "from": 20230928,
+      "to": 20260930,
+      "slope": 0.656,
+      "roll": 0.642,
+      "n_1y_diffs": 487
+     },
+     "5y": {
+      "from": 20210928,
+      "to": 20260930,
+      "slope": 1.113,
+      "roll": 1.191,
+      "n_1y_diffs": 982
+     }
+    },
+    "full_record_slope": {
+     "from": 20201019,
+     "to": 20260930,
+     "slope": 1.217,
+     "years": 6.03
+    },
+    "record": "20200917〜20260930",
+    "primary_window": "3y",
+    "real_cost": 0.642,
+    "real_cost_slope": 0.656,
+    "nisa_cost": 0.642,
+    "hidden_vs_stated": 0.367,
+    "hidden_vs_stated_slope": 0.381
+   },
+   {
+    "bet": "NDX_H",
+    "vehicle": "東証 2087 NZAM 上場投信 NASDAQ100（為替ヘッジあり）",
+    "kind": "jita_etf",
+    "source": "探索役 tse-us-index（同上・NZAM hedged）",
+    "isin": "JP3050050008",
+    "assoc": "25315239",
+    "jita_name": "NZAM上場投信NASDAQ100(為替ヘッジあり)",
+    "established": "2023-09-21",
+    "tsumitate": false,
+    "growth_jita": true,
+    "rakuten": {
+     "sold": true,
+     "note": "東証 ETF＝国内株として楽天で売買できる"
+    },
+    "fee_jita_ex_tax": 0.2,
+    "code": "2087",
+    "jpx": {
+     "index": "NASDAQ100指数（配当込み、円ヘッジベース）",
+     "name": "NZAM 上場投信 NASDAQ100（為替ヘッジあり） iNAV",
+     "issuer": "農林中金全共連アセットマネジメント(15954)",
+     "fee": "0.20％以内",
+     "nisa": "●"
+    },
+    "stated_fee_incl_tax": 0.22,
+    "stated_fee_src": "JPX の ETF 一覧 https://www.jpx.co.jp/equities/products/etfs/issues/01.html（0.20％以内・税抜×1.1）",
+    "growth": true,
+    "data": "投資信託協会の基準価額＋分配金（東証 ETF も基準価額）",
+    "windows": {
+     "1y": {
+      "from": 20250929,
+      "to": 20260930,
+      "slope": 1.21,
+      "roll": 0.978,
+      "n_1y_diffs": 1
+     },
+     "2y": {
+      "from": 20240930,
+      "to": 20260930,
+      "slope": 0.725,
+      "roll": 0.663,
+      "n_1y_diffs": 244
+     },
+     "3y": {
+      "from": 20230928,
+      "to": 20260930,
+      "slope": 0.685,
+      "roll": 0.653,
+      "n_1y_diffs": 487
+     }
+    },
+    "full_record_slope": {
+     "from": 20231020,
+     "to": 20260930,
+     "slope": 0.674,
+     "years": 3.03
+    },
+    "record": "20230921〜20260930",
+    "primary_window": "3y",
+    "real_cost": 0.653,
+    "real_cost_slope": 0.685,
+    "nisa_cost": 0.653,
+    "hidden_vs_stated": 0.433,
+    "hidden_vs_stated_slope": 0.465
+   },
+   {
+    "bet": "SOX",
+    "vehicle": "楽天・プラス・SOXインデックス・ファンド",
+    "kind": "jita",
+    "source": "事前登録",
+    "isin": "JP90C000QF30",
+    "assoc": "9I315241",
+    "jita_name": "楽天・プラス・SOXインデックス・ファンド",
+    "established": "2024-01-30",
+    "tsumitate": false,
+    "growth_jita": true,
+    "rakuten": {
+     "sold": true,
+     "sales_fee_pct": 0.0
+    },
+    "fee_jita_ex_tax": 0.16,
+    "growth": true,
+    "stated_fee_incl_tax": 0.176,
+    "stated_fee_src": "投資信託協会の一覧 2026-10-09（trustReward 税抜×1.1）",
+    "data": "投資信託協会の基準価額＋分配金（東証 ETF も基準価額）",
+    "windows": {
+     "1y": {
+      "from": 20250929,
+      "to": 20260930,
+      "slope": 1.132,
+      "roll": 0.907,
+      "n_1y_diffs": 1
+     },
+     "2y": {
+      "from": 20240930,
+      "to": 20260930,
+      "slope": 1.017,
+      "roll": 1.11,
+      "n_1y_diffs": 244
+     }
+    },
+    "full_record_slope": {
+     "from": 20240229,
+     "to": 20260930,
+     "slope": 0.778,
+     "years": 2.67
+    },
+    "record": "20240130〜20260930",
+    "primary_window": "2y",
+    "real_cost": 1.11,
+    "real_cost_slope": 1.017,
+    "nisa_cost": 1.11,
+    "hidden_vs_stated": 0.934,
+    "hidden_vs_stated_slope": 0.841
+   },
+   {
+    "bet": "SOX",
+    "vehicle": "ニッセイSOX指数インデックスファンド（米国半導体株）",
+    "kind": "jita",
+    "source": "事前登録",
+    "isin": "JP90C000PDZ3",
+    "assoc": "29314233",
+    "jita_name": "ニッセイSOX指数インデックスファンド(米国半導体株)<購入・換金手数料なし>",
+    "established": "2023-03-31",
+    "tsumitate": false,
+    "growth_jita": true,
+    "rakuten": {
+     "sold": true,
+     "sales_fee_pct": 0.0
+    },
+    "fee_jita_ex_tax": 0.165,
+    "growth": true,
+    "stated_fee_incl_tax": 0.1815,
+    "stated_fee_src": "投資信託協会の一覧 2026-10-09（trustReward 税抜×1.1）",
+    "data": "投資信託協会の基準価額＋分配金（東証 ETF も基準価額）",
+    "windows": {
+     "1y": {
+      "from": 20250929,
+      "to": 20260930,
+      "slope": 1.364,
+      "roll": 1.058,
+      "n_1y_diffs": 1
+     },
+     "2y": {
+      "from": 20240930,
+      "to": 20260930,
+      "slope": 1.023,
+      "roll": 1.041,
+      "n_1y_diffs": 244
+     },
+     "3y": {
+      "from": 20230928,
+      "to": 20260930,
+      "slope": 0.841,
+      "roll": 0.817,
+      "n_1y_diffs": 487
+     }
+    },
+    "full_record_slope": {
+     "from": 20230428,
+     "to": 20260930,
+     "slope": 0.85,
+     "years": 3.5
+    },
+    "record": "20230331〜20260930",
+    "primary_window": "3y",
+    "real_cost": 0.817,
+    "real_cost_slope": 0.841,
+    "nisa_cost": 0.817,
+    "hidden_vs_stated": 0.635,
+    "hidden_vs_stated_slope": 0.659
+   },
+   {
+    "bet": "SOX",
+    "vehicle": "インデックスファンドSOX指数（米国上場半導体株式）〔アモーヴァ〕",
+    "kind": "jita",
+    "source": "探索役 tse-us-index",
+    "isin": "JP90C000Q1Q6",
+    "assoc": "02313239",
+    "jita_name": "インデックスファンドSOX指数(米国上場半導体株式)",
+    "established": "2023-09-29",
+    "tsumitate": false,
+    "growth_jita": true,
+    "rakuten": {
+     "sold": true,
+     "sales_fee_pct": 0.0
+    },
+    "fee_jita_ex_tax": 0.435,
+    "growth": true,
+    "stated_fee_incl_tax": 0.4785,
+    "stated_fee_src": "投資信託協会の一覧 2026-10-09（trustReward 税抜×1.1）",
+    "data": "投資信託協会の基準価額＋分配金（東証 ETF も基準価額）",
+    "windows": {
+     "1y": {
+      "from": 20250929,
+      "to": 20260930,
+      "slope": 1.516,
+      "roll": 1.23,
+      "n_1y_diffs": 1
+     },
+     "2y": {
+      "from": 20240930,
+      "to": 20260930,
+      "slope": 1.345,
+      "roll": 1.382,
+      "n_1y_diffs": 244
+     },
+     "3y": {
+      "from": 20230929,
+      "to": 20260930,
+      "slope": 1.09,
+      "roll": 1.093,
+      "n_1y_diffs": 487
+     }
+    },
+    "full_record_slope": {
+     "from": 20231030,
+     "to": 20260930,
+     "slope": 1.1,
+     "years": 3.0
+    },
+    "record": "20230929〜20260930",
+    "primary_window": "3y",
+    "real_cost": 1.093,
+    "real_cost_slope": 1.09,
+    "nisa_cost": 1.093,
+    "hidden_vs_stated": 0.615,
+    "hidden_vs_stated_slope": 0.612
+   },
+   {
+    "bet": "SOX",
+    "vehicle": "ニッセイ・インデックス・SOX（米国半導体株）",
+    "kind": "jita",
+    "source": "探索役 tse-us-index",
+    "isin": "JP90C000R8K3",
+    "assoc": "2931224A",
+    "jita_name": "ニッセイ・インデックス・SOX(米国半導体株)",
+    "established": "2024-10-16",
+    "tsumitate": false,
+    "growth_jita": true,
+    "rakuten": {
+     "sold": false
+    },
+    "fee_jita_ex_tax": 0.42,
+    "growth": true,
+    "stated_fee_incl_tax": 0.462,
+    "stated_fee_src": "投資信託協会の一覧 2026-10-09（trustReward 税抜×1.1）",
+    "data": "投資信託協会の基準価額＋分配金（東証 ETF も基準価額）",
+    "windows": {
+     "1y": {
+      "from": 20250929,
+      "to": 20260930,
+      "slope": 1.643,
+      "roll": 1.335,
+      "n_1y_diffs": 1
+     }
+    },
+    "full_record_slope": {
+     "from": 20241114,
+     "to": 20260930,
+     "slope": 1.345,
+     "years": 1.95
+    },
+    "record": "20241016〜20260930",
+    "primary_window": null,
+    "real_cost": null,
+    "note_short": "記録が2年未満＝並びに入れない（1年の窓・設定来の傾きは参考）"
+   },
+   {
+    "bet": "SOX",
+    "vehicle": "東証 2243 グローバルX 半導体 ETF",
+    "kind": "jita_etf",
+    "source": "事前登録",
+    "isin": "JP3049860004",
+    "assoc": "B5311234",
+    "jita_name": "グローバルX半導体ETF",
+    "established": "2023-04-11",
+    "tsumitate": false,
+    "growth_jita": true,
+    "rakuten": {
+     "sold": true,
+     "note": "東証 ETF＝国内株として楽天で売買できる"
+    },
+    "fee_jita_ex_tax": 0.375,
+    "code": "2243",
+    "jpx": {
+     "index": "フィラデルフィア半導体株指数（配当込み、円換算ベース）",
+     "name": "グローバルＸ 半導体 ETF",
+     "issuer": "Global X Japan(25644)",
+     "fee": "0.375％以内",
+     "nisa": "●"
+    },
+    "stated_fee_incl_tax": 0.4125,
+    "stated_fee_src": "JPX の ETF 一覧 https://www.jpx.co.jp/equities/products/etfs/issues/01.html（0.375％以内・税抜×1.1）",
+    "growth": true,
+    "data": "投資信託協会の基準価額＋分配金（東証 ETF も基準価額）",
+    "windows": {
+     "1y": {
+      "from": 20250929,
+      "to": 20260930,
+      "slope": 1.19,
+      "roll": 0.975,
+      "n_1y_diffs": 1
+     },
+     "2y": {
+      "from": 20240930,
+      "to": 20260930,
+      "slope": 1.213,
+      "roll": 1.254,
+      "n_1y_diffs": 244
+     },
+     "3y": {
+      "from": 20230928,
+      "to": 20260930,
+      "slope": 0.933,
+      "roll": 0.931,
+      "n_1y_diffs": 487
+     }
+    },
+    "full_record_slope": {
+     "from": 20230512,
+     "to": 20260930,
+     "slope": 0.922,
+     "years": 3.47
+    },
+    "record": "20230411〜20260930",
+    "primary_window": "3y",
+    "real_cost": 0.931,
+    "real_cost_slope": 0.933,
+    "nisa_cost": 0.931,
+    "hidden_vs_stated": 0.519,
+    "hidden_vs_stated_slope": 0.521
+   },
+   {
+    "bet": "SOX",
+    "vehicle": "SMH（指数は MVIS US Listed Semiconductor 25＝SOX ではない）",
+    "kind": "us",
+    "source": "事前登録",
+    "ticker": "SMH",
+    "growth": true,
+    "rakuten": {
+     "sold": true,
+     "note": "楽天の海外 ETF 一覧（2026-10-11）にあるか"
+    },
+    "stated_fee_incl_tax": 0.35,
+    "stated_fee_src": "楽天の海外 ETF 一覧の経費率（2026-10-11）",
+    "data": "Yahoo の調整後終値（配当は源泉なしで再投資）。指数と同じ米国の終値どうし＝円にしても同じドル円が両方に掛かり消える",
+    "windows": {
+     "1y": {
+      "from": 20250929,
+      "to": 20260930,
+      "slope": 9.015,
+      "roll": 5.887,
+      "n_1y_diffs": 1
+     },
+     "2y": {
+      "from": 20240930,
+      "to": 20260930,
+      "slope": 1.689,
+      "roll": 1.63,
+      "n_1y_diffs": 253
+     },
+     "3y": {
+      "from": 20230928,
+      "to": 20260930,
+      "slope": -3.5,
+      "roll": -3.535,
+      "n_1y_diffs": 502
+     },
+     "5y": {
+      "from": 20210928,
+      "to": 20260930,
+      "slope": -5.67,
+      "roll": -5.058,
+      "n_1y_diffs": 1005
+     }
+    },
+    "full_record_slope": {
+     "from": 20010730,
+     "to": 20260930,
+     "slope": 0.133,
+     "years": 25.25
+    },
+    "record": "20010629〜20260930",
+    "nisa_add_pct": 0.035,
+    "nisa_add_note": "取り戻せない配当の外国税 0.10×配当利回り 0.15%＋両替 0.02%（bestfund_data.VEH・FX_FEE）",
+    "primary_window": "3y",
+    "real_cost": -3.535,
+    "real_cost_slope": -3.5,
+    "nisa_cost": -3.5,
+    "hidden_vs_stated": -3.885,
+    "hidden_vs_stated_slope": -3.85
+   },
+   {
+    "bet": "SOX",
+    "vehicle": "SOXX（2021-06-21 から SOX ではない）",
+    "kind": "us",
+    "source": "事前登録（別に名指し）",
+    "ticker": "SOXX",
+    "growth": false,
+    "rakuten": {
+     "sold": false,
+     "note": "楽天の海外 ETF 一覧（2026-10-11）にあるか"
+    },
+    "stated_fee_incl_tax": 0.34,
+    "stated_fee_src": "iShares の公表値 0.34%（楽天の一覧に無い＝楽天では買えない）",
+    "data": "Yahoo の調整後終値（配当は源泉なしで再投資）。指数と同じ米国の終値どうし＝円にしても同じドル円が両方に掛かり消える",
+    "windows": {
+     "1y": {
+      "from": 20250929,
+      "to": 20260930,
+      "slope": -6.196,
+      "roll": -5.419,
+      "n_1y_diffs": 1
+     },
+     "2y": {
+      "from": 20240930,
+      "to": 20260930,
+      "slope": -0.587,
+      "roll": -0.196,
+      "n_1y_diffs": 253
+     },
+     "3y": {
+      "from": 20230928,
+      "to": 20260930,
+      "slope": 2.21,
+      "roll": 2.441,
+      "n_1y_diffs": 502
+     },
+     "5y": {
+      "from": 20210928,
+      "to": 20260930,
+      "slope": 1.775,
+      "roll": 1.499,
+      "n_1y_diffs": 1005
+     }
+    },
+    "full_record_slope": {
+     "from": 20010813,
+     "to": 20260930,
+     "slope": 0.219,
+     "years": 25.21
+    },
+    "record": "20010716〜20260930",
+    "nisa_add_pct": 0.041,
+    "nisa_add_note": "取り戻せない配当の外国税 0.10×配当利回り 0.21%＋両替 0.02%（bestfund_data.VEH・FX_FEE）",
+    "primary_window": "3y",
+    "real_cost": 2.441,
+    "real_cost_slope": 2.21,
+    "nisa_cost": 2.482,
+    "hidden_vs_stated": 2.101,
+    "hidden_vs_stated_slope": 1.87
+   },
+   {
+    "bet": "GOLD",
+    "vehicle": "ステート・ストリート・ゴールド・オープン（為替ヘッジなし）",
+    "kind": "jita",
+    "source": "事前登録・探索役 ideco-lineup",
+    "isin": "JP90C000RXU8",
+    "assoc": "55311258",
+    "jita_name": "ステート・ストリート・ゴールド・オープン(為替ヘッジなし)",
+    "established": "2025-08-14",
+    "tsumitate": false,
+    "growth_jita": true,
+    "rakuten": {
+     "sold": true,
+     "sales_fee_pct": 0.0
+    },
+    "fee_jita_ex_tax": 0.175,
+    "growth": true,
+    "stated_fee_incl_tax": 0.1925,
+    "stated_fee_src": "投資信託協会の一覧 2026-10-09（trustReward 税抜×1.1）",
+    "data": "投資信託協会の基準価額＋分配金（東証 ETF も基準価額）",
+    "windows": {
+     "1y": {
+      "from": 20250929,
+      "to": 20260930,
+      "slope": 0.434,
+      "roll": 0.226,
+      "n_1y_diffs": 1
+     }
+    },
+    "full_record_slope": {
+     "from": 20250911,
+     "to": 20260930,
+     "slope": 0.441,
+     "years": 1.13
+    },
+    "record": "20250814〜20260930",
+    "primary_window": null,
+    "real_cost": null,
+    "note_short": "記録が2年未満＝並びに入れない（1年の窓・設定来の傾きは参考）"
+   },
+   {
+    "bet": "GOLD",
+    "vehicle": "iシェアーズ ゴールドインデックス・ファンド（為替ヘッジなし）",
+    "kind": "jita",
+    "source": "探索役 wf-jp-funds-index",
+    "isin": "JP90C0009G00",
+    "assoc": "4831M139",
+    "jita_name": "iシェアーズゴールドインデックス・ファンド(為替ヘッジなし)",
+    "established": "2013-09-26",
+    "tsumitate": false,
+    "growth_jita": true,
+    "rakuten": {
+     "sold": true,
+     "sales_fee_pct": 0.0
+    },
+    "fee_jita_ex_tax": 0.235,
+    "growth": true,
+    "stated_fee_incl_tax": 0.2585,
+    "stated_fee_src": "投資信託協会の一覧 2026-10-09（trustReward 税抜×1.1）",
+    "data": "投資信託協会の基準価額＋分配金（東証 ETF も基準価額）",
+    "windows": {
+     "1y": {
+      "from": 20250929,
+      "to": 20260930,
+      "slope": 0.943,
+      "roll": 0.775,
+      "n_1y_diffs": 1
+     },
+     "2y": {
+      "from": 20240930,
+      "to": 20260930,
+      "slope": 1.118,
+      "roll": 1.193,
+      "n_1y_diffs": 244
+     },
+     "3y": {
+      "from": 20230928,
+      "to": 20260930,
+      "slope": 1.06,
+      "roll": 1.072,
+      "n_1y_diffs": 487
+     },
+     "5y": {
+      "from": 20210928,
+      "to": 20260930,
+      "slope": 0.964,
+      "roll": 0.968,
+      "n_1y_diffs": 979
+     }
+    },
+    "full_record_slope": {
+     "from": 20131025,
+     "to": 20260930,
+     "slope": 0.808,
+     "years": 13.01
+    },
+    "record": "20130926〜20260930",
+    "primary_window": "3y",
+    "real_cost": 1.072,
+    "real_cost_slope": 1.06,
+    "nisa_cost": 1.072,
+    "hidden_vs_stated": 0.814,
+    "hidden_vs_stated_slope": 0.802
+   },
+   {
+    "bet": "GOLD",
+    "vehicle": "東証 314A iシェアーズ ゴールド ETF",
+    "kind": "jita_etf",
+    "source": "事前登録・探索役 tse-other",
+    "isin": "JP3050630007",
+    "assoc": "48312251",
+    "jita_name": "iシェアーズゴールドETF",
+    "established": "2025-01-14",
+    "tsumitate": false,
+    "growth_jita": true,
+    "rakuten": {
+     "sold": true,
+     "note": "東証 ETF＝国内株として楽天で売買できる"
+    },
+    "fee_jita_ex_tax": 0.2,
+    "code": "314A",
+    "jpx": {
+     "index": "ＬＢＭＡ金価格（円換算ベース）",
+     "name": "iシェアーズ ゴールド ETF iNAV",
+     "issuer": "ブラックロック・ジャパン(13294)",
+     "fee": "0.20%",
+     "nisa": "●"
+    },
+    "stated_fee_incl_tax": 0.22,
+    "stated_fee_src": "JPX の ETF 一覧 https://www.jpx.co.jp/equities/products/etfs/issues/01.html（0.20%・税抜×1.1）",
+    "growth": true,
+    "data": "投資信託協会の基準価額＋分配金（東証 ETF も基準価額）",
+    "windows": {
+     "1y": {
+      "from": 20250929,
+      "to": 20260930,
+      "slope": 0.049,
+      "roll": 0.807,
+      "n_1y_diffs": 1
+     }
+    },
+    "full_record_slope": {
+     "from": 20250212,
+     "to": 20260930,
+     "slope": 0.047,
+     "years": 1.71
+    },
+    "record": "20250114〜20260930",
+    "primary_window": null,
+    "real_cost": null,
+    "note_short": "記録が2年未満＝並びに入れない（1年の窓・設定来の傾きは参考）"
+   },
+   {
+    "bet": "GOLD",
+    "vehicle": "東証 1328 NEXT FUNDS 金価格連動型上場投信",
+    "kind": "jita_etf",
+    "source": "探索役 wf-jp-funds-index・tse-other",
+    "isin": "JP3046490003",
+    "assoc": "01311078",
+    "jita_name": "NEXT FUNDS金価格連動型上場投信",
+    "established": "2007-08-02",
+    "tsumitate": false,
+    "growth_jita": true,
+    "rakuten": {
+     "sold": true,
+     "note": "東証 ETF＝国内株として楽天で売買できる"
+    },
+    "fee_jita_ex_tax": 0.16,
+    "code": "1328",
+    "jpx": {
+     "index": "金",
+     "name": "ＮＥＸＴ ＦＵＮＤＳ 金価格連動型上場投信 先物型",
+     "issuer": "野村アセットマネジメント(13064)",
+     "fee": "0.16%以内",
+     "nisa": "●"
+    },
+    "stated_fee_incl_tax": 0.176,
+    "stated_fee_src": "JPX の ETF 一覧 https://www.jpx.co.jp/equities/products/etfs/issues/01.html（0.16%以内・税抜×1.1）",
+    "growth": true,
+    "data": "投資信託協会の基準価額＋分配金（東証 ETF も基準価額）",
+    "unit_events": [
+     "20260709 100:1"
+    ],
+    "windows": {
+     "1y": {
+      "from": 20250929,
+      "to": 20260930,
+      "slope": 1.049,
+      "roll": 2.085,
+      "n_1y_diffs": 1
+     },
+     "2y": {
+      "from": 20240930,
+      "to": 20260930,
+      "slope": 1.654,
+      "roll": 1.688,
+      "n_1y_diffs": 244
+     },
+     "3y": {
+      "from": 20230928,
+      "to": 20260930,
+      "slope": 1.634,
+      "roll": 1.644,
+      "n_1y_diffs": 487
+     },
+     "5y": {
+      "from": 20210928,
+      "to": 20260930,
+      "slope": 1.484,
+      "roll": 1.474,
+      "n_1y_diffs": 980
+     }
+    },
+    "full_record_slope": {
+     "from": 20070830,
+     "to": 20260930,
+     "slope": 1.594,
+     "years": 19.16
+    },
+    "record": "20070802〜20260930",
+    "primary_window": "3y",
+    "real_cost": 1.644,
+    "real_cost_slope": 1.634,
+    "nisa_cost": 1.644,
+    "hidden_vs_stated": 1.468,
+    "hidden_vs_stated_slope": 1.458
+   },
+   {
+    "bet": "GOLD",
+    "vehicle": "東証 447A ステート・ストリート・スパイダー ゴールド ETF（為替ヘッジなし）",
+    "kind": "jita_etf",
+    "source": "探索役 tse-other",
+    "isin": "JP3050970007",
+    "assoc": "5531125B",
+    "jita_name": "ステート・ストリート・スパイダーゴールドETF(為替ヘッジなし)",
+    "established": "2025-11-17",
+    "tsumitate": false,
+    "growth_jita": true,
+    "rakuten": {
+     "sold": true,
+     "note": "東証 ETF＝国内株として楽天で売買できる"
+    },
+    "fee_jita_ex_tax": 0.07,
+    "code": "447A",
+    "jpx": {
+     "index": "LBMA金価格（円換算ベース）",
+     "name": "ステート・ストリート・スパイダー ゴールド ETF（為替ヘッジなし） iNAV",
+     "issuer": "ステート・ストリート・グローバル・アドバイザーズ(447A4)",
+     "fee": "0.17%程度",
+     "nisa": "●"
+    },
+    "stated_fee_incl_tax": 0.187,
+    "stated_fee_src": "JPX の ETF 一覧 https://www.jpx.co.jp/equities/products/etfs/issues/01.html（0.17%程度・税抜×1.1）",
+    "growth": true,
+    "data": "投資信託協会の基準価額＋分配金（東証 ETF も基準価額）",
+    "windows": {},
+    "full_record_slope": {
+     "from": 20251216,
+     "to": 20260930,
+     "slope": 0.2,
+     "years": 0.87
+    },
+    "record": "20251117〜20260930",
+    "primary_window": null,
+    "real_cost": null,
+    "note_short": "記録が2年未満＝並びに入れない（1年の窓・設定来の傾きは参考）"
+   },
+   {
+    "bet": "GOLD",
+    "vehicle": "東証 425A グローバルX ゴールド ETF",
+    "kind": "jita_etf",
+    "source": "探索役 tse-other",
+    "isin": "JP3050930001",
+    "assoc": "B5312259",
+    "jita_name": "グローバルXゴールドETF",
+    "established": "2025-09-24",
+    "tsumitate": false,
+    "growth_jita": true,
+    "rakuten": {
+     "sold": true,
+     "note": "東証 ETF＝国内株として楽天で売買できる"
+    },
+    "fee_jita_ex_tax": 0.025,
+    "code": "425A",
+    "jpx": {
+     "index": "Mirae Asset Gold Bullion ETF Index（円換算ベース）",
+     "name": "グローバルＸ ゴールド ETF iNAV",
+     "issuer": "Global X Japan(25644)",
+     "fee": "0.1775%程度",
+     "nisa": "●"
+    },
+    "stated_fee_incl_tax": 0.1953,
+    "stated_fee_src": "JPX の ETF 一覧 https://www.jpx.co.jp/equities/products/etfs/issues/01.html（0.1775%程度・税抜×1.1）",
+    "growth": true,
+    "data": "投資信託協会の基準価額＋分配金（東証 ETF も基準価額）",
+    "windows": {
+     "1y": {
+      "from": 20250929,
+      "to": 20260930,
+      "slope": 0.496,
+      "roll": 1.011,
+      "n_1y_diffs": 1
+     }
+    },
+    "full_record_slope": {
+     "from": 20251023,
+     "to": 20260930,
+     "slope": 0.429,
+     "years": 1.02
+    },
+    "record": "20250924〜20260930",
+    "primary_window": null,
+    "real_cost": null,
+    "note_short": "記録が2年未満＝並びに入れない（1年の窓・設定来の傾きは参考）"
+   },
+   {
+    "bet": "GOLD",
+    "vehicle": "東証 1540 純金上場信託（現物国内保管型）",
+    "kind": "tse_px",
+    "source": "事前登録・探索役 tse-other",
+    "ticker": "1540.T",
+    "jpx": {
+     "index": "金",
+     "name": "純金上場信託（現物国内保管型）",
+     "issuer": "三菱UFJ信託銀行(15404)",
+     "fee": "0.4%",
+     "nisa": "●"
+    },
+    "stated_fee_incl_tax": 0.44,
+    "stated_fee_src": "JPX の ETF 一覧（0.4%・税抜×1.1）",
+    "growth": true,
+    "rakuten": {
+     "sold": true,
+     "note": "東証上場＝国内株として楽天で売買できる"
+    },
+    "data": "⚠ Yahoo の市場価格（代わり）: 投資信託協会に基準価額が無い。分割は比で戻した・分配金はない本（1540・1326）。基準価額でないので市場の上乗せ・割引と東京の時刻のずれが混ざる",
+    "windows": {
+     "1y": {
+      "from": 20250929,
+      "to": 20260930,
+      "slope": 6.466,
+      "roll": 7.217,
+      "n_1y_diffs": 1
+     },
+     "2y": {
+      "from": 20240930,
+      "to": 20260930,
+      "slope": 0.439,
+      "roll": -0.338,
+      "n_1y_diffs": 243
+     },
+     "3y": {
+      "from": 20230928,
+      "to": 20260930,
+      "slope": 0.33,
+      "roll": 0.128,
+      "n_1y_diffs": 486
+     },
+     "5y": {
+      "from": 20210928,
+      "to": 20260930,
+      "slope": 0.219,
+      "roll": 0.146,
+      "n_1y_diffs": 978
+     }
+    },
+    "full_record_slope": {
+     "from": 20100803,
+     "to": 20260930,
+     "slope": 0.409,
+     "years": 16.25
+    },
+    "record": "20100702〜20260930",
+    "primary_window": "3y",
+    "real_cost": 0.128,
+    "real_cost_slope": 0.33,
+    "nisa_cost": 0.128,
+    "hidden_vs_stated": -0.312,
+    "hidden_vs_stated_slope": -0.11
+   },
+   {
+    "bet": "GOLD",
+    "vehicle": "東証 1326 SPDR ゴールド・シェア",
+    "kind": "tse_px",
+    "source": "事前登録・探索役 tse-other",
+    "ticker": "1326.T",
+    "jpx": {
+     "index": "金",
+     "name": "SPDR®ゴールド・シェア 受益証券(注2)",
+     "issuer": "ワールド・ゴールド・トラスト・サービシズ・エルエルシー(13264)",
+     "fee": "0.4％程度",
+     "nisa": "●"
+    },
+    "stated_fee_incl_tax": 0.4,
+    "stated_fee_src": "JPX の ETF 一覧（0.4％程度・外国 ETF の管理費用＝消費税なし）",
+    "growth": true,
+    "rakuten": {
+     "sold": true,
+     "note": "東証上場＝国内株として楽天で売買できる"
+    },
+    "data": "⚠ Yahoo の市場価格（代わり）: 投資信託協会に基準価額が無い。分割は比で戻した・分配金はない本（1540・1326）。基準価額でないので市場の上乗せ・割引と東京の時刻のずれが混ざる",
+    "unit_events": [
+     "20081128 1:100",
+     "20081127 100:1",
+     "20080902 説明できない1日の動き 0.009",
+     "20080901 説明できない1日の動き 108.457",
+     "20080707 説明できない1日の動き 0.009",
+     "20080704 100:1"
+    ],
+    "windows": {
+     "1y": {
+      "from": 20250929,
+      "to": 20260930,
+      "slope": -27.591,
+      "roll": 1.664,
+      "n_1y_diffs": 1
+     },
+     "2y": {
+      "from": 20240930,
+      "to": 20260930,
+      "slope": 4.984,
+      "roll": 10.583,
+      "n_1y_diffs": 236
+     },
+     "3y": {
+      "from": 20230928,
+      "to": 20260930,
+      "slope": 4.109,
+      "roll": 5.523,
+      "n_1y_diffs": 479
+     },
+     "5y": {
+      "from": 20210928,
+      "to": 20260930,
+      "slope": 2.201,
+      "roll": 2.959,
+      "n_1y_diffs": 971
+     }
+    },
+    "full_record_slope": {
+     "from": 20080205,
+     "to": 20260930,
+     "slope": 3.805,
+     "years": 18.74
+    },
+    "record": "20080104〜20260930",
+    "primary_window": "3y",
+    "real_cost": 5.523,
+    "real_cost_slope": 4.109,
+    "nisa_cost": 5.523,
+    "hidden_vs_stated": 5.123,
+    "hidden_vs_stated_slope": 3.709
+   },
+   {
+    "bet": "GOLD",
+    "vehicle": "GLDM",
+    "kind": "us",
+    "source": "事前登録",
+    "ticker": "GLDM",
+    "growth": true,
+    "rakuten": {
+     "sold": true,
+     "note": "楽天の海外 ETF 一覧（2026-10-11）にあるか"
+    },
+    "stated_fee_incl_tax": 0.1,
+    "stated_fee_src": "楽天の海外 ETF 一覧の経費率（2026-10-11）",
+    "data": "Yahoo の調整後終値（配当は源泉なしで再投資）。指数と同じ米国の終値どうし＝円にしても同じドル円が両方に掛かり消える",
+    "windows": {
+     "1y": {
+      "from": 20250929,
+      "to": 20260930,
+      "slope": 0.094,
+      "roll": 0.089,
+      "n_1y_diffs": 1
+     },
+     "2y": {
+      "from": 20240930,
+      "to": 20260930,
+      "slope": 0.105,
+      "roll": 0.107,
+      "n_1y_diffs": 253
+     },
+     "3y": {
+      "from": 20230928,
+      "to": 20260930,
+      "slope": 0.1,
+      "roll": 0.1,
+      "n_1y_diffs": 502
+     },
+     "5y": {
+      "from": 20210928,
+      "to": 20260930,
+      "slope": 0.103,
+      "roll": 0.106,
+      "n_1y_diffs": 1005
+     }
+    },
+    "full_record_slope": {
+     "from": 20180726,
+     "to": 20260930,
+     "slope": 0.134,
+     "years": 8.26
+    },
+    "record": "20180627〜20260930",
+    "nisa_add_pct": 0.02,
+    "nisa_add_note": "取り戻せない配当の外国税 0.00×配当利回り 0.00%＋両替 0.02%（bestfund_data.VEH・FX_FEE）",
+    "primary_window": "3y",
+    "real_cost": 0.1,
+    "real_cost_slope": 0.1,
+    "nisa_cost": 0.12,
+    "hidden_vs_stated": 0.0,
+    "hidden_vs_stated_slope": 0.0
+   },
+   {
+    "bet": "UST20H",
+    "vehicle": "東証 2621 iシェアーズ 米国債20年超 ETF（為替ヘッジあり）",
+    "kind": "jita_etf",
+    "source": "事前登録",
+    "isin": "JP3049130002",
+    "assoc": "4831220A",
+    "jita_name": "iシェアーズ米国債20年超ETF(為替ヘッジあり)",
+    "established": "2020-10-14",
+    "tsumitate": false,
+    "growth_jita": true,
+    "rakuten": {
+     "sold": true,
+     "note": "東証 ETF＝国内株として楽天で売買できる"
+    },
+    "fee_jita_ex_tax": 0.14,
+    "code": "2621",
+    "jpx": {
+     "index": "ＦＴＳＥ米国債20年超セレクト・インデックス（国内投信用 円ヘッジ円ベース）",
+     "name": "iシェアーズ 米国債20年超 ETF（為替ヘッジあり） iNAV",
+     "issuer": "ブラックロック・ジャパン(13294)",
+     "fee": "0.14%",
+     "nisa": "●"
+    },
+    "stated_fee_incl_tax": 0.154,
+    "stated_fee_src": "JPX の ETF 一覧 https://www.jpx.co.jp/equities/products/etfs/issues/01.html（0.14%・税抜×1.1）",
+    "growth": true,
+    "data": "投資信託協会の基準価額＋分配金（東証 ETF も基準価額）",
+    "windows": {
+     "1y": {
+      "from": 20250929,
+      "to": 20260930,
+      "slope": 0.458,
+      "roll": 0.319,
+      "n_1y_diffs": 1
+     },
+     "2y": {
+      "from": 20240930,
+      "to": 20260930,
+      "slope": 0.756,
+      "roll": 0.699,
+      "n_1y_diffs": 248
+     },
+     "3y": {
+      "from": 20230928,
+      "to": 20260930,
+      "slope": 1.219,
+      "roll": 1.221,
+      "n_1y_diffs": 492
+     },
+     "5y": {
+      "from": 20210928,
+      "to": 20260930,
+      "slope": 1.72,
+      "roll": 1.711,
+      "n_1y_diffs": 984
+     }
+    },
+    "full_record_slope": {
+     "from": 20201112,
+     "to": 20260930,
+     "slope": 1.771,
+     "years": 5.96
+    },
+    "record": "20201014〜20260930",
+    "primary_window": "3y",
+    "real_cost": 1.221,
+    "real_cost_slope": 1.219,
+    "nisa_cost": 1.221,
+    "hidden_vs_stated": 1.067,
+    "hidden_vs_stated_slope": 1.065
+   },
+   {
+    "bet": "UST20H",
+    "vehicle": "東証 183A MAXIS米国国債20年超上場投信（為替ヘッジあり）",
+    "kind": "jita_etf",
+    "source": "探索役 tse-other",
+    "isin": "JP3050400005",
+    "assoc": "03313244",
+    "jita_name": "MAXIS米国国債20年超上場投信(為替ヘッジあり)",
+    "established": "2024-04-24",
+    "tsumitate": false,
+    "growth_jita": true,
+    "rakuten": {
+     "sold": true,
+     "note": "東証 ETF＝国内株として楽天で売買できる"
+    },
+    "fee_jita_ex_tax": 0.12,
+    "code": "183A",
+    "jpx": {
+     "index": "ＩＣＥ米国債２０年超指数（円ヘッジ・円ベース）",
+     "name": "ＭＡＸＩＳ米国国債２０年超上場投信（為替ヘッジあり） iNAV",
+     "issuer": "三菱UFJアセットマネジメント(13444)",
+     "fee": "0.12%以内",
+     "nisa": "●"
+    },
+    "stated_fee_incl_tax": 0.132,
+    "stated_fee_src": "JPX の ETF 一覧 https://www.jpx.co.jp/equities/products/etfs/issues/01.html（0.12%以内・税抜×1.1）",
+    "growth": true,
+    "data": "投資信託協会の基準価額＋分配金（東証 ETF も基準価額）",
+    "windows": {
+     "1y": {
+      "from": 20250929,
+      "to": 20260930,
+      "slope": 0.381,
+      "roll": 0.195,
+      "n_1y_diffs": 1
+     },
+     "2y": {
+      "from": 20240930,
+      "to": 20260930,
+      "slope": 0.692,
+      "roll": 0.642,
+      "n_1y_diffs": 245
+     }
+    },
+    "full_record_slope": {
+     "from": 20240527,
+     "to": 20260930,
+     "slope": 0.896,
+     "years": 2.43
+    },
+    "record": "20240424〜20260930",
+    "primary_window": "2y",
+    "real_cost": 0.642,
+    "real_cost_slope": 0.692,
+    "nisa_cost": 0.642,
+    "hidden_vs_stated": 0.51,
+    "hidden_vs_stated_slope": 0.56
+   },
+   {
+    "bet": "UST20H",
+    "vehicle": "東証 179A グローバルX 超長期米国債 ETF（為替ヘッジあり・ICE 25年超）",
+    "kind": "jita_etf",
+    "source": "探索役 tse-other",
+    "isin": "JP3050360001",
+    "assoc": "B5312244",
+    "jita_name": "グローバルX超長期米国債ETF(為替ヘッジあり)",
+    "established": "2024-04-08",
+    "tsumitate": false,
+    "growth_jita": false,
+    "rakuten": {
+     "sold": true,
+     "note": "東証 ETF＝国内株として楽天で売買できる"
+    },
+    "fee_jita_ex_tax": 0.095,
+    "code": "179A",
+    "jpx": {
+     "index": "ICE US Treasury 25+ Year Bond Index （円建て、円ヘッジ）",
+     "name": "グローバルＸ 超長期米国債 ETF（為替ヘッジあり） iNAV",
+     "issuer": "Global X Japan(25644)",
+     "fee": "0.095％以内",
+     "nisa": "●"
+    },
+    "stated_fee_incl_tax": 0.1045,
+    "stated_fee_src": "JPX の ETF 一覧 https://www.jpx.co.jp/equities/products/etfs/issues/01.html（0.095％以内・税抜×1.1）",
+    "growth": true,
+    "nisa_flag_conflict": "JPX の NISA の印 ● と投資信託協会の nisaGrowthFlg 1以外 が食い違う",
+    "data": "投資信託協会の基準価額＋分配金（東証 ETF も基準価額）",
+    "windows": {
+     "1y": {
+      "from": 20250929,
+      "to": 20260930,
+      "slope": 0.859,
+      "roll": 0.81,
+      "n_1y_diffs": 1
+     },
+     "2y": {
+      "from": 20240930,
+      "to": 20260930,
+      "slope": 1.388,
+      "roll": 1.334,
+      "n_1y_diffs": 246
+     }
+    },
+    "full_record_slope": {
+     "from": 20240509,
+     "to": 20260930,
+     "slope": 1.562,
+     "years": 2.48
+    },
+    "record": "20240408〜20260930",
+    "primary_window": "2y",
+    "real_cost": 1.334,
+    "real_cost_slope": 1.388,
+    "nisa_cost": 1.334,
+    "hidden_vs_stated": 1.23,
+    "hidden_vs_stated_slope": 1.283
+   }
+  ],
+  "not_measured": [
+   {
+    "bet": "NDX",
+    "vehicle": "Tracers NASDAQ100（プレーン）",
+    "why": "存在しない（投資信託協会の一覧 2026-10-09 にあるのは「毎月決算・予想分配金提示型」〔JP90C000TCP8・2026-09-24 設定・NISA 対象外＝nisaGrowthFlg 9〕と「NASDAQ100ゴールドプラス」〔JP90C000RH60・NASDAQ100＋金の先物の重ね＝別の賭け・NISA 対象外〕だけ）"
+   },
+   {
+    "bet": "NDX",
+    "vehicle": "東証 587A インベスコQQQトラスト（QQQ の東証上場）",
+    "why": "外国 ETF で協会の基準価額が無い・東証の記録は 2026-06-09〜＝1年未満（市場価格でも1年の窓が取れない）"
+   },
+   {
+    "bet": "NDX",
+    "vehicle": "東証 392A iシェアーズ NASDAQ トップ30",
+    "why": "指数が違う（NASDAQ100 トップ30）"
+   },
+   {
+    "bet": "NDX",
+    "vehicle": "東証 2244 グローバルX US テック・トップ20・316A iFreeETF FANG+",
+    "why": "指数が違う（別の賭け）"
+   },
+   {
+    "bet": "SOX",
+    "vehicle": "iFreeNEXT SOX",
+    "why": "存在しない（投資信託協会の一覧 2026-10-09 に無い）"
+   },
+   {
+    "bet": "SOX",
+    "vehicle": "東証 2644 グローバルX 半導体関連-日本株式",
+    "why": "指数が SOX ではない（FactSet Japan Semiconductor）"
+   },
+   {
+    "bet": "SOX",
+    "vehicle": "東証 200A NEXT FUNDS 日経半導体株",
+    "why": "指数が SOX ではない（日経半導体株指数）"
+   },
+   {
+    "bet": "SOX",
+    "vehicle": "東証 346A NEXT FUNDS S&P500 半導体35%キャップ・iFreeNEXT 全世界半導体・東証 639A メモリ",
+    "why": "指数が SOX ではない"
+   },
+   {
+    "bet": "GOLD",
+    "vehicle": "他の円の金の投信（たわらノーロードゴールド・楽天・ゴールド・ファンド・SMTゴールド・Smart-i ゴールド・ニッセイゴールド ほか）",
+    "why": "事前登録の一覧にも探索役の一覧にも無い＝測らない（事前登録「器のリストは測る前のこの一覧＋探索役の一覧に限る」）"
+   },
+   {
+    "bet": "UST20H",
+    "vehicle": "東証 238A iシェアーズ 米国債25年超ロングデュレーション（ヘッジあり）",
+    "why": "指数が STRIPS の元本25年超＝TLT（20年超の利付債）より残存がずっと長い"
+   },
+   {
+    "bet": "UST20H",
+    "vehicle": "東証 1482・2839・2016・2090・1487（7〜10年・ヘッジあり）・382A（3〜5年・ヘッジあり）",
+    "why": "残存が違う（20年超ではない）＝TLT の代わりの指数と比べられない"
+   }
+  ]
+ },
+ "F": {
+  "smh_er": {
+   "value_pct": 0.35,
+   "src": "楽天の海外 ETF 一覧（2026-10-11）"
+  },
+  "smh_vs_xsox_usd": {
+   "2012-01〜2026-09（主）": {
+    "from": 20120106,
+    "to": 20260930,
+    "n": 769,
+    "months": 176.8,
+    "corr": 0.9896,
+    "te_pct": 4.1,
+    "cagr_a_pct": 29.67,
+    "cagr_b_pct": 28.9,
+    "gap_pct": 0.77
+   },
+   "直近24か月": {
+    "from": 20241004,
+    "to": 20260930,
+    "n": 104,
+    "months": 23.9,
+    "corr": 0.9916,
+    "te_pct": 5.14,
+    "cagr_a_pct": 57.8,
+    "cagr_b_pct": 57.36,
+    "gap_pct": 0.44
+   },
+   "直近36か月": {
+    "from": 20231006,
+    "to": 20260930,
+    "n": 156,
+    "months": 35.8,
+    "corr": 0.9891,
+    "te_pct": 5.34,
+    "cagr_a_pct": 61.25,
+    "cagr_b_pct": 55.39,
+    "gap_pct": 5.85
+   }
+  },
+  "smh_vs_xsox_note": "SMH＝Yahoo の調整後終値（経費0.35%を引いた後）・XSOX＝指数（費用なし）。週＝ISO 週の最後の取引日。gap は SMH − XSOX の年率",
+  "sox_funds_real_cost": [
+   {
+    "fund": "楽天・プラス・SOXインデックス・ファンド",
+    "window": "2y",
+    "real_cost": 1.11,
+    "real_cost_slope": 1.017,
+    "line": 0.45,
+    "cost_ok": false,
+    "rakuten_sold": true,
+    "record": "20240130〜20260930"
+   },
+   {
+    "fund": "ニッセイSOX指数インデックスファンド（米国半導体株）",
+    "window": "3y",
+    "real_cost": 0.817,
+    "real_cost_slope": 0.841,
+    "line": 0.45,
+    "cost_ok": false,
+    "rakuten_sold": true,
+    "record": "20230331〜20260930"
+   },
+   {
+    "fund": "インデックスファンドSOX指数（米国上場半導体株式）〔アモーヴァ〕",
+    "window": "3y",
+    "real_cost": 1.093,
+    "real_cost_slope": 1.09,
+    "line": 0.45,
+    "cost_ok": false,
+    "rakuten_sold": true,
+    "record": "20230929〜20260930"
+   },
+   {
+    "fund": "ニッセイ・インデックス・SOX（米国半導体株）",
+    "window": null,
+    "real_cost": null,
+    "real_cost_slope": null,
+    "line": 0.45,
+    "cost_ok": false,
+    "rakuten_sold": false,
+    "record": "20241016〜20260930"
+   }
+  ],
+  "condition_cost": "SOX の投信の実際の費用（3年・無ければ2年・1年ごとの差の平均）≤ SMH の経費率 0.35%＋0.10pt＝0.45%",
+  "condition_corr": "SMH と XSOX の週次の相関 ≥ 0.98（24か月以上＝主は 2012-01〜2026-09）",
+  "corr_ok": true,
+  "wholeshare_from_out/wholeshare_buy.json": {
+   "note": "参考（事前登録なし）。事前登録つきの同じ問いは out/buy_rules.json の R0 と R1（1株単位なし）",
+   "target_etf_side": {
+    "NDX": 58.8,
+    "SMH": 29.4,
+    "ITA": 11.8
+   },
+   "windows": {
+    "10年": {
+     "n": 372,
+     "1株単位_倍率中央": 2.653,
+     "端数まで買える_倍率中央": 2.653,
+     "1株単位_倍率最悪": 0.554,
+     "端数まで買える_倍率最悪": 0.555,
+     "1株単位_ずれ平均の中央pt": 1.2,
+     "端数まで買える_ずれ平均の中央pt": 1.1,
+     "1株単位_ずれ最大の中央pt": 5.2,
+     "端数まで買える_ずれ最大の中央pt": 5.4
+    },
+    "15年": {
+     "n": 312,
+     "1株単位_倍率中央": 2.917,
+     "端数まで買える_倍率中央": 2.995,
+     "1株単位_倍率最悪": 0.954,
+     "端数まで買える_倍率最悪": 0.961,
+     "1株単位_ずれ平均の中央pt": 2.5,
+     "端数まで買える_ずれ平均の中央pt": 2.4,
+     "1株単位_ずれ最大の中央pt": 9.3,
+     "端数まで買える_ずれ最大の中央pt": 11.3
+    },
+    "20年": {
+     "n": 252,
+     "1株単位_倍率中央": 3.784,
+     "端数まで買える_倍率中央": 3.793,
+     "1株単位_倍率最悪": 1.615,
+     "端数まで買える_倍率最悪": 1.664,
+     "1株単位_ずれ平均の中央pt": 3.7,
+     "端数まで買える_ずれ平均の中央pt": 3.8,
+     "1株単位_ずれ最大の中央pt": 12.7,
+     "端数まで買える_ずれ最大の中央pt": 15.7
+    }
+   },
+   "reading": "「1株単位（gap＝門の注文書の規則）」と「端数まで買える（gapfrac・参考）」の差が、SOX の投信（円の金額で買える）に替えて取れる上限の目安（同じ指数の場合）"
+  },
+  "sox_capping": {
+   "url": "https://indexes.nasdaqomx.com/docs/Methodology_SOX.pdf",
+   "top3_rule": "The weights of the top three (3) Index Securities by market capitalization, may not exceed 12%, 10%, 8%, respectively. The weight of a top three (3) Index Security is only adjusted downward if it exceeds its respective constraint.",
+   "others_rule": "The individual weights of other Index Securities may not exceed 4%; only the top three (3) may exceed this constraint.",
+   "changed_2024_04_22": true,
+   "prior_rule_note": "2024-04-22 より前は「1社 8%まで・上位5社だけ 4%を超えてよい」（同じ方法書の変更履歴）",
+   "smh_index_rule": "SMH の指数（MVIS US Listed Semiconductor 25）の方法書は marketvector.com が 403 で取れず、この道具では確かめていない"
+  },
+  "decision": "考える価値なし（事前登録の2条件を満たさない）",
+  "decision_detail": {
+   "corr_condition": true,
+   "funds_meeting_cost_condition": [],
+   "funds_meeting_cost_at_rakuten": []
+  }
+ },
+ "G1": {
+  "what": "SOXX の配当込み（Yahoo の調整後終値）と XSOX（指数）・主は日次の相関（同じ米国の終値どうし）と年率の差（SOXX − XSOX・SOXX の経費 0.34% を含む）",
+  "measure": {
+   "2021-07〜2026-09（主）": {
+    "d": {
+     "from": 20210701,
+     "to": 20260930,
+     "n": 1317,
+     "months": 63.0,
+     "corr": 0.9975,
+     "te_pct": 2.67,
+     "cagr_a_pct": 30.03,
+     "cagr_b_pct": 30.54,
+     "gap_pct": -0.52
+    },
+    "w": {
+     "from": 20210702,
+     "to": 20260930,
+     "n": 274,
+     "months": 62.9,
+     "corr": 0.9973,
+     "te_pct": 2.49,
+     "cagr_a_pct": 29.89,
+     "cagr_b_pct": 30.4,
+     "gap_pct": -0.51
+    },
+    "m": {
+     "from": 20210730,
+     "to": 20260930,
+     "n": 62,
+     "months": 62.0,
+     "corr": 0.9978,
+     "te_pct": 2.46,
+     "cagr_a_pct": 30.04,
+     "cagr_b_pct": 30.6,
+     "gap_pct": -0.56
+    }
+   },
+   "参考 2015-01〜2021-06-18（乗り換え前）": {
+    "d": {
+     "from": 20150102,
+     "to": 20210618,
+     "n": 1626,
+     "months": 77.5,
+     "corr": 0.9986,
+     "te_pct": 1.65,
+     "cagr_a_pct": 28.23,
+     "cagr_b_pct": 28.89,
+     "gap_pct": -0.66
+    },
+    "w": {
+     "from": 20150102,
+     "to": 20210618,
+     "n": 337,
+     "months": 77.5,
+     "corr": 0.9997,
+     "te_pct": 0.61,
+     "cagr_a_pct": 28.23,
+     "cagr_b_pct": 28.89,
+     "gap_pct": -0.66
+    },
+    "m": {
+     "from": 20150130,
+     "to": 20210618,
+     "n": 77,
+     "months": 76.6,
+     "corr": 0.9999,
+     "te_pct": 0.29,
+     "cagr_a_pct": 29.61,
+     "cagr_b_pct": 30.29,
+     "gap_pct": -0.69
+    }
+   }
+  },
+  "condition": "年率の差の大きさ > 0.5pt か 相関 < 0.995（主の窓・日次）",
+  "triggered": true,
+  "named_non_SOX_after_2021_06": [
+   {
+    "file": "night/bestfund_data.py",
+    "line": 67,
+    "text": "'SEMI_SOX': [('actual', ('yahoo', 'SOXX'), 'SOXX'), ('index', ('px_div', '^SOX', 'SOXX'), '^SOX の価格＋配当の置き値（SOXX の最初の3年）'),"
+   },
+   {
+    "file": "night/bestfund_vehicles.py",
+    "line": 65,
+    "text": "'EM': ('msci', 891800), 'SEMI_SOX': ('yahoo_er', 'SOXX', 0.0033), 'SEMI_MV': ('yahoo_er', 'SMH', 0.0035),"
+   }
+  ],
+  "also_noticed_post_hoc": [
+   {
+    "file": "night/bestfund.py",
+    "line": 41,
+    "text": "HOLD_MAP = {'SEMI_SOX': 'SOXX', 'SOFT': 'IGV', 'INET': 'FDN', 'MEGAG': 'MGK', 'FIN': 'XLF', 'FANG': 'FANG', 'TECH_VGT': 'VGT'}",
+    "why": "bestfund の世界 B は SEMI_SOX を SOXX の保有の業種で作る（事前登録 G1 の外・事後の気づき・直していない）"
+   }
+  ],
+  "ce_recompute": {
+   "how": "世界 A1・A2・E と σ・z を作り直し、B・C・D は out/bestfund.json の SEMI_SOX の値（小数2桁）。模擬は bestfund.simulate を SEMI_SOX だけで（同じ種＝他の賭けの数字は out/bestfund.json のまま比べられる）",
+   "published": {
+    "CE_γ2": 6.86,
+    "rank_eligible": 26,
+    "worlds_pct": {
+     "A1": 11.03,
+     "A2": 28.84,
+     "B": 8.07,
+     "C": 6.67,
+     "D": 6.67,
+     "E": 9.0
+    },
+    "sigma_pct": 34.6,
+    "E_X": 0.01534,
+    "chain": "SOXX[200108〜202609] ← ^SOX の価格＋配当の置き値（SOXX の最初の3年）[199406〜200107] ← 代わり: French の Chips[192607〜199405]"
+   },
+   "reproduced_original": {
+    "CE_γ2": 6.865,
+    "CE_γ1": 13.271,
+    "CE_γ5": -3.756,
+    "worlds_pct": {
+     "A1": 11.032,
+     "A2": 28.844,
+     "B": 8.07,
+     "C": 6.67,
+     "D": 6.67,
+     "E": 8.999
+    },
+    "X": 0.01534,
+    "sigma_pct": 34.58,
+    "P15": 0.378,
+    "median": 11.5,
+    "rank_eligible": 26
+   },
+   "reproduction_check": {
+    "CE_diff_pt": 0.005,
+    "X_diff": 0.0,
+    "A1_diff_pt": 0.002,
+    "A2_diff_pt": 0.004,
+    "ok": 
