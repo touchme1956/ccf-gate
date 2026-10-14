@@ -9,9 +9,10 @@
   保険の3条件（unx_final.conds＝2026-10-13 に XLV を入れたときの決まり）を「今」を「案」と比べて当てる。
 回帰の検査: ① F_cur が out/upside_check.json と小数1桁で一致 ② 感度の計算の main が unx_assets.measure の丸める前の値と 1e-9 以内で一致。
 参考（判定に使わない）: 上振れ（P20・90%点）・過去の転がる20年の積立・100年の代用・SHLD／ITA が本物の窓・下げの局面・中身の集中・注文書。
-注文書は night/shadow_seats.js --weights の結果（out/_nx_cache/ndx_swap/orders_*.json・run_orders.sh）を読む（無ければ『未取得』）。
+注文書は night/shadow_seats.js --weights の結果（out/_nx_cache/ndx_swap/orders_*.json）を読む（無ければ『未取得』）。
+  --orders を付けると先に5通りを回し直す（門を実ブラウザで5回開く・1回約2分・NODE_PATH は npm root -g から）。
 
-使い方: python3 night/ndx_swap_check.py  → out/ndx_swap_check.json
+使い方: python3 night/ndx_swap_check.py [--orders]  → out/ndx_swap_check.json
 """
 import datetime, json, math, os, re, subprocess, sys, time
 
@@ -202,6 +203,28 @@ def lookthrough(f):
             'NVDA（資産全体）': float(m.group(7)), '未取得': f'{m.group(6)}%', '城': CASTLE_ARG + '（席5社×3%）', '網': net}
 
 
+ORDER_RUNS = {'F_cur': None, 'A': 'IFREE-NDX=45,ITA=0', 'B': 'IFREE-NDX=45,SHLD=0', 'C': 'IFREE-NDX=50,ITA=0,SHLD=0', 'D': 'ITA=10,SHLD=0'}
+
+
+def run_orders():
+    """5通りの注文書を門そのもので（shadow_seats.js --weights・席10・入金20万円・12か月）"""
+    os.makedirs(ORD, exist_ok=True)
+    env = dict(os.environ)
+    try:
+        env['NODE_PATH'] = subprocess.run(['npm', 'root', '-g'], capture_output=True, text=True, timeout=60).stdout.strip()
+    except Exception:  # noqa
+        pass
+    for k, w in ORDER_RUNS.items():
+        cmd = ['node', os.path.join(BASE, 'night', 'shadow_seats.js'), '--seats', '10', '--monthly', '200000', '--out', os.path.join(ORD, f'orders_{k}.json')]
+        if w:
+            cmd += ['--weights', w]
+        U.log('注文書', k, w or '（今の目標）')
+        with open(os.path.join(ORD, f'orders_{k}.log'), 'w') as fh:
+            r = subprocess.run(cmd, stdout=fh, stderr=subprocess.STDOUT, cwd=BASE, env=env, timeout=1800)
+        if r.returncode:
+            raise SystemExit(f'shadow_seats が失敗した（{k}）: out/_nx_cache/ndx_swap/orders_{k}.log')
+
+
 def orders():
     out = {}
     for k in ('F_cur', 'A', 'B', 'C', 'D'):
@@ -233,6 +256,8 @@ def orders():
 
 def main():
     t0 = time.time()
+    if '--orders' in sys.argv:
+        run_orders()
     F, P = forms()
     res = U.build()
     rows, chains = res['rows'], res['chains']
