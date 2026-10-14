@@ -447,24 +447,14 @@ jobs:
       #   （index.html:4349）の母集団でもある。生成者は night/make_chunks.py だけで、
       #   **どのCIからも呼ばれない**＝索引と実パックがずれても誰も言わない。
       #   実害の前例: 6146 を追加した日に索引が316件のままで、一括取込しても台帳に入らなかった。
+      #   2026-10-14: 索引にパックごとの指紋（fp）が入った（門 v9.9.219 が「新しくなったパック」を自動で取り込み直す材料）。
+      #   検査は night/packs_index.py --check に一本化した（ファイル名と指紋の両方を見る）。
+      #   ⚠ packs_index.json が持つのは**ファイル名**（'MSFT_gate_pack.json'）であってティッカーではない
+      #     ——ティッカーの集合と突き合わせると件数は一致するのに全件ズレて見える（この検査を書いた当日に踏んだ）。
+      #   ずれていても落とさない（表示のみ）——下の「検査結果のコミット」が schedule のたびに作り直してコミットする。
       - name: 索引と実パックの整合（表示のみ）
         continue-on-error: true
-        run: |
-          python3 - <<'EOF'
-          import glob, json, os, sys
-          # ⚠ packs_index.json が持つのは**ファイル名**（'MSFT_gate_pack.json'）であってティッカーではない。
-          #   ティッカーの集合と突き合わせると **件数は 369/369 で一致するのに全件ズレて見える**
-          #   ——この検査を書いた当日に実際に踏んだ。「基準の違う二つを割る」型の同族なので、
-          #   **両側をファイル名に揃えてから**比べる。
-          idx = json.load(open('out/packs_index.json', encoding='utf-8'))
-          i = set(idx.get('packs') or [])
-          a = set(os.path.basename(p) for p in glob.glob('out/*_gate_pack.json'))
-          print(f'索引 {len(i)}件 / 実パック {len(a)}件')
-          only_i, only_a = sorted(i - a), sorted(a - i)
-          if only_i: print('⚠ 索引にあるが実体が無い:', only_i)
-          if only_a: print('⚠ 実体はあるが索引に無い（Ⅵ一括取込で台帳へ入らない）:', only_a)
-          if not (only_i or only_a): print('✓ 一致')
-          EOF
+        run: python3 night/packs_index.py --check
 
       # ── 6-d. explain_score と score_all が同じことを言うか（2026-08-10新設）───────
       #   night/explain_score.js は**判定式を書き写していたせいで3版ぶん取り残された**前歴がある
@@ -668,7 +658,11 @@ jobs:
           #   末尾の `2>/dev/null || true` がそれを無音にするので、ここは今日は全パスが実在していても
           #   **次に検査を1本足した日に静かに全滅しうる**（ops.yml で実際に起きた）。
           #   ccf_git_add は1パスずつ add して落ちたものを名指しする＝巻き添えが構造的に起きない。
+          # 2026-10-14: パック索引の指紋もここで作り直す——人がマージした PR（審査・機械項目の充填）がパックを
+          #   書き換えても、その日の schedule で索引が追いつく（門 v9.9.219 は指紋で新しくなったパックに気づく）。
+          python3 night/packs_index.py --write || true
           . night/git_add_safe.sh
+          ccf_git_add out/packs_index.json
           ccf_git_add out/frozen_dates.json out/freshness.json out/today.json out/gate_parity.json out/kessan_flags.json out/stale_bs.json out/pack_stale.json out/validate_fail.json out/todo_audit.json out/score_all.json out/promotion_ready.json out/pending.json out/irr85_myrule.json out/irr85_mech_diff.json out/irr70_mech_diff.json out/audit_irr85.json out/irr85_dual.json out/irr70_dual.json night/reaudit_queue.json out/ci_health.json
           if git diff --staged --quiet; then
             echo "検査結果に変化なし"

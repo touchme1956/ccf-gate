@@ -116,7 +116,10 @@ for i in range(0, len(jp_todo), 10):
 print(f"日本株: 未審査{len(jp_todo)}社 → jp_chunk{js0:02d}〜{js0 + jm - 1:02d}({jm}枚)。審査はagent_prompt_template_jp.txtで" if jm else "日本株: 新規チャンクなし")
 
 # --- パック索引(門の一括取込ボタン用): 門がGitHub Pages経由でfetchできる目録 ---
-idx = sorted(os.path.basename(f) for f in glob.glob("out/*_gate_pack.json"))
-json.dump({"packs": idx}, open("out/packs_index.json", "w"), ensure_ascii=False, indent=0)
-print(f"→ out/packs_index.json 更新({len(idx)}パック)")
+#   2026-10-14: パックごとの指紋(fp)も書く——門が「新しくなったパック」だけを自動で取り込み直すため。
+#   書き手は night/packs_index.py に一本化した（ここで写して書くと指紋の作り方が二つに割れる）
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import packs_index
+idx = packs_index.write()["packs"]
+print(f"→ out/packs_index.json 更新({len(idx)}パック・指紋つき)")
 print("進行はnight/progress.jsonへ。審査はagent_prompt_template.txt(正本はⅡ手順3と同期)で。")

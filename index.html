@@ -1161,7 +1161,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.218</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.219</span></h1>
     <div style="margin:6px 0 2px"><button id="hintBtn" onclick="ccfToggleHints()" style="padding:5px 11px;background:none;border:1px solid var(--line);border-radius:7px;color:var(--dim);font-size:11.5px;cursor:pointer">欄の注記を出す</button></div>
   <div class="sub"><details class="why plain" data-fold="6"><summary>ℹ この画面について</summary><div class="why-body"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——絶対MOAT指数をΩの直接項に加え(実効≒22%)、<b>四関門の一つ（絶対MOAT指数75+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%。⚠率そのものは退場社の抜けた母集団で測った下限の側で、2013年の質実証プールでは4.2〜19.2%の幅がある〔2026-09-23 に退場日を是正した後の値・是正前は2.0〜25.7%〕）。</div></details></div>
   </div>
@@ -1564,6 +1564,19 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 
 <script>
 const $=id=>document.getElementById(id);
+// v9.9.219（2026-10-14）: 採点の式の指紋＝このスクリプトの全文の FNV-1a（32bit）＋長さ。台帳の記録に sv として写し、
+//   開いたとき今の指紋と違う記録だけを自動で再採点する（ccfAutoRefresh・data は変えない＝↻全再採点と同じ）。
+//   全文を見るので表示だけの変更でも一度は再採点が走る（数十秒・裏で）——採点の式に触れたかを人が覚えておく形より確か。
+//   読めない環境（素の node の score_all 等）では空＝指紋を写さず、再採点もしない（読めないを「同じ」と読まない）。
+const __CCF_MAIN_SRC=(typeof document!=='undefined'&&document.currentScript&&document.currentScript.textContent)||'';
+let __ccfSig=null;
+function ccfScoreSig(){
+  if(__ccfSig!==null)return __ccfSig;
+  const s=__CCF_MAIN_SRC; if(!s){ __ccfSig=''; return ''; }
+  let h=0x811c9dc5; for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,0x01000193); }
+  __ccfSig=('0000000'+(h>>>0).toString(16)).slice(-8)+'.'+s.length.toString(36);
+  return __ccfSig;
+}
 const n=id=>parseFloat($(id).value)||0;
 const nn=id=>{const el=$(id);if(!el)return null;const v=(el.value==null?'':String(el.value)).trim();return v===''?null:(parseFloat(v)||0)};
 const gm=(v,w)=>Math.exp(v.reduce((a,x,i)=>a+w[i]*Math.log(Math.max(x,1)),0));
@@ -2945,6 +2958,10 @@ var __ccfBatchChain=Promise.resolve();
 function processBatch(t,opt){ const p=__ccfBatchChain.then(function(){return processBatchRun(t,opt);}); __ccfBatchChain=p.catch(function(){}); return p; }
 async function processBatchRun(t,opt){
   opt=opt||{};   // v9.9.218: opt.stay＝📚台帳へ飛ばない（🛒買付順位から押したとき）／opt.auto＝台帳が空のときの自動取込（知らせ方と記録の題を変える）／opt.resume＝その続き（台帳に無い社だけ）
+  // v9.9.219: opt.fromRepo＝repo のパックを取り込む（記録の src は 'JSON取込'・パックの指紋 __pfx を写す）。
+  //   それ以外（JSON を貼った・現値を手で入れた）は src 'JSON貼付'＝人が入れた記録として、開いたときの自動の追いつきで置き換えない。
+  //   opt.refresh＝開いたときの自動の追いつき（ccfAutoRefresh）——知らせ・結果の箱・ページ移動・検証履歴を出さず、結果を返す（記録は呼び手が1件にまとめる）
+  const __src=opt.fromRepo?'JSON取込':'JSON貼付';
   t=t.replace(/```json|```/g,'').trim();
   let d;
   const am=t.match(/\[[\s\S]*\]/);
@@ -2958,8 +2975,9 @@ async function processBatchRun(t,opt){
   if(!arr.length){ await renderLedger(); const bb=$('batchBox'); if(bb)bb.innerHTML='<div style="background:var(--panel2);border:1px solid rgba(84,184,138,.5);border-radius:10px;padding:12px 14px;margin-top:12px;color:#8fc9a4;font-size:13px">全'+drafts.length+'件は<b>審査待ち</b>（機械値のみ）だったので台帳に入れず隣離した。下の「審査待ち」棚から依頼文をClaudeへ。</div>'; return; }
   const results=[],errors=[];
   let _ns=0;
-  for(const one of arr){ applyFields(one); compute(); const info=await autoSave('JSON取込',arr.length>1); if(info){info.error?errors.push(info):results.push(info);} _ns++; if(opt.onSave){try{opt.onSave(_ns,arr.length);}catch(_){}} if(arr.length>5)await _sleep(130); }
+  for(const one of arr){ applyFields(one); compute(); const info=await autoSave(__src,arr.length>1,{pfx:opt.fromRepo?(one.__pfx||''):''}); if(info){info.error?errors.push(info):results.push(info);} _ns++; if(opt.onSave){try{opt.onSave(_ns,arr.length);}catch(_){}} if(arr.length>5)await _sleep(130); }
   if(arr.length>1)renderLedger();
+  if(opt.refresh)return {results,errors};
   if(errors.length)uiNotice(`保存失敗 ${errors.length}件——Ⅲの結果パネルに理由を表示`,6000);
   if(arr.length>1){
     const bb=$('batchBox');
@@ -2972,6 +2990,7 @@ async function processBatchRun(t,opt){
     const lg=results.map(x=>`${x.nm}　評価 ${x.prevScore?x.prevScore+'→':''}${x.score}（${x.tier}）${x.prevTier&&x.prevTier!==x.tier?' ★ティア変更':''}　ROIC ${x.roic}%　PER ${x.per}`).join('\n');
     saveLog({date:new Date().toISOString().slice(0,10),title:(opt.auto?(opt.resume?`自動取込の続き（前回が途中で終わった・台帳に無い社だけ） ${results.length}銘柄`:`自動取込（台帳が空だった） ${results.length}銘柄`):`一括再採点 ${results.length}銘柄`),body:lg});
   }
+  return {results,errors};
 }
 function applyJSON(){
   const t=$('jsonin').value.trim(); if(!t){uiNotice('JSONを貼ってください');return;}
@@ -3015,12 +3034,21 @@ if(this.mode==='local'){localStorage.setItem(k,v);return{key:k};}_mem[k]=v;retur
 function safeKey(nm){return nm.replace(/[\s\/\\'"]+/g,'_');}
 // v9.9.10: 台帳を全再採点——保存済みdataをそのまま現行compute()に通し、r(スコア/act)だけ最新化。
 //   採点ロジックの更新(門X・Ω間の成長連動等)を台帳全体に反映する。dataは一切変えない(データ修正は取込が必要)。
-async function ccfRescoreAll(btn){
+// v9.9.219: 再採点も採点機のフォームを使うので、取り込み（processBatch）と同じ列に並べる＝同時に走らせない（v9.9.218 の取り込みどうしと同じ理由）。
+//   opt.silent＝開いたときの自動の追いつき（ccfAutoRefresh）から: ボタン・作り直し・結果の欄を触らず、結果を返す／opt.only＝この鍵の集合だけ／opt.onProgress(done,total)
+//   記録には今の採点の式の指紋（sv）を写す。data は変えない（下の旧既定の金利の正規化を除く・従来どおり）。
+function ccfRescoreAll(btn,opt){ const p=__ccfBatchChain.then(function(){return ccfRescoreAllRun(btn,opt);}); __ccfBatchChain=p.catch(function(){}); return p; }
+async function ccfRescoreAllRun(btn,opt){
+  opt=opt||{};
   const o=btn?btn.textContent:'';
   if(btn){btn.textContent='再採点中…';btn.disabled=true;}
   let keys=[]; try{const r=await store.list('g7:');keys=r?r.keys:[];}catch(e){}
-  let n=0,chg=0; const changed=[];
+  if(opt.only)keys=keys.filter(k=>opt.only.has(k));
+  const __sv=ccfScoreSig();
+  let n=0,chg=0,seen=0; const changed=[];
   for(const k of keys){
+    seen++; if(opt.onProgress&&seen%10===0){try{opt.onProgress(seen,keys.length);}catch(_){}}
+    if(opt.silent&&seen%20===0)await _sleep(0);   // 裏で走るときは画面を固めない
     let e; try{e=await store.get(k);}catch(_){continue;} if(!e)continue;
     let obj; try{obj=JSON.parse(e.value);}catch(_){continue;} if(!obj||!obj.data)continue;
     // 保存dataをフォームへ載せ替え(loadItと同じ)→現行ロジックで再計算
@@ -3047,6 +3075,7 @@ async function ccfRescoreAll(btn){
       const beforeT=obj.r?(obj.r.tierShort||obj.r.grade||null):null, beforeS=obj.r?obj.r.evalScore:null;
       // r以外(ts/src/held等)は保持。tsは"データ鮮度"の指標ゆえ据え置き、再採点印はsrcに残す
       obj.r=r; obj.src=(obj.src||'auto').replace('+再採点','')+'+再採点';
+      if(__sv)obj.sv=__sv;   // v9.9.219: どの版の採点の式で採点したか（開いたときの自動の再採点の印）
       await store.set(k, JSON.stringify(obj));
       n++;
       const afterT=r.tierShort||r.grade;
@@ -3055,13 +3084,14 @@ async function ccfRescoreAll(btn){
       }
     }catch(_){continue;}
   }
+  if(opt.silent)return {n,chg,changed};
   try{renderLedger();}catch(_){}
   try{if(typeof renderPlan==='function')await renderPlan();}catch(_){}
   if(btn){btn.disabled=false;btn.textContent=`↻ 再採点 ✓ ${n}件（変化${chg}）`;setTimeout(()=>btn.textContent=o,5000);}
   // 変化した銘柄をⅢのタイムライン欄に一覧(あれば)
   try{const ts=$('timeSig'); if(ts&&changed.length)ts.innerHTML=`<div class="flag f-ok"><i>↻</i><div><b>台帳を全再採点：</b>${n}件を現行ロジックで更新。<b>判定/スコアが変化した${chg}件</b>：<br>${changed.slice(0,30).join('<br>')}${changed.length>30?'<br>…他':''}<br><span style="color:var(--dim)">※dataは不変。データ自体の修正(gm/sbc検死等)は修正済みパックの再取込が必要。</span></div></div>`+ts.innerHTML;}catch(_){}
 }
-async function autoSave(src,silent){
+async function autoSave(src,silent,meta){   // v9.9.219: meta.pfx＝取り込んだパックの指紋（repo から取り込んだときだけ）
   const nm=$('nm').value.trim(); if(!nm)return null;
   let r=compute(); const data={};
   document.querySelectorAll('#scorer input,#scorer select').forEach(e=>{if(e.id)data[e.id]=e.value;}); // v9.9.26: 採点機フォームに限定(logBody/ioBox等の他タブ入力とid無し欄の混入=記録肥大を解消。読込側は既存マップで無害)
@@ -3112,7 +3142,12 @@ async function autoSave(src,silent){
     }catch(e){} }
     // v9.9.54: 取込で黙って化けた欄を台帳に同梱する。採点には使わない＝ccfAudit が読んで ⚠ を出すだけ。
     //   ここで残さないと「化けた事実」は再読込で消え、後からΩが動いた理由を追えなくなる。
-    await store.set('g7:'+sk,JSON.stringify({data,r,ts:Date.now(),src:src||'auto',coerce:(__coerce||[]).slice(),ok:(__kenshiOk||[]).slice()}));
+    // v9.9.219: 記録に「どの版のパックから」（pfx＝out/packs_index.json の指紋・repo から取り込んだときだけ）と
+    //   「どの版の採点の式で」（sv＝ccfScoreSig）を写す——開いたときの自動の追いつき（ccfAutoRefresh）がこれで古い記録を見分ける
+    const __rec={data,r,ts:Date.now(),src:src||'auto',coerce:(__coerce||[]).slice(),ok:(__kenshiOk||[]).slice()};
+    const __sv=ccfScoreSig(); if(__sv)__rec.sv=__sv;
+    if(meta&&meta.pfx)__rec.pfx=String(meta.pfx);
+    await store.set('g7:'+sk,JSON.stringify(__rec));
     if(!silent)renderLedger();
     const dv=prevScore!=null?(parseFloat(r.evalScore)-parseFloat(prevScore)):null;
     const diff=dv==null?'':dv>0?`<span style="color:var(--jade)">（▲${dv.toFixed(1)}）</span>`:dv<0?`<span style="color:var(--rust)">（▼${Math.abs(dv).toFixed(1)}）</span>`:'（±0）';
@@ -3204,9 +3239,13 @@ async function save(){
   document.querySelectorAll('#scorer input,#scorer select').forEach(e=>{if(e.id)data[e.id]=e.value;}); // v9.9.26: 採点機フォームに限定(logBody/ioBox等の他タブ入力とid無し欄の混入=記録肥大を解消。読込側は既存マップで無害)
   // v9.9.78: 手動saveを取込(applyFields)と同じ作法に——(1)直前版をg7prev:へ退避（delIt/取込は退避するのにsaveだけ無かった）
   //   (2)既存レコードの coerce/ok を引き継ぐ。落とすと手動記録した瞬間に✓検算済の印が消えて旧⚠バッジが復活する
+  // v9.9.219: 手で記録した版にも採点の式の指紋（sv）を写し、元にしたパックの指紋を pfxBase に残す
+  //   ——開いたときの自動の追いつき（ccfAutoRefresh）は手の記録を置き換えないが、「パックのほうが新しくなった」は pfxBase で言える
   try{const sk=safeKey(nm); const rec={data,r,ts:Date.now(),src:'manual'};
+    const __sv=ccfScoreSig(); if(__sv)rec.sv=__sv;
     try{const prev=await store.get('g7:'+sk); if(prev){await store.set('g7prev:'+sk,prev.value);
-      try{const po=JSON.parse(prev.value); if(po&&po.coerce)rec.coerce=po.coerce; if(po&&po.ok)rec.ok=po.ok;}catch(_){}}}catch(_){}
+      try{const po=JSON.parse(prev.value); if(po&&po.coerce)rec.coerce=po.coerce; if(po&&po.ok)rec.ok=po.ok;
+        const pb=(po&&(po.pfx||po.pfxBase))||''; if(pb)rec.pfxBase=pb;}catch(_){}}}catch(_){}
     await store.set('g7:'+sk,JSON.stringify(rec));renderLedger();uiNotice('記録した：'+nm);}catch(e){uiNotice('記録に失敗：'+String(e&&e.message||e));}
 }
 async function renderLedger(){
@@ -4580,12 +4619,19 @@ function ccfWholeShareBody(pass, tw, pxInfo, NO, T, catIn){
       +(catIn._otherErr?`<div class="other-err" style="font-size:11px;color:#b45309;margin-top:3px">⚠ ${ccfBoughtEsc(catIn._otherErr)}</div>`:'')
       +`<div style="font-size:11px;color:var(--dim);margin-top:3px">${catIn._unownedFirst?(catIn._unownedFirst==='all'?'<span class="first-note">持っていない本（ETF・個別株）は区分の比率より先に1株ずつ（不足が1株の半分に届いた本・目標の大きい順→1株の安い順・2026-10-13）。</span>':'<span class="first-note">持っていない個別株は区分の比率より先に1株ずつ（不足が1株の半分に届いた本・2026-10-12）。</span>'):''}目標を超えている区分は今月¥0（売らずに新しいお金で戻す）。区分の中は銘柄ごとの不足の順に1株ずつ・1株に届かない端数は投資信託へ。</div></div>`; })():'';
   window.__ccfOrderNet=ordNet;
+  // ★v9.9.219（2026-10-14 ユーザー「購入した個別銘柄で入れ替わった場合は売却せず引き継ぐ形にしたい」）: 席の外で持っている個別株＝引き継ぎ。
+  //   注文書では買わない（目標0%）が、売らずに持ち続け、個別株の区分の「今」に数える——注文書の個別株の節に名指しで出す。renderPlan が置く window.__ccfCarry を読む。
+  //   金額は出さない（保有の円は🙈金額を隠すの対象）。出口判定が S1/S2 なら🏦保有で確かめるよう添える（売りの判断は S1/S2/S3 だけ・ここでは何も売らない）
+  const CY=((typeof window!=='undefined'&&window.__ccfCarry)||[]);
+  const cyH=CY.length?`<div class="carry-row" style="font-size:11.5px;padding:4px 7px;line-height:1.6;color:var(--ink-soft)">↪ <b>引き継ぎ</b>（席の外・売らずに持ち続ける）：`
+    +CY.map(x=>`<span style="white-space:nowrap">${ccfBoughtEsc(x.t)} ${(+x.w).toFixed(1)}%</span>（${ccfBoughtEsc(x.why)}${x.exit==='s1'?'・<b style="color:#b91c1c">⚠出口 S1</b>':x.exit==='s2'?'・<b style="color:#b45309">⚠出口 S2</b>':''}）`).join('・')
+    +`<br><span style="color:var(--dim);font-size:11px">個別株の区分に数え、新しいお金は回らない（目標0%）。売りは S1/S2/S3 だけ（🏦保有の出口判定）——席から出ただけでは売らない。</span></div>`:'';
   const html=`<div style="margin-top:10px;padding:9px 12px;border:1px solid rgba(201,166,74,.5);border-radius:8px;background:rgba(201,166,74,.06)">
     <div style="font-size:12.5px;color:var(--gold-bright);margin-bottom:4px"><b>📋 今月の注文書</b></div>
     ${idecoBox}
     ${kodomoBox}
     ${catBox}
-    ${(ob||stopped.length)?`<div style="font-size:11.5px;color:var(--gold-bright);margin:0 0 2px;font-weight:600">${catIn?'🏰 個別株':'🏰 個別'}</div>${ob}${stopped.map(x=>`<div style="font-size:11px;color:#b91c1c;padding:3px 7px">${x}</div>`).join('')}`:''}
+    ${(ob||stopped.length||cyH)?`<div style="font-size:11.5px;color:var(--gold-bright);margin:0 0 2px;font-weight:600">${catIn?'🏰 個別株':'🏰 個別'}</div>${ob}${stopped.map(x=>`<div style="font-size:11px;color:#b91c1c;padding:3px 7px">${x}</div>`).join('')}${cyH}`:''}
     ${nbh?`<div style="font-size:11.5px;color:#6fa8c9;margin:7px 0 2px;font-weight:600">◈ ETF</div>${nbh}`:''}
     ${nfh?`<div style="font-size:11.5px;color:#6fa8c9;margin:7px 0 2px;font-weight:600">📈 投資信託</div>${nfh}`:''}
     ${(idle.length||zero.length)?`<div style="font-size:11px;color:var(--dim);padding:3px 7px">${idle.length?idle.join('・')+'：目標に届いているので今月なし':''}${idle.length&&zero.length?'　':''}${zero.length?zero.join('・')+'：目標0%（売らない・新規なし）':''}</div>`:''}
@@ -6079,7 +6125,8 @@ function ccfPftModel(pfJ,exJ,led,buy,fxU,pfRows,nmOf,opt){   // opt.busy＝台�
   if(LV)Object.keys(LV.byT).forEach(t=>{ const x=LV.byT[t];   // 席の外で持っている個別株（売らない・目標0%）
     if(x.sleeve!=='城'||!(+x.w>0)||castle.some(c=>c.k==='c:'+t))return;
     const q=nmSub(t);
-    castleExtra.push({k:'c:'+t, nm:q.nm, sub:(q.id?q.id+'・':'')+'席の外（目標0%・売らずに持ち続ける）', tw:0, now:+x.w}); });
+    // v9.9.219（2026-10-14 ユーザー「入れ替わった場合は売却せず引き継ぐ形にしたい」）: 席の外で持っている社は**引き継ぎ**——売らず、個別株の区分に数え、新しいお金は回らない
+    castleExtra.push({k:'c:'+t, nm:q.nm, sub:(q.id?q.id+'・':'')+'引き継ぎ（席の外・目標0%・売らずに持ち続ける）', tw:0, now:+x.w, carry:true}); });
   // 色: 今のカード（評価額の大きい順に CCF_PFC_COLORS）と同じ保有は同じ色。区分は中の保有のうち今いちばん大きい本の色
   const all=etf.concat(castle), cur={}, used=new Set();
   (pfRows||[]).slice().sort((a,b)=>b.val-a.val).forEach((r,i)=>{ cur[r.t]=CCF_PFC_COLORS[i%CCF_PFC_COLORS.length]; });
@@ -6126,10 +6173,10 @@ function ccfPftHTML(M){
   const gap=(tw,now)=>{ if(now==null)return ''; const d=tw-now;
     if(Math.abs(d)<0.05)return `<span class="pft-d fl">目標どおり</span>`;
     return d>0?`<span class="pft-d up">あと ${d.toFixed(1)}pt</span>`:`<span class="pft-d fl">${(-d).toFixed(1)}pt 多い</span>`; };
-  const rr=(tw,now)=>`<span class="pft-rr"><span class="pft-v">${f(tw)}%</span>${now!=null?`<span class="pft-w">今 ${now.toFixed(1)}%</span>`:''}${gap(tw,now)}</span>`;
+  const rr=(tw,now,cy)=>`<span class="pft-rr"><span class="pft-v">${f(tw)}%</span>${now!=null?`<span class="pft-w">今 ${now.toFixed(1)}%</span>`:''}${cy?`<span class="pft-d fl" title="席の外で持っている社は売らない（売りは S1/S2/S3 だけ）。個別株の区分に数え、新しいお金は回らない">引き継ぎ</span>`:gap(tw,now)}</span>`;
   const row=r=>`<div class="pft-r${r.tw>0?'':' z'}" data-k="${esc(r.k)}">`
     +(r.tw>0?`<span class="pft-dot" style="--pfc-c:${r.color}"></span>`:`<span class="pft-dot z" aria-hidden="true"></span>`)
-    +`<span class="pft-nb"><span class="pft-n">${esc(r.nm)}</span>${r.sub?`<span class="pft-sb">${esc(r.sub)}</span>`:''}</span>`+rr(r.tw,r.now)+`</div>`;
+    +`<span class="pft-nb"><span class="pft-n">${esc(r.nm)}</span>${r.sub?`<span class="pft-sb">${esc(r.sub)}</span>`:''}</span>`+rr(r.tw,r.now,!!r.carry)+`</div>`;
   const grp=(nm,sub,tw,now)=>`<div class="pft-g"><span class="pft-nb"><span class="pft-n">${nm}</span>${sub?`<span class="pft-sb">${sub}</span>`:''}</span>${rr(tw,now)}</div>`;
   const modeTxt={rank:'席の順位で重み',equal_rule:'均等',equal:'均等（時価総額が測れない社がある）',mcap:'時価総額Tier',hand:'手で決めた重み',none:''}[M.mode]||'';
   const list=grp('ETF・投資信託','',M.etfT,M.etfNow)
@@ -6149,7 +6196,7 @@ function ccfPftHTML(M){
       <div class="pft-c"><div class="pft-c1">目標</div><div class="pft-c2">${g(M.etfT)} : ${g(M.castleT)}</div><div class="pft-c3">ETF・投資信託 : 個別株</div></div>
     </div>
     <div class="pft-ls">${list}</div>
-    <div class="pft-note">${warn.length?`<span class="pft-warn">⚠ ${warn.join('<br>⚠ ')}</span><br>`:''}目標との差は<b>新しい入金で埋める</b>（売らない）。<span class="up">あと</span>＝目標に足りない分（今月の入金はこちらへ回る）・多い＝目標を超えている分（入金が薄めるのを待つ）。今月いくら買うかは 🛒買付順位の注文書。${M.live?'':'今の比率は保有（🏦保有の台帳・portfolio.json の写し）が読めないので出していない。'}色は上のポートフォリオと同じ保有には同じ色。</div>
+    <div class="pft-note">${warn.length?`<span class="pft-warn">⚠ ${warn.join('<br>⚠ ')}</span><br>`:''}目標との差は<b>新しい入金で埋める</b>（売らない）。<span class="up">あと</span>＝目標に足りない分（今月の入金はこちらへ回る）・多い＝目標を超えている分（入金が薄めるのを待つ）・引き継ぎ＝席から外れても売らずに持ち続ける個別株（区分に数え、新しいお金は回らない）。今月いくら買うかは 🛒買付順位の注文書。${M.live?'':'今の比率は保有（🏦保有の台帳・portfolio.json の写し）が読めないので出していない。'}色は上のポートフォリオと同じ保有には同じ色。</div>
   </section>`;
 }
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){const m=document.getElementById('pfcMenu');if(m)m.classList.remove('on');}});
@@ -6642,12 +6689,21 @@ async function ccfToday(btn){
     else if(ai==='fail')bnow.push({title:'台帳に入っていないパックが '+miss.length+'社（自動の取り込みに失敗）',
       why:miss.slice(0,10).join(' ')+(miss.length>10?' …':''),
       how:'通信を確かめて、🛒買付順位の「⭳ いま取り込む」'});
+    else if(ccfRefreshBusy()){}   // v9.9.219: 開いたときの自動の追いつきが取り込んでいる最中（下の1行で進み具合を出す）
     else bnow.push({title:'台帳に入っていないパックが '+miss.length+'社',
       why:miss.slice(0,10).join(' ')+(miss.length>10?' …':''),
-      how:'🛒買付順位（または📚台帳）の「⭳ いま取り込む」（台帳に1件でもあれば自動では取り込みません——人が直した値を巻き戻さないため）'});
+      how:'🛒買付順位（または📚台帳）の「⭳ いま取り込む」（開いたときの自動の取り込みは、台帳から消した社を戻さない・失敗したら通信を確かめて押す）'});
   }
+  // v9.9.219: 席の入れ替わり——今日の集計（CI・repo のパック）の投下可と、この端末で最後に確かめた席（🛒買付順位の「✓ 確認した」）を比べる。表示だけ
+  const btoday=[];
+  try{ const ack=(typeof ccfSeatAck==='function')?ccfSeatAck():null, buy=(td.buy||[]).map(x=>String(x).toUpperCase());
+    if(ack&&buy.length&&!(td.blind||[]).length){ const A=new Set(ack.seats.map(x=>String(x).toUpperCase())), B=new Set(buy);
+      const add=buy.filter(t=>!A.has(t)), out=ack.seats.map(x=>String(x).toUpperCase()).filter(t=>!B.has(t));
+      if(add.length||out.length)btoday.push({title:'門の席が入れ替わりました：'+[add.length?'入 '+add.join('・'):'',out.length?'出 '+out.join('・'):''].filter(Boolean).join('　'),
+        why:'今日の集計（'+(td.generated||'—')+'・repo のパック）の投下可が、この端末で最後に確かめた席（'+String(ack.at||'').slice(0,10)+'）と違います。出た社は売らない——持っていれば売らずに引き継ぐ（個別株の区分に数え、新しいお金は回らない）。売りは S1/S2/S3 だけ',
+        how:'🛒買付順位を開いて入れ替わりを確かめ、帯の「✓ 確認した」を押す（台帳は開いたときに自動で repo に追いつく）'}); } }catch(e){}
 
-  const N=(td.now||[]).length+bnow.length, T=(td.today||[]).length;
+  const N=(td.now||[]).length+bnow.length, T=(td.today||[]).length+btoday.length;
   const blind=td.blind||[];
   let html='';
 
@@ -6666,7 +6722,12 @@ async function ccfToday(btn){
   if(N)html+=sec('⚠ いま止まっている／壊れている（'+N+'件）',
     bnow.map(x=>card(x,'#cf5f48')).join('')+(td.now||[]).map(x=>card(x,'#cf5f48')).join(''),
     '検算しても消えない種類の破損・止まった周期作業・根拠の穴。放置すると次に線が動いたときに効きます。');
-  if(T)html+=sec('📌 今日見るもの（'+T+'件）',(td.today||[]).map(x=>card(x,'#d69a3c')).join(''),
+  // v9.9.219: 開いたときの自動の追いつき（台帳を repo のパックに合わせる）の進み具合——数十秒で終わり、終わると作り直す（件数には数えない）
+  if(ccfRefreshBusy()){ const rf=window.__ccfRefresh;
+    html+='<div class="td-refresh" style="font-size:12px;color:var(--ink-soft);margin:-8px 0 14px;padding:7px 12px;border:1px solid rgba(93,140,194,.4);border-radius:8px;background:rgba(93,140,194,.06)">'
+      +'⟳ 台帳を repo のパックに追いつかせています（'+[rf.impNew?'新しいパック '+rf.impNew+'社':'',rf.impOld?'新しくなったパック '+rf.impOld+'社':'',rf.rsn?'採点の式の更新で再採点 '+rf.rsn+'件':''].filter(Boolean).join('・')+'）'
+      +' <span class="autoRefProg">'+(rf.n?(rf.st+' '+rf.done+'/'+rf.n):'')+'</span>——終わると🛒買付順位の席と注文書を作り直します</div>'; }
+  if(T)html+=sec('📌 今日見るもの（'+T+'件）',btoday.map(x=>card(x,'#5d8cc2')).join('')+(td.today||[]).map(x=>card(x,'#d69a3c')).join(''),
     '8-K警報・決算・門外例外の見張り。<b>気づきであって判定ではありません</b>——売りは S1/S2/S3 のみで動きます。');
 
   const M=(td.month||[]).length;
@@ -7851,6 +7912,7 @@ async function ccfLedgerStale(elId){
   if(missTick.length) L.push('<b>パックはあるのに台帳に無い銘柄 '+missTick.length+'件</b>（'+missTick.slice(0,6).join(' / ')+(missTick.length>6?' ほか':'')+'）');
   box.innerHTML='<div style="background:rgba(196,105,63,.10);border:1px solid rgba(196,105,63,.55);border-radius:10px;padding:11px 14px;margin:8px 0;font-size:12.5px;line-height:1.85">'
     +'<b style="color:var(--gold-bright)">⚠ 台帳が古いままです</b>　'+L.join('　／　')
+    +((typeof ccfRefreshBusy==='function'&&ccfRefreshBusy())?'<div style="margin-top:6px;color:var(--ink-soft,#bbb)">⟳ いま開いたときの自動の追いつきが台帳を repo のパックに合わせています（v9.9.219）——終わってもこの帯が残るなら、下を押してください。</div>':'')
     +'<div style="margin-top:6px;color:var(--ink-soft,#bbb)">→ <b>🛒買付順位の「⭳ 全パック一括取込」</b>を押してください。'
     +'<u>「↻全再採点」では直りません</u>——あれは保存済みの値に今の採点式を通すだけで、<b>欄そのものが無い記録には何も足せない</b>ので、'
     +'買付順位が古い姿のままになります（2026-09-22 に LRCX がこれで投下可から消えました）。</div>'
@@ -8048,7 +8110,7 @@ async function renderPlan(){
     //   (a)価格チップ __Q が引けず「台帳」印に落ちる (b)Ⅶ実額の livePos が引けず手入力posへ黙って後退
     //   (c)審査/決算ボタンの依頼文銘柄名が壊れる——Ⅵだけ他と違う規則だった（v9.9.65違反の同型）
     const tSym=String(it.d.nm||it.k.slice(3)).trim().split(/[\s_]/)[0].toUpperCase();
-    return {nm:it.d.nm||it.k.slice(3),t:tSym,s,act,memo,room,hold,pc,layer,xEr,xPass,per,shy,g:gOut,gcap:xj.gcap,gcapSrc:xj.gcapSrc,grower:growerR,moat:mg.idx,moatOK:mg.pass,moatNA:mg.na,depVeto:mg.depVeto,depGov:mg.depGov,dep:mg.dep,shrink:ccfShrinkGate(it.d),irr:it.d.irr,mcapU:ccfMcapUSD(it.d,__fxU),pos:(livePos&&livePos[tSym]!=null)?livePos[tSym]:num(it.d.pos),tier:it.r.tierShort||it.r.grade,objD:it.r.objDurable,objC:it.r.objCompound,audW:ccfAudit(it.d,it.r,it.coerce,it.ok),audB:ccfAuditBadge(ccfAudit(it.d,it.r,it.coerce,it.ok),it.k),px0:it.d.px,epsOld:(it.d.erdate&&(Date.now()-new Date(it.d.erdate).getTime())>300*864e5)};
+    return {nm:it.d.nm||it.k.slice(3),t:tSym,s,act,memo,room,hold,pc,layer,xEr,xPass,per,shy,g:gOut,gcap:xj.gcap,gcapSrc:xj.gcapSrc,grower:growerR,moat:mg.idx,moatOK:mg.pass,moatNA:mg.na,depVeto:mg.depVeto,depGov:mg.depGov,dep:mg.dep,shrink:ccfShrinkGate(it.d),irr:it.d.irr,mcapU:ccfMcapUSD(it.d,__fxU),pos:(livePos&&livePos[tSym]!=null)?livePos[tSym]:num(it.d.pos),tier:it.r.tierShort||it.r.grade,exitLv:(it.r.exit&&it.r.exit.level)||'',objD:it.r.objDurable,objC:it.r.objCompound,audW:ccfAudit(it.d,it.r,it.coerce,it.ok),audB:ccfAuditBadge(ccfAudit(it.d,it.r,it.coerce,it.ok),it.k),px0:it.d.px,epsOld:(it.d.erdate&&(Date.now()-new Date(it.d.erdate).getTime())>300*864e5)};
   });
   // 4本目（紫）は門外の明示判断で買う社（Ω75未満）の色。判定には不介入
   const lcol=['var(--gold-bright)','var(--jade)','var(--steel)','#9b7fd4']; // layerは色分け専用（旧段差8/5/3のlnameはv9.9.78で撤去——v9.9.70の連続ウェイト移行後は未使用の死骸だった）
@@ -8186,6 +8248,9 @@ async function renderPlan(){
   //   ⚠画面の文字列を解析する形にしていたら誤検出した（実測: 説明文の「🟢投下可」を拾い、
   //     さらに買付の行に印が無いので10社すべてを不一致と報告した）。**描画ではなく判断そのものを測る。**
   try{ window.__ccfBuyList=passIn.map(r=>String(r.nm||r.t||'').trim().split(/\s/)[0].toUpperCase()); }catch(e){}
+  // ★v9.9.219: 席の入れ替わりの帯（この端末で最後に確かめた席と比べる・表示と記録だけ）。関門の入力が読めない日・取り込み／追いつきの途中は比べない
+  let __seatBan=''; try{ __seatBan=ccfSeatBannerHTML(passIn.map(r=>r.t),{blind:gBlind.length>0,busy:ccfRefreshBusy()||ccfAutoImpBusy(),pos:livePos||{},
+    castlePct:(window.__ccfSleeveTarget&&+window.__ccfSleeveTarget.c)||0}); }catch(e){}
   /* ★**眠っている関門も一緒に公開する**（v9.9.170）。__ccfBuyList だけを出すと、
      関門のJSONが届く前の描画を「門の判断」として読まれる——実測(2026-08-23)で
      check_gate_parity が固定6秒で読んで **VRSK が入り MCO が落ちた偽の不一致**を出した
@@ -8379,7 +8444,9 @@ async function renderPlan(){
   // v9.9.89: ◆保有チップ。保有銘柄が買付順位に載るのは仕様（DCAは目標ウェイトまで積み増す）だが、
   //   posはallocTagのtooltipの中にしか出ておらず「門が保有を認識しているか」が画面から見えなかった
   //   （実例: IRMD保有なのに順位に出る→ユーザーが連携切れを疑った。連携は生きていて表示が無いだけだった）
-  const posChip=r=>(r.pos>0)?`<span style="font-size:10px;color:var(--jade);margin-left:6px" title="現在保有ウェイト（${(livePos&&livePos[r.t]!=null)?'🏦保有の実額から自動算出':'✎採点機の手入力pos——🏦保有に株数を入れれば自動連携に切替わる'}）。保有中でも目標ウェイトに届くまでは買付順位に残る＝DCAの積み増し対象。目標に達すると「充足」＝今月0円">◆保有${r.pos.toFixed(0)}%</span>`:'';
+  // v9.9.219: 席の外で持っている社（window.__ccfCarry・下で作る）には「引き継ぎ」を添える＝売らない・新しいお金は回らない
+  const posChip=r=>{ if(!(r.pos>0))return ''; const cy=(window.__ccfCarry||[]).some(x=>x.t===r.t);
+    return `<span style="font-size:10px;color:var(--jade);margin-left:6px" title="現在保有ウェイト（${(livePos&&livePos[r.t]!=null)?'🏦保有の実額から自動算出':'✎採点機の手入力pos——🏦保有に株数を入れれば自動連携に切替わる'}）。${cy?'席の外なので目標0%＝新しいお金は回らないが、売らずに持ち続ける（引き継ぎ・個別株の区分に数える）。売りは S1/S2/S3 だけ':'保有中でも目標ウェイトに届くまでは買付順位に残る＝DCAの積み増し対象。目標に達すると「充足」＝今月0円'}">◆保有${r.pos.toFixed(0)}%${cy?'・引き継ぎ':''}</span>`; };
   // v9.9.139: 全行に「＋株」。価格は盤の実測から採り、無ければ入れない（推測の単価を作らない・ルール7）。
   //   通貨の判定は score_all.js:269 と**同じ式**（銘柄名の先頭が4-5桁の数字なら日本株）＝新しい規約を作らない。
   const boughtBtn=r=>{ if(!r.t)return '';
@@ -8554,6 +8621,15 @@ async function renderPlan(){
   const tw=r=>Math.round(twRaw(r)*100)/100;
   const planRows=passIn.concat(exRows);
   const gap=r=>Math.max(0,tw(r)-(r.pos||0)), passGap=planRows.reduce((a,r)=>a+gap(r),0);
+  // ★v9.9.219（2026-10-14 ユーザー「購入した個別銘柄で入れ替わった場合は売却せず引き継ぐ形にしたい」）: 席の外で持っている個別株＝**引き継ぎ**。
+  //   売らない（売りは S1/S2/S3 だけ）・個別株の区分の「今」に数えたまま（区分の比率は元から城の全保有を数える）・新しいお金は回らない（目標0%）。
+  //   これは元からの動きで、変えたのは**注文書に名指しで出す**ことだけ（区分の中に黙って埋めない・v9.9.52）。判定・配分は不変。
+  try{ const inPlan=new Set(planRows.filter(r=>(+tw(r)||0)>0).map(r=>r.t)), byRow={}, passT=new Set(pass.map(r=>r.t));
+    rows.forEach(r=>{ if(!byRow[r.t])byRow[r.t]=r; });
+    window.__ccfCarry=(__LV&&__LV.byT)?Object.keys(__LV.byT).filter(t=>__LV.byT[t].sleeve==='城'&&(+__LV.byT[t].w||0)>0&&!inPlan.has(t)).map(t=>{ const r=byRow[t];
+      const why=!r?'台帳に無い':passT.has(t)?`次点（四関門は通過・席${CCF_SEATS}社の外）`:'四関門の外';
+      return {t, w:+__LV.byT[t].w, why, s:r?r.s:null, exit:r?r.exitLv:''}; }).sort((a,b)=>b.w-a.w):[];
+  }catch(e){ window.__ccfCarry=[]; }
   const allocTag=r=>{if(!allocSet.has(r.t))return `<span style="font-size:11px;color:var(--dim);white-space:nowrap" title="四関門は通過（投下可）だが、Ωが上位${CCF_SEATS}社に入らないため配分対象外。順位が上がれば自動で枠入り">配分枠外（席順${CCF_SEATS+1}位以下）</span>`;
     const filled=tw(r)>0&&gap(r)<=0, m=passGap>0?gap(r)/passGap*100:0;
     const mcTxt=(r.mcapU>0)?`時価総額 ${r.mcapU>=1000?(r.mcapU/1000).toFixed(2)+'兆':r.mcapU.toFixed(1)+'十億'}$（px×ni÷eps・ドル円${__fxU>0?__fxU.toFixed(2):'—'}で換算）`:'時価総額 未取得';
@@ -8789,7 +8865,7 @@ async function renderPlan(){
     //   Ⅳからはv9.9.74で撤去済みなのに監視枠の行だけ残り、Ⅵの四関門と同じ言葉が別の意味で並んでいた
     html+=watch.map(r=>`<div class="led" style="border-left:3px solid ${lcol[2]};opacity:.6"><span class="ln">${ccfIcon(r.nm)}${r.nm}</span><span class="grade" style="color:var(--steel)">${r.s}</span>${xtag(r)}${reqbtns(r)}${boughtBtn(r)}</div>`).join('');
   }
-  pb.innerHTML=ccfGateBlindHTML(gBlind).replace('<div ','<div data-keep ')+planBox+html;
+  pb.innerHTML=ccfGateBlindHTML(gBlind).replace('<div ','<div data-keep ')+__seatBan+planBox+html;
   // v9.9.191（ユーザー指示「買付の文字が無駄に多い。説明はすべてなくしてシンプルに」）:
   //   各節の**説明の段落と「ℹ」の折り畳み**を描いた後で外す。残すのは 見出し(h2)・銘柄の行(.led)・
   //   今月の買付プラン（data-keep）・眠っている関門の警告（data-keep）だけ。
@@ -8997,7 +9073,8 @@ async function importAll(){
 //   取込(applyFields)・全再採点(2562)には v9.7 で入ったのに loadIt だけ無く、moatW等の新設欄を
 //   持たない旧レコードを開くと直前に表示していた銘柄の選択値のまま compute されていた（CMG型汚染の残存経路）
 async function loadIt(k){try{const res=await store.get(k);if(!res)return;const {data}=JSON.parse(res.value);Object.entries(data).forEach(([id,v])=>{if($(id))$(id).value=v;});if(typeof __selDefaults!=='undefined')Object.keys(__selDefaults).forEach(id=>{if($(id)&&data[id]===undefined)$(id).value=__selDefaults[id];});compute();if(typeof showPage==='function')showPage(2);window.scrollTo({top:0,behavior:'smooth'});}catch(e){}}
-async function delIt(k){if(!await uiConfirm('「'+k.slice(k.indexOf(':')+1)+'」を台帳から削除しますか？（直前版はg7prev:に退避されます）'))return;try{const cur=await store.get(k);if(cur&&k.startsWith('g7:'))await store.set('g7prev:'+k.slice(3),cur.value);await store.delete(k);renderLedger();}catch(e){}}
+// v9.9.219: 台帳から消した社は、開いたときの自動の追いつき（ccfAutoRefresh）で戻さない（印 ccf:noAuto・この端末だけ）。「⭳ 全パック一括取込」を人が押せば印は消えて戻る
+async function delIt(k){if(!await uiConfirm('「'+k.slice(k.indexOf(':')+1)+'」を台帳から削除しますか？（直前版はg7prev:に退避されます。開いたときの自動の取り込みでも戻しません——戻すには「⭳ 全パック一括取込」）'))return;try{const cur=await store.get(k);if(cur&&k.startsWith('g7:'))await store.set('g7prev:'+k.slice(3),cur.value);await store.delete(k);if(k.startsWith('g7:'))ccfNoAutoAdd(k.slice(3).split(/[\s_]/)[0]);renderLedger();}catch(e){}}
 
 // v9.9.35: 台帳の重複統合——保存キーは safeKey(nm)=nm文字列そのものから作られるため、
 //   同じ会社が違う表記(例「レーザーテック」と「6920 レーザーテック」)で保存されると別エントリになり、
@@ -9252,18 +9329,23 @@ async function ccfImportPacks(btn,mode,opt){
   }
   if(cur&&cur.part){ try{ await cur.p; }catch(_){} }
   var p=ccfImportPacksRun(btn,mode,opt);
-  window.__ccfImpRun={mode:mode,p:p,part:!!opt.onlyMissing};
+  window.__ccfImpRun={mode:mode,p:p,part:!!(opt.onlyMissing||opt.files)};   // v9.9.219: 指定した社だけ（opt.files）も一部
   try{ return await p; } finally{ if(window.__ccfImpRun&&window.__ccfImpRun.p===p)window.__ccfImpRun=null; }
 }
 async function ccfImportPacksRun(btn,mode,opt){
   opt=opt||{};   // v9.9.218: opt.stay（📚台帳へ飛ばない）・opt.auto（台帳が空のときの自動取込）・opt.onlyMissing（その続き＝台帳にまだ無い社だけ）・opt.onProgress(段階,done,total)
+                 // v9.9.219: opt.files（取り込むパックのファイル名の配列＝開いたときの自動の追いつき・人の記録を置き換えるボタン）・opt.refresh（ccfAutoRefresh から・結果を返す）
   var o=btn?btn.textContent:'';
   try{
     if(btn)btn.textContent='索引を取得中…';
     var r=await fetch('out/packs_index.json',{cache:'no-store'});
     if(!r.ok)throw new Error('packs_index.jsonが無い(night/make_chunks.pyで生成→コミット)');
-    var idx=(await r.json()).packs||[];
+    var ij=await r.json();
+    var idx=ij.packs||[], FP=ij.fp||{};   // v9.9.219: fp＝パックごとの指紋（night/packs_index.py）。記録に pfx として写す
     var jp=(mode==='jp')?idx.filter(function(f){return /^\d{4,5}_/.test(f);}):idx.slice();
+    if(Array.isArray(opt.files)){ var fs0=new Set(opt.files); jp=jp.filter(function(f){return fs0.has(f);}); if(!jp.length){ if(btn)btn.textContent=o; return true; } }
+    // 人が全部を取り込んだら、台帳から消した社の印（自動では戻さない）も消す＝全部を取り込むと決めたのだから
+    if(!opt.files&&!opt.onlyMissing&&!opt.auto&&mode==='all'){ try{ localStorage.removeItem(CCF_NOAUTO_KEY); }catch(_){} }
     // v9.9.218: 続きの自動取込（opt.onlyMissing）は**台帳にまだ無い社だけ**を取る＝既にあるレコードは1件も置き換えない。
     //   名前の揺れは ccfCheckPacksFresh と同じ規則（鍵の先頭の語をティッカーとして大文字で比べる）。台帳を読めなければ取り込まない（0件と読まない）
     if(opt.onlyMissing){
@@ -9280,16 +9362,17 @@ async function ccfImportPacksRun(btn,mode,opt){
       var got=await Promise.all(chunk.map(function(f){
         return fetch('out/'+f,{cache:'no-store'}).then(function(pr){return pr.ok?pr.json():null;}).catch(function(){return null;});
       }));
-      got.forEach(function(x){if(x)arr.push(x);});
+      got.forEach(function(x,j){ if(x&&typeof x==='object'){ x.__pfx=FP[chunk[j]]||''; arr.push(x); } });
       done+=chunk.length;
       if(btn)btn.textContent='取得 '+done+'/'+jp.length;
       if(opt.onProgress){try{opt.onProgress('取得',done,jp.length);}catch(_){}}
     }
     if(!arr.length)throw new Error('パックを読めなかった');
-    await processBatch(JSON.stringify(arr),{stay:!!opt.stay,auto:!!opt.auto,resume:!!opt.onlyMissing,onSave:function(i,n){
+    var res=await processBatch(JSON.stringify(arr),{stay:!!(opt.stay||opt.refresh),auto:!!opt.auto,resume:!!opt.onlyMissing,fromRepo:true,refresh:!!opt.refresh,onSave:function(i,n){
       if(btn&&i%8===0)btn.textContent='取込 '+i+'/'+n;
       if(opt.onProgress){try{opt.onProgress('取込',i,n);}catch(_){}}
     }});
+    if(opt.refresh){ try{ if(typeof ccfLedgerStale==='function') await ccfLedgerStale('staleBar'); }catch(_){} return {ok:true,got:arr.length,want:jp.length,res:res||null}; }
     if(btn){btn.textContent='取込 ✓ '+arr.length+'件';setTimeout(function(){btn.textContent=o;},3000);}
     // 取込のあと、台帳の取り残しの帯を測り直す（2026-09-22）。
     //   **直ったことを画面で示すのが本体**——押したのに帯が残っていれば、それは別の原因
@@ -9298,7 +9381,8 @@ async function ccfImportPacksRun(btn,mode,opt){
     // その場に留まるときは、見えている画面（🛒買付順位・📋今日・🏦保有）を新しい台帳で作り直す（v9.9.209 の受け手を使う＝呼び出し地点を増やさない）
     if(opt.stay){ try{ await ccfCheckPacksFresh(); }catch(_){} try{ if(typeof ccfHoldingsChanged==='function')ccfHoldingsChanged(); }catch(_){} }
     return true;
-  }catch(e){uiNotice('一括取込失敗: '+(e&&e.message||e),6000);if(btn)btn.textContent=o;return false;}
+  }catch(e){ if(opt.refresh)return {ok:false,err:String(e&&e.message||e)};
+    uiNotice('一括取込失敗: '+(e&&e.message||e),6000);if(btn)btn.textContent=o;return false;}
 }
 async function ccfSyncFromLocal(){
   if(store.mode!=='claude')return;
@@ -9323,6 +9407,8 @@ async function ccfSyncFromLocal(){
 //   ⚠**黙って自動取込はしない。** 一括取込は台帳のレコードを置き換えるので、
 //     ✎採点機で人が直した値を無言で巻き戻す事故になりうる（キーエンスで一度記録した型）。
 //     だから**検出して知らせるところまで**を自動にし、取り込むかは人が決める。
+//   ★v9.9.219: 上の理由は**人が直した記録**にだけ当てはまる——開いたときの自動の追いつき（ccfAutoRefresh）は repo から取り込んだ記録と
+//     まだ無い社だけを取り込み、人の記録は置き換えずにこの帯で名指しする（「パックで置き換える」は人が押す）。
 async function ccfCheckPacksFresh(){
   try{
     const r=await fetch('out/packs_index.json',{cache:'no-store'}); if(!r.ok)return;
@@ -9334,23 +9420,46 @@ async function ccfCheckPacksFresh(){
     // v9.9.218: 同じ帯を 📚台帳（packFreshBar）と 🛒買付順位（packFreshBar5）の両方に出す——取り込んでいない社は買付順位にも出ないので、
     //   旧は📚台帳のタブにしか案内が無く、買付順位だけ見る人には「投下可なし」の理由が分からなかった（2026-10-12 ユーザー「全然買付順位に出ない」）。
     const els=['packFreshBar','packFreshBar5'].map(function(id){return document.getElementById(id);}).filter(Boolean);
-    if(!miss.length){els.forEach(function(e){e.style.display='none';});return miss;}
     const ai=window.__ccfAutoImp, busy=!!(ai&&typeof ai==='object');   // 台帳が空のときの自動取込の最中（ccfAutoImportIfEmpty）
-    const html=busy
-      ? (ai.resume
+    const rf=window.__ccfRefresh, rfRun=ccfRefreshBusy();              // v9.9.219: 開いたときの自動の追いつき（ccfAutoRefresh）
+    const keep=(!busy&&!rfRun&&rf&&Array.isArray(rf.keep))?rf.keep:[];
+    const note='<div style="color:var(--muted);font-size:12px;margin-top:4px">';
+    let html='';
+    if(busy){
+      if(!miss.length){els.forEach(function(e){e.style.display='none';});return miss;}
+      html=(ai.resume
           ? '<b>⭳ 前回の自動取込が途中で終わっていたので、台帳にまだ無い '+miss.length+'社を取り込んでいます</b>'
           : '<b>⭳ 台帳が空なので、全パック（'+miss.length+'社）を自動で取り込んでいます</b>')
         +' <span class="autoImpProg" style="color:var(--muted);font-size:12.5px">'+(ai.n?(ai.st+' '+ai.done+'/'+ai.n):'')+'</span>'
-        +'<div style="color:var(--muted);font-size:12px;margin-top:4px">'
-        +'※自動で取り込むのは、台帳が空のときと、その取り込みが途中で終わったときの続き（台帳にまだ無い社だけ）だけ——どちらも置き換える値が無いので。'
-        +'それ以外で台帳に入っていない社は、取り込むかを人が決める。</div>'
-      : '<b>⭳ 台帳に入っていないパックが '+miss.length+'社あります</b>'
-        +'<span style="color:var(--muted);font-size:12.5px"> — '+miss.slice(0,12).join(' ')
-        +(miss.length>12?' …':'')+'</span>'
-        +'<button onclick="ccfImportPacks(this,\'all\',{stay:true})" style="margin-left:10px">⭳ いま取り込む</button>'
-        +'<div style="color:var(--muted);font-size:12px;margin-top:4px">'
-        +'※取り込んでいない社は🛒買付順位にも出ない。**自動では取り込まない**——一括取込は台帳のレコードを置き換えるので、'
-        +'✎採点機で直した値を無言で巻き戻す事故を避けるため、押すかどうかは人が決める。</div>';
+        +note+'※台帳が空のときと、その取り込みが途中で終わったときは、置き換える値が無いので全部を自動で取り込む。'
+        +'台帳があるときは、開いたときに repo に追いつかせる（新しいパック・新しくなったパックを取り込む。人が直した記録は置き換えない）。</div>';
+    }else if(rfRun){
+      html='<b>⟳ 台帳を repo のパックに追いつかせています</b>'
+        +'<span style="color:var(--muted);font-size:12.5px">（'+[rf.impNew?'新しいパック '+rf.impNew+'社':'',rf.impOld?'新しくなったパック '+rf.impOld+'社':'',rf.rsn?'採点の式の更新で再採点 '+rf.rsn+'件':''].filter(Boolean).join('・')+'）</span>'
+        +' <span class="autoRefProg" style="color:var(--muted);font-size:12.5px">'+(rf.n?(rf.st+' '+rf.done+'/'+rf.n):'')+'</span>'
+        +note+'終わると🛒買付順位の席と今月の注文書を作り直します（それまでの表示は前の台帳のもの）。✎採点機で直した記録・JSON を貼った記録は置き換えません。</div>';
+    }else{
+      if(miss.length){
+        const na=new Set(ccfNoAuto()), del=miss.filter(t=>na.has(String(t).toUpperCase()));
+        html+='<b>⭳ 台帳に入っていないパックが '+miss.length+'社あります</b>'
+          +'<span style="color:var(--muted);font-size:12.5px"> — '+miss.slice(0,12).join(' ')+(miss.length>12?' …':'')+'</span>'
+          +'<button onclick="ccfImportPacks(this,\'all\',{stay:true})" style="margin-left:10px">⭳ いま取り込む</button>'
+          +note+'※取り込んでいない社は🛒買付順位にも出ない（席を争えない）。'
+          +(del.length?'台帳から消した社（'+del.slice(0,8).join(' ')+(del.length>8?' …':'')+'）は開いたときの自動の取り込みでも戻さない。':'')
+          +((rf&&rf.fail)?'⚠ 開いたときの自動の取り込みに失敗した（'+rf.fail+'）——通信を確かめて押す。':(rf?'':'開いたときに自動で取り込む（台帳から消した社を除く）。'))
+          +'</div>';
+      }
+      if(keep.length){
+        html+=(html?'<div style="margin-top:9px">':'<div>')
+          +'<b>✎ 人が直した記録 '+keep.length+'社は、repo のパックに合わせていません</b>'
+          +'<span style="color:var(--muted);font-size:12.5px">（'+(keep.some(x=>!x.unk)?'パックのほうが新しくなった社'+(keep.some(x=>x.unk)?'と、':''):'')+(keep.some(x=>x.unk)?'元にしたパックの版が判らない社':'')+'）</span>'
+          +'<span style="color:var(--muted);font-size:12.5px"> — '+keep.slice(0,12).map(x=>x.t).join(' ')+(keep.length>12?' …':'')+'</span>'
+          +'<button onclick="ccfReplaceHuman(this)" style="margin-left:10px">⭳ パックで置き換える</button>'
+          +note+'※✎採点機で記録した・JSON を貼った記録は、開いたときの自動の追いつきで置き換えない（人が直した値を黙って巻き戻さない）。'
+          +'このままだと、この社の席は人の記録で決まる。置き換えるかは人が決める。</div></div>';
+      }
+    }
+    if(!html){els.forEach(function(e){e.style.display='none';});return miss;}
     els.forEach(function(e){e.style.display='block';e.innerHTML=html;});
     return miss;                       // v9.9.140: 📋今日タブが同じ判定を再実装しないため返す
   }catch(e){return null;}              // ⚠ null は「判らなかった」＝**0件と区別する**（ルール7）
@@ -9431,7 +9540,143 @@ function ccfLedEmptyRefresh(){
   else if(pg===6&&typeof ccfDash==='function')ccfDash();
   else if(pg===10&&typeof ccfToday==='function')ccfToday();
 }
-store.init().then(async()=>{await ccfSyncFromLocal();compute();renderLedger();if(typeof ccfRenderAllQueues==='function')ccfRenderAllQueues();ccfAutoImportIfEmpty().then(function(r){if(!r)ccfCheckPacksFresh();});
+// ── v9.9.219（2026-10-14・ユーザーの問い「門の個別銘柄が入れ替わった場合はきちんと入れ替わるようになってる？」）: **開いたときに台帳を repo に追いつかせる** ──
+//   席（🟢投下可）は端末の台帳（g7:）から描くたびに計算するので、関門の線・席の数・人の拒否権・第四の関門の JSON の変化は次に開いたときにそのまま効く。
+//   ところが**台帳そのもの**は「⭳ 全パック一括取込」を押すまで古いまま——repo のパックが新しくなっても（審査のやり直し・機械項目の充填・
+//   毎営業日の株価の反映）、採点の式が変わっても（「↻ 全再採点」を押すまで）、端末の席は前のままで、それを知らせる印も無かった
+//   （ccfCheckPacksFresh は台帳に無い社しか見ず、ccfLedgerStale は欄の有無しか見ない）。CI の集計（out/today.json の投下可）とも食い違いうる。
+//   → 開いたとき（と、6時間以上たって画面に戻ったとき）に:
+//     ① 台帳にまだ無いパック（新しく審査した社）を取り込む——台帳から消した社（delIt）は戻さない（印 ccf:noAuto）
+//     ② repo から取り込んだ記録（src 'JSON取込'）のうち、パックの指紋（out/packs_index.json の fp）が記録の pfx と違う社を取り込み直す
+//     ③ 採点の式の指紋（ccfScoreSig）が記録の sv と違う記録を再採点する（data は変えない＝↻全再採点と同じ）
+//   ⚠ **人が入れた記録は②で置き換えない**（✎採点機で記録＝'manual'・JSON を貼った／現値を手で入れた＝'JSON貼付'）——v9.9.128 の
+//     「一括取込は人が直した値を無言で巻き戻す」はこの記録にだけ当てはまる。パックのほうが新しければ📚台帳と🛒買付順位の帯で名指しし、置き換えるかは人が決める。
+//     ③の再採点は data を変えないので人の記録にも掛ける（今の式で採点し直すだけ）。
+//   印（pfx・sv）を持たない古い記録は「古いかどうか判らない」＝一度だけ取り込み直す／再採点する（判らないを新しいと読まない・ルール7）。
+//   表示と取り込みの道だけ——採点・四関門・席の規則・配分・売却規律は不変。席が入れ替わったら🛒買付順位の帯（ccfSeatBannerHTML）で知らせる。
+//   'ccf:autoRefresh'='off' で止まる（検査が自前の台帳を置くとき用）。印はどれも state.json に同期しない（人の決定ではない）。
+const CCF_REFRESH_OFF='ccf:autoRefresh', CCF_NOAUTO_KEY='ccf:noAuto';
+window.__ccfRefresh=null;            // null＝未着手 / {running:true,st,done,n,…}＝実行中 / {at,imp,rs,keep,fail,chg,…}＝終わった
+function ccfRefreshBusy(){ const x=window.__ccfRefresh; return !!(x&&typeof x==='object'&&x.running); }
+function ccfNoAuto(){ try{ const a=JSON.parse(localStorage.getItem(CCF_NOAUTO_KEY)||'[]'); return Array.isArray(a)?a.map(x=>String(x).toUpperCase()):[]; }catch(e){ return []; } }
+function ccfNoAutoAdd(t){ t=String(t||'').toUpperCase(); if(!t)return; const a=ccfNoAuto(); if(a.indexOf(t)<0){ a.push(t); try{ localStorage.setItem(CCF_NOAUTO_KEY,JSON.stringify(a)); }catch(e){} } }
+async function ccfAutoRefresh(why){
+  if(ccfRefreshBusy()||ccfAutoImpBusy())return null;
+  try{ if(localStorage.getItem(CCF_REFRESH_OFF)==='off')return null; }catch(e){}
+  if(window.__ccfPage===2)return null;   // ✎採点機で入力中にフォームを使わない（取り込み・再採点は採点機のフォームを使う）——次に開いたとき・画面に戻ったときに追いつく
+  let ij=null; try{ const r=await fetch('out/packs_index.json',{cache:'no-store'}); if(r.ok)ij=await r.json(); }catch(e){}
+  if(!ij||!Array.isArray(ij.packs))return null;          // 目録が読めない＝何もしない（読めないを「新しいパックは無い」と読まない＝帯は従来の判定のまま）
+  let keys=null; try{ const l=await store.list('g7:'); if(l&&Array.isArray(l.keys))keys=l.keys; }catch(e){}
+  if(!keys||!keys.length)return null;                    // 台帳が読めない・空 → 空は ccfAutoImportIfEmpty の仕事
+  const FP=ij.fp||{}, sig=ccfScoreSig(), noA=new Set(ccfNoAuto());
+  const byT={}, recs=[];
+  for(const k of keys){ let o=null; try{ const g=await store.get(k); if(g&&g.value)o=JSON.parse(g.value); }catch(e){}
+    if(!o||!o.data)continue;
+    const t=String(k).slice(3).split(/[\s_]/)[0].toUpperCase();
+    (byT[t]=byT[t]||[]).push({k,o}); recs.push({k,o,t}); }
+  const isRepo=o=>/^JSON取込/.test(String(o.src||''));
+  const isHuman=o=>/^(manual|JSON貼付)/.test(String(o.src||''));
+  const isPlace=o=>o.ts===0&&!(o.r&&o.r.evalScore!=null);   // 🏦保有の「門の台帳へ登録」が置いた空の記録（portfolio.html registerToGate・人の値は株数%だけ）
+  const want=[], keep=[], wantT=new Set(); let nNew=0, nOld=0;
+  for(const f of ij.packs){
+    const t=String(f).replace('_gate_pack.json','').toUpperCase(), rs=byT[t];
+    if(!rs){ if(!noA.has(t)){ want.push(f); wantT.add(t); nNew++; } continue; }
+    const fpf=FP[f]; if(!fpf)continue;                        // 指紋が無い＝新旧が判らない→触らない（索引の古さは CI の packs_index.py --check が言う）
+    if(rs.some(x=>isHuman(x.o))){ const h=rs.filter(x=>isHuman(x.o)&&x.o.pfxBase!==fpf);
+      if(h.length)keep.push({t,f,unk:h.some(x=>!x.o.pfxBase)}); continue; }   // unk＝手の記録が元にしたパックの版が判らない（v9.9.219 より前の記録）
+    if(rs.some(x=>(isRepo(x.o)&&x.o.pfx!==fpf)||isPlace(x.o))){ want.push(f); wantT.add(t); nOld++; }
+  }
+  // ③の対象は門が書いた記録だけ（src がある）——src の無い記録（🏦保有の「門の台帳へ登録」の空の記録など）を再採点すると、既定値から点を作ってしまう
+  const rsKeys=sig?recs.filter(x=>!wantT.has(x.t)&&x.o.sv!==sig&&x.o.src&&!isPlace(x.o)).map(x=>x.k):[];
+  const base={at:Date.now(),why:why||'open',imp:0,impNew:nNew,impOld:nOld,rs:0,keep,fail:'',chg:[]};
+  if(!want.length&&!rsKeys.length){ window.__ccfRefresh=base; try{ await ccfCheckPacksFresh(); }catch(e){} return base; }
+  const N=want.length+rsKeys.length;
+  window.__ccfRefresh=Object.assign({},base,{running:true,st:'準備',done:0,n:N,want:want.length,rsn:rsKeys.length});
+  const prog=(st,d)=>{ const x=window.__ccfRefresh; if(x&&x.running){ x.st=st; x.done=d; }
+    document.querySelectorAll('.autoRefProg').forEach(el=>{ el.textContent=st+' '+d+'/'+N; }); };
+  try{ await ccfCheckPacksFresh(); }catch(e){}
+  try{ if(window.__ccfPage===10&&typeof ccfToday==='function')ccfToday(); }catch(e){}
+  const before={}; recs.forEach(x=>{ if(x.o.r&&x.o.r.evalScore!=null&&before[x.t]==null)before[x.t]=parseFloat(x.o.r.evalScore); });
+  let fail='', impN=0, rsN=0;
+  if(want.length){
+    const r=await ccfImportPacks(null,'all',{files:want,refresh:true,onProgress:function(st,d){ prog(st==='取得'?'取得':'取り込み',d); }});
+    if(r===true)impN=want.length;                            // 人が押した全部の取り込みが同時に走っていた（それが全部を取り込んだ）
+    else if(r&&r.ok)impN=(r.res&&r.res.results)?r.res.results.length:(r.got||0);
+    else fail=(r&&r.err)||'取り込みに失敗';
+  }
+  if(rsKeys.length){
+    const r=await ccfRescoreAll(null,{silent:true,only:new Set(rsKeys),onProgress:function(d){ prog('再採点',want.length+d); }});
+    rsN=(r&&r.n)||0;
+  }
+  // 点が動いた社（0.1pt 以上）と新しく入った社だけを1件の検証履歴に残す——毎営業日の株価の反映で数十社が取り込み直されるので、全部を書くと履歴が膨らむ
+  const chg=[], rsSet=new Set(rsKeys);
+  try{ const l=await store.list('g7:'); const seen=new Set();
+    for(const k of ((l&&l.keys)||[])){ const t=String(k).slice(3).split(/[\s_]/)[0].toUpperCase(); if(seen.has(t))continue; seen.add(t);
+      if(!wantT.has(t)&&!rsSet.has(k))continue;
+      let o=null; try{ const g=await store.get(k); if(g&&g.value)o=JSON.parse(g.value); }catch(e){}
+      const a=o&&o.r&&o.r.evalScore!=null?parseFloat(o.r.evalScore):null, b=before[t];
+      if(a==null)continue;
+      if(b==null)chg.push({t,b:null,a}); else if(Math.abs(a-b)>=0.1)chg.push({t,b,a}); } }catch(e){}
+  window.__ccfRefresh=Object.assign({},base,{imp:impN,rs:rsN,fail,chg});
+  if(chg.length||nNew||fail){
+    try{ await saveLog({date:new Date().toISOString().slice(0,10),
+      title:`開いたときの自動の追いつき：新しいパック ${nNew}社・新しくなったパック ${nOld}社・採点の式の更新で再採点 ${rsN}件（点が動いた社 ${chg.filter(x=>x.b!=null).length}社）${fail?'・⚠'+fail:''}`,
+      body:chg.map(x=>x.b==null?`${x.t}　新しく台帳に入った　Ω ${x.a.toFixed(1)}`:`${x.t}　Ω ${x.b.toFixed(1)} → ${x.a.toFixed(1)}`).join('\n')||'（点が動いた社なし）'}); }catch(e){}
+  }
+  try{ if(typeof ccfHoldingsChanged==='function')ccfHoldingsChanged(); }catch(e){}
+  try{ if(window.__ccfPage===3&&typeof renderLedger==='function')renderLedger(); }catch(e){}
+  try{ await ccfCheckPacksFresh(); }catch(e){}
+  return window.__ccfRefresh;
+}
+// 人が直した記録を、パックで置き換える（帯のボタン）——押したのは人＝v9.9.128 の線の内側
+async function ccfReplaceHuman(btn){
+  const rf=window.__ccfRefresh, ks=(rf&&Array.isArray(rf.keep))?rf.keep:[]; if(!ks.length)return;
+  if(!await uiConfirm('人が直した記録 '+ks.length+'社（'+ks.map(x=>x.t).join('・')+'）を、repo のパックで置き換えますか？（直前版は g7prev: に退避されます）'))return;
+  await ccfImportPacks(btn,'all',{stay:true,files:ks.map(x=>x.f)});
+  window.__ccfRefresh=null; await ccfAutoRefresh('replace');
+}
+// ── v9.9.219: 席の入れ替わりを知らせる（表示と記録だけ・判定は不変）──
+//   この端末で最後に確かめた席（localStorage 'ccf:seats'＝{seats:[ティッカー…],at}・state.json に同期しない）と今の席を比べ、違えば🛒買付順位の先頭に帯を出す。
+//   「✓ 確認した」で今の席を覚える。初めて（覚えた席が無い）は黙って覚える。関門の入力が読めない日・台帳の取り込みの途中・追いつきの途中は比べない（覚えもしない）。
+//   出た社を持っていれば**売らずに引き継ぐ**（個別株の区分の目標に数えたまま・新しいお金は回らない・売りは S1/S2/S3 だけ）——そのことを帯に書く。
+const CCF_SEATS_KEY='ccf:seats';
+function ccfSeatAck(){ try{ const o=JSON.parse(localStorage.getItem(CCF_SEATS_KEY)||'null'); return (o&&Array.isArray(o.seats))?o:null; }catch(e){ return null; } }
+function ccfSeatAckSet(seats){ try{ localStorage.setItem(CCF_SEATS_KEY,JSON.stringify({seats:(seats||[]).map(t=>String(t).toUpperCase()),at:new Date().toISOString()})); }catch(e){} }
+function ccfSeatAckNow(){
+  ccfSeatAckSet(window.__ccfSeatsNow||[]); window.__ccfSeatDiff=null;
+  document.querySelectorAll('.seat-change').forEach(e=>e.remove());
+  try{ if(window.__ccfPage===10&&typeof ccfToday==='function')ccfToday(); }catch(e){}
+}
+function ccfSeatBannerHTML(cur,o){
+  o=o||{}; cur=(cur||[]).map(t=>String(t).toUpperCase());
+  window.__ccfSeatsNow=cur.slice(); window.__ccfSeatDiff=null;
+  if(o.blind||o.busy)return '';
+  const ack=ccfSeatAck();
+  if(!ack){ ccfSeatAckSet(cur); return ''; }
+  const A=new Set(ack.seats.map(t=>String(t).toUpperCase())), C=new Set(cur);
+  const add=cur.filter(t=>!A.has(t)), out=ack.seats.map(t=>String(t).toUpperCase()).filter(t=>!C.has(t));
+  if(!add.length&&!out.length)return '';
+  window.__ccfSeatDiff={add,out,since:ack.at};
+  const pos=o.pos||{}, esc=ccfBoughtEsc;
+  const outH=out.map(t=>{ const w=+pos[t]||0; return esc(t)+(w>0?`（保有 ${w.toFixed(1)}%→<b>売らずに引き継ぐ</b>）`:'（持っていない）'); });
+  const ct=(+o.castlePct>0)?`個別株の区分（目標${+o.castlePct}%）`:'個別株の区分';
+  return `<div data-keep class="seat-change" style="margin:6px 0 10px;padding:10px 13px;border:1px solid rgba(93,140,194,.55);border-left:4px solid #5d8cc2;border-radius:8px;background:rgba(93,140,194,.08);font-size:13px;line-height:1.7">`
+    +`<b>🔄 門の席が入れ替わりました</b><span style="color:var(--muted);font-size:12px">（この端末で最後に確かめた ${esc(String(ack.at||'').slice(0,10))} の席から）</span>`
+    +`<div class="seat-diff">${add.length?`<span style="color:var(--jade)">入 ${add.map(esc).join('・')}</span>`:''}${add.length&&out.length?'　':''}${out.length?`<span>出 ${outH.join('・')}</span>`:''}</div>`
+    +`<div style="color:var(--muted);font-size:12px;margin-top:3px">出た社は<b>売らない</b>——持っていれば${ct}に数えたまま持ち続け（引き継ぎ）、新しいお金は回らない。売りは S1/S2/S3 だけ（🏦保有の出口判定）。入った社は今月の注文書が新しい入金で買う。席は四関門と Ω の順で決まる（門の判定は変えていない）。</div>`
+    +`<button onclick="ccfSeatAckNow()" style="margin-top:6px">✓ 確認した</button></div>`;
+}
+// 6時間以上たって画面に戻ったら、もう一度追いつかせる（ホーム画面のアプリは閉じずに何日も残る）
+document.addEventListener('visibilitychange',function(){
+  if(document.visibilityState!=='visible')return;
+  const x=window.__ccfRefresh; if(x&&x.running)return;
+  if(x&&x.at&&Date.now()-x.at<6*3600e3)return;
+  if(!x&&!window.__ccfBooted)return;     // 起動の途中（起動の流れが自分で呼ぶ）
+  ccfAutoRefresh('resume');
+});
+store.init().then(async()=>{await ccfSyncFromLocal();compute();renderLedger();if(typeof ccfRenderAllQueues==='function')ccfRenderAllQueues();ccfAutoImportIfEmpty().then(function(r){ if(r)return;
+    /* v9.9.219: 台帳が空でなければ、開いたときに repo に追いつかせる（新しいパック・新しくなったパック・採点の式の更新）。走れなければ従来どおり帯を測るだけ */
+    ccfAutoRefresh('open').then(function(x){ if(x==null)ccfCheckPacksFresh(); }); });
   /* v9.9.131: 人の決定(state.json)を repo から読む。**採用は repo のほうが新しいときだけ**で、
      手元に未書き出しがあれば採用せず警告する（黙って上書きする経路を作らない）。
      ⚠ ccfSyncFromLocal の**後**に置く——先に走らせると、まだ同期していない localStorage を
@@ -9446,6 +9691,7 @@ store.init().then(async()=>{await ccfSyncFromLocal();compute();renderLedger();if
   // 台帳の取り残しの帯（2026-09-22）。**ccfState の後・台帳を読んだ後**に置く
   //   ——先に走らせると、repo から採用する前の台帳を見て誤検出する（v9.9.131 で踏んだ順序の事故と同型）。
   try{ if(typeof ccfLedgerStale==='function') await ccfLedgerStale('staleBar'); }catch(e){}
+  window.__ccfBooted=true;   // v9.9.219: これ以降は、画面に戻ったときの追いつき（visibilitychange）が自分で走る
 });
 
 </script>

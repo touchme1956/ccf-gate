@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* night/check_auto_import.js — 台帳が空の端末で🛒買付順位が空にならないかを実ブラウザで確かめる（v9.9.218）
+/* night/check_auto_import.js — 台帳が空の端末で🛒買付順位が空にならないかを実ブラウザで確かめる（v9.9.218・v9.9.219 で③⑤を追いつきに合わせた）
  *
  * ■ なぜ要るか（実害から作った検査）
  *   2026-10-12、ユーザー「全然買付順位に出ない」。ホーム画面のアプリ（v9.9.216）は Safari と保存場所（localStorage）が別で、
@@ -11,11 +11,12 @@
  *      → 終わると買付順位に注文書が出る・赤い帯（未書き出し）は立たない・検証履歴に「自動取込」
  *   ② 自動取込の最中に「⭳ 全パック一括取込」を押す → 2本目は始めずに待つ（パックの取得は1回）
  *      → 台帳の各社がパックの数字のまま（取り込みが重なって別の社の数字で保存されていない）
- *   ③ 台帳がパックの半分以上あり印も無い → 自動では取り込まない（人が直した値を巻き戻さない）・未取込の帯を🛒買付順位にも出す
+ *   ③ 台帳がパックの半分以上あり印も無い → v9.9.219 から: 開いたときの追いつき（ccfAutoRefresh）が台帳に無い社だけを取り込む
+ *      （既にある記録は置き換えない＝指紋が同じ）。'ccf:autoRefresh'='off' なら従来どおり未取込の帯を🛒買付順位にも出すだけ
  *      → 買付順位の帯から押した取り込みはページを移動しない
  *   ④ 自動取込が途中で終わった（印 ccf:autoImp が残る）→ 次に開くと台帳にまだ無い社だけを取り込む
  *      → 取得は無かった社の数だけ・既にあったレコードは置き換えない・終わると印は消える（2026-10-13 ユーザー「投下可がなしになってるから直して」）
- *   ⑤ 印が3回目まで残る → 続きはせず印を消し、🛒買付順位の帯で知らせる
+ *   ⑤ 印が3回目まで残る → 続きはせず印を消し、🛒買付順位の帯で知らせる（追いつきを止めた端末＝'ccf:autoRefresh'='off'。止めていなければ追いつきが無い社を取り込む）
  *   ⑥ 取り込み中の🏦保有・📋今日・今月の買付プラン・目標ポートフォリオのカード → 「投下可なし」とだけ言わず理由と進み具合
  *      → 台帳が半分の間も席を計算しない（席が欠けた注文書や「投下可なし」を出さない）
  *   ⑦ 印は無いが台帳がパックの半分に届かない → 台帳にまだ無い社だけを続きから（置き換えない）
@@ -131,8 +132,9 @@ const ok = (c, m) => { console.log((c ? '  ✓ ' : '  ✗ ') + m); if (!c) ng++;
     ok(errs.length === 0, '   pageerror 0件' + (errs.length ? '（' + errs[0].slice(0, 120) + '）' : ''));
   }
 
-  // ③ 台帳がパックの半分以上あり、印も無い（5社だけ無い）→ 自動では取り込まない（人が直した値を巻き戻さない）・帯を🛒買付順位にも出す
-  //    → そこから押した取り込みはページを移動しない
+  // ③ 台帳がパックの半分以上あり、印も無い（5社だけ無い）
+  //    v9.9.219 から: 開いたときの追いつき（ccfAutoRefresh）が台帳に無い5社だけを取り込む（既にある記録は置き換えない＝パックの指紋が同じ）
+  //    追いつきを止めた端末（'ccf:autoRefresh'='off'）では従来どおり帯で知らせるだけ → そこから押した取り込みはページを移動しない
   //    （v9.9.218 の続きで、半分に届かない台帳は「初めての取り込みが途中で終わった」とみなして台帳に無い社だけを自動で取り込む＝⑦。
   //      旧版の③は「1件でもあれば自動では取り込まない」を1社の台帳で確かめていた）
   {
@@ -142,19 +144,35 @@ const ok = (c, m) => { console.log((c ? '  ✓ ' : '  ✗ ') + m); if (!c) ng++;
     await pg.goto(URL);
     const s0 = await waitAuto(pg);                    // 台帳が空なので、まず全部が自動で入る
     await pg.waitForTimeout(1500);
-    await pg.evaluate(() => {
+    const drop5 = () => pg.evaluate(() => {
       const ks = Object.keys(localStorage).filter(k => k.indexOf('g7:') === 0).sort();
       ks.slice(0, 5).forEach(k => localStorage.removeItem(k));
+      const k0 = ks[10], o = JSON.parse(localStorage.getItem(k0)); o.__probe = 'keep'; localStorage.setItem(k0, JSON.stringify(o));
       localStorage.removeItem('ccf:autoImp');
+      return k0;
     });
+    const waitRefresh = async () => { for (let i = 0; i < 120; i++) { const x = await pg.evaluate(() => { const r = window.__ccfRefresh; return r ? !r.running && !!r.at : false; }); if (x) return true; await pg.waitForTimeout(500); } return false; };
+    // (a) 追いつきが台帳に無い5社だけを取り込む
+    const k0 = await drop5();
+    packFetches = 0;
+    await pg.reload(); const rf = await waitRefresh(); await pg.waitForTimeout(1500);
+    await pg.evaluate(() => showPage(5)); await pg.waitForTimeout(2500);
+    const a = await pg.evaluate(k0 => ({ st: window.__ccfAutoImp, rf: window.__ccfRefresh, probe: (JSON.parse(localStorage.getItem(k0) || '{}') || {}).__probe || null,
+      bar5: getComputedStyle(document.getElementById('packFreshBar5')).display, order: /📋 今月の注文書/.test((document.querySelector('#pg5') || {}).innerText || '') }), k0);
+    ok(s0 === 'done' && rf && a.st === null && (await ledgerN(pg)) === N && packFetches === 5 && a.rf.impNew === 5 && a.probe === 'keep',
+      '③ 台帳がパックの半分以上（5社だけ無い）・印なし → 開いたときの追いつきが無い5社だけを取り込む（取得 ' + packFetches + '件・台帳 ' + N + '社・既にある記録は置き換えない）');
+    ok(a.bar5 === 'none' && a.order, '   🛒買付順位の未取込の帯は出ず、注文書が出る');
+    // (b) 追いつきを止めた端末（'ccf:autoRefresh'='off'）→ 従来どおり帯で知らせるだけ
+    await drop5();
+    await pg.evaluate(() => localStorage.setItem('ccf:autoRefresh', 'off'));
     packFetches = 0;
     await pg.reload(); await pg.waitForTimeout(3000);
     const n0 = await ledgerN(pg);
     const st0 = await pg.evaluate(() => window.__ccfAutoImp);
     await pg.evaluate(() => showPage(5)); await pg.waitForTimeout(2500);
     const bar5 = await pg.evaluate(() => { const e = document.getElementById('packFreshBar5'); return { shown: getComputedStyle(e).display !== 'none', t: e.innerText }; });
-    ok(s0 === 'done' && n0 === N - 5 && st0 === null && packFetches === 0,
-      '③ 台帳がパックの半分以上（5社だけ無い）・印なし → 自動では取り込まない（台帳 ' + n0 + '社・自動取込 ' + JSON.stringify(st0) + '・取得 ' + packFetches + '件）');
+    ok(n0 === N - 5 && st0 === null && packFetches === 0,
+      '   追いつきを止めた端末（off）では自動では取り込まない（台帳 ' + n0 + '社・自動取込 ' + JSON.stringify(st0) + '・取得 ' + packFetches + '件）');
     ok(bar5.shown && /台帳に入っていないパックが 5社/.test(bar5.t) && /いま取り込む/.test(bar5.t) && /買付順位にも出ない/.test(bar5.t),
       '   🛒買付順位にも未取込の帯（理由と「⭳ いま取り込む」）');
     await pg.evaluate(() => { const btn = document.querySelector('#packFreshBar5 button'); btn && btn.click(); });
@@ -164,6 +182,7 @@ const ok = (c, m) => { console.log((c ? '  ✓ ' : '  ✗ ') + m); if (!c) ng++;
       bar5: getComputedStyle(document.getElementById('packFreshBar5')).display }));
     ok((await ledgerN(pg)) === N && after.page === 5 && after.order && after.bar5 === 'none',
       '   帯から押すと全部取り込み、ページは🛒買付順位のまま・注文書が出て帯は消える（page ' + after.page + '）');
+    await pg.evaluate(() => localStorage.removeItem('ccf:autoRefresh'));
     ok(errs.length === 0, '   pageerror 0件' + (errs.length ? '（' + errs[0].slice(0, 120) + '）' : ''));
   }
 
@@ -211,10 +230,12 @@ const ok = (c, m) => { console.log((c ? '  ✓ ' : '  ✗ ') + m); if (!c) ng++;
     ok(errs.length === 0, '   pageerror 0件' + (errs.length ? '（' + errs[0].slice(0, 120) + '）' : ''));
 
     // ⑤ 印が3回続けて残る（毎回終わらない）なら、諦めて印を消し、帯で知らせるだけにする
+    //   v9.9.219: ふつうの端末では、そのあと開いたときの追いつき（ccfAutoRefresh）が無い社を取り込む（③）。ここでは諦めた後の帯を見るため追いつきを止める（'ccf:autoRefresh'='off'）
     const prep2 = await pg.evaluate(() => {
       const ks = Object.keys(localStorage).filter(k => k.indexOf('g7:') === 0).sort();
       const drop = ks.slice(0, 5); drop.forEach(k => localStorage.removeItem(k));
       localStorage.setItem('ccf:autoImp', JSON.stringify({ at: new Date().toISOString(), tries: 3 }));
+      localStorage.setItem('ccf:autoRefresh', 'off');
       return { drop: drop.length };
     });
     PACK_DELAY = 0; packFetches = 0;
@@ -232,6 +253,7 @@ const ok = (c, m) => { console.log((c ? '  ✓ ' : '  ✗ ') + m); if (!c) ng++;
 
     // ⑦ 印は無いが台帳がパックの半分に届かない（印を置く前の版で押した一括取込を途中で閉じた等）→ 台帳にまだ無い社だけを続きから
     const prep3 = await pg.evaluate(() => {
+      localStorage.removeItem('ccf:autoRefresh');      // ⑤で止めた追いつきを戻す（続きの自動取込が走るので、この開き方では追いつきは呼ばれない）
       const ks = Object.keys(localStorage).filter(k => k.indexOf('g7:') === 0).sort();
       const keep = ks.filter((k, i) => i % 3 === 0);   // 3社に1社だけ残す＝半分に届かない
       const drop = ks.filter((k, i) => i % 3 !== 0); drop.forEach(k => localStorage.removeItem(k));
