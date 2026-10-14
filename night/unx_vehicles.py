@@ -171,9 +171,30 @@ def yahoo_tse_price(t):
     for ts, c in zip(j['timestamp'], q):
         if c:
             px[iymd(datetime.datetime.utcfromtimestamp(ts + off))] = c
+    # 悪い値（Yahoo が数日だけ別の単位〔実測: 1326.T が 2025-12・2026-01 にドル建ての値〕で返す）を落とす:
+    # 直前の10本の中央値から 0.3倍未満・3.3倍超へ跳び、20営業日以内に元の水準（0.5〜2倍）へ戻る塊は値の誤り。戻らなければ分割として下で扱う
+    ks0 = sorted(px)
+    keep, dropped, i = [], [], 0
+    while i < len(ks0):
+        if keep:
+            ref = S.median(px[k] for k in keep[-10:])
+            r_ = px[ks0[i]] / ref
+            if r_ < 0.3 or r_ > 3.3:
+                j = i
+                while j < len(ks0) and j - i < 20 and not (0.5 <= px[ks0[j]] / ref <= 2.0):
+                    j += 1
+                if j < len(ks0) and j - i < 20:
+                    dropped.extend(ks0[i:j])
+                    i = j
+                    continue
+        keep.append(ks0[i])
+        i += 1
+    px = {k: px[k] for k in keep}
     ks = sorted(px)
     nice = (2, 3, 4, 5, 8, 10, 16, 20, 25, 50, 100, 200, 500, 1000)
     f, ev, lv = 1.0, [], {}
+    if dropped:
+        ev.append((dropped[-1], f'悪い値として落とした日 {len(dropped)}日（最後 {dropped[-1]}・直近2年 {sum(1 for d in dropped if d >= 20240901)}日）'))
     fac = {ks[-1]: 1.0}
     for i in range(len(ks) - 1, 0, -1):
         q_ = px[ks[i]] / px[ks[i - 1]]
@@ -882,6 +903,7 @@ def main():
         '事前登録 D の「実際の費用」は回帰の傾きと1年ごとの差の平均の両方を挙げ、並べ方は1つ＝主は1年ごとの差の平均（repo の bestfund_vehicles・newfunds の物差し）と測る前に決めた。傾きは同じ行に並べ、名指しで食い違えばそう書いた',
         '投資信託協会の取得は nx_jpfunds_data.Lib を使った（指示にあった fetch_tsumitate_funds.Lib は User-Agent に個人のメールを載せる＝G3 で名指しされる道具なので使わない。トップを読んでから CSV を取る手順は同じ）',
         '日本1か月は全銀協 日本円 TIBOR 1か月（銀行間の無担保）・米国1か月は米国債1か月（無リスク）＝同じ種類の金利ではない（TIBOR のほうが信用の上乗せの分だけ高い＝ヘッジの費用の近似が小さめ＝ヘッジつきの器の実際の費用が大きめに出る向き）。無料で取れる日本の1か月の日次はこれだけ',
+        '東証の市場価格の代わり（1540・1326）で、Yahoo が数日だけ別の単位の値を返す日（1326.T: 2025-12-23・2026-01-13〜16 にドル建ての値）を見つけた＝分割の検査に「元へ戻る跳びは値の誤りとして落とす」を足した（初回の実行がこの値で 1326 の1年の費用 −27% などを出したのを見て直した・データの誤りの是正で、規則・候補・線は変えていない）',
         'SMH の実際の費用は自分の指数（MVIS US Listed Semiconductor 25）の日次が無料で取れない（marketvector.com は 403）ので測れない＝SOX の賭けの今の器の費用は表の経費率＋外国税＋両替で置いた',
         '2632・2569・2087（NASDAQ100 の円ヘッジの東証 ETF）は探索役が名前を挙げて測らなかった本。事前登録の一覧（2841）と同じ賭けとして測った（並びだけ・今の器なし）',
     ]
@@ -894,7 +916,7 @@ def main():
         'NISA の枠・楽天の取扱は投資信託協会の一覧（2026-10-09）と JPX・楽天の一覧の写真。変わることがある',
     ]
     doc['runtime_sec'] = round(time.time() - t0)
-    json.dump(doc, open(OUT, 'w'), ensure_ascii=False, indent=1)
+    json.dump(doc, open(OUT, 'w'), ensure_ascii=False, indent=1, default=lambda o: o.item() if hasattr(o, 'item') else str(o))
     log('→', OUT, doc['runtime_sec'], 's')
     log(json.dumps(doc['decision'], ensure_ascii=False, indent=1))
     return doc
