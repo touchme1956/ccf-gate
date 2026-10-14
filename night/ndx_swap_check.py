@@ -151,11 +151,12 @@ def judge(vt, wn, a, b):
     return dict(感度=per, まとめ=summarize(vs), 主の判定=vs['main'])
 
 
-def reading(summary, main_v, ins_ok, others):
+def reading(summary, main_v, ins_ok, others, dest='NASDAQ100'):
+    """事前登録 R1〜R5。dest＝回す先（smh_swap は SMH を渡す・既定は ndx_swap の NASDAQ100）"""
     if summary == '堅い価値あり':
         r = 'R1: 今のまま（残す）を勧める'
     elif summary == '堅い価値なし〜小さい':
-        r = ('R2: NASDAQ100 へ替えるほうが測りでは良い' if main_v == '価値なし' else 'R2: どちらでもよい（好みの差）')
+        r = (f'R2: {dest} へ替えるほうが測りでは良い' if main_v == '価値なし' else 'R2: どちらでもよい（好みの差）')
     elif ins_ok:
         r = 'R3: 今のまま（保険として 2026-10-13 の3条件を満たす）'
     else:

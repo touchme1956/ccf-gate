@@ -124,8 +124,11 @@ def main():
         main_j = judg[cj]['USD・崩れあり（主）']
         ins_ok = ins[cj]['USD の枠']['3条件すべて（崩れあり窓・書庫:19497 と同じ窓）']
         others = {fn: judg[cj][fn]['まとめ'] for fn in ('USD・ドットコム級なし', '円・崩れあり')}
-        read[cj] = dict(まとめ=main_j['まとめ'], 主の判定=main_j['主の判定'], 保険の3条件=ins_ok, 確かめの枠=others,
-                        読み=N.reading(main_j['まとめ'], main_j['主の判定'], ins_ok, others) + ('' if judged else '（参考・判定に使わない）'))
+        if a == CUR:
+            rd = N.reading(main_j['まとめ'], main_j['主の判定'], ins_ok, others, dest='SMH') + ('' if judged else '（参考・判定に使わない）')
+        else:   # 今との比べではない（E − B）＝ R1〜R5 の『今のまま』の読みは当てない
+            rd = f"（参考・判定に使わない）まとめ {main_j['まとめ']}・主 {main_j['主の判定']}——今との比べではないので R1〜R5 の読みは当てない"
+        read[cj] = dict(まとめ=main_j['まとめ'], 主の判定=main_j['主の判定'], 保険の3条件=ins_ok, 確かめの枠=others, 読み=rd)
 
     U.log('参考: 上振れ・転がる積立・本物の窓・下げ・集中')
 
