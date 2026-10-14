@@ -381,9 +381,30 @@ def jita_2621():
     if _fresh(p, 7):
         return json.load(open(p))
     try:
-        from fetch_tsumitate_funds import Lib, BASE as TLB
-        lib = Lib()
-        hits = lib.search('米国債20年超')
+        import nx_jpfunds_data as JD               # 投信ライブラリーの客（UA に個人の連絡先を載せない＝nx_common.UA）
+        lib = JD.Lib()
+        TLB = JD.LIB
+
+        def search(keyword, limit=200):
+            """fetch_tsumitate_funds.Lib.search と同じ検索の本文（t_keyword）を、中立の UA の JD.Lib のセッションで"""
+            rows, start = [], 0
+            while start < limit:
+                body = {f: [] for f in JD.ARRAY_FIELDS}
+                body.update({'t_keyword': keyword, 't_kensakuKbn': '1', 't_searchInfoFlag': '1', 'startNo': start, 'draw': 1,
+                             'searchBtnClickFlg': True})
+                req = urllib.request.Request(TLB + '/FdsWeb/FDST999900/fundDataSearch', data=json.dumps(body).encode(),
+                                             headers={'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest',
+                                                      'Referer': TLB + '/FdsWeb/FDST999900', 'User-Agent': N.UA['User-Agent']})
+                d = json.loads(lib.op.open(req, timeout=60).read().decode())
+                info = d.get('searchResultInfo') or {}
+                got = info.get('resultInfoMapList') or []
+                rows += got
+                start += len(got)
+                if not got or start >= int(info.get('recordsTotal') or 0):
+                    break
+                time.sleep(0.5)
+            return rows
+        hits = search('米国債20年超')
         cand = [h for h in hits if '為替ヘッジあり' in (h.get('fundNm') or '') and 'iシェアーズ' in (h.get('fundNm') or '').replace('ｉ', 'i')]
         if not cand:
             cand = [h for h in hits if '為替ヘッジあり' in (h.get('fundNm') or '') and '20年超' in (h.get('fundNm') or '')]
@@ -392,7 +413,9 @@ def jita_2621():
         h = cand[0]
         url = (TLB + '/FdsWeb/FDST030000/csv-file-download?' + urllib.parse.urlencode({'isinCd': h['isinCd'], 'associFundCd': h['associFundCd']}))
         time.sleep(0.5)
-        b = lib.op.open(url, timeout=60).read()
+        b = lib.csv(h['isinCd'], h['associFundCd'])
+        if b is None:
+            return dict(ok=False, reason='基準価額の CSV が無い（HTTP 500）')
         try:
             s = b.decode('utf-8')
         except UnicodeDecodeError:

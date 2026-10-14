@@ -155,6 +155,8 @@ def main():
 
     deviations = list(info['deviations'])
     if shld_failed:
+        deviations.append('事前登録の食い違いの読み: A_final_allocation.new_assets.SHLD は 2023-09 以前を ITA と書き、common.proxy_gate は相関 ≥ 0.90 の代理だけを使い'
+                          '満たせない本を外すと書く。この道具は common.proxy_gate を優先した（＝事前登録どおりの判定は『測れない』）。ITA つなぎの F_now は参考として並べた')
         deviations.append('SHLD: 事前登録の代理（2023-09 以前は ITA）が代理の門を通らない（相関 '
                           f"{info['gates']['SHLD']['corr']}・36か月）。F_now は事前登録どおりには測れない。参考として、門を通らない ITA つなぎのまま SHLD を置いた F_now と、"
                           'SHLD5 を ITA5 に置いた F_now_ITA10 を同じ物差しで並べた（どちらも 2023-09 以前の SHLD の部分は ITA と同じ＝違いは最後の36か月だけ）')
