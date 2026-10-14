@@ -38,6 +38,9 @@
  *      不足が半株に届かない本は候補にしない）・true/'castle' は個別株だけ（⑱）。実データは盤に値段の無い本（XLV・FBT・SHLD・
  *      main に入るまで）へ検査の中で値段を足して見る（盤に値段があればそちらを使う）。⑱ の実データの部分は 'castle' を検査の中で作って見る
  *
+ *   ㉑ 投資信託の区分が2つ（2026-10-14「SMH15％SOX10に変えてマージして」＝楽天・プラス・SOX）: 端数と使い残しは2つの投資信託の区分へ取り分の比で・
+ *      2本ともお金を受ける月の行の文・旧の組み方（mkNb）の端数は1回だけ
+ *
  * playwright が要るので CI には入れていない。使い方: node night/check_sleeve_split.js
  */
 const { chromium } = require('playwright');
@@ -403,11 +406,13 @@ const srv = http.createServer((q, r) => {
     {
       const LB = base.target.ami_labels || {}, OB0 = r12.OB || {};
       const cxs = Object.keys(OB0).filter(t => /-USD$/.test(t) && (+OB0[t] || 0) > 0);
-      const cxBad = cxs.filter(t => { const tx = r12.fr.find(x => x.includes(LB[t] || t)); return !tx || !/取引所で金額で買う/.test(tx) || /残りの円は全部ここへ/.test(tx); });
-      const fundRest = r12.fr.filter(x => /残りの円は全部ここへ/.test(x));
+      // ★2026-10-14: 投資信託の区分が2つ（iFreeNEXT・楽天・プラス・SOX）になり、2本ともお金を受ける月は「残りの円は投資信託へ（2本の取り分の比で分ける）」と書く
+      const REST = /残りの円は(?:全部ここへ|投資信託へ)/;
+      const cxBad = cxs.filter(t => { const tx = r12.fr.find(x => x.includes(LB[t] || t)); return !tx || !/取引所で金額で買う/.test(tx) || REST.test(tx); });
+      const fundRest = r12.fr.filter(x => REST.test(x));
       const fundY = Object.keys(OB0).filter(t => (base.target.ami_funds || {})[t] && (+OB0[t] || 0) > 0);
       ok(!cxBad.length && fundRest.length >= (fundY.length ? 1 : 0) && fundRest.every(x => !cxs.some(t => x.includes(LB[t] || t))),
-         `⑫ 割り方 '${m}'（実データ）: 暗号資産の行（${cxs.map(t => (LB[t] || t) + ' ¥' + OB0[t]).join('・') || 'なし'}）は「取引所で金額で買う」・「残りの円は全部ここへ」は投資信託の行だけ（${fundRest.length}行）`
+         `⑫ 割り方 '${m}'（実データ）: 暗号資産の行（${cxs.map(t => (LB[t] || t) + ' ¥' + OB0[t]).join('・') || 'なし'}）は「取引所で金額で買う」・「残りの円は全部ここへ／投資信託へ」は投資信託の行だけ（${fundRest.length}行）`
          + (cxBad.length ? ' ／ 食い違い ' + cxBad.join('・') : ''));
     }
     const bad = r12.OB ? r12.sec.filter(x => x.buy !== ((+r12.OB[x.t] || 0) > 0)) : [{ t: '注文書の円が無い' }];
@@ -957,6 +962,60 @@ const srv = http.createServer((q, r) => {
          '⑳ 実データ（入金17万）: 先に買う本 ' + r20.tagged.join('・') + '（個別株 ¥' + r20.castle.toLocaleString() + '・合計 ¥' + r20.total.toLocaleString()
          + '）／ castle なら ' + r20c.tagged.join('・') + '（個別株 ¥' + r20c.castle.toLocaleString() + '）');
     } else ok(true, '   （正本の unowned_first が all でないので ⑳ の実データの部分は飛ばす）');
+  }
+
+  // ㉑ 投資信託の区分が2つ（2026-10-14 ユーザー明示指示「SMH15％SOX10に変えてマージして」＝楽天・プラス・SOX を足した）:
+  //   ① 区分の比率の計画（ccfCatSharePlan）: 丸株の端数と使い残しは2つの投資信託の区分へ「その月の取り分の比」で分かれ、合計は入金にぴったり
+  //   ② 実データ（正本の保有＋全パック・割り方 cat）: NASDAQ100 も目標を下回る形を検査の中で作り、2本ともお金を受ける月は
+  //      どちらの行も「残りの円は投資信託へ（2本の取り分の比で分ける）」で、「全部ここへ」とは言わない
+  //   ③ 旧の組み方（mkNb・割り方 gap）: 端数は投資信託の行に1回だけ足す（旧は投資信託の行ごとに同じ端数を足し、合計が入金を超えた）
+  {
+    await pg.goto('http://localhost:' + PORT + '/index.html'); await pg.waitForTimeout(600);
+    const q21 = await pg.evaluate(() => {
+      const TOT = 2000000, T = 200000;
+      const K = { tot: TOT, 'n:IFREE-NDX': { t: 40, now: 35, nm: 'NASDAQ100', fund: true }, 'n:SMH': { t: 15, now: 12, nm: 'SMH' },
+        'n:RPLUS-SOX': { t: 10, now: 5, nm: 'SOX', fund: true }, c: { t: 35, now: 48, nm: '個別株' } };
+      const items = [
+        { k: 'N0', g: 'n:IFREE-NDX', tw: 40, pos: 35, jpy: 5.8, frac: true },
+        { k: 'N1', g: 'n:SMH', tw: 15, pos: 12, jpy: 95000 },     // 取り分が1株の半分に届かない＝取り分は投資信託へ
+        { k: 'N2', g: 'n:RPLUS-SOX', tw: 10, pos: 5, jpy: 3.1, frac: true },
+        { k: 'C0', g: 'c', tw: 5, pos: 20, jpy: 60000 }];
+      const B = ccfCatBudget(Object.assign({}, K), T), p = ccfCatSharePlan(items, T, TOT, K);
+      const used = Object.values(p.buy).reduce((a, b) => a + b.cost, 0) + Object.values(p.frac).reduce((a, b) => a + b, 0) + p.rest;
+      return { b0: B['n:IFREE-NDX'].b, b2: B['n:RPLUS-SOX'].b, f0: p.frac.N0 || 0, f2: p.frac.N2 || 0, nbuy: Object.keys(p.buy).length, used, rest: p.rest };
+    });
+    const pool = q21.f0 + q21.f2, want0 = pool * q21.b0 / (q21.b0 + q21.b2);
+    ok(q21.f0 > 0 && q21.f2 > 0 && Math.abs(q21.f0 - want0) <= 200 && q21.used === 200000 && q21.nbuy === 0,
+       '㉑ 投資信託の区分が2つ（入金20万・SMH は1株の半分に届かない）: 端数と使い残し ¥' + pool.toLocaleString() + ' を取り分の比（¥'
+       + Math.round(q21.b0).toLocaleString() + ' : ¥' + Math.round(q21.b2).toLocaleString() + '）で NASDAQ100 ¥' + q21.f0.toLocaleString() + '・SOX ¥' + q21.f2.toLocaleString()
+       + 'へ・合計は入金にぴったり（残り ¥' + q21.rest + '）');
+    if ((base.target.ami_funds || {})['RPLUS-SOX'] && (+(base.target.ami_weights || {})['RPLUS-SOX'] || 0) > 0) {
+      const two = (m) => { const o = withMode(m), W = o.target.ami_weights;   // NASDAQ100 も目標を下回る形（合計は ami_net_pct のまま）
+        const d = Math.min(+W.SMH || 0, 15); W['IFREE-NDX'] = (+W['IFREE-NDX'] || 0) + d; W.SMH = (+W.SMH || 0) - d; return o; };
+      const load21 = async (over, amt) => {
+        OVER = over;
+        await pg.goto('http://localhost:' + PORT + '/index.html'); await pg.waitForTimeout(600);
+        await pg.evaluate(stt => { localStorage.clear(); for (const k in stt.data) localStorage.setItem(k, stt.data[k]);
+          localStorage.setItem('ccf:stateSavedAt', stt.savedAt); }, ST);
+        await pg.reload(); await pg.waitForTimeout(1500);
+        await pg.evaluate(() => ccfImportAllPacks()); await pg.waitForTimeout(1800);
+        await pg.evaluate(a => { localStorage.setItem('pf:monthly_total', String(a)); showPage(5); }, amt); await pg.waitForTimeout(3200);
+        return pg.evaluate(() => {
+          const fr = [...document.querySelectorAll('#pg5 div.planrow')].map(e => e.innerText).filter(x => /金額で買う/.test(x));
+          const txt = (document.querySelector('#pg5') || {}).innerText || '';
+          const tot = (txt.match(/合計 約?¥([\d,]+)/) || [0, '0'])[1];
+          return { fr, tot: +String(tot).replace(/,/g, '') };
+        });
+      };
+      const r21 = await load21(two('cat'), 1000000);
+      const both = r21.fr.filter(x => /残りの円は投資信託へ/.test(x) && /2本の取り分の比で分ける/.test(x));
+      ok(r21.fr.length >= 2 && both.length >= 2 && !r21.fr.some(x => /残りの円は全部ここへ/.test(x)) && r21.tot <= 1000000,
+         '㉑ 実データ（SMH の15を NASDAQ100 へ移した形・入金100万）: 金額で買う行 ' + r21.fr.length + '本のうち ' + both.length + '本が「残りの円は投資信託へ（2本の取り分の比で分ける）」・「全部ここへ」は無し・合計 ¥' + r21.tot.toLocaleString());
+      const r21g = await load21(two('gap'), 1000000);
+      const abs = r21g.fr.filter(x => /＋端数/.test(x));
+      ok(r21g.fr.length >= 2 && abs.length <= 1 && r21g.tot > 0 && r21g.tot <= 1000000,
+         '㉑ 旧の組み方（割り方 gap・同じ形）: 投資信託の行 ' + r21g.fr.length + '本・「＋端数」は ' + abs.length + '本だけ・合計 ¥' + r21g.tot.toLocaleString() + '（入金を超えない）');
+    } else ok(true, '   （正本に楽天・プラス・SOX が無いので ㉑ の実データの部分は飛ばす）');
   }
 
   ok(errs.length === 0, 'pageerror 0件' + (errs.length ? '（' + errs[0].slice(0, 120) + '）' : ''));
