@@ -348,6 +348,13 @@ jobs:
       # ⚠2026-08-10: **ops_status を最後へ移した。** 以前は wacc の**前**に居たので、
       #   コミットされる out/ops_status.json は必ず1ヶ月前の wacc 日付を載せていた
       #   ——盤が自分より後の作業を測れない、という順序の誤り。
+      # ── パック索引の指紋を作り直す（2026-10-14）──────────────────────────────
+      #   上の段（audit_wacc_stale --write・backfill_machine_evidence --write・fill_intcov --write ほか）が
+      #   パックを書くので、**パックを書く段の後**でもう一度作る。make_chunks（上の「パック索引の再生成」）の
+      #   時点の指紋のままだと、門（v9.9.219）がこの実行で新しくなったパックに気づかない。
+      - name: パック索引の指紋を作り直す（パックを書く段の後）
+        continue-on-error: true
+        run: python3 night/packs_index.py --write
       - name: 運用サイクルの回転状態を実測（必ず最後）
         run: python3 night/ops_status.py
 
