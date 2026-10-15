@@ -1,0 +1,1173 @@
+{
+ "generated": "2026-10-14",
+ "about": "out/compounder_fit.json（事前登録 06d101cc・結果 98999a81）の検証。数字は書き換えていない（すべて事後の注記）。",
+ "independent_reimplementation": {
+  "how": "別の担当が事前登録の文面とデータだけから標準ライブラリで作り直し、元の道具を開く前に自分の数字を保存してから突き合わせた。",
+  "match_summary": {
+   "scope": "Family A: every primary+replicate cell (63 cells: n_pop, n_S, n_notS, events_S, events_notS, P(S), P(notS), delta, 95% Newcombe CI, Fisher p, MH delta, MH strata, n-rule flag), 22 Holm p, the 10% table (p_S, p_notS, delta, CI, p for every compounder-metric cell), replicate signs and 22 verdicts; Family B B1-B5 numbers and verdicts; also base_rates (5 vintages), 31 quantile cut values in S_def, and the extra B fields (B1 tickers/shares, B2 iqr_tr_cagr, B3 largest5).",
+   "fields_compared": 1317,
+   "mismatches_my_readings_after_fixing_my_bug": 27,
+   "mismatches_my_pre_comparison_output_v1": 55,
+   "mismatches_when_I_adopt_their_readings_for_the_two_data_ambiguities": 1,
+   "verdicts": "27 verdicts (A01-A22, B1-B5): 26 identical. A22 differs only in how a gap in the pre-registered null-prediction rules is filled (no reading of the data differs).",
+   "exact_agreement": [
+    "All 22 Fisher p and all 22 Holm p identical to <=1e-9 relative; all 63 cells: counts identical, P(S)/P(notS)/delta/CI identical at 4 dp, Fisher p identical to <=1e-9 relative",
+    "All 10%-line cells identical (after my fix)",
+    "All 31 quantile cut values identical (type-7 linear interpolation; upper >= cut, lower <= cut: the original states the same readings in implementation_notes)",
+    "base_rates identical (2013 941/199/49/392, 2015 503/99/9/213, 2016 946/230/55/405, 2017 951/222/60/386, 2018 952/200/77/358)",
+    "B1, B2, B4, B5 numbers identical; B3 identical when top-10% count = round(0.10*n)",
+    "MH delta identical in 51 of 63 cells under my reading and in 63 of 63 cells when sic2=None is kept as its own stratum"
+   ],
+   "B_results": {
+    "B1": {
+     "share_shallower_than_SPY": 0.0302,
+     "n_shallower": 6,
+     "median_mdd_compounders": -0.476,
+     "median_mdd_rest": -0.663,
+     "verdict": "当てはまった"
+    },
+    "B2": {
+     "iqr_mdd": 0.2175,
+     "spearman": -0.0608,
+     "verdict": "当てはまった"
+    },
+    "B3": {
+     "top10_share_k95_type7cut": 0.536,
+     "top10_share_k94_round": 0.5341,
+     "within_compounders_k20": 0.4807,
+     "verdict": "当てはまった"
+    },
+    "B4": {
+     "2013": 0.1895,
+     "2015": 0.138,
+     "2018": 0.1315,
+     "verdict": "当てはまった"
+    },
+    "B5": {
+     "significant_after_holm": {
+      "compounder": 2,
+      "destroy": 4
+     },
+     "which": {
+      "compounder": [
+       "A11",
+       "A13"
+      ],
+      "destroy": [
+       "A06",
+       "A17",
+       "A18",
+       "A19"
+      ]
+     },
+     "verdict": "当てはまった"
+    }
+   },
+   "my_primary_table": [
+    {
+     "id": "A01",
+     "metric": "compounder",
+     "predict": "null",
+     "primary": 2013,
+     "n": 941,
+     "n_S": 236,
+     "events": 199,
+     "P_S": 0.1864,
+     "P_notS": 0.2199,
+     "delta": -0.0334,
+     "ci95": [
+      -0.0883,
+      0.0284
+     ],
+     "fisher_p": 0.3112567527274146,
+     "holm_p": 1.0,
+     "mh_delta_sic2None_dropped": -0.025,
+     "rep_deltas": {
+      "2015": -0.0614,
+      "2016": -0.0654,
+      "2017": -0.0312,
+      "2018": 0.0165
+     },
+     "my_verdict": "当てはまった（差が見えない）",
+     "their_verdict": "当てはまった（差が見えない）"
+    },
+    {
+     "id": "A02",
+     "metric": "compounder",
+     "predict": "null",
+     "primary": 2018,
+     "n": 948,
+     "n_S": 164,
+     "events": 199,
+     "P_S": 0.1707,
+     "P_notS": 0.2181,
+     "delta": -0.0474,
+     "ci95": [
+      -0.1057,
+      0.0232
+     ],
+     "fisher_p": 0.20566416480160776,
+     "holm_p": 1.0,
+     "mh_delta_sic2None_dropped": -0.027,
+     "rep_deltas": {
+      "2016": -0.0503,
+      "2017": -0.0728
+     },
+     "my_verdict": "判定できない（差は見えないが区間が広い）",
+     "their_verdict": "判定できない（差は見えないが区間が広い）"
+    },
+    {
+     "id": "A03",
+     "metric": "compounder",
+     "predict": "null",
+     "primary": 2013,
+     "n": 941,
+     "n_S": 358,
+     "events": 199,
+     "P_S": 0.1927,
+     "P_notS": 0.223,
+     "delta": -0.0302,
+     "ci95": [
+      -0.0819,
+      0.0241
+     ],
+     "fisher_p": 0.28584657424492255,
+     "holm_p": 1.0,
+     "mh_delta_sic2None_dropped": 0.0023,
+     "rep_deltas": {
+      "2016": -0.0699,
+      "2017": -0.0435,
+      "2018": -0.026
+     },
+     "my_verdict": "当てはまった（差が見えない）",
+     "their_verdict": "当てはまった（差が見えない）"
+    },
+    {
+     "id": "A04",
+     "metric": "destroy",
+     "predict": "negative",
+     "primary": 2013,
+     "n": 941,
+     "n_S": 358,
+     "events": 49,
+     "P_S": 0.0251,
+     "P_notS": 0.0686,
+     "delta": -0.0435,
+     "ci95": [
+      -0.0698,
+      -0.0152
+     ],
+     "fisher_p": 0.00367845539261866,
+     "holm_p": 0.05885528628189856,
+     "mh_delta_sic2None_dropped": -0.0596,
+     "rep_deltas": {
+      "2016": -0.0597,
+      "2017": -0.087,
+      "2018": -0.0799
+     },
+     "my_verdict": "向きは合う（弱い）",
+     "their_verdict": "向きは合う（弱い）"
+    },
+    {
+     "id": "A05",
+     "metric": "compounder",
+     "predict": "null",
+     "primary": 2013,
+     "n": 941,
+     "n_S": 382,
+     "events": 199,
+     "P_S": 0.212,
+     "P_notS": 0.2111,
+     "delta": 0.001,
+     "ci95": [
+      -0.0512,
+      0.055
+     ],
+     "fisher_p": 1.0,
+     "holm_p": 1.0,
+     "mh_delta_sic2None_dropped": 0.0146,
+     "rep_deltas": {
+      "2015": -0.0109
+     },
+     "my_verdict": "当てはまった（差が見えない）",
+     "their_verdict": "当てはまった（差が見えない）"
+    },
+    {
+     "id": "A06",
+     "metric": "destroy",
+     "predict": "positive",
+     "primary": 2013,
+     "n": 941,
+     "n_S": 310,
+     "events": 49,
+     "P_S": 0.0935,
+     "P_notS": 0.0317,
+     "delta": 0.0619,
+     "ci95": [
+      0.0295,
+      0.101
+     ],
+     "fisher_p": 0.00012791592505837407,
+     "holm_p": 0.002302486651050733,
+     "mh_delta_sic2None_dropped": 0.068,
+     "rep_deltas": {
+      "2015": 0.0117
+     },
+     "my_verdict": "当てはまった",
+     "their_verdict": "当てはまった"
+    },
+    {
+     "id": "A07",
+     "metric": "compounder",
+     "predict": "null",
+     "primary": 2013,
+     "n": 342,
+     "n_S": 122,
+     "events": 67,
+     "P_S": 0.1803,
+     "P_notS": 0.2045,
+     "delta": -0.0242,
+     "ci95": [
+      -0.1064,
+      0.0671
+     ],
+     "fisher_p": 0.6702470419682924,
+     "holm_p": 1.0,
+     "mh_delta_sic2None_dropped": -0.0278,
+     "rep_deltas": {
+      "2015": 0.0559,
+      "2018": -0.0358
+     },
+     "my_verdict": "判定できない（差は見えないが区間が広い）",
+     "their_verdict": "判定できない（差は見えないが区間が広い）"
+    },
+    {
+     "id": "A08",
+     "metric": "compounder",
+     "predict": "null",
+     "primary": 2018,
+     "n": 944,
+     "n_S": 235,
+     "events": 198,
+     "P_S": 0.1787,
+     "P_notS": 0.22,
+     "delta": -0.0413,
+     "ci95": [
+      -0.0954,
+      0.02
+     ],
+     "fisher_p": 0.19592399240895794,
+     "holm_p": 1.0,
+     "mh_delta_sic2None_dropped": -0.036,
+     "rep_deltas": {},
+     "my_verdict": "当てはまった（差が見えない）",
+     "their_verdict": "当てはまった（差が見えない）"
+    },
+    {
+     "id": "A09",
+     "metric": "compounder",
+     "predict": "null",
+     "primary": 2018,
+     "n": 944,
+     "n_S": 236,
+     "events": 198,
+     "P_S": 0.2458,
+     "P_notS": 0.1977,
+     "delta": 0.048,
+     "ci95": [
+      -0.0113,
+      0.1129
+     ],
+     "fisher_p": 0.1176502768971716,
+     "holm_p": 1.0,
+     "mh_delta_sic2None_dropped": 0.0344,
+     "rep_deltas": {},
+     "my_verdict": "判定できない（差は見えないが区間が広い）",
+     "their_verdict": "判定できない（差は見えないが区間が広い）"
+    },
+    {
+     "id": "A10",
+     "metric": "compounder",
+     "predict": "negative",
+     "primary": 2018,
+     "n": 944,
+     "n_S": 237,
+     "events": 198,
+     "P_S": 0.1814,
+     "P_notS": 0.2192,
+     "delta": -0.0378,
+     "ci95": [
+      -0.0921,
+      0.0235
+     ],
+     "fisher_p": 0.23162855728975407,
+     "holm_p": 1.0,
+     "mh_delta_sic2None_dropped": -0.0403,
+     "rep_deltas": {},
+     "my_verdict": "向きは合う（弱い）",
+     "their_verdict": "向きは合う（弱い）"
+    },
+    {
+     "id": "A11",
+     "metric": "compounder",
+     "predict": "positive",
+     "primary": 2018,
+     "n": 136,
+     "n_S": 21,
+     "events": 36,
+     "P_S": 0.7143,
+     "P_notS": 0.1826,
+     "delta": 0.5317,
+     "ci95": [
+      0.3032,
+      0.691
+     ],
+     "fisher_p": 2.9499357824086344e-06,
+     "holm_p": 6.489858721298996e-05,
+     "mh_delta_sic2None_dropped": 0.3679,
+     "rep_deltas": {
+      "2013": 0.459,
+      "2015": 0.3453
+     },
+     "my_verdict": "当てはまった",
+     "their_verdict": "当てはまった"
+    },
+    {
+     "id": "A12",
+     "metric": "compounder",
+     "predict": "negative",
+     "primary": 2015,
+     "n": 498,
+     "n_S": 14,
+     "events": 99,
+     "P_S": 0.0714,
+     "P_notS": 0.2025,
+     "delta": -0.1311,
+     "ci95": [
+      -0.201,
+      0.1145
+     ],
+     "fisher_p": 0.321058638976711,
+     "holm_p": 1.0,
+     "mh_delta_sic2None_dropped": -0.1378,
+     "rep_deltas": {
+      "2013": -0.219
+     },
+     "my_verdict": "向きは合う（弱い）",
+     "their_verdict": "向きは合う（弱い）"
+    },
+    {
+     "id": "A13",
+     "metric": "compounder",
+     "predict": "negative",
+     "primary": 2013,
+     "n": 248,
+     "n_S": 62,
+     "events": 53,
+     "P_S": 0.371,
+     "P_notS": 0.1613,
+     "delta": 0.2097,
+     "ci95": [
+      0.0851,
+      0.3423
+     ],
+     "fisher_p": 0.0010649572123359425,
+     "holm_p": 0.018104272609711022,
+     "mh_delta_sic2None_dropped": 0.2021,
+     "rep_deltas": {
+      "2015": 0.0893,
+      "2018": 0.0629
+     },
+     "my_verdict": "逆",
+     "their_verdict": "逆"
+    },
+    {
+     "id": "A14",
+     "metric": "compounder",
+     "predict": "positive",
+     "primary": 2018,
+     "n": 743,
+     "n_S": 248,
+     "events": 175,
+     "P_S": 0.2016,
+     "P_notS": 0.2525,
+     "delta": -0.0509,
+     "ci95": [
+      -0.1113,
+      0.0144
+     ],
+     "fisher_p": 0.14233108025600077,
+     "holm_p": 1.0,
+     "mh_delta_sic2None_dropped": 0.0303,
+     "rep_deltas": {
+      "2016": -0.0522,
+      "2017": -0.065
+     },
+     "my_verdict": "当てはまらない",
+     "their_verdict": "当てはまらない"
+    },
+    {
+     "id": "A15",
+     "metric": "destroy",
+     "predict": "negative",
+     "primary": 2013,
+     "n": 382,
+     "n_S": 304,
+     "events": 12,
+     "P_S": 0.0329,
+     "P_notS": 0.0256,
+     "delta": 0.0073,
+     "ci95": [
+      -0.0576,
+      0.0397
+     ],
+     "fisher_p": 1.0,
+     "holm_p": 1.0,
+     "mh_delta_sic2None_dropped": -0.0041,
+     "rep_deltas": {
+      "2015": -0.0422
+     },
+     "my_verdict": "当てはまらない",
+     "their_verdict": "当てはまらない"
+    },
+    {
+     "id": "A16",
+     "metric": "compounder",
+     "predict": "null",
+     "primary": 2013,
+     "n": 941,
+     "n_S": 314,
+     "events": 199,
+     "P_S": 0.2261,
+     "P_notS": 0.2041,
+     "delta": 0.022,
+     "ci95": [
+      -0.0323,
+      0.0796
+     ],
+     "fisher_p": 0.4468580281455404,
+     "holm_p": 1.0,
+     "mh_delta_sic2None_dropped": 0.0397,
+     "rep_deltas": {
+      "2015": 0.0262,
+      "2016": 0.0056,
+      "2017": 0.0047,
+      "2018": 0.03
+     },
+     "my_verdict": "当てはまった（差が見えない）",
+     "their_verdict": "当てはまった（差が見えない）"
+    },
+    {
+     "id": "A17",
+     "metric": "destroy",
+     "predict": "negative",
+     "primary": 2013,
+     "n": 941,
+     "n_S": 314,
+     "events": 49,
+     "P_S": 0.0096,
+     "P_notS": 0.0734,
+     "delta": -0.0638,
+     "ci95": [
+      -0.0878,
+      -0.0383
+     ],
+     "fisher_p": 6.546339152080278e-06,
+     "holm_p": 0.0001243804438895253,
+     "mh_delta_sic2None_dropped": -0.0665,
+     "rep_deltas": {
+      "2015": -0.009,
+      "2016": -0.0683,
+      "2017": -0.0804,
+      "2018": -0.0962
+     },
+     "my_verdict": "当てはまった",
+     "their_verdict": "当てはまった"
+    },
+    {
+     "id": "A18",
+     "metric": "destroy",
+     "predict": "positive",
+     "primary": 2018,
+     "n": 690,
+     "n_S": 211,
+     "events": 46,
+     "P_S": 0.1374,
+     "P_notS": 0.0355,
+     "delta": 0.102,
+     "ci95": [
+      0.0569,
+      0.1566
+     ],
+     "fisher_p": 3.091413643736208e-06,
+     "holm_p": 6.491968651846036e-05,
+     "mh_delta_sic2None_dropped": 0.1137,
+     "rep_deltas": {
+      "2016": 0.0677,
+      "2017": 0.0899
+     },
+     "my_verdict": "当てはまった",
+     "their_verdict": "当てはまった"
+    },
+    {
+     "id": "A19",
+     "metric": "destroy",
+     "predict": "positive",
+     "primary": 2018,
+     "n": 874,
+     "n_S": 176,
+     "events": 72,
+     "P_S": 0.1761,
+     "P_notS": 0.0587,
+     "delta": 0.1174,
+     "ci95": [
+      0.0643,
+      0.1822
+     ],
+     "fisher_p": 3.875635123171333e-06,
+     "holm_p": 7.751270246342666e-05,
+     "mh_delta_sic2None_dropped": 0.111,
+     "rep_deltas": {
+      "2016": 0.0876,
+      "2017": 0.079
+     },
+     "my_verdict": "当てはまった",
+     "their_verdict": "当てはまった"
+    },
+    {
+     "id": "A20",
+     "metric": "compounder",
+     "predict": "positive",
+     "primary": 2018,
+     "n": 701,
+     "n_S": 234,
+     "events": 147,
+     "P_S": 0.1923,
+     "P_notS": 0.2184,
+     "delta": -0.0261,
+     "ci95": [
+      -0.0864,
+      0.0394
+     ],
+     "fisher_p": 0.4911205186843591,
+     "holm_p": 1.0,
+     "mh_delta_sic2None_dropped": -0.0329,
+     "rep_deltas": {
+      "2016": -0.0243,
+      "2017": -0.0182
+     },
+     "my_verdict": "当てはまらない",
+     "their_verdict": "当てはまらない"
+    },
+    {
+     "id": "A21",
+     "metric": "compounder",
+     "predict": "positive",
+     "primary": 2013,
+     "n": 694,
+     "n_S": 233,
+     "events": 148,
+     "P_S": 0.1845,
+     "P_notS": 0.2278,
+     "delta": -0.0432,
+     "ci95": [
+      -0.1034,
+      0.0223
+     ],
+     "fisher_p": 0.203028780460101,
+     "holm_p": 1.0,
+     "mh_delta_sic2None_dropped": -0.0118,
+     "rep_deltas": {
+      "2015": 0.0063,
+      "2018": 0.0
+     },
+     "my_verdict": "当てはまらない",
+     "their_verdict": "当てはまらない"
+    },
+    {
+     "id": "A22",
+     "metric": "compounder",
+     "predict": "null",
+     "primary": 2013,
+     "n": 941,
+     "n_S": 315,
+     "events": 199,
+     "P_S": 0.1651,
+     "P_notS": 0.2348,
+     "delta": -0.0697,
+     "ci95": [
+      -0.1204,
+      -0.0148
+     ],
+     "fisher_p": 0.01411825187725897,
+     "holm_p": 0.21177377815888457,
+     "mh_delta_sic2None_dropped": -0.0095,
+     "rep_deltas": {
+      "2015": -0.0542
+     },
+     "my_verdict": "UNCOVERED(raw p<0.05, Holm p>=0.05)",
+     "their_verdict": "判定できない（差は見えないが区間が広い）"
+    }
+   ]
+  },
+  "mismatches": [
+   {
+    "id": "M1",
+    "cells": [
+     "A14/2016 (replicate)",
+     "A21/2015 (replicate)"
+    ],
+    "what": "n_S off by one (244 vs 245; 45 vs 46) and every derived field (P(S), P(notS), delta, CI, Fisher p, MH, the 10% line).",
+    "cause": "MY BUG (fixed). The exact type-7 position (n-1)*2/3 is an integer for these two cells (733 -> 488, 136 -> 90). I computed it as (n-1)*(1-1/3) in floating point, which gives 488.00000000000006 / 90.00000000000001, so my cut sat a hair above x[h] and the row at the cut was dropped from the upper group. Exact arithmetic puts the cut at x[h] and >= keeps it: 245 and 46, as in the original. Fixed by computing plotting positions as exact fractions; after the fix the two cells match to the last digit.",
+    "detail": [
+     {
+      "cell": "A14/2016",
+      "v1_n_S": 244,
+      "v2_n_S": 245,
+      "their_n_S": 245,
+      "v1_delta": -0.0507,
+      "v2_delta": -0.0522,
+      "their_delta": -0.0522,
+      "v1_p": 0.15488115581953302,
+      "v2_p": 0.15479201555105604,
+      "their_p": 0.15479201555104585
+     },
+     {
+      "cell": "A21/2015",
+      "v1_n_S": 45,
+      "v2_n_S": 46,
+      "their_n_S": 46,
+      "v1_delta": 0.0134,
+      "v2_delta": 0.0063,
+      "their_delta": 0.0063,
+      "v1_p": 1.0,
+      "v2_p": 1.0,
+      "their_p": 1.0
+     }
+    ],
+    "verdict_effect": "none (both are replicates of tests whose primary decides the verdict: A14 primary opposite direction; A21 primary opposite direction)"
+   },
+   {
+    "id": "M2",
+    "cells": [
+     "A01/2015",
+     "A05/2015",
+     "A06/2015",
+     "A07/2015",
+     "A11/2015",
+     "A12/2015",
+     "A13/2015",
+     "A15/2015",
+     "A16/2015",
+     "A17/2015",
+     "A21/2015",
+     "A22/2015"
+    ],
+    "what": "MH risk difference (and stratum count +1) in 12 cells of vintage 2015 (11 replicates + the A12 primary).",
+    "cause": "AMBIGUITY (not a bug on either side). 98 of the 503 usable 2015 rows have sic2 = None (14 compounders, 2 destroy). The original keeps them as one pseudo-industry stratum; I dropped them from the MH estimate (they are not an industry). Adopting their reading reproduces all 63 MH cells exactly. Their implementation_notes do not mention this choice.",
+    "detail": [
+     {
+      "cell": "A01/2015",
+      "mine_sic2None_dropped": -0.0858,
+      "theirs_sic2None_as_stratum": -0.0428,
+      "role": "replicate",
+      "sign_differs": false
+     },
+     {
+      "cell": "A05/2015",
+      "mine_sic2None_dropped": -0.0041,
+      "theirs_sic2None_as_stratum": -0.021,
+      "role": "replicate",
+      "sign_differs": false
+     },
+     {
+      "cell": "A06/2015",
+      "mine_sic2None_dropped": 0.0298,
+      "theirs_sic2None_as_stratum": 0.0143,
+      "role": "replicate",
+      "sign_differs": false
+     },
+     {
+      "cell": "A07/2015",
+      "mine_sic2None_dropped": 0.0068,
+      "theirs_sic2None_as_stratum": 0.037,
+      "role": "replicate",
+      "sign_differs": false
+     },
+     {
+      "cell": "A11/2015",
+      "mine_sic2None_dropped": 0.3027,
+      "theirs_sic2None_as_stratum": 0.2642,
+      "role": "replicate",
+      "sign_differs": false
+     },
+     {
+      "cell": "A12/2015",
+      "mine_sic2None_dropped": -0.1378,
+      "theirs_sic2None_as_stratum": -0.1431,
+      "role": "primary",
+      "sign_differs": false
+     },
+     {
+      "cell": "A13/2015",
+      "mine_sic2None_dropped": 0.0949,
+      "theirs_sic2None_as_stratum": 0.0731,
+      "role": "replicate",
+      "sign_differs": false
+     },
+     {
+      "cell": "A15/2015",
+      "mine_sic2None_dropped": 0.0197,
+      "theirs_sic2None_as_stratum": -0.0345,
+      "role": "replicate",
+      "sign_differs": true
+     },
+     {
+      "cell": "A16/2015",
+      "mine_sic2None_dropped": 0.021,
+      "theirs_sic2None_as_stratum": 0.0295,
+      "role": "replicate",
+      "sign_differs": false
+     },
+     {
+      "cell": "A17/2015",
+      "mine_sic2None_dropped": -0.0139,
+      "theirs_sic2None_as_stratum": -0.0153,
+      "role": "replicate",
+      "sign_differs": false
+     },
+     {
+      "cell": "A21/2015",
+      "mine_sic2None_dropped": -0.0298,
+      "theirs_sic2None_as_stratum": -0.0293,
+      "role": "replicate",
+      "sign_differs": false
+     },
+     {
+      "cell": "A22/2015",
+      "mine_sic2None_dropped": -0.0343,
+      "theirs_sic2None_as_stratum": -0.0354,
+      "role": "replicate",
+      "sign_differs": false
+     }
+    ],
+    "verdict_effect": "none. MH enters only the primary of directional tests; the only 2015 primary is A12 (predict negative), whose MH is negative either way (-0.1378 dropped / -0.1431 stratum) and which fails Holm anyway (weak). The A15/2015 replicate MH changes sign (+0.0197 vs -0.0345) but replicate MH is not used by any rule."
+   },
+   {
+    "id": "M3",
+    "cells": [
+     "A22 (primary 2013, predict null)"
+    ],
+    "what": "Verdict label. Original: 判定できない（差は見えないが区間が広い）. Mine: not covered by the pre-registered rules.",
+    "cause": "AMBIGUITY / GAP IN THE PRE-REGISTERED RULES (all numbers agree: delta -0.0697, CI [-0.1204, -0.0148], Fisher p 0.0141, Holm p 0.2118, MH -0.0095). The null rules are: 当てはまった needs Holm-before p >= 0.05 and CI inside +-0.10; 判定できない needs \"p >= 0.05\" but CI outside +-0.10; 当てはまらない needs Holm-after p < 0.05. A22 has Holm-before p < 0.05 and Holm-after p >= 0.05, so no rule applies literally. The original silently filled the gap with 判定できない (reading the second rule p as Holm-adjusted). This is the conservative fill and does not affect B5, but its parenthetical 差は見えない is not literally true: the unadjusted 95% CI lies entirely below zero (the top third by co_opm had 7.0pt fewer compounders before multiplicity correction). The MH delta (-0.0095) suggests the raw gap is mostly industry composition (post hoc observation). Recommend a note in the results.",
+    "verdict_effect": "label of A22 only; depends on how the gap is filled"
+   },
+   {
+    "id": "M4",
+    "cells": [
+     "B3"
+    ],
+    "what": "Top-10% count and share: original 94 companies -> 0.5341 (and 20 of 199 compounders -> 0.4807); my primary reading 95 -> 0.5360.",
+    "cause": "AMBIGUITY. I applied the pre-registration quantile definition (type-7 cut at the 90th percentile, >= cut; the position 940*0.9 = 846 is an integer, so the cut row is included -> 95). The original used a count of round(0.10*n) (94 and 20; the pair is consistent only with round). The quantile definition is written for entry values, and B3 ranks by outcome, so the count reading is equally natural. Under floor/ceil/round/type-7/type-6 the share is 0.534-0.536 for all companies and 0.474-0.481 within compounders.",
+    "verdict_effect": "none (>= 0.40 under every reading)"
+   }
+  ],
+  "ambiguities": [
+   {
+    "item": "Tie rule for quantile groups",
+    "text": "「同値は大きい側に入れない＝ >= 上側の切れ目で上の群」 contradicts itself (the first half says ties stay out of the upper side; the second half says >= cut is upper).",
+    "mine": ">= (second half), as did the original (stated in its implementation_notes)",
+    "alternative_tested": "upper strictly > cut (first half), with lower <= or <",
+    "effect": "n_S changes by 1-2 in 7-10 cells (e.g. A01/2013 236->235, A21/2013 233->231, A22/2013 315->313); no verdict changes (A-family or B).",
+    "details": {
+     "upper_gt_lower_le": {
+      "n_S_changes": [
+       [
+        "A01",
+        2013,
+        236,
+        235,
+        -0.0334,
+        -0.038
+       ],
+       [
+        "A14",
+        2016,
+        245,
+        244,
+        -0.0522,
+        -0.0507
+       ],
+       [
+        "A16",
+        2016,
+        316,
+        315,
+        0.0056,
+        0.0067
+       ],
+       [
+        "A17",
+        2016,
+        316,
+        315,
+        -0.0683,
+        -0.0681
+       ],
+       [
+        "A21",
+        2013,
+        233,
+        231,
+        -0.0432,
+        -0.0471
+       ],
+       [
+        "A21",
+        2015,
+        46,
+        45,
+        0.0063,
+        0.0134
+       ],
+       [
+        "A22",
+        2013,
+        315,
+        313,
+        -0.0697,
+        -0.0679
+       ]
+      ],
+      "verdict_changes": []
+     },
+     "upper_gt_lower_lt": {
+      "n_S_changes": [
+       [
+        "A01",
+        2013,
+        236,
+        235,
+        -0.0334,
+        -0.038
+       ],
+       [
+        "A10",
+        2018,
+        237,
+        235,
+        -0.0378,
+        -0.0356
+       ],
+       [
+        "A14",
+        2016,
+        245,
+        244,
+        -0.0522,
+        -0.0507
+       ],
+       [
+        "A16",
+        2016,
+        316,
+        315,
+        0.0056,
+        0.0067
+       ],
+       [
+        "A17",
+        2016,
+        316,
+        315,
+        -0.0683,
+        -0.0681
+       ],
+       [
+        "A20",
+        2016,
+        236,
+        235,
+        -0.0243,
+        -0.0293
+       ],
+       [
+        "A20",
+        2017,
+        233,
+        232,
+        -0.0182,
+        -0.0167
+       ],
+       [
+        "A21",
+        2013,
+        233,
+        231,
+        -0.0432,
+        -0.0471
+       ],
+       [
+        "A21",
+        2015,
+        46,
+        45,
+        0.0063,
+        0.0134
+       ],
+       [
+        "A22",
+        2013,
+        315,
+        313,
+        -0.0697,
+        -0.0679
+       ]
+      ],
+      "verdict_changes": []
+     }
+    }
+   },
+   {
+    "item": "Lower quantile group",
+    "text": "the rule only defines the upper group",
+    "mine": "<= cut (mirror), same as the original",
+    "alternative_tested": "< cut",
+    "effect": "A10/2018 237->235 (a tie at the cut), A20/2016 and A20/2017 -1; no verdict changes."
+   },
+   {
+    "item": "Quantile interpolation",
+    "mine": "type 7 (linear, numpy default), same as the original",
+    "alternative_tested": "type 6 (statistics.quantiles default), type 5, type 1",
+    "effect": "n_S changes by 1-2 in 6-8 cells; no verdict changes."
+   },
+   {
+    "item": "sic2 = None in the MH strata (2015: 98 rows)",
+    "mine": "rows dropped from MH only",
+    "original": "one extra stratum",
+    "effect": "see M2; no verdict changes."
+   },
+   {
+    "item": "\"測れた再現ビンテージ\" (which replicates count)",
+    "mine": "replicates that pass the same n-rule (excludes A11/2013 n_S=6, A12/2013 n_S=4, A15/2015 with 3 events)",
+    "alternative_tested": "any replicate with both groups non-empty",
+    "effect": "no verdict changes (the small replicates all have the predicted sign, or the verdict is fixed by an opposite-direction primary)."
+   },
+   {
+    "item": "\"全社\" population with a missing measure",
+    "text": "A01/2018: 1 row has f2_cagr5 = None (the same row has size_rev = None and is a destroy; that is why base_rates say 952 rows / 77 destroys but the A01 and A17 2018 populations are 951 / 76)",
+    "mine": "row left out (pop = rows that have the measure), same as the original (n_pop 951)",
+    "alternative_tested": "kept as not-S",
+    "effect": "A01/2018 delta 0.0165 -> 0.0168; no verdict change."
+   },
+   {
+    "item": "Null-rule gap: raw p < 0.05 but Holm p >= 0.05",
+    "effect": "only A22; see M3."
+   },
+   {
+    "item": "delta exactly 0 in a replicate",
+    "text": "A21/2018: 48/233 = 96/466, sign 0 (the original also reports 0)",
+    "effect": "not \"the same direction\" under any reading; A21 is decided by its opposite-direction primary, so no effect."
+   },
+   {
+    "item": "B1 \"より浅かった\" strict > vs >=",
+    "effect": "no compounder has mdd exactly -0.239; none."
+   },
+   {
+    "item": "B2 IQR quantile method",
+    "effect": "IQR 0.2175 (type 7) to 0.2210 (type 6/1), all >= 0.15; none."
+   },
+   {
+    "item": "B3 count of the top 10%",
+    "effect": "see M4; none."
+   },
+   {
+    "item": "B5 counting",
+    "text": "counts Holm-significant tests regardless of direction, so A13 (逆, significant against its principle) counts for the compounder side",
+    "effect": "destroy 4 > compounder 2; also 4 > 1 if only direction-consistent results counted; verdict unchanged."
+   },
+   {
+    "item": "Fisher two-sided convention",
+    "mine": "sum of P(table) <= P(observed)*(1+1e-7) (R fisher.test), exact integer arithmetic",
+    "effect": "identical to the original to <=1e-9 relative, so it uses the same convention. No primary p is near a decision line (closest: A04 Holm 0.0589, which also fails |delta| >= 0.05 = 0.0435, so robust)."
+   }
+  ],
+  "verdict_changes": [
+   {
+    "id": "A22",
+    "original": "判定できない（差は見えないが区間が広い）",
+    "literal_text": "no pre-registered category applies (Holm-before p = 0.0141 < 0.05, Holm-after p = 0.2118 >= 0.05, CI [-0.1204, -0.0148])",
+    "note": "This is the only verdict that depends on a reading. Under every data reading tested (10 variants: quantile type 6/5/1, lower <, upper >, upper > with lower <, MH sic2=None as stratum, replicate n-rule off, keep missing rows in 全社, B3 counts) no A or B verdict changes."
+   }
+  ]
+ },
+ "post_hoc_notes_by_author": [
+  "A22: 事前登録の『差なし』の判定規則に穴があった（Holm前 p<0.05 かつ Holm後 p>=0.05 はどの規則にも当たらない）。保守的に『判定できない』と札を付けたが、Holm前の95%区間は全体が0より下（−0.120〜−0.015）。業種をそろえると −0.0095 で、業種の混ざりの疑い（事後）。",
+  "A13: 事前登録の言い換え『堀の全体の印象が高い社は大勝ちが少ない』は P66 の主張の誤った言い換えだった。P66 は『irr で通った群に印象の高い社（moat5>=4・irr<70）を足すと15%以上の割合が下がる』。この狭い主張は同じデータで再現した（足された社 22.7/18.2/9.8% 対 irr>=70 の 44.3/30.8/38.1%・事後・同じ標本・中央値と損失は同等か良い・半導体と航空防衛を除くとほぼ消える）。A13 の『逆』は P66 への反証ではない。",
+  "MH の層: sic2 が無い行（2015 で98行）を1つの層として数えていた（実装の注記に書いていなかった）。除いても判定は変わらない。",
+  "B3: 上位1割の社数は round(0.1n)=94。分位の規則で数えると95社・0.5360。判定は変わらない。"
+ ],
+ "skeptic_review": {
+  "issues": [
+   {
+    "claim": "A11/A13 are pre-registered confirmations that the moat-reading labels separate compounders (irr=85 2018: 15/21 vs 21/115; moat5>=4 2013: 23/62 vs 30/186).",
+    "finding": "Both primaries re-use the exact samples on which these labels were discovered, so the prereg protects the test wording, not the data. irr=85 was discovered on the 2018 read on 2026-08-05 (archive L314: P=0.71, n=21, base 0.23). The 2013 moat5>=4 P15 of 0.371 vs base 0.217 (lift +0.154) was recorded on 2026-08-12 (archive L5939). The prereg was written on 2026-10-14, so the 'test' re-tabulates known in-sample numbers. The replicates are not independent either (next issues).",
+    "numbers": {
+     "archive_2018_irr85": "P=0.71 n=21 base 0.23 (2026-08-05)",
+     "compounder_fit_2018_irr85": "15/21=0.714 vs 21/115=0.183",
+     "archive_2013_moat5": "0.371 vs base 0.217 lift +0.154 (2026-08-12)",
+     "compounder_fit_2013_moat5": "23/62=0.371 vs 30/186=0.161"
+    },
+    "severity": "high"
+   },
+   {
+    "claim": "irr=85 separates compounders as a moat mechanism (A11 'when it applied').",
+    "finding": "In this data, irr=85 can hardly be told apart from exposure to two sectors that boomed in 2013-26 (semiconductor supply chain, and aerospace/defence suppliers). In 2018, 19/21 of the irr=85 firms are semi-chain or aero (by the record's own lists). Of the firms in those two sectors, 19/28 were rated 85, against 2/108 elsewhere. A sector dummy alone gives a delta as large as irr=85 and is steadier across vintages. Within the sectors, irr=85 adds +0.2 to +0.4, but no vintage is significant. Outside them, there are 7 irr=85 companies and 1 compounder (WST). Dropping sic2 35-38 removes almost every 85. The answer depends on how the sectors are defined. With narrow SIC codes alone, a residual remains (6/15 vs 86/557, p=0.02 company-level), but 5 of those 6 compounders (CW, RBC, ENTG, MKSI, STX) are aero or semi suppliers that carry machinery or chemical SIC codes. In 2015, non-85 semis also compounded heavily: NVDA +73.6%, KLAC +40.7%, MU +42.2% and AMAT +37.8%, all rated irr=70. In the same 2018 read, irr18 did not predict operating-margin persistence (moat_repl rho +0.086, n=125), which is the business mechanism the label is supposed to capture.",
+    "numbers": {
+     "sector_dummy_semi_or_aero_P15": {
+      "2018": "18/28=0.643 vs 18/108=0.167 d=+0.476 p=2e-6",
+      "2015": "23/36=0.639 vs 75/448=0.167 d=+0.471",
+      "2013": "14/22=0.636 vs 39/220=0.177 d=+0.459"
+     },
+     "irr85_within_semi_aero": {
+      "2018": "14/19 vs 4/9 d=+0.29 p=0.21",
+      "2015": "7/8 vs 16/28 d=+0.30 p=0.21",
+      "2013": "3/3 vs 11/19 p=0.27",
+      "pooled_company_level": "15/21 vs 15/30 d=+0.21 p=0.16"
+     },
+     "irr85_outside_semi_aero": {
+      "2018": "1/2",
+      "2015": "0/5",
+      "2013": "1/3",
+      "pooled_company_level": "1/7 vs 83/553 d=-0.007"
+     },
+     "MH_by_semi/aero/other_strata": {
+      "2018": 0.307,
+      "2015": 0.099,
+      "2013": 0.259,
+      "raw_deltas": "0.532/0.345/0.459"
+     },
+     "crude_ex_sic2_35_38": {
+      "2018": "S 1/2 vs 14/94 p=0.29",
+      "2015": "1/5 vs 61/383 p=0.58",
+      "2013": "0/1"
+     },
+     "SIC_only_definition_pooled": "within 10/13 vs 12/26 p=0.09; outside 6/15 vs 86/557 p=0.02 (CW,RBC,ENTG,MKSI,STX,WST)",
+     "2018_irr85_compounders": "10 semi-chain (LRCX,NVMI,AMAT,MPWR,COHR,APH,AEIS,ADI,ENTG,MKSI) + 4 aero (CW,HEI,TDG,RBC) + WST",
+     "today_definition_agreement": "historical 85 still 85 under today's rubric: 11/28 (archive irr_rung_audit)"
+    },
+    "severity": "high"
+   },
+   {
+    "claim": "The 2013/2015/2018 moat readings were blind, so they carry ex-ante information.",
+    "finding": "'Blind' meant only that returns were withheld. LLM subagents read named 10-Ks in Aug 2026, after the outcomes (the 2018 notes even name the company, e.g. 'Agilent Technologies FY2017 10-K'). The record's own anonymisation test covered the very same 249 firms of the 2013 read, and the readers named the company from anonymised excerpts in 228/249 cases (92%). Evidence that worries: on the 144 firms read in 2018 and also earlier, 2018 readers gave 85 to 19 firms versus 7 before. That is 12 upgrades (9 of them semis) and 0 downgrades, and 8 of the 12 upgrades went on to compound. The share rated moat5>=4 on the same firms rose from 48% to 67% (against 2013) and from 48% to 60% (against 2015). The 2013 moat5 separation is implausibly clean for an ex-ante read: 1 of 62 moat5>=4 firms returned under 5%/yr, against 44% of moat5<4 firms (rho 0.42). The 2015 and 2018 reads are much weaker. Counter-evidence: (a) a blind quote-only regrade (ticker, rung and return hidden; kappa 0.87) kept 5 of the 21 2018 irr=85s (ENTG, LRCX, NVMI, TDG, WST), and all 5 compounded (5/5 vs 30/128, p=0.001). However, the quoted sentences were picked by the non-blind readers, 3 of the 5 are semis, and the regrade's own calibration check H5 failed. (b) Identity-aware anonymised ratings of other constructs did not lean toward winners (capalloc=100: 0/17 compounders; runway=100: 7/29 vs 46/215). (c) The 2018 'rec' flag: 14/69 vs 27/108. (d) The 2013 moat5 effect is largest in the smallest size tertile (+0.40) and smallest in the top tertile (+0.15, p=0.10), the opposite of fame-driven leakage. (e) Some famous decliners were rated 4 (INTC, BIDU, BA). (f) The 7 firms already labelled 85 in earlier reads all compounded 2018-26 (CW, ENTG, LRCX, MKSI, RBC, TDG, WST), so the 2018 upgrades do not create the separation, but 6 of those 7 are semi or aero. Verdict: hindsight can be neither excluded nor shown. The archive itself (L18971, L19027) says only a forward test can remove it.",
+    "numbers": {
+     "anon_identification_2013_same_249": "228/249",
+     "2018_vs_earlier_85_count_on_144_overlap": "7 -> 19 (12 up, 9 semis, 0 down)",
+     "moat5>=4_share_same_firms": "2013 0.478->0.667; 2015 0.478->0.604",
+     "2013_P(CAGR<5%)": "moat5>=4 1/62=0.016 vs moat5<4 0.441",
+     "spearman_moat5_cagr": {
+      "2013": 0.42,
+      "2015": 0.27,
+      "2018": 0.252
+     },
+     "blind_regrade_2018": "5/21 kept 85 -> 5/5 compounders vs 30/128 p=0.001",
+     "regrade_H5": "failed",
+     "angles_capalloc100": "0/17",
+     "angles_runway100": "7/29 vs 46/215",
+     "2018_rec_flag": "14/69 vs 27/108",
+     "2013_moat5_by_size_tertile": "+0.398 / +0.253 / +0.145 (MH 0.223)",
+     "2018_irr85_size<$1B": "5/8 vs 5/27 (but AEIS, COHR, MPWR, NVMI are semis)"
+    },
+    "severity": "high"
+   },
+   {
+    "claim": "The read sets are a reasonable sample, and agreement across vintages is replication.",
+    "finding": "The read lists were chosen without outcome data, but they were chosen after interim results and are heavily overlapping. 2018 (177 firms) = firms with a 2013-18 return of at least 15%/yr, FCF positive in at least 4 of 5 years and OPM of at least 10%; all 177 have pa_rf5 >= 0.15 (median 0.22 vs 0.10 for the panel). The rule was found on the first 140 tickers alphabetically, and the 37-firm 'holdout' (R-Z) held 2 irr=85s. 2013 = a 119-firm systematic sample plus a 130-firm quality pool, added after the broad sample yielded only 2 irr=85s. 2015 = a 163-firm earlier sample plus 130 plus 212, added after the first batch looked bad: in that batch moat5>=4 was 7/45 vs 28/117 (d -0.084) and irr=85 was 0/2. The positive 2015 replicate comes entirely from the later 342 firms (moat5 +0.17/+0.18; irr=85 7/11). Every list comes from tickers still alive in 2026. Overlap: 144/177 of the 2018 firms had already been read; 147 firms appear in both 2013 and 2015 and 59 in all three; irr=85 = 40 firm-vintages but only 28 firms (CW, LRCX and RBC in all three). The outcome windows are nested: compounder Jaccard 2013/2018 0.55, 43 of 49 2013 destroyers are also 2018 destroyers, and rho(tr_cagr 2013, 2018) = 0.845.",
+    "numbers": {
+     "2015_first_batch": "moat5 7/45 vs 28/117; irr85 0/2",
+     "2015_later_batches": "q: moat5 12/33 vs 18/95, irr85 2/2; qb: moat5 15/51 vs 19/161, irr85 5/9",
+     "overlaps": "2013&2015 147, 2015&2018 134, 2013&2018 69, all three 59",
+     "irr85": "40 firm-vintages / 28 firms"
+    },
+    "severity": "medium"
+   },
+   {
+    "claim": "A13 verdict '逆': high moat impression had MORE compounders, contradicting P66.",
+    "finding": "The prereg misparaphrased P66. P66 (principles/P66.json) says: the holistic impression predicts margin persistence better than composites; it is skewed toward large, famous firms; and adding impression-high firms (moat5>=4 with irr<70, the 'rescued') to the irr-passed group A (irr>=70) lowers P15. It never says moat5>=4 firms have fewer compounders than moat5<4 firms, and the positive raw association (2013 lift +0.154; rho +0.41) was already in the archive before registration. The '逆' verdict was therefore foreseeable and refutes a straw man. The narrow claim can be checked from the panel fields irr and moat5, and it reproduces the archive exactly (post-hoc, same data). Rescued vs A, P15: 5/22 vs 27/61 (2013, p=0.12); 10/55 vs 33/107 (2015, p=0.09); 4/41 vs 24/63 (2018, p=0.0014). But the rescued firms have similar or better P10 and medians and fewer losses, and in 2013 they beat the neither-group (22.7% vs 12.7%). Excluding semis and aero, most of the gap disappears: the 'harm' is mainly that group A is heavy in semis and aero.",
+    "numbers": {
+     "rescued_vs_A_P15": {
+      "2013": "0.227 vs 0.443",
+      "2015": "0.182 vs 0.308",
+      "2018": "0.098 vs 0.381"
+     },
+     "rescued_vs_A_P10": "0.77/0.60/0.51 vs 0.67/0.52/0.57",
+     "rescued_vs_A_median": "14.0/11.8/10.4% vs 13.9/10.2/11.4%",
+     "ex_semi_aero_rescued_vs_A": "2013 0.238 vs 0.333 p=0.57; 2015 0.189 vs 0.188; 2018 0.100 vs 0.231 p=0.14"
+    },
+    "severity": "high"
+   },
+   {
+    "claim": "Left-tail principles hold (A06 ROIC<=8%, A18 intcov<3, A19 extreme margin change, A17 size, A04 quality).",
+    "finding": "Mostly a matter of loss-making and small firms. In 2018, 58 of the 77 destroyers were small (bottom size tertile) or loss-making. A19 disappears among profitable or larger firms. A06 drops to n.s. A04 disappears in the top two size tertiles in 3 of 4 vintages. A18 is the most robust (it survives the profitable-and-top-two-tertiles restriction in 2018 and 2017, but not in 2016). A17 holds among profitable firms (it is the size effect itself). The replicates count largely the same failing firms. Survivors-only data understates the left tail, which likely biases these tests toward null, so the direction is plausibly real; but they are not insights about quality firms.",
+    "numbers": {
+     "2018_destroyers": "54/77 bottom tertile, 29/77 opm<0, 58/77 either; A18|A19 catch 51, 44 of them small or loss-making",
+     "2013_destroyers": "34/49 bottom tertile; 23/29 of ROIC<=8% destroyers small, 19/29 negative ROIC",
+     "A19_2018": "+0.117 -> +0.035 (opm>0, p=0.12) -> +0.006 (opm>0 & top-2)",
+     "A19_2016/2017_profitable_top2": "-0.010 / -0.026",
+     "A06_2013": "+0.062 -> +0.031 (opm>0, p=0.057) -> +0.024 (p=0.15)",
+     "A04_top2_size": "2013 -0.004, 2016 -0.006, 2017 -0.030 (p=0.04), 2018 -0.028 (p=0.10)",
+     "A18_profitable_top2": "2018 +0.046 p=0.033; 2017 +0.069 p=0.002; 2016 +0.030 p=0.24",
+     "A17_profitable": "2013 -0.045, 2018 -0.065",
+     "destroyer_overlap": "2016/2018 51 shared; 2017/2018 57 shared"
+    },
+    "severity": "medium"
+   },
+   {
+    "claim": "Family B: winners also fall deeper than the market (B1), winners differ by drawdown not CAGR (B2), the right tail dominates (B3), moat5 means shallower drawdowns (B4), only the left tail is predictable (B5).",
+    "finding": "No artifact flips these results, but B1, B2 and B3 are mechanical and would pass for almost any group. Both the stock and SPY MDDs come from the same monthly Yahoo adjclose function, so the basis is the same (daily data would be deeper for both). B1: every return band passes, and compounders are actually shallower than typical stocks. B2: a range-restriction artifact; over all stocks the CAGR-MDD rank correlation is +0.66, and inside any narrow band it is about 0, with IQR >= 0.15 in every band. B3: NVDA alone holds 11.5% of the total; a lognormal with the observed sigma gives 58%, and the 0.40 threshold passes for any sigma >= 1.03. Survivorship makes B3 conservative. B4: holds within size tertiles, but it is in-sample (archive rho(moat5, mdd) about +0.50 in 2013) and exposed to hindsight. B5: built into the design — 9 of the 16 compounder tests predicted null, against 0 of the 6 destroy tests. The 4 significant destroy tests share the same mostly small or unprofitable destroyers, and the principles came from earlier analyses of this panel.",
+    "numbers": {
+     "share_shallower_than_SPY": "all 0.014; comp 0.030; 10-15% 0.026; 5-10% 0.010",
+     "spearman_cagr_mdd": "all +0.657; comp -0.061; 10-15% +0.064; 5-10% +0.112; 0-5% +0.272",
+     "iqr_mdd_by_band": "0.217/0.259/0.248/0.230",
+     "B3": "top10 0.534; ex-NVDA 0.476; lognormal(sigma=1.495) 0.585",
+     "B4_by_size_tertile_2013": "+0.239/+0.136/+0.177"
+    },
+    "severity": "low"
+   },
+   {
+    "claim": "The 2013/2015 entry signals (co_ features) are point-in-time.",
+    "finding": "They are not. The cohort features use fiscal-year-label windows FY2009-13 and FY2011-15, which include data published up to about 8 months after the 1 July entry date. For example, the 2013 size_rev for CAT is $55.66B, its calendar-2013 revenue reported in January 2014; IBM is $98.4B, also FY2013. The archive (L5296) itself says about 94% of cohort rows contain look-ahead, but the prereg's known-limits list does not mention it. This affects the 2013/2015 primaries of A01, A03-A06, A15-A17 and A22. A check on 428 firms that have pre-entry FY2008-12 features shows little change (A06: 3/117 vs 2/76), but that subset holds only 4 destroyers, so the left-tail tests cannot be checked.",
+    "numbers": {
+     "CAT_2013_size_rev": 55656000000.0,
+     "subset_check_n": 428,
+     "A06_subset": "registered 3/117 vs 1/311; pre-entry 2/76 vs 2/352"
+    },
+    "severity": "medium"
+   },
+   {
+    "claim": "Only the moat-reading labels separated compounders.",
+    "finding": "This holds only at the 15% bar and with Holm. At the pre-registered 10% sensitivity line, several mechanical entry signals separate significantly and replicate. Large size: more 10%+ winners in 4 of 4 vintages. Growth deceleration: fewer in 3 of 3. 30%+ below the 5-year high: fewer. Bottom-quartile past return: fewer. Low payout: fewer in 3 of 3. Top-quartile growth: fewer in 3 of 5. So the statement depends on where the bar is placed, and the mechanical signals mostly line up with momentum and size.",
+    "numbers": {
+     "A16_size_10pct": "2013 +0.106 p=0.002; 2018 +0.126 p=0.0002",
+     "A02_10pct_2018": "-0.138 p=0.001",
+     "A08_10pct": "-0.134 p=0.00025",
+     "A10_10pct": "-0.104 p=0.005",
+     "A20_10pct": "-0.080/-0.127/-0.107"
+    },
+    "severity": "medium"
+   },
+   {
+    "claim": "The verdict mechanics and labels are sound.",
+    "finding": "Small but misleading points. A22 is labelled '判定できない（差は見えないが区間が広い）' although the raw p is 0.014 and its CI [-0.120, -0.015] excludes 0; the null rules have no category for raw p<0.05 with Holm>=0.05. The sic2 MH (-0.0095) shows A22 is a sector effect. Holm covers only the 22 primaries; the replicates, the 10% table and Family B are unadjusted. The 15% 'compounder' bar is about SPY's own CAGR in these windows (14.2-15.2%), so 'compounder' roughly means 'beat a strong index in the mega-cap/AI era'. The P_quality definitions also differ by vintage, and 2015 is a quality-filtered pool with only 9 destroyers.",
+    "numbers": {
+     "A22": "raw p 0.014, Holm 0.212, CI [-0.1204,-0.0148], MH -0.0095",
+     "SPY_cagr": "2013 0.142; 2016 0.152; 2017 0.151; 2018 0.150"
+    },
+    "severity": "low"
+   }
+  ],
+  "honest_summary_ja": "要約の読み方を弱める・直すべき点:\n1) 『堀の読解だけが勝ち組を分けた』の2本（irr=85 2018・moat5≥4 2013）は、事前登録の時点で書庫に結果が載っていた標本そのもの（irr=85 は 2018 で発見・P=0.71／moat5 2013 の 0.371 対 0.217 も記録済み）。事前登録は言い回しを固定しただけで、新しい確認になっていない。\n2) irr=85 は『半導体の連鎖＋航空防衛の部品』という、2013〜26年に大きく上がった2業種とほぼ重なる（2018 は85の21社中19社。業種だけで差 +0.46〜+0.48 が3ビンテージで出る）。業種の中での上乗せは +0.2〜+0.4 だが、どのビンテージでも有意でない。業種の外の85は7社で勝ち組1社（WST）。SIC コードだけで業種を切ると残差が残るが、それを担うのも航空防衛・半導体の部品会社。同じ 2018 の読解で irr18 は営業利益率の持続を当てなかった（ρ+0.086）。\n3) 読み手は 2026年の LLM で、社名の付いた 10-K を読んだ（『盲検』はリターンを隠しただけ）。同じ 2013 の249社を匿名で読ませても228社（92%）を言い当てた。2018 の読み手は、以前に読んだ同じ会社に85を7→19と多く付けた（格上げ12社のうち半導体9・格下げ0）。2013 の moat5≥4 で年5%未満は62社中1社だけで、事前の読みとしてはきれいすぎる。一方で、引用だけの盲検の再採点で残った2018の85（5社）は全部勝った・匿名の読み手の他の評価は勝ち組に寄らなかった・moat5 は小型ほど効いた、という反対の材料もある。後知恵は排除も証明もできない（書庫自身も前向きの検定でしか消せないと書いている）。\n4) A13 の『逆』は P66 の言い換えの誤り。P66 は『irr で通った群に印象の高い社を足すと15%以上の割合が下がる』で、『moat5≥4 は勝ち組が少ない』とは言っていない。前者は同じデータで再現する（救われた社 22.7/18.2/9.8% 対 irr≥70 の 44.3/30.8/38.1%）。ただし事後・同じ標本で、中央値・損失は同等か良く、半導体と航空防衛を除くとほぼ消える。\n5) 左の裾の結果は、ほぼ『赤字・小型の社』の言い換え（2018 の大損77社中58社が小型か赤字）。黒字かつ上位2/3の規模に絞ると、利益率の急変（A19）と質の床（A04）は消え、ROIC≤8%（A06）は有意でなくなる。残るのは利払いの余裕（A18、2018・2017 で残り2016 は消える）と規模そのもの（A17）。\n6) Family B は大半が機械的。B1・B2 はどのリターン帯でも通る（B2 は結果で範囲を絞ったせい）。B3 は対数正規の散らばりで説明が付く。B5 は設計で決まる（勝ち組側は16本中9本が『差なし』の予想）。株価の最大下落は銘柄と SPY が同じ月次の作りで、ここに作り物はない。\n7) そのほか: 2013/2015 の入口の数字には入口日より後の決算が入っている（書庫によれば約94%の行・事前登録の限界の欄に書かれていない）。ビンテージの窓は入れ子で、銘柄・勝ち組・大損の社が大きく重なる（大損49社中43社が共通・ρ0.85）。年10%の線では規模・勢い・成長の鈍化など機械の数字も分けている。A22 の判定の札が数字と合っていない。\n正直に言えるのはここまで: 『2013〜26年の生き残りの中で、半導体・航空防衛の部品会社と、LLM が質が高いと読んだ大型の安定株が良かった。大損は赤字・小型・利払いの薄い社に集中した』。どれが事前に分かる原則なのかは、この在庫では決められない。"
+ },
+ "bottom_line_ja": "年15%以上（この窓の S&P500 とほぼ同じ年率）を13年出した生き残り199社は、入口の決算の数字（成長・ROIC・質の床・規模・5年高値からの下げ・PER・還元）では見分けられなかった。勝ち組に偏った堀の読解のラベル（irr=85・moat5）は、ラベルが最初に見つかったのと同じ標本の再確認で、半導体と航空防衛の部品会社とほぼ重なり、読み手の後知恵を排除できない＝独立の証拠ではない。年10%の線では、規模が大きい・直前5年に上がっていた・成長が鈍化していない・5年高値から大きく下げていない・還元が多い社が勝ち組を分けた（地味な数字は『大きく負けない』側を当てる）。大損は赤字・小型の社に集中し、黒字で中型以上に絞って残ったのは利払いの余裕（3倍未満）だけ。勝ち組の97%は保有中に指数より深く下げ（中央値−48%・43%は半値以下）、最終資産の半分は上位1割の社が作った。"
+}
