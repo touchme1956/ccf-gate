@@ -20082,6 +20082,6 @@ B＝今も上場している NYSE・Nasdaq の6,026本（SEC の一覧・使え�
 
 **集中**（`night/lookthrough.py --what-if`・城は席5社×2%）: NVDA 9.0%・半導体の連鎖 39.7〜39.9%＝MISL のときと同じ（どちらも半導体を持たない）。
 
-**検査**: check_gate_parity（投下可5社 ASML・CW・GOOGL・LRCX・MSFT が門と端末で一致）・check_fund_trade 全項目・check_auto_import 全項目・check_pft_card 56・--full 61・check_pfc_card 67・check_hold_detail 82・check_state_issue 48・validate_state・check_forward_frozen・check_html・audit_docs（--no-templates・--templates-only）すべて通過（✗ 0）。check_sleeve_split は回している途中（終わったら追記）。採点・四関門・席・割り方の式・売却規律・castle_rule の線は不変。
+**検査**: check_gate_parity（投下可5社 ASML・CW・GOOGL・LRCX・MSFT が門と端末で一致）・check_fund_trade 全項目・check_auto_import 全項目・check_pft_card 56・--full 61・check_pfc_card 67・check_hold_detail 82・check_state_issue 48・validate_state・check_forward_frozen・check_html・audit_docs（--no-templates・--templates-only）・check_sleeve_split 97項目（⑳ 実データ・入金17万: 先に買う本 LRCX・XLV・FBT・ITA・SHLD／㉑ は楽天・プラス・SOX を検査の中で足した形）すべて通過（✗ 0）。採点・四関門・席・割り方の式・売却規律・castle_rule の線は不変。
 
 **戻し方**: portfolio.json の `ami_mix_superseded_2026_10_15e` の姿へ（`ami_names` と `ami_weights` の SHLD を MISL 5 に〔SHLD を持っていれば名前は残して目標0%に＝売らない〕・`castle_rule_measure.sleeve` の SHLD を MISL に・`nisa.rule` の SHLD の一節を `nisa_rule_MISL` に）。売るものは無い。
