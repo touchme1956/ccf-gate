@@ -20014,7 +20014,7 @@ B＝今も上場している NYSE・Nasdaq の6,026本（SEC の一覧・使え�
 
 **集中（目標の姿・`night/lookthrough.py --what-if`・城は席5社の均等）**: NVDA 7.9→7.9%・半導体の連鎖 40.9〜41.1→38.9〜39.1%（NASDAQ100 45 の形なら NVDA 8.3%・40.5〜40.7%）。
 
-**検査**: 下に追記。採点・四関門・席・割り方の式・売却規律は不変。⚠ out/returns.json の castle_rule（物差しの袖の比・規則の線）は main に入ったあと CI が作り直す。
+**検査（最終の形）**: check_gate_parity（投下可5社 ASML・CW・GOOGL・LRCX・MSFT が門と端末で一致）・check_fund_trade 全項目・check_sleeve_split 97項目・check_auto_import 44項目・check_pft_card 59・--full 64・check_pfc_card 67・check_hold_detail 82・check_state_issue 48・validate_state・check_forward_frozen・check_html・audit_docs すべて通過（✗ 0）。castle_rule_eval は新しい線で動く（判定は2029-09から・それまでは10%・線の表示に 2.5% が出る）。途中の NASDAQ100 45 の形で回していた check_sleeve_split は91項目まで ✗ 0 で止めて、この形で回し直した。採点・四関門・席・割り方の式・売却規律は不変。⚠ out/returns.json の castle_rule（物差しの袖の比・規則の線）は main に入ったあと CI が作り直す。
 
 **道具（scratchpad・repo に入れていない）**: century_wr.py（①②・期間・下げで止める代金）・four_worlds_d.py（③に S&P500 の形を足す）・health_e.py（形 e＝ヘルスケア）・castle_rule_sim.py（規則の線の模擬）。
 
