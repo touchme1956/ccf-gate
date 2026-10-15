@@ -19969,6 +19969,6 @@ B＝今も上場している NYSE・Nasdaq の6,026本（SEC の一覧・使え�
 - どちらも CW・GOOGL は「持っていない銘柄を先に買う枠——今月の入金は先の銘柄で尽きた」で来月・SMH は不足が1株の半分に届かない。
 - ⚠ 盤（out/dashboard.json）に MISL の値段が入るのは main に入ったあとの market.yml から（night/fetch_dashboard.py は ami_names の本を引く）——それまで注文書は MISL を「価格未取得」と出し、その月は買わない。MISL が NISA 成長投資枠で買えるかは最初に買う前にアプリで確かめる（todo `xlv_nisa_check`）。
 
-**検査**: check_fund_trade 全項目・check_gate_parity（Ω 376/376・投下可5社 ASML・CW・GOOGL・LRCX・MSFT が門と端末で一致）・check_pft_card 59・--full 64・check_hold_detail 82・check_pfc_card 67・check_html・audit_docs・validate_state・check_frozen_dates 通過。check_sleeve_split（⑳ を直した検査）と check_auto_import はこのコミットの時点で回している途中（ここまで ✗ 0・結果は追って追記）。採点・四関門・席・割り方の式・売却規律・castle_rule の線は不変。
+**検査**: check_fund_trade 全項目・check_gate_parity（Ω 376/376・投下可5社 ASML・CW・GOOGL・LRCX・MSFT が門と端末で一致）・check_pft_card 59・--full 64・check_hold_detail 82・check_pfc_card 67・check_html・audit_docs・validate_state・check_frozen_dates 通過。check_sleeve_split 96項目（⑳ 実データ・入金17万: 先に買う本 LRCX・XLV・FBT・ITA・MISL・個別株 ¥45,319・合計 ¥169,981／castle なら LRCX・GOOGL）・check_auto_import 44項目も通過（✗ 0）。採点・四関門・席・割り方の式・売却規律・castle_rule の線は不変。
 
 **戻し方**: portfolio.json の `ami_mix_superseded_2026_10_15` の姿へ（`ami_names` と `ami_weights` の MISL を SHLD 5 に〔MISL を持っていれば名前は残して目標0%に＝売らない〕・`castle_rule_measure.sleeve` の MISL を SHLD に）。
