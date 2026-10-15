@@ -933,7 +933,7 @@ const srv = http.createServer((q, r) => {
     // 実データ（正本の保有と全パック・割り方 cat・入金17万）: 盤に値段の無い本は検査の中で値段を足す（盤にあればそちらを使う）
     if ((base.target || {}).unowned_first === 'all') {
       DASHX = { XLV: { px: 171.99, prev: 171.99, chg: 0, chgPct: 0, src: 'check' }, FBT: { px: 263.90, prev: 263.90, chg: 0, chgPct: 0, src: 'check' },
-                SHLD: { px: 59.83, prev: 59.83, chg: 0, chgPct: 0, src: 'check' } };
+                SHLD: { px: 59.83, prev: 59.83, chg: 0, chgPct: 0, src: 'check' }, MISL: { px: 41.11, prev: 41.11, chg: 0, chgPct: 0, src: 'check' } };
       const load20 = async (over) => {
         OVER = over;
         await pg.goto('http://localhost:' + PORT + '/index.html'); await pg.waitForTimeout(600);
@@ -955,7 +955,11 @@ const srv = http.createServer((q, r) => {
       const c20 = withMode('cat'); c20.target.unowned_first = 'castle';
       const r20c = await load20(c20);
       DASHX = null;
-      const ETF4 = ['XLV', 'FBT', 'ITA', 'SHLD'], has = (L, t) => L.some(x => x.includes(t));
+      // 先に買うはずの ETF は正本から読む（目標>0・金額で買う本〔ami_funds〕でない・持っていない本）＝本を入れ替えても検査を書き直さなくてよい
+      //   （2026-10-15「SHLDをやめてMISLを5％入れて」までは XLV・FBT・ITA・SHLD を名指ししていた）
+      const W20 = base.target.ami_weights || {}, F20 = base.target.ami_funds || {};
+      const held20 = new Set(((JSON.parse((ST.data || {})['pf:portfolio'] || '{}').positions) || []).filter(p => (+p.sh || 0) > 0).map(p => p.t));
+      const ETF4 = Object.keys(W20).filter(t => (+W20[t] || 0) > 0 && !F20[t] && !held20.has(t) && !/-USD$/.test(t)), has = (L, t) => L.some(x => x.includes(t));
       ok(ETF4.every(t => has(r20.tagged, t)) && /持っていない本を先に/.test(r20.line) && /持っていない本（ETF・個別株）/.test(r20.note)
          && r20.total >= 169000 && r20.total <= 170000
          && !ETF4.some(t => has(r20c.tagged, t)) && r20c.tagged.length >= 1 && /持っていない個別株を先に/.test(r20c.line),
