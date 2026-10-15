@@ -20019,3 +20019,36 @@ B＝今も上場している NYSE・Nasdaq の6,026本（SEC の一覧・使え�
 **道具（scratchpad・repo に入れていない）**: century_wr.py（①②・期間・下げで止める代金）・four_worlds_d.py（③に S&P500 の形を足す）・health_e.py（形 e＝ヘルスケア）・castle_rule_sim.py（規則の線の模擬）。
 
 **戻し方**: portfolio.json の `ami_mix_superseded_2026_10_15b` の姿へ（`shiro_castle_pct` 15・`ami_net_pct` 85・`ami_weights` の XLV・FBT 5・`castle_rule_measure.sleeve` の XLV・FBT 5・`castle_rule_params` を15%起点の線に）。売るものは無い。
+
+## 2026-10-15 SMH 15 ＋ 楽天・プラス・SOX 10 を SMH 25 の1本に戻した——全体で NASDAQ100 40 / SMH 25 / ITA 5 / MISL 5 / XLV 7.5 / FBT 7.5 / 個別株 10（ユーザー明示指示「SMH1本に変えて」）
+
+**流れ**: 「今のポートフォリオ評価して」への答えの『気をつけるところ』に「重なり: SMH と SOX はどちらも半導体（合計25%）」と書いた →「SMH25％がいいよね？」→ 私の答えは『半導体を全体の25%にするのはよい。SMH 1本にまとめても差は偶然と区別できない大きさ。今の分け方のまま（NVDA への偏りが小さい・円で金額を指定して買える）を勧めるが、SMH 1本でも問題ない』→「SMH1本に変えて」。
+
+**比べた数字（判断の材料・会話で測った）**
+- 中身（out/etf_profiles.json: SMH は 2026-08-19・楽天・プラス・SOX は同じ指数に連動する東証 2243 の PCF から作った 2026-10-12）: 重さの小さいほうの合計で約75%が同じ会社。SMH だけが持つのは CDNS・SNPS・STM・SWKS、SOX だけが持つのは COHR・CRDO・GFS・Q・ENTG・TSEM・MTSI・LSCC・SITM。NVDA は SMH の中で22.1%・SOX の中で11.6%、上位3社は SMH 38.0%・SOX 28.4%。
+- 集中（`night/lookthrough.py --what-if`・城は席5社×2%）: ETF の中身まで見た NVDA は全体の 7.9→9.0%（v9.9.188 で撤廃した旧上限8%を超える＝承知の数字）・半導体の連鎖 38.9〜39.1→39.7〜39.9%。
+- 費用: 半導体の部分は年0.28%（SMH 0.35%×15＋楽天・プラス・SOX 税込0.176%×10）→0.35%＝全体で年0.017pt。
+- 過去（2012-01〜2026-09・177か月・ドル建て・配当込み・Yahoo の調整後終値。SOX は SOXX〔2021-05 まで・当時は SOX に連動〕→ 2021-06 は SOXX と SOXQ の平均 → 2021-07〜 SOXQ をつないだもの）:
+
+| | SMH | SOX（つないだもの） |
+|---|---|---|
+| 年率 | 29.9% | 28.6% |
+| 年率のぶれ | 25.6% | 26.9% |
+| 最大の下げ | −40.0% | −41.3% |
+
+  月次の相関 0.987・差の t（Newey-West）0.53・年ごとに SMH が上だったのは15年中9年。2012〜2020 は SOX が年0.7pt 上（t −0.79）、2021〜 は SMH が年4.5pt 上（t 1.03・NVDA が伸びた年: 2024 は SMH +39% 対 SOX +20%）、2026（9月まで）は SOX +79% 対 SMH +69%。実物どうし（2021-07〜・SOXQ）は SMH 34.8% 対 29.9%。半導体25%の部分（SMH 25 と SMH 15＋SOX 10 を毎月組み直したもの）は年29.9% 対 29.4%＝年0.5pt・全体にすると年0.1pt 程度で、偶然と区別できない（t 0.53）。
+- 私の勧めは今の分け方のままだった（NVDA 1社への偏りが小さい・円で金額を指定してその月の取り分を毎月買える・ドルに替えない・費用が少し安い）＝SMH 1本は人の判断。SMH 1本の良いところは本数が1つ減って簡単になることと、最大手の勢いにもっと乗れること。
+
+**変えたもの**
+- portfolio.json: `ami_names`・`ami_weights`・`ami_funds` から RPLUS-SOX（楽天・プラス・SOX）を外して SMH 15→25・`castle_rule_measure.sleeve` から SOXQ 10 を外して SMH 15→25（QQQM 40 : SMH 25 : ITA 5 : MISL 5 : XLV 7.5 : FBT 7.5・起点 2026-09-25 からの全期間をこの比で測り直す・規則が判定するのは2029年9月）・`nisa.rule` の成長投資枠から楽天・プラス・SOX を外した・target の note。楽天・プラス・SOX は一度も買っていない（2026-10-11 の state.json の保有は MSFT・ASML・XLK・SMH・QQQM だけ）ので名前ごと外した（SHLD と同じ扱い）。旧の姿は `ami_mix_superseded_2026_10_15d`（ami_funds の設定と nisa.rule の一節も持つ）。中身の写真 out/etf_profiles.json の etfs["RPLUS-SOX"] は残した。
+- index.html: 解説の配分の文（見出しの帯・ETF の行・ETF の中の重み〔NASDAQ100 約44 / SMH 約28 / XLV 約8 / FBT 約8 / ITA 約6 / MISL 約6〕・個別の行の物差しの袖と1株単位の注文・区分の比率の段落〔8区分→7区分〕）。門のコードは不変（2026-10-14 に足した『投資信託の区分が2つ』の道・口座の既定を ami_funds の account から・旧の組み方 mkNb の端数を1回だけ、はどれも残す＝投資信託が1本なら今までどおり動く）。
+- todo: `rplus_sox_first_buy_check` を done（買わないので要らなくなった）。
+- 検査 `night/check_sleeve_split.js` の ㉑: 正本に楽天・プラス・SOX が無ければ、旧の設定（`ami_mix_superseded_2026_10_15d`）で2本の形を検査の中で作って見続ける（盤に基準価額が無ければ検査の中で足す）——コードの道を検査の外に落とさない（⑯⑰ の ami_other と同じ作法）。
+
+**今月の注文書（入金20万円・門そのもの・盤に無い MISL は $41.11 を足して読んだ）**: 前 XLV・FBT・ITA 各1株・MISL 2株・LRCX 1株（個別株 ¥45,319）＋楽天・プラス・SOX ¥40,400 → 後 同じ株＋iFreeNEXT ¥40,400（合計 約¥199,974）。SMH は目標25%に対し保有14.6%（不足 ¥303,278）だが、今月の SMH の取り分 ¥16,633 が1株 ¥89,200 の半分に届かないので今月なし（取り分は投資信託へ・不足は来月以降へ）。CW・GOOGL は来月（持っていない銘柄を先に買う枠で今月の入金が尽きた）。⚠ NASDAQ100 は目標40%に対し保有47.1%で超えているが、1株に届かない分と端数は投資信託（今は iFreeNEXT だけ）へ回る（門の既存の規則・現金で残さない）＝SMH が1株ずつ買われるまでは NASDAQ100 に少し多めに入る。
+
+**検査**: check_gate_parity（投下可5社 ASML・CW・GOOGL・LRCX・MSFT が門と端末で一致）・check_fund_trade 全項目・check_sleeve_split 97項目（㉑ の実データの部分は楽天・プラス・SOX を検査の中で足した形で）・check_auto_import 全項目・check_pft_card 56・--full 61（区分が1つ減った分、区分ごとの3項目が少ない）・check_pfc_card 67・check_hold_detail 82・check_state_issue 48・validate_state・check_forward_frozen・check_html・audit_docs すべて通過（✗ 0）。採点・四関門・席・割り方の式・売却規律・castle_rule の線は不変。
+
+**道具（scratchpad・repo に入れていない）**: smh25/cmp.py（SMH と SOX の過去の比べ）。
+
+**戻し方**: portfolio.json の `ami_mix_superseded_2026_10_15d` の姿へ（ami_names の SMH の後に RPLUS-SOX・ami_weights の SMH 15・RPLUS-SOX 10・ami_funds に ami_funds_RPLUS-SOX・castle_rule_measure.sleeve に SOXQ 10・nisa.rule に nisa_rule_SOX の一節）と todo `rplus_sox_first_buy_check` を開き直す。売るものは無い。

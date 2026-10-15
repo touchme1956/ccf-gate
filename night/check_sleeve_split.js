@@ -39,7 +39,9 @@
  *      main に入るまで）へ検査の中で値段を足して見る（盤に値段があればそちらを使う）。⑱ の実データの部分は 'castle' を検査の中で作って見る
  *
  *   ㉑ 投資信託の区分が2つ（2026-10-14「SMH15％SOX10に変えてマージして」＝楽天・プラス・SOX）: 端数と使い残しは2つの投資信託の区分へ取り分の比で・
- *      2本ともお金を受ける月の行の文・旧の組み方（mkNb）の端数は1回だけ
+ *      2本ともお金を受ける月の行の文・旧の組み方（mkNb）の端数は1回だけ。2026-10-15「SMH1本に変えて」で正本から楽天・プラス・SOX を外した
+ *      （コードの道は残す）——正本に無ければ、2本の形（SMH の10を楽天・プラス・SOX へ・ami_funds は旧の設定 target.ami_mix_superseded_2026_10_15d）を
+ *      検査の中で作って見続ける（正本は触らない・盤に基準価額が無ければ検査の中で足す）
  *
  * playwright が要るので CI には入れていない。使い方: node night/check_sleeve_split.js
  */
@@ -993,8 +995,16 @@ const srv = http.createServer((q, r) => {
        '㉑ 投資信託の区分が2つ（入金20万・SMH は1株の半分に届かない）: 端数と使い残し ¥' + pool.toLocaleString() + ' を取り分の比（¥'
        + Math.round(q21.b0).toLocaleString() + ' : ¥' + Math.round(q21.b2).toLocaleString() + '）で NASDAQ100 ¥' + q21.f0.toLocaleString() + '・SOX ¥' + q21.f2.toLocaleString()
        + 'へ・合計は入金にぴったり（残り ¥' + q21.rest + '）');
-    if ((base.target.ami_funds || {})['RPLUS-SOX'] && (+(base.target.ami_weights || {})['RPLUS-SOX'] || 0) > 0) {
-      const two = (m) => { const o = withMode(m), W = o.target.ami_weights;   // NASDAQ100 も目標を下回る形（合計は ami_net_pct のまま）
+    const has21 = (base.target.ami_funds || {})['RPLUS-SOX'] && (+(base.target.ami_weights || {})['RPLUS-SOX'] || 0) > 0;
+    const old21 = (base.target.ami_mix_superseded_2026_10_15d || {})['ami_funds_RPLUS-SOX'];
+    // 2026-10-15「SMH1本に変えて」で正本から外した——正本に無ければ旧の設定で2本の形を検査の中で作る（SMH の10を楽天・プラス・SOX へ）
+    const withSox = (o) => { if (has21) return o; const T = o.target, W = T.ami_weights, N = T.ami_names;
+      T.ami_funds = Object.assign({}, T.ami_funds, { 'RPLUS-SOX': old21 });
+      if (!N.includes('RPLUS-SOX')) N.splice(N.indexOf('SMH') + 1, 0, 'RPLUS-SOX');
+      const d = Math.min(+W.SMH || 0, 10); W.SMH = (+W.SMH || 0) - d; W['RPLUS-SOX'] = d; return o; };
+    if (has21 || old21) {
+      if (!has21) DASHX = { 'RPLUS-SOX': { px: 3.0943, prev: 3.0943, chg: 0, chgPct: 0, src: 'check' } };   // 盤に基準価額が無ければ足す（1口あたりの円・2026-10-14）
+      const two = (m) => { const o = withSox(withMode(m)), W = o.target.ami_weights;   // NASDAQ100 も目標を下回る形（合計は ami_net_pct のまま）
         const d = Math.min(+W.SMH || 0, 15); W['IFREE-NDX'] = (+W['IFREE-NDX'] || 0) + d; W.SMH = (+W.SMH || 0) - d; return o; };
       const load21 = async (over, amt) => {
         OVER = over;
@@ -1014,12 +1024,13 @@ const srv = http.createServer((q, r) => {
       const r21 = await load21(two('cat'), 1000000);
       const both = r21.fr.filter(x => /残りの円は投資信託へ/.test(x) && /2本の取り分の比で分ける/.test(x));
       ok(r21.fr.length >= 2 && both.length >= 2 && !r21.fr.some(x => /残りの円は全部ここへ/.test(x)) && r21.tot <= 1000000,
-         '㉑ 実データ（SMH の15を NASDAQ100 へ移した形・入金100万）: 金額で買う行 ' + r21.fr.length + '本のうち ' + both.length + '本が「残りの円は投資信託へ（2本の取り分の比で分ける）」・「全部ここへ」は無し・合計 ¥' + r21.tot.toLocaleString());
+         '㉑ 実データ（' + (has21 ? '' : '正本に無いので楽天・プラス・SOX 10 を検査の中で足し、') + 'SMH の15を NASDAQ100 へ移した形・入金100万）: 金額で買う行 ' + r21.fr.length + '本のうち ' + both.length + '本が「残りの円は投資信託へ（2本の取り分の比で分ける）」・「全部ここへ」は無し・合計 ¥' + r21.tot.toLocaleString());
       const r21g = await load21(two('gap'), 1000000);
       const abs = r21g.fr.filter(x => /＋端数/.test(x));
       ok(r21g.fr.length >= 2 && abs.length <= 1 && r21g.tot > 0 && r21g.tot <= 1000000,
          '㉑ 旧の組み方（割り方 gap・同じ形）: 投資信託の行 ' + r21g.fr.length + '本・「＋端数」は ' + abs.length + '本だけ・合計 ¥' + r21g.tot.toLocaleString() + '（入金を超えない）');
-    } else ok(true, '   （正本に楽天・プラス・SOX が無いので ㉑ の実データの部分は飛ばす）');
+      DASHX = null;
+    } else ok(true, '   （正本にも旧の設定にも楽天・プラス・SOX が無いので ㉑ の実データの部分は飛ばす）');
   }
 
   ok(errs.length === 0, 'pageerror 0件' + (errs.length ? '（' + errs[0].slice(0, 120) + '）' : ''));
