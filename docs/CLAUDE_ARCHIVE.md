@@ -20052,3 +20052,36 @@ B＝今も上場している NYSE・Nasdaq の6,026本（SEC の一覧・使え�
 **道具（scratchpad・repo に入れていない）**: smh25/cmp.py（SMH と SOX の過去の比べ）。
 
 **戻し方**: portfolio.json の `ami_mix_superseded_2026_10_15d` の姿へ（ami_names の SMH の後に RPLUS-SOX・ami_weights の SMH 15・RPLUS-SOX 10・ami_funds に ami_funds_RPLUS-SOX・castle_rule_measure.sleeve に SOXQ 10・nisa.rule に nisa_rule_SOX の一節）と todo `rplus_sox_first_buy_check` を開き直す。売るものは無い。
+
+## 2026-10-15 防衛の MISL 5 を SHLD 5 に戻した——全体で NASDAQ100 40 / SMH 25 / ITA 5 / SHLD 5 / XLV 7.5 / FBT 7.5 / 個別株 10（ユーザー明示指示「SHLD5％MISLはなくして」）
+
+**流れ**: PR #275 で MISL・個別株10%・SMH 1本の形を main に入れた（60e127fb）→「防衛のETFもっといいのないか教えて」→ 楽天の海外ETFの一覧（ETFD.csv）と投資信託協会の投信総合検索ライブラリー（「防衛」「ディフェンス」「航空宇宙」で検索）を洗い直した。比べられる記録のある本は 10/10・10/15 と同じ（ITA・MISL・SHLD・466A・513A・たわら防衛・欧州防衛〔2030年償還＝NISA の成長投資枠の外〕／楽天に無い PPA・XAR）。新しく見つかったのは、ドローンの DRNZ（記録が短い）と、2026年7〜9月に出た投資信託4本——日欧防衛ファンド（信託報酬 税込 約1.59%）・明治安田グローバル次世代防衛株式ファンド（約1.19%）・イノベーション・インデックス・宇宙＆防衛（約0.82%）・一歩先いく防衛テック－日本株式インデックス（約0.08%・日本の防衛関連株）。どれも記録が3か月未満で、楽天で買えるかは確かめていない。2024-02 からの航空宇宙戦略グローバルファンドは直近1年 +9.1%（同じ分類の702本中488位）。DFEN は値動きが3倍の本で長く持つと目減りするので外した。私の答え: はっきり良い本は無い。もっと良くなりうるのは SHLD だけだが記録は3年。勧めは今のままか、MISL を ITA にまとめる（ITA 10）→「SHLD5％MISLはなくして」。
+
+**比べた数字**（out/defense_alts.json・2026-10-10・ドル建て・2023-10〜2026-09 の36か月）
+
+| | 記録 | 費用（年） | 年率 | 最大の下げ | QQQ との相関 | 中身 |
+|---|---|---|---|---|---|---|
+| ITA | 20年 | 0.37% | 25.9% | −14.8% | 0.40 | 米国だけ・航空機寄り（GE・RTX・Boeing） |
+| MISL | 4年 | 0.61% | 24.8% | −15.6% | 0.44 | 米国だけ・Palantir と SpaceX で約2割 |
+| SHLD（採用） | 3年 | 0.50% | 35.9% | −20.4% | 0.01 | 防衛の会社だけ・欧州と韓国が3割強 |
+
+- 中身の重なり（小さいほうの重みの合計・out/etf_profiles.json）: SHLD と ITA 31.1%・MISL と ITA 63.0%・SHLD と MISL 42.5%。SHLD の上位は RTX 9.5・Palantir 9.3・General Dynamics 8.5・Lockheed 8.5・Northrop 7.9・BAE 4.7（%・2026-08-24）。指数の決まりは売上の50%以上が防衛（防衛テック）の会社だけ・最大50社・1社8%上限・5月と11月に組み直す。
+- 長い歴史（French 49・1963-07〜2026-08・米国）: Guns（ミサイル・弾薬）はテックとの相関 0.39・ITバブル崩壊（2000-03→2002-09）で +208%／Aero（航空機・部品）は 0.58・−18.6%。SHLD は ITA より Guns 寄り。
+- 弱いところ: SHLD の記録は3年だけで、欧州の再軍備で防衛株が上がった時期と重なる。同じ中身を円で持つ 466A は 2025-12〜2026-09 の10か月 −3.7%（ITA は +2.0%）。
+- 私の勧めは防衛は ITA（記録20年・費用0.37%・裏付けがあるのは MISL を ITA にまとめることだけ）だった＝SHLD は人の判断。再検定は SHLD が10年になる 2033-09（todo `defense_alts_retest_2033`）。
+
+**変えたもの**
+- portfolio.json: `ami_names`・`ami_weights` の MISL → SHLD（ITA の後・MISL は一度も買っていないので名前ごと外した）・`castle_rule_measure.sleeve` の MISL → SHLD（QQQM 40 : SMH 25 : ITA 5 : SHLD 5 : XLV 7.5 : FBT 7.5・起点 2026-09-25 からの全期間をこの比で測り直す）・`nisa.rule`・target の note。旧の姿は `ami_mix_superseded_2026_10_15e`。
+- index.html: 解説の配分の文（見出しの帯・ETF の行・ETF の中の重み・物差しの袖・区分の段落）。門のコードは不変（SHLD は目標が0より大きい本なので自分の区分）。
+- todo: `xlv_nisa_check` の題と追記を SHLD に・`defense_alts_retest_2033` の期限を 2033-09-30 に戻した（MISL に合わせた 2032-10 の前倒しを取り消し）。
+
+**今月の注文書**（入金20万円・門そのもの・前は main の 60e127fb の portfolio.json・盤に無い MISL は $41.11 を足して読んだ）
+- 前: LRCX・XLV・FBT・ITA 各1株・MISL 2株（約¥12,987）＋iFreeNEXT ¥40,400（合計 約¥199,974）
+- 後: LRCX・XLV・FBT・ITA 各1株・**SHLD 1株（約¥9,426・盤の $59.68）**＋iFreeNEXT ¥43,900（合計 約¥199,914）
+- どちらも CW・GOOGL は来月（持っていない銘柄を先に買う枠で今月の入金が尽きた）・SMH は今月の取り分が1株の半分に届かない。SHLD は 10-13 から main の ami_names にあったので盤に値段があり、今月から買える。
+
+**集中**（`night/lookthrough.py --what-if`・城は席5社×2%）: NVDA 9.0%・半導体の連鎖 39.7〜39.9%＝MISL のときと同じ（どちらも半導体を持たない）。
+
+**検査**: check_gate_parity（投下可5社 ASML・CW・GOOGL・LRCX・MSFT が門と端末で一致）・check_fund_trade 全項目・check_auto_import 全項目・check_pft_card 56・--full 61・check_pfc_card 67・check_hold_detail 82・check_state_issue 48・validate_state・check_forward_frozen・check_html・audit_docs（--no-templates・--templates-only）・check_sleeve_split 97項目（⑳ 実データ・入金17万: 先に買う本 LRCX・XLV・FBT・ITA・SHLD／㉑ は楽天・プラス・SOX を検査の中で足した形）すべて通過（✗ 0）。採点・四関門・席・割り方の式・売却規律・castle_rule の線は不変。
+
+**戻し方**: portfolio.json の `ami_mix_superseded_2026_10_15e` の姿へ（`ami_names` と `ami_weights` の SHLD を MISL 5 に〔SHLD を持っていれば名前は残して目標0%に＝売らない〕・`castle_rule_measure.sleeve` の SHLD を MISL に・`nisa.rule` の SHLD の一節を `nisa_rule_MISL` に）。売るものは無い。
