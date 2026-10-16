@@ -98,18 +98,30 @@ def main():
     rows, chains = res['rows'], res['chains']
 
     # ── AVUV を R の口に足して R.main を回す（X.sec_env の中＝SIC の写しへ書く）──
-    R.C['AVUV'] = dict(ja='米国小型バリュー（Avantis・割安∧収益性）', veh='AVUV（楽天では買えない・松井証券ほか）', us=True, k=0.10)
-    R.DATA['AVUV'] = ('AVUV', best, SPLICE_LAST)
-    if best == 'FRENCH_SMALL_HIBM':
-        R.EXTRA_PROXY['FRENCH_SMALL_HIBM'] = lambda: french_small_hibm(M, avuv_er)
-    R.JPM_MAP['AVUV'] = R.JPM_MAP['VBR']
-    R.GMO_MAP['AVUV'] = list(R.GMO_MAP['VBR'])
-    R.EXTRA_STYLE['AVUV'] = 'VBR'
-    hold = [[h['symbol'], float(h['weight'])] for h in prof['holdings'] if h.get('symbol') and h['symbol'] != 'n/a']
-    R.EXTRA_PROFILES['AVUV'] = dict(er=avuv_er, dy=float(prof['dividend_yield']), holdings=hold)
-    U.log('R.main（AVUV を足して）')
-    with X.sec_env():
-        ext = R.main(write=False)
+    # X.rank_result の後の R.C・R.DATA には R7 の本（合成の代わり BESTPF_PX_* を持つ）が残る＝unx の swap_R と同じく
+    # R の25本＋AVUV だけにして回し、終われば元へ戻す
+    rows0 = res['rows0']
+    r25 = [c for c in rows0 if not rows0[c].get('r7_new')]
+    oc, od = R.C, R.DATA
+    try:
+        R.C = {c: oc[c] for c in r25}
+        R.DATA = {c: od[c] for c in r25}
+        R.C['AVUV'] = dict(ja='米国小型バリュー（Avantis・割安∧収益性）', veh='AVUV（楽天では買えない・松井証券ほか）', us=True, k=0.10)
+        R.DATA['AVUV'] = ('AVUV', best, SPLICE_LAST)
+        if best == 'FRENCH_SMALL_HIBM':
+            R.EXTRA_PROXY['FRENCH_SMALL_HIBM'] = lambda: french_small_hibm(M, avuv_er)
+        R.JPM_MAP['AVUV'] = R.JPM_MAP['VBR']
+        R.GMO_MAP['AVUV'] = list(R.GMO_MAP['VBR'])
+        R.EXTRA_STYLE['AVUV'] = 'VBR'
+        hold = [[h['symbol'], float(h['weight'])] for h in prof['holdings'] if h.get('symbol') and h['symbol'] != 'n/a']
+        R.EXTRA_PROFILES['AVUV'] = dict(er=avuv_er, dy=float(prof['dividend_yield']), holdings=hold)
+        U.log('R.main（R の25本＋AVUV）', len(R.C))
+        with X.sec_env():
+            ext = R.main(write=False)
+        avuv_meta = dict(R.C['AVUV'])
+    finally:
+        R.C, R.DATA = oc, od
+    R.C['AVUV'] = avuv_meta       # 判定の段の chips_adj が『米国の本』と読めるように（R.DATA には足さない）
     rowsR, chainsR = ext['rows'], ext['chains']
     reg3 = {}
     for k in ('A1', 'A2', 'B', 'C', 'A1_gross'):
