@@ -1,0 +1,48 @@
+{
+ "name": "avuv（AVUV を今の配分に足すのは？）",
+ "date": "2026-10-16",
+ "question": "ユーザー「AVUV」——直前の「追加するならどんなETF?」（etf_add・5a527332）の続きで、Avantis U.S. Small Cap Value ETF（AVUV）を今の配分に足す価値。GDX・VBR と比べて",
+ "status": "測る前に固定した（このファイルをコミットしてから night/avuv_check.py を書いて回す）",
+ "scope": "読むだけ。門・採点・配分（portfolio.json）・注文書には触れない。結果がどう出ても配分は変えない（入れるかはユーザーの明示指示のときだけ）",
+ "facts_known_before_measuring": {
+  "楽天証券": "楽天の海外ETF一覧（ETFD.csv・2026-10-16 に取り直した写し・1,370行）に AVUV は無い＝楽天では買えない（GDX・VBR は載っている）。out/broker_lineup.json（742本）にも無い",
+  "松井証券": "2025-07-07 から AVUV の取り扱い（https://www.matsui.co.jp/news/2025/detail_0707_01.html）。NISA 成長投資枠の対象かは確かめていない。NISA の口座は1年に1つの金融機関だけ",
+  "器": "Avantis（American Century）・2019-09-24 設定・能動の運用（指数なし）・経費率 0.25%・配当利回り 1.38%・794銘柄・純資産 約304億ドル（Alpha Vantage ETF_PROFILE 2026-10-16）",
+  "前の記録": "etf_add（書庫:20367）で同じ賭けの VBR（Vanguard 小型バリュー・0.07%・楽天で買える）は『前提しだい』（Δ平均 +0.037・Δ最悪 +0.097・ドットコム級なしの枠は『堅い価値なし〜小さい』）。edge の小型の良い側の家族（VBR・AVUV など）は 2001 年以降の検定で『不合格』（out/edge_results.json）——edge の文の『いずれも楽天で…NISA で買える』は AVUV については誤り（楽天に無い）。第三者の数字（未監査）: AVUV の5年の年率 約13.9% 対 IWN 約9.5%（PortfoliosLab）"
+ },
+ "row_construction（AVUV の行の作り方）": {
+  "方法": "night/etf_forward_rank.py の外の道具のための口（C・DATA・JPM_MAP・GMO_MAP・EXTRA_PROXY・EXTRA_STYLE・EXTRA_PROFILES）に AVUV を足してから night/unx_assets.build を回す（morefunds が SCHD を足したのと同じ作法・既存の本の数字は変えない＝回帰の検査で確かめる）",
+  "毎月の値（A1・A2）": "2019-10 から AVUV の本物（Yahoo の調整後終値）。2019-09 以前は代わり。代わりは DFSVX（DFA US Small Cap Value I）・VISVX（Vanguard Small-Cap Value Index＝VBR の代わり）・DFFVX（DFA US Targeted Value I）・French の 6_Portfolios_2x3 の SMALL HiBM（時価総額加重・AVUV の経費率/12 を引く）のうち、AVUV の本物 2019-10〜2026-09 との月次の相関がいちばん高いもの（同点は DFSVX）。投信はそのまま（自分の費用を引いた後の値・unx の代わりと同じ）。相関が 0.90 未満なら『測れない』で止める",
+  "世界B": "VBR と同じ型の上乗せ（French の SMALL HiBM 対 市場 ×0.5）＋米国の記録の業種の基礎率（AVUV の保有で）− 経費率 − 外国税（k=0.10×配当利回り）",
+  "世界C": "JPM の USS（VBR と同じ）。GMO の写しも VBR と同じ（感度で使う道具のため）",
+  "世界D": "アナリストの予想が無い本は C で代える（bestpf_eval.load_D の決まり）",
+  "半導体の基礎率（K4）": "米国の本として保有の Chips の比重で（etf_forward_combo の式）"
+ },
+ "forms_etf_side_percent_of_total": {
+  "今": {"QQQM": 40, "SMH": 25, "ITA": 5, "SHLD": 5, "XLV": 7.5, "FBT": 7.5},
+  "+AVUV（NASDAQ100 から5）": {"QQQM": 35, "SMH": 25, "ITA": 5, "SHLD": 5, "XLV": 7.5, "FBT": 7.5, "AVUV": 5},
+  "+VBR（etf_add と同じ）": {"QQQM": 35, "SMH": 25, "ITA": 5, "SHLD": 5, "XLV": 7.5, "FBT": 7.5, "VBR": 5},
+  "+GDX（etf_add と同じ）": {"QQQM": 35, "SMH": 25, "ITA": 5, "SHLD": 5, "XLV": 7.5, "FBT": 7.5, "GDX": 5}
+ },
+ "verdict_rule": "etf_add と同じ: Δ＝案 − 今 を etf_ita_xlk.verdict に通し、感度5本（主・A2を外す・半導体の基礎率・分散の上乗せなし・共分散を A2 の窓から＝ndx_swap_check.variants）を etf_ita_xlk.summarize でまとめる。主の枠 USD・崩れあり 2000-09〜、確かめの枠 USD・ドットコム級なし 2002-11〜 と 円・崩れあり。保険の3条件（unx_final.conds）。100年の代用の (3) は AVUV と VBR を French の SMALL HiBM（1926〜）で写す（unx_assets.century_parts の部品にこの道具の中だけで足す）",
+ "comparisons": {
+  "主": "AVUV の価値＝ +AVUV − 今",
+  "参考（判定の決まりで裁くが勧めは R の決まりどおり）": ["器の差＝ +AVUV − +VBR（同じ賭けの2つの器）", "GDX と比べる＝ +AVUV − +GDX"]
+ },
+ "reading_rules_fixed_before_measuring": {
+  "R1": "+AVUV − 今 が主の枠で『堅い価値あり』→『AVUV も足す候補』。+GDX も『堅い価値あり』なので、主の Δ平均 が大きいほう（同じなら Δ最悪）を上に並べる。確かめの枠で割れれば『窓・通貨で割れる』と添える",
+  "R2": "『前提しだい』で保険の3条件をすべて満たす →『保険として足すのは筋が通る（好みの差）』",
+  "R3": "それ以外 →『足す根拠はデータに無い』",
+  "R4": "器の差（+AVUV − +VBR）が『堅い価値あり』→『同じ小型バリューの賭けなら AVUV の器のほうが良い』／『堅い価値なし〜小さい』で主が価値なし →『VBR の器で足りる』／それ以外 →『器の差は決まりでははっきりしない』",
+  "R5": "楽天で買えないことは判定に入れず、読みに必ず添える（楽天で買える同じ賭けは VBR）",
+  "R7": "どの結果でも配分は変えない（報告するだけ）"
+ },
+ "regression": "① 今・+VBR・+GDX の 15%以上・5%未満・最悪の世界・最大下落が out/etf_add_check.json と小数1桁で一致（AVUV を足しても既存の本の数字が動かない）② 感度の主が measure と 1e-9 以内（USD・円）。どれかが外れれば止める",
+ "reported_not_judged": [
+  "AVUV の本物の記録 2019-10〜2026-09（年率・ぶれ・最大下落・暦年）を VBR・DFSVX・IJR・SPY・QQQ と同じ窓で",
+  "代わりの相関の表と、つないだ AVUV の 2000-09〜 の年率・ぶれ・最大下落",
+  "上振れ（20%以上・内部収益率の分位）・過去の転がる20年の積立・100年の代用の数字",
+  "足し方の感度（ETF 側全部から按分で5・NASDAQ100 から10）"
+ ],
+ "outputs": ["out/avuv_check.json", "night/avuv_check.py"]
+}
