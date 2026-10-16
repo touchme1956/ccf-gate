@@ -47,6 +47,12 @@ COST_NOTE = ('今の NASDAQ100 は iFreeNEXT（信託報酬 税込0.495%）で�
              'S&P500 を NISA の eMAXIS Slim 米国株式（0.0814%）で持つなら VOO（0.03%）より年約0.05pt 重い＝模型の差は年約0.1pt 縮む（信託報酬の差だけ・ここでは引いていない）')
 
 
+def dca_mult(irr_pct, n=240):
+    """年率の内部収益率 → 毎月の初めに同額を n か月入れた最後の額÷投じた額（bestpf_realized.irr_monthly と同じ置き方）"""
+    g = (1 + irr_pct / 100) ** (1 / 12) - 1
+    return n if g == 0 else ((1 + g) ** n - 1) / g * (1 + g) / n
+
+
 def forms():
     tg = json.load(open(os.path.join(BASE, 'portfolio.json')))['target']
     cur = {}
@@ -220,7 +226,8 @@ def main():
             for nm, r in t.items():
                 q, pr = UC.upside(sim, r['_raw'], pi)
                 rr = {k: v for k, v in r.items() if k != '_raw'}
-                rr['上振れ'] = dict(pr, 内部収益率の分位=q)
+                rr['上振れ'] = dict(pr, 内部収益率の分位=q,
+                                  **{'20年の積立の倍率（分位から・最後の額÷投じた額）': {k: round(dca_mult(v), 2) for k, v in q.items()}})
                 o[nm] = rr
             for nm in (CUR, NDX):
                 a, b = t[nm]['_raw'], t[SPX]['_raw']
