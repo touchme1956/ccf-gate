@@ -99,10 +99,10 @@ def machine2():
 
 
 # ───────────────────────── 機械1 ─────────────────────────
-def forms(P):
+def forms(P, drop=()):
     m1 = P['machine_1_main']
     cur = dict(m1['今'])
-    cands = list(m1[next(k for k in m1 if k.startswith('候補'))])
+    cands = [x for x in m1[next(k for k in m1 if k.startswith('候補'))] if x not in drop]
     F = {CUR: cur}
     REF = {}
     tot = sum(cur.values())
@@ -135,9 +135,14 @@ def main():
 
     res = U.build()
     rows, chains = res['rows'], res['chains']
-    miss = [x for x in cands if x not in rows or min(chains[x]) > UC.FIRST]
+    miss = [x for x in cands if x not in rows]
     if miss:
-        raise SystemExit(f'候補の行・系列が足りない: {miss}')
+        raise SystemExit(f'候補の行が無い: {miss}')
+    # 系列が主の窓（2000-09〜）にそろわない候補は測れない＝事前登録で GRID・EPI を外したのと同じ理由で外し、名指しする
+    late = {x: min(chains[x]) for x in cands if min(chains[x]) > UC.FIRST}
+    if late:
+        cur, cands, F, REF = forms(P, drop=set(late))
+        U.log('  系列が主の窓にそろわず外した候補', late)
     allp = dict(F, **REF)
     assets = sorted({a for f in allp.values() for a in f} | {'VOO'})
     mega = U.mega_map(rows, assets)
@@ -160,6 +165,10 @@ def main():
     U.log('回帰の検査', ok1, reg2['max_abs_diff'], '機械2', m2['regression']['ok'])
     doc = dict(generated=datetime.date.today().isoformat(), tool='night/etf_add_check.py', prereg='out/etf_add_prereg.json（5a527332）',
                question=P['question'],
+               deviations_from_prereg={
+                   '測れない候補（事前登録の31本から外した）': {x: f'系列が {m // 100}-{m % 100:02d} から＝主の窓（2000-09〜）にそろわない（事前登録で GRID を外したのと同じ理由・事前登録の時点で見落とした）'
+                                                    for x, m in late.items()},
+                   '機械2 の材料': m2.get('データの置き換え')},
                regression={'① 今と out/sp500_compare.json の今（USD・崩れあり・小数1桁）': dict(ok=ok1, rows=reg1),
                            '② 感度の計算の主と unx_assets.measure（USD・丸める前・1e-9）': {k: v for k, v in reg2.items() if k != 'rows'},
                            '③ 機械2 が etfcand の第2段の主の Δ を再現（GDX・SIL・小数2桁）': m2['regression'],
