@@ -41,7 +41,8 @@
  *   ㉑ 投資信託の区分が2つ（2026-10-14「SMH15％SOX10に変えてマージして」＝楽天・プラス・SOX）: 端数と使い残しは2つの投資信託の区分へ取り分の比で・
  *      2本ともお金を受ける月の行の文・旧の組み方（mkNb）の端数は1回だけ。2026-10-15「SMH1本に変えて」で正本から楽天・プラス・SOX を外した
  *      （コードの道は残す）——正本に無ければ、2本の形（SMH の10を楽天・プラス・SOX へ・ami_funds は旧の設定 target.ami_mix_superseded_2026_10_15d）を
- *      検査の中で作って見続ける（正本は触らない・盤に基準価額が無ければ検査の中で足す）
+ *      検査の中で作って見続ける（正本は触らない・盤に基準価額が無ければ検査の中で足す）。2026-10-16「… SMTモメンタム10％ …」で正本の投資信託が
+ *      再び2つ（iFreeNEXT と SMT 米国株式モメンタム）になったので、正本に2つ以上あれば正本の形のまま見る（楽天・プラス・SOX を足して3つにしない）
  *
  * playwright が要るので CI には入れていない。使い方: node night/check_sleeve_split.js
  */
@@ -995,7 +996,9 @@ const srv = http.createServer((q, r) => {
        '㉑ 投資信託の区分が2つ（入金20万・SMH は1株の半分に届かない）: 端数と使い残し ¥' + pool.toLocaleString() + ' を取り分の比（¥'
        + Math.round(q21.b0).toLocaleString() + ' : ¥' + Math.round(q21.b2).toLocaleString() + '）で NASDAQ100 ¥' + q21.f0.toLocaleString() + '・SOX ¥' + q21.f2.toLocaleString()
        + 'へ・合計は入金にぴったり（残り ¥' + q21.rest + '）');
-    const has21 = (base.target.ami_funds || {})['RPLUS-SOX'] && (+(base.target.ami_weights || {})['RPLUS-SOX'] || 0) > 0;
+    // ★2026-10-16: 正本の投資信託の区分（ami_names にあり ami_weights>0 の ami_funds の本）が2つ以上なら、正本の形のまま見る
+    const fund21 = Object.keys(base.target.ami_funds || {}).filter(k => (base.target.ami_names || []).includes(k) && (+(base.target.ami_weights || {})[k] || 0) > 0);
+    const has21 = fund21.length >= 2 || ((base.target.ami_funds || {})['RPLUS-SOX'] && (+(base.target.ami_weights || {})['RPLUS-SOX'] || 0) > 0);
     const old21 = (base.target.ami_mix_superseded_2026_10_15d || {})['ami_funds_RPLUS-SOX'];
     // 2026-10-15「SMH1本に変えて」で正本から外した——正本に無ければ旧の設定で2本の形を検査の中で作る（SMH の10を楽天・プラス・SOX へ）
     const withSox = (o) => { if (has21) return o; const T = o.target, W = T.ami_weights, N = T.ami_names;
@@ -1022,9 +1025,9 @@ const srv = http.createServer((q, r) => {
         });
       };
       const r21 = await load21(two('cat'), 1000000);
-      const both = r21.fr.filter(x => /残りの円は投資信託へ/.test(x) && /2本の取り分の比で分ける/.test(x));
+      const both = r21.fr.filter(x => /残りの円は投資信託へ/.test(x) && /[2-9]本の取り分の比で分ける/.test(x));
       ok(r21.fr.length >= 2 && both.length >= 2 && !r21.fr.some(x => /残りの円は全部ここへ/.test(x)) && r21.tot <= 1000000,
-         '㉑ 実データ（' + (has21 ? '' : '正本に無いので楽天・プラス・SOX 10 を検査の中で足し、') + 'SMH の15を NASDAQ100 へ移した形・入金100万）: 金額で買う行 ' + r21.fr.length + '本のうち ' + both.length + '本が「残りの円は投資信託へ（2本の取り分の比で分ける）」・「全部ここへ」は無し・合計 ¥' + r21.tot.toLocaleString());
+         '㉑ 実データ（' + (fund21.length >= 2 ? '正本の投資信託 ' + fund21.join('・') + '・' : has21 ? '' : '正本に無いので楽天・プラス・SOX 10 を検査の中で足し、') + 'SMH の15を NASDAQ100 へ移した形・入金100万）: 金額で買う行 ' + r21.fr.length + '本のうち ' + both.length + '本が「残りの円は投資信託へ（N本の取り分の比で分ける）」・「全部ここへ」は無し・合計 ¥' + r21.tot.toLocaleString());
       const r21g = await load21(two('gap'), 1000000);
       const abs = r21g.fr.filter(x => /＋端数/.test(x));
       ok(r21g.fr.length >= 2 && abs.length <= 1 && r21g.tot > 0 && r21g.tot <= 1000000,
