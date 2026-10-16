@@ -71,7 +71,20 @@ def machine2_child(dst):
         out = {fid: dict(t=v.get('t'), 判定の外=v.get('判定の外')) for fid, v in ctx['outside'].items()}
         return dict(base=base, has_fbt=has_fbt, base_show=show(mb), regression=dict(ok=ok, rows=reg), results=res, outside=out,
                     self_check=ctx['self_check'], fbt_info={k: v for k, v in (ctx['fbt_info'] or {}).items() if k != '代理の候補の相関'})
+    subst = {}
+    if not os.path.exists(EC.ETFD):
+        # etfcand の写し（etfd_20261013.csv・gitignore）がこのコンテナに無い → unx が取った 2026-10-14 の写しで代える。
+        # 第2段がこの表から読むのは FBT の経費率・配当利回りだけ（FBT の行は代理 FBIOX の相関で門を通らないので判定には効かない）
+        alt = os.path.join(BASE, 'out', '_nx_cache', 'unx', 'ab', 'dl', 'ETFD_20261014.csv')
+        if not os.path.exists(alt):
+            raise SystemExit(f'楽天の ETFD.csv の写しが無い: {EC.ETFD} / {alt}')
+        subst['楽天 ETFD.csv'] = f'{os.path.relpath(EC.ETFD, BASE)} が無い → {os.path.relpath(alt, BASE)}（2026-10-14 の写し）で代えた（読むのは FBT の行だけ）'
+        EC.ETFD = alt
+    av = sorted(f[:-5] for f in os.listdir(EC.AVDIR)) if os.path.isdir(EC.AVDIR) else []
+    subst['Alpha Vantage の保有（out/_nx_cache/etfcand/av/）'] = (
+        f'この道具の実行の前に {"・".join(av)} を 2026-10-16 に取り直した（etfcand は 2026-10-13 の写し・このコンテナに無かった）' if av else '無い')
     doc = EC.stage2(src=EC.OUT, dst=SCRATCH, posthoc_on=False, hook=hook)
+    doc['データの置き換え'] = subst
     json.dump(doc, open(dst, 'w'), ensure_ascii=False, indent=1, default=str)
 
 
@@ -118,7 +131,7 @@ def main():
 
     U.log('機械2（別のプロセス・etfcand の第2段の道具）')
     m2 = machine2()
-    U.log('  機械2 の回帰の検査', m2['regression']['ok'], '今', m2['base'], 'FBT', m2['has_fbt'])
+    U.log('  機械2 の回帰の検査', m2['regression']['ok'], '今', m2['base'], 'FBT', m2['has_fbt'], m2.get('データの置き換え'))
 
     res = U.build()
     rows, chains = res['rows'], res['chains']
@@ -287,6 +300,7 @@ def main():
         insurance=ins, reference_ways_to_add=refj, reading=read, combo_top2=combo,
         machine2={'今': m2['base'], 'FBT': ('FBT の行が通った' if m2['has_fbt'] else 'FBT の代理が門を通らない → XLV で代えた（etfcand と同じ）'),
                   'FBT の行': m2['fbt_info'], '今の物差し': m2['base_show'], '判定の外': m2['outside'],
+                  'データの置き換え（事前登録からのずれ・道具の式は不変）': m2.get('データの置き換え'),
                   'results': {t: dict(家族=r['家族'], 行=r['行'], まとめ=r['判定']['まとめ'], 主=r['判定']['主'], 感度=r['判定']['感度ごと'],
                                       物差し=r['物差し'], 行の情報=r['行の情報']) for t, r in m2r.items()}},
         results={'機械1 USD・崩れあり（主）': table, '機械1 USD・ドットコム級なし': table_dc, '機械1 円・崩れあり': table_jpy,
