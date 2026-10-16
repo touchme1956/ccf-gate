@@ -1,0 +1,893 @@
+{
+ "generated": "2026-10-14",
+ "tool": "night/unx_account.py",
+ "prereg": "out/unexplored_prereg.json（6f534c92）",
+ "question": "groups.E_account_costs（器の外の費用と取り分: iDeCo の固定の手数料・カード積立のポイント・為替の手数料・使われないドルの配当・緊急の資金の置き場所）",
+ "inputs": {
+  "facts_accessed": "2026-10-14",
+  "sources": [
+   "https://dc.rakuten-sec.co.jp/admission/setting/",
+   "https://dc.rakuten-sec.co.jp/service/commission/",
+   "https://dc.rakuten-sec.co.jp/service/product/",
+   "https://dc.rakuten-sec.co.jp/service/select/",
+   "https://toushin-lib.fwg.ne.jp/FdsWeb/FDST030000/csv-file-download",
+   "https://www.daiwa-am.co.jp/funds/doc_open/fund_doc_open.php?code=3373&type=1",
+   "https://www.daiwa-am.co.jp/funds/doc_open/fund_doc_open.php?code=3373&type=2",
+   "https://www.hokugin.co.jp/save/kakuteikyosyutu/data/ideco_info20260828_01.pdf",
+   "https://www.ideco-koushiki.jp/guide/structure.html",
+   "https://www.mof.go.jp/jgbs/individual/kojinmuke/houdouhappyou/p20261007.pdf",
+   "https://www.mof.go.jp/jgbs/individual/kojinmuke/main/outline/hendou/",
+   "https://www.rakuten-bank.co.jp/info/2026/260617.html",
+   "https://www.rakuten-bank.co.jp/interest/details.html",
+   "https://www.rakuten-card.co.jp/card/rakuten-gold-card/",
+   "https://www.rakuten-sec.co.jp/api/ss/menu_js/rakuten_money_fund.js",
+   "https://www.rakuten-sec.co.jp/web/commission/",
+   "https://www.rakuten-sec.co.jp/web/company/newsrelease/pdf/press20231201_02.pdf",
+   "https://www.rakuten-sec.co.jp/web/currency/forex/rule.html",
+   "https://www.rakuten-sec.co.jp/web/foreign/us/commission.html",
+   "https://www.rakuten-sec.co.jp/web/info/info20230529-01.html",
+   "https://www.rakuten-sec.co.jp/web/nisa/kodomo-nisa/",
+   "https://www.rakuten-sec.co.jp/web/rakutenmoneyfund/",
+   "https://www.rakuten-sec.co.jp/web/rfund/guide/creditcard.html",
+   "https://www.rakuten-sec.co.jp/web/rfund/guide/creditcard/list.html",
+   "https://www.rakuten-sec.co.jp/web/rfund/guide/creditcard/pdf/fund_list_05point_202610.pdf",
+   "https://www.rakuten-sec.co.jp/web/rfund/guide/rcash.html",
+   "https://www.rakuten-sec.co.jp/web/service/dividend/",
+   "https://www.rakuten-sec.co.jp/web/service/rakumoney-mgmt/",
+   "https://www.rakuten-sec.co.jp/web/service/rakumoney-mgmt/currency-yen/",
+   "https://www.rakuten-sec.co.jp/web/us/stock/mmf/dividend/"
+  ],
+  "repo_files_read": [
+   "index.html（注文書のコード）",
+   "portfolio.html（🏦保有の編集の現金の行）",
+   "portfolio.json（target）",
+   "state.json（保有の写真）",
+   "out/etf_profiles.json（dy）",
+   "out/holdings_div.json",
+   "out/dashboard.json（ドル円・株価）"
+  ],
+  "nav_cache": "（スクラッチ・UNX_CACHE）",
+  "data_end": "2026-09-30"
+ },
+ "results": {
+  "E1_ideco": {
+   "fees": {
+    "加入時・移換時（国民年金基金連合会）": 2829,
+    "毎月（加入者＝掛金を拠出している人）": {
+     "国民年金基金連合会": {
+      "2026年11月分まで": 105,
+      "2026年12月分（2027年1月26日引落分）から": 120
+     },
+     "楽天証券（運営管理手数料）": 0,
+     "信託銀行": 66,
+     "合計": {
+      "今（2026年11月分まで）": 171,
+      "2026年12月分から": 186
+     }
+    },
+    "国基連の手数料の数え方": "2026年11月分（2026-12-28引落分）までは納付（収納）回数1回につき105円。2026年12月分（2027-01-26引落分）からは拠出月数（収納回数にかかわらず、掛金を拠出する対象月数）に応じて月額120円＝年単位拠出（月別掛金）でも120円×月数。毎月の掛金から控除され、控除後の額で運用商品が買われる。",
+    "運用指図者（掛金を拠出していない人）": {
+     "信託銀行": 66,
+     "楽天証券": 0,
+     "合計": 66,
+     "払い方": "年金資産から（毎年1回、保有商品の一部を売って充てる）・給付金から差し引く"
+    },
+    "給付（受け取り）1回あたり（信託銀行）": 440,
+    "還付1回あたり": {
+     "国民年金基金連合会": 1048,
+     "信託銀行": 440,
+     "合計": 1488,
+     "還付とは": "限度額を超えた掛金・加入資格の無い月の掛金などを返すこと"
+    },
+    "移換（楽天証券から他社等へ）": 4400,
+    "cross_check": {
+     "url": "https://www.hokugin.co.jp/save/kakuteikyosyutu/data/ideco_info20260828_01.pdf",
+     "accessed": "2026-10-14",
+     "要旨": "北陸銀行の案内（2026年9月）: 国基連の掛金納付時手数料 105円→120円・2027年1月26日の口座引き落とし分の掛金から。年単位拠出の加入者は「現行: 掛金を拠出する月のみ負担／新: 掛金拠出有無に関わらず毎月分負担」。運用指図者は掛金納付時手数料を負担しない（影響なし）。"
+    },
+    "scout_conflict": "探索役は「186円/月」と書いた＝一次資料と一致（今は171円・2026年12月分から186円）。拠出しない月: 掛金を止めて運用指図者になれば国基連の120円は掛からず信託銀行の66円/月だけ（資産から年1回）。年単位拠出の拠出しない月も、2026年12月分からは国基連120円×その期間の月数が掛かる（楽天・北陸銀行とも）。"
+   },
+   "model": "月の掛金 C を240か月（20年）。毎月 186円（2026年12月分からの国基連120＋信託銀行66）を掛金から引き、最初の月に加入時 2,829円も引く。運用は年率 r（ファンドの費用は入れない＝手数料だけの効き）。受け取りは一時金1回で 440円。掛金の側から見た内部収益率と r の差＝年率の費用。還付（1,488円/回）と移換（4,400円）は起きたときだけなので入れていない。年金形式で受け取れば 440円×回数。加入時の 2,829円は最初の掛金から引くと置いた（引かれ方の一次資料は確かめていない・別に払っても効きはほぼ同じ）。",
+   "drag_5000yen_pt_per_year": {
+    "r=5%": 0.38,
+    "r=8%": 0.371,
+    "r=12%": 0.366
+   },
+   "drag_table": [
+    {
+     "月の掛金_円": 5000,
+     "毎月の手数料が掛金に占める割合_%": 3.72,
+     "r=5%": {
+      "irr_pct": 4.62,
+      "drag_pt": 0.38,
+      "fees_total_yen": 47909,
+      "fee_share_of_contrib_pct": 3.99
+     },
+     "r=8%": {
+      "irr_pct": 7.629,
+      "drag_pt": 0.371,
+      "fees_total_yen": 47909,
+      "fee_share_of_contrib_pct": 3.99
+     },
+     "r=12%": {
+      "irr_pct": 11.634,
+      "drag_pt": 0.366,
+      "fees_total_yen": 47909,
+      "fee_share_of_contrib_pct": 3.99
+     }
+    },
+    {
+     "月の掛金_円": 10000,
+     "毎月の手数料が掛金に占める割合_%": 1.86,
+     "r=5%": {
+      "irr_pct": 4.812,
+      "drag_pt": 0.188,
+      "fees_total_yen": 47909,
+      "fee_share_of_contrib_pct": 2.0
+     },
+     "r=8%": {
+      "irr_pct": 7.817,
+      "drag_pt": 0.183,
+      "fees_total_yen": 47909,
+      "fee_share_of_contrib_pct": 2.0
+     },
+     "r=12%": {
+      "irr_pct": 11.819,
+      "drag_pt": 0.181,
+      "fees_total_yen": 47909,
+      "fee_share_of_contrib_pct": 2.0
+     }
+    },
+    {
+     "月の掛金_円": 20000,
+     "毎月の手数料が掛金に占める割合_%": 0.93,
+     "r=5%": {
+      "irr_pct": 4.907,
+      "drag_pt": 0.093,
+      "fees_total_yen": 47909,
+      "fee_share_of_contrib_pct": 1.0
+     },
+     "r=8%": {
+      "irr_pct": 7.909,
+      "drag_pt": 0.091,
+      "fees_total_yen": 47909,
+      "fee_share_of_contrib_pct": 1.0
+     },
+     "r=12%": {
+      "irr_pct": 11.91,
+      "drag_pt": 0.09,
+      "fees_total_yen": 47909,
+      "fee_share_of_contrib_pct": 1.0
+     }
+    },
+    {
+     "月の掛金_円": 23000,
+     "毎月の手数料が掛金に占める割合_%": 0.81,
+     "r=5%": {
+      "irr_pct": 4.919,
+      "drag_pt": 0.081,
+      "fees_total_yen": 47909,
+      "fee_share_of_contrib_pct": 0.87
+     },
+     "r=8%": {
+      "irr_pct": 7.921,
+      "drag_pt": 0.079,
+      "fees_total_yen": 47909,
+      "fee_share_of_contrib_pct": 0.87
+     },
+     "r=12%": {
+      "irr_pct": 11.922,
+      "drag_pt": 0.078,
+      "fees_total_yen": 47909,
+      "fee_share_of_contrib_pct": 0.87
+     }
+    },
+    {
+     "月の掛金_円": 62000,
+     "毎月の手数料が掛金に占める割合_%": 0.3,
+     "r=5%": {
+      "irr_pct": 4.97,
+      "drag_pt": 0.03,
+      "fees_total_yen": 47909,
+      "fee_share_of_contrib_pct": 0.32
+     },
+     "r=8%": {
+      "irr_pct": 7.971,
+      "drag_pt": 0.029,
+      "fees_total_yen": 47909,
+      "fee_share_of_contrib_pct": 0.32
+     },
+     "r=12%": {
+      "irr_pct": 11.971,
+      "drag_pt": 0.029,
+      "fees_total_yen": 47909,
+      "fee_share_of_contrib_pct": 0.32
+     }
+    }
+   ],
+   "note_r_independence": "r を 5〜12% に振っても差はほぼ同じ（手数料は掛金に対する一定額なので、成長率にほとんど依らない）。",
+   "phrasing": "所得控除の効果（個人の収入で決まるので計算しない）が、この年率の費用（月5,000円なら上の値）を上回るかどうかで判断する形になる。iDeCo の中のファンドの費用（楽天・プラス・NASDAQ-100 の実際の費用）はこの外に別にかかる。",
+   "after_stop": "掛金を止めて運用指図者になると、毎月 66円（信託銀行）だけが年1回 資産から引かれる＝年792円（残高に対する割合は残高次第）。"
+  },
+  "E1_default_fund": {
+   "name": "楽天・インデックス・バランス（DC年金）",
+   "rule": "初回掛金拠出日から約4か月経過しても配分指定をされていない場合、この商品で運用される（楽天証券）。それまでは未指図資産として現金のまま管理される（楽天証券 口座開設後のお手続き）。2018年4月30日以前の加入者は特定期間・猶予期間なく『みずほDC定期預金』が購入される。",
+   "koushiki": "最初の掛金の納付日から特定期間3か月以上および猶予期間2週間以上で運営管理機関が定める期間を経過しても運用商品を選ばないと、指定運用方法を選んだものとみなされ購入される（iDeCo公式）。",
+   "verify_allocation": [
+    "書類（国基連の「個人型年金加入確認通知書」・JIS&T社の「口座開設のお知らせ」「インターネットパスワード設定のお知らせ」）が届いたら、楽天証券にログイン→「確定拠出年金 iDeCo」で初期設定（加入者口座番号と JIS&T のインターネットパスワード）",
+    "「掛金の配分方針を設定（商品別配分設定）」（2回目以降は 注文→「掛金の配分変更」）で商品ごとの割合を1%単位で入れ、「商品別配分」で内容を確かめて確定。配分状況は「確定拠出年金トップ」に反映（時間がかかることがある）",
+    "楽天証券の総合口座が無い場合は JIS&T社の専用サイト→「個人ポートフォリオ」→「商品別配分変更」",
+    "締め切り: 引落日（26日・休日は翌営業日）から9営業日目の17時30分まで。配分指定した商品は掛金引落日から13営業日目に発注",
+    "確かめる点: 確定拠出年金トップの配分状況が「楽天・プラス・NASDAQ-100 100%」になっていること・最初の約定後の資産に「楽天・インデックス・バランス（DC年金）」や現金（未指図資産）が残っていないこと"
+   ],
+   "returns_yen_TR": {
+    "楽天・インデックス・バランス（DC年金）": {
+     "1年": {
+      "start": "2025-09-30",
+      "end": "2026-09-30",
+      "cum_pct": -0.49,
+      "ann_pct": -0.49
+     },
+     "3年": {
+      "start": "2023-09-29",
+      "end": "2026-09-30",
+      "cum_pct": 8.76,
+      "ann_pct": 2.84
+     },
+     "5年": {
+      "start": "2021-09-30",
+      "end": "2026-09-30",
+      "cum_pct": -5.55,
+      "ann_pct": -1.14
+     },
+     "楽天・プラス・NASDAQ-100 の設定来と同じ窓": {
+      "start": "2024-01-30",
+      "end": "2026-09-30",
+      "cum_pct": 3.88,
+      "ann_pct": 1.44
+     },
+     "5年の窓の月末の最大下落_%": -15.1
+    },
+    "楽天・プラス・NASDAQ-100インデックス・ファンド": {
+     "1年": {
+      "start": "2025-09-30",
+      "end": "2026-09-30",
+      "cum_pct": 30.69,
+      "ann_pct": 30.72
+     },
+     "3年": {
+      "start": null,
+      "end": "2026-09-30",
+      "cum_pct": null,
+      "ann_pct": null,
+      "reason": "記録が窓に足りない（最初の基準価額 2024-01-30）"
+     },
+     "5年": {
+      "start": null,
+      "end": "2026-09-30",
+      "cum_pct": null,
+      "ann_pct": null,
+      "reason": "記録が窓に足りない（最初の基準価額 2024-01-30）"
+     },
+     "楽天・プラス・NASDAQ-100 の設定来と同じ窓": {
+      "start": "2024-01-30",
+      "end": "2026-09-30",
+      "cum_pct": 91.78,
+      "ann_pct": 27.66
+     },
+     "5年の窓の月末の最大下落_%": null
+    },
+    "参考: iFreeNEXT NASDAQ100インデックス（同じ指数・iDeCo には無い）": {
+     "1年": {
+      "start": "2025-09-30",
+      "end": "2026-09-30",
+      "cum_pct": 30.32,
+      "ann_pct": 30.34
+     },
+     "3年": {
+      "start": "2023-09-29",
+      "end": "2026-09-30",
+      "cum_pct": 117.71,
+      "ann_pct": 29.57
+     },
+     "5年": {
+      "start": "2021-09-30",
+      "end": "2026-09-30",
+      "cum_pct": 191.24,
+      "ann_pct": 23.84
+     },
+     "楽天・プラス・NASDAQ-100 の設定来と同じ窓": {
+      "start": "2024-01-30",
+      "end": "2026-09-30",
+      "cum_pct": 84.56,
+      "ann_pct": 25.84
+     },
+     "5年の窓の月末の最大下落_%": -23.2
+    }
+   },
+   "returns_note": "投資信託協会 投信総合検索ライブラリーの基準価額 CSV（https://toushin-lib.fwg.ne.jp/FdsWeb/FDST030000/csv-file-download）。分配金は分配落ちの日に再投資。終わりは 2026-09-30 以前の最後の基準価額。窓の始まりはその日の N 年前以前の最後の基準価額。費用は基準価額の中に入っている（税は入らない）。"
+  },
+  "E2_card_points": {
+   "rates": {
+    "還元率（代行手数料が年率0.4%（税込）未満のファンド）": {
+     "楽天ブラックカード": 0.02,
+     "楽天プレミアムカード": 0.01,
+     "楽天ゴールドカード": 0.0075,
+     "上記以外の楽天カード": 0.005
+    },
+    "還元率（代行手数料が年率0.4%（税込）以上のファンド）": {
+     "楽天ブラックカード": 0.02,
+     "上記以外の楽天カード": 0.01
+    },
+    "ブラックカードの変更": "2027年1月買付分から 2.0%〜3.2%（前年の年間ショッピング利用額400万円以上で3.2%）（creditcard.html）",
+    "判定の時点": "積立購入の前月12日（非営業日は前営業日）の代行手数料データ。変動するタイプは3か月前の13日",
+    "月の上限": 100000,
+    "上限の注": "毎月100円〜100,000円（複数ファンドの合計）。登録できる楽天カードは1枚・別のカードに変えても上限は同じ（creditcard.html）",
+    "対象口座": "特定口座・一般口座・NISA成長投資枠・NISAつみたて投資枠。未成年口座・法人口座は対象外。楽ラップの積立・iDeCo口座での積立は対象外（creditcard.html）",
+    "名義": "楽天証券と楽天カードの名義が一致するカードだけ。家族カードは使えない（贈与とみなされ得る）（creditcard.html）",
+    "締め切りと買付日": "毎月12日までの積立設定で翌月の積立注文。買付日は 2024-08-25 以降に初めて使う人は毎月12日。1回払いだけ（creditcard.html）",
+    "ポイント付与日": "積立注文月の15日前後（creditcard.html）"
+   },
+   "iFreeNEXT_NASDAQ100": {
+    "販売会社の取り分（代行手数料）": {
+     "税抜": 0.215,
+     "税込": 0.2365,
+     "単位": "%/年",
+     "url": "https://www.daiwa-am.co.jp/funds/doc_open/fund_doc_open.php?code=3373&type=2",
+     "accessed": "2026-10-14",
+     "要旨": "信託報酬 年率0.495%（税抜0.45%）の配分: 委託会社 0.215%・販売会社 0.215%・受託会社 0.02%（税抜・別途消費税）。販売会社への配分は代行手数料（請求目論見書 第二部(3)【信託報酬等】・交付目論見書 使用開始日 2026-05-26 にも同じ表）",
+     "url_kofu": "https://www.daiwa-am.co.jp/funds/doc_open/fund_doc_open.php?code=3373&type=1"
+    },
+    "帯": "0.4%（税込）未満",
+    "一覧に載っているか": true,
+    "一覧": {
+     "url": "https://www.rakuten-sec.co.jp/web/rfund/guide/creditcard/pdf/fund_list_05point_202610.pdf",
+     "要旨": "「楽天カードクレジット決済0.5%～2％ポイント還元対象ファンド一覧（2026年9月12日時点）」＝2026年10月注文分に JP90C000GUN2 iFreeNEXTNASDAQ100ｲﾝﾃﾞｯｸｽ（大和アセットマネジメント）が載っている"
+    }
+   },
+   "kodomo_NISA": {
+    "付くか": false,
+    "url": "https://www.rakuten-sec.co.jp/web/nisa/kodomo-nisa/",
+    "理由": "カード積立と楽天ペイ残高積立はどちらも「未成年口座」を対象外とする（creditcard.html・rcash.html）。楽天証券のこどもNISAはこども口座（未成年口座）で開く（kodomo-nisa ページ「こども口座（未成年口座）開設済の場合は…」）。同じページが挙げるポイントは対象ファンドの残高に応じたポイントと、楽天ポイントで買付できることだけ。また名義が一致するカードに限られ家族カードも不可。"
+   },
+   "iDeCo": {
+    "付くか": false,
+    "理由": "「iDeCo口座での積立は対象外」（creditcard.html・rcash.html）"
+   },
+   "rakuten_pay_balance": {
+    "url": "https://www.rakuten-sec.co.jp/web/rfund/guide/rcash.html",
+    "還元率": 0.005,
+    "月の上限": 50000,
+    "要旨": "積立利用額の0.5%。毎月100円〜50,000円。対象口座はカードと同じ（未成年口座・iDeCo は対象外）。カードと合わせて月15万円まで"
+   },
+   "value_formula": "価値（円）＝カードで払った積立額×還元率（その月に一度だけ）。20年の毎月の積立の年率への換算: 内部収益率の上乗せ ≈ ln(1+p)÷D（D＝最終額への寄与で重みを付けた平均の保有年数。毎月同額の20年なら r=8% で約12.5年）。exact_pt は全ての積立に p が付いたとして内部収益率を解き直した値。カードで払える分（月10万円まで）にだけ効く。",
+   "annualized": {
+    "一般カード 0.5%": {
+     "r=5%": {
+      "exact_pt": 0.045,
+      "approx_pt_ln1p_over_D": 0.0428,
+      "D_years": 11.64
+     },
+     "r=8%": {
+      "exact_pt": 0.043,
+      "approx_pt_ln1p_over_D": 0.0399,
+      "D_years": 12.51
+     },
+     "r=12%": {
+      "exact_pt": 0.0413,
+      "approx_pt_ln1p_over_D": 0.0369,
+      "D_years": 13.53
+     }
+    },
+    "ゴールド 0.75%": {
+     "r=5%": {
+      "exact_pt": 0.0673,
+      "approx_pt_ln1p_over_D": 0.0642,
+      "D_years": 11.64
+     },
+     "r=8%": {
+      "exact_pt": 0.0645,
+      "approx_pt_ln1p_over_D": 0.0597,
+      "D_years": 12.51
+     },
+     "r=12%": {
+      "exact_pt": 0.0618,
+      "approx_pt_ln1p_over_D": 0.0552,
+      "D_years": 13.53
+     }
+    },
+    "プレミアム 1%": {
+     "r=5%": {
+      "exact_pt": 0.0897,
+      "approx_pt_ln1p_over_D": 0.0855,
+      "D_years": 11.64
+     },
+     "r=8%": {
+      "exact_pt": 0.0858,
+      "approx_pt_ln1p_over_D": 0.0795,
+      "D_years": 12.51
+     },
+     "r=12%": {
+      "exact_pt": 0.0823,
+      "approx_pt_ln1p_over_D": 0.0735,
+      "D_years": 13.53
+     }
+    }
+   },
+   "points_per_year_examples": {
+    "月10,000円": {
+     "一般0.5%_年のポイント": 600,
+     "ゴールド0.75%": 900,
+     "プレミアム1%": 1200
+    },
+    "月30,000円": {
+     "一般0.5%_年のポイント": 1800,
+     "ゴールド0.75%": 2700,
+     "プレミアム1%": 3600
+    },
+    "月50,000円": {
+     "一般0.5%_年のポイント": 3000,
+     "ゴールド0.75%": 4500,
+     "プレミアム1%": 6000
+    },
+    "月100,000円": {
+     "一般0.5%_年のポイント": 6000,
+     "ゴールド0.75%": 9000,
+     "プレミアム1%": 12000
+    }
+   },
+   "higher_tier_breakeven": {
+    "ゴールド（年会費2,200円・一般より+0.25%）": {
+     "損益分岐の月の積立_円": 73333
+    },
+    "プレミアム（年会費11,000円・一般より+0.5%）": {
+     "損益分岐の月の積立_円": 183333,
+     "注": "上限の月10万円を超える＝積立のポイントだけでは元が取れない"
+    }
+   },
+   "friction": "積立設定（毎月12日まで・翌月12日に買付・金額は前もって決める）だけが対象。門の注文書が出す iFreeNEXT の月ごとに変わる額（端数を寄せる分）をその月にスポットで買う分にはポイントが付かない。"
+  },
+  "E3_fx": {
+   "facts": {
+    "リアルタイム為替（米ドル/円）": {
+     "手数料_銭": 0,
+     "url": "https://www.rakuten-sec.co.jp/web/currency/forex/rule.html",
+     "accessed": "2026-10-14",
+     "要旨": "取引時間 8:00〜翌6:00（夏時間翌5:00）・1米ドル以上0.01米ドル単位・発注後即時に約定。手数料は0銭だが、買レート・売レートは業者間レートを採用しており乖離がある（＝業者間の売り買いの差は残る）",
+     "since": {
+      "url": "https://www.rakuten-sec.co.jp/web/company/newsrelease/pdf/press20231201_02.pdf",
+      "要旨": "2023年12月4日（月）8時注文分から米ドル/円のリアルタイム為替の手数料を無料"
+     }
+    },
+    "円貨決済（日本円で米国株を売買）": {
+     "手数料_銭": 25,
+     "url": "https://www.rakuten-sec.co.jp/web/foreign/us/commission.html",
+     "accessed": "2026-10-14",
+     "要旨": "為替手数料（スプレッド）日本円での株式購入時 25銭/米ドル・売却時 25銭/米ドル（注文約定時の為替レートに含まれる）"
+    },
+    "配当の円での受け取り": {
+     "手数料_銭": 25,
+     "url": "https://www.rakuten-sec.co.jp/web/info/info20230529-01.html",
+     "accessed": "2026-10-14",
+     "要旨": "米国株の配当を日本円で受け取る場合、1米ドルあたり25銭の為替手数料（受け取り方を変えなければ米ドルで受け取る）"
+    },
+    "NISA の米国株の取引手数料": {
+     "値": 0,
+     "url": "https://www.rakuten-sec.co.jp/web/commission/",
+     "注": "楽天のプレス（2023-12-01）「新NISA 米国株式の個別銘柄（ADR含む）・ETF の取引（売買）手数料が無料」"
+    }
+   },
+   "usdjpy": 158.365,
+   "usdjpy_src": "out/dashboard.json fx.USDJPY（2026-10-14）",
+   "fee_per_usd_purchase_pct": 0.1579,
+   "usd_bought_share_of_target_pct": 60.0,
+   "usd_share_note": "目標（portfolio.json）のうち円の投資信託（IFREE-NDX, RPLUS-NDX）以外の ETF 45%＋個別株 15%（米国株・ADR が中心）をドルで買う分とした。",
+   "irr_effect": {
+    "r=5%": {
+     "ドルで買う分_買いだけ_pt": -0.0142,
+     "ドルで買う分_買い＋最後に円へ_pt": -0.0284,
+     "ポートフォリオ全体_買いだけ_pt": -0.0085,
+     "ポートフォリオ全体_買い＋最後_pt": -0.017
+    },
+    "r=8%": {
+     "ドルで買う分_買いだけ_pt": -0.0136,
+     "ドルで買う分_買い＋最後に円へ_pt": -0.0272,
+     "ポートフォリオ全体_買いだけ_pt": -0.0082,
+     "ポートフォリオ全体_買い＋最後_pt": -0.0163
+    },
+    "r=12%": {
+     "ドルで買う分_買いだけ_pt": -0.0131,
+     "ドルで買う分_買い＋最後に円へ_pt": -0.0262,
+     "ポートフォリオ全体_買いだけ_pt": -0.0079,
+     "ポートフォリオ全体_買い＋最後_pt": -0.0157
+    }
+   },
+   "note": "25銭は円貨決済で毎回、0銭はリアルタイム為替で先に両替してから外貨決済で買う場合。0銭でも業者間レートの売り買いの差は残る（大きさは未取得＝null）。repo の既存の置き値 FX_FEE=年0.02%（bestfund_data・newfunds）は 25銭を前提にした値で、上の買いだけの値とほぼ同じ。",
+   "spread_on_0sen": null,
+   "spread_on_0sen_reason": "楽天は「業者間レートを採用・買レートと売レートに乖離」とだけ書き、幅を公表していない"
+  },
+  "E4_usd_dividends": {
+   "facts": {
+    "受け取りの通貨": {
+     "url": "https://www.rakuten-sec.co.jp/web/info/info20230529-01.html",
+     "accessed": "2026-10-14",
+     "要旨": "2023年5月28日から米国株の配当を米ドルか円かで選べる。変更がない場合は米ドルで受け取る設定（初期設定＝米ドル）。"
+    },
+    "入金先": {
+     "url": "https://www.rakuten-sec.co.jp/web/service/dividend/",
+     "要旨": "外国株式の配当金・分配金は源泉徴収後の金額が総合取引口座に入金。米国株式は配当金受取方法に応じて日本円か米ドル"
+    },
+    "米ドルMMF の自動買付": {
+     "url": "https://www.rakuten-sec.co.jp/web/us/stock/mmf/dividend/",
+     "accessed": "2026-10-14",
+     "要旨": "配当金受取方法を「外貨建てMMFで受取り」にすると、配当の入金日に楽天・米ドルMMF（ノーザン・トラスト・米ドル・リクイディティ・ファンド）を購入手数料0で自動買付。らくらくマネー運用（米ドル）では保有している米ドルMMFを米国株式などの買付代金としてそのまま使える（rakumoney-mgmt）",
+     "url2": "https://www.rakuten-sec.co.jp/web/service/rakumoney-mgmt/",
+     "利回り": null,
+     "利回りの理由": "楽天のページは利回りを画面の中で読み込む形で、静的な取得では値が取れなかった（未取得）"
+    },
+    "NISA の配当の税": "日本の税は掛からず、米国の源泉税10%は戻らない（etf_forward_rank の k と同じ扱い・事前登録 common.costs）"
+   },
+   "order_book_reads": {
+    "index_html_lines": {
+     "ccfLedgerMap": 3365,
+     "ccfPfLive": 3397,
+     "ccfNetRows": 3479,
+     "ccfTotalAmt": 3601,
+     "ccfAutoAmt": 3647,
+     "ccfOrderAmt": 3648,
+     "ccfCatBudget": 3727,
+     "ccfSleeveSplit": 3767,
+     "ccfWholeSharePlan": 4307,
+     "ccfCatSharePlan": 4355,
+     "ccfWholeShareBody": 4451,
+     "renderPlan": 7897
+    },
+    "call_sites": {
+     "ccfWholeShareBody に渡す入金（TO=ccfOrderAmt()）": [
+      4603
+     ],
+     "注文書の呼び出し（ccfWholeShareBody(pass,tw,pxInfo,NO,TO,…)）": [
+      4701
+     ],
+     "区分の材料の総資産（K={tot:+LV.total}）": [
+      8591
+     ],
+     "pf:monthly_total を読む所": [
+      3601
+     ]
+    },
+    "token_counts_in_index_html": {
+     "預り金": 0,
+     "外貨預り": 0,
+     "sleeve==='cash'": 0,
+     "cash（英字・どこでも）": 11,
+     "MMF": 0
+    },
+    "token_note": "英字の cash（index.html 全体）は全部、企業の財務（XBRL の現金の欄・net-cash の注意書き）で口座の現金ではない。renderPlan の中の「配当」2件は表示の文（実現複利は配当込み、の注記）",
+    "token_counts_in_order_book_function_bodies": {
+     "ccfLedgerMap": {
+      "預り": 0,
+      "配当": 0,
+      "dividend": 0,
+      "cash": 0,
+      "外貨": 0
+     },
+     "ccfPfLive": {
+      "預り": 0,
+      "配当": 0,
+      "dividend": 0,
+      "cash": 0,
+      "外貨": 0
+     },
+     "ccfNetRows": {
+      "預り": 0,
+      "配当": 0,
+      "dividend": 0,
+      "cash": 0,
+      "外貨": 0
+     },
+     "ccfTotalAmt": {
+      "預り": 0,
+      "配当": 0,
+      "dividend": 0,
+      "cash": 0,
+      "外貨": 0
+     },
+     "ccfAutoAmt": {
+      "預り": 0,
+      "配当": 0,
+      "dividend": 0,
+      "cash": 0,
+      "外貨": 0
+     },
+     "ccfOrderAmt": {
+      "預り": 0,
+      "配当": 0,
+      "dividend": 0,
+      "cash": 0,
+      "外貨": 0
+     },
+     "ccfCatBudget": {
+      "預り": 0,
+      "配当": 0,
+      "dividend": 0,
+      "cash": 0,
+      "外貨": 0
+     },
+     "ccfSleeveSplit": {
+      "預り": 0,
+      "配当": 0,
+      "dividend": 0,
+      "cash": 0,
+      "外貨": 0
+     },
+     "ccfWholeSharePlan": {
+      "預り": 0,
+      "配当": 0,
+      "dividend": 0,
+      "cash": 0,
+      "外貨": 0
+     },
+     "ccfCatSharePlan": {
+      "預り": 0,
+      "配当": 0,
+      "dividend": 0,
+      "cash": 0,
+      "外貨": 0
+     },
+     "ccfWholeShareBody": {
+      "預り": 0,
+      "配当": 0,
+      "dividend": 0,
+      "cash": 0,
+      "外貨": 0
+     },
+     "renderPlan": {
+      "預り": 0,
+      "配当": 2,
+      "dividend": 0,
+      "cash": 0,
+      "外貨": 0
+     }
+    },
+    "portfolio_html_cash_row_option_line": [
+     485
+    ]
+   },
+   "finding": "注文書が配るお金は「今月の入金額」（localStorage pf:monthly_total を読む ccfTotalAmt）から iDeCo とこどもNISA の自動の積立を引いた ccfOrderAmt() だけ（renderPlan の中で TO=ccfOrderAmt() を ccfWholeShareBody に渡し、ccfCatSharePlan／ccfWholeSharePlan がその T だけを区分・銘柄に割る）。口座のドルや円の預り金・受け取った配当を読む欄は 🏦保有 の台帳（pf:portfolio の positions: t/sh/npx/bpx/ccy/v/sleeve…）にも注文書にも無い（index.html に「預り金」「外貨預り」は0件）。⇒ ドルで受け取った配当は、人が手で両替・買付するか入金額に足さない限り使われない。副作用: 🏦保有の編集で「現金」の行（portfolio.html の sleeve=cash）を手で入れると、ccfLedgerMap はその行を袖なし（城でも網でもない）として総資産（ccfPfLive の total＝区分の材料の tot）に足すので、各区分の目標額（目標%×総資産）が上がるが、その現金自体は配られない。",
+   "yields_from_etf_profiles": {
+    "SMH": 0.0015,
+    "ITA": 0.0044,
+    "SHLD": 0.0065,
+    "XLV": 0.0152,
+    "FBT": 0.0,
+    "QQQM": 0.0046,
+    "XLK": 0.0042
+   },
+   "target_weights_pct": {
+    "SMH": 25.0,
+    "ITA": 5.0,
+    "SHLD": 5.0,
+    "XLV": 5.0,
+    "FBT": 5.0,
+    "QQQM": 0.0,
+    "XLK": 0.0
+   },
+   "y_target_portfolio_gross_pct": 0.168,
+   "current_holdings": {
+    "asof": "2026-09-23",
+    "weights_pct": {
+     "MSFT": 26.7,
+     "ASML": 11.1,
+     "XLK": 29.8,
+     "SMH": 15.1,
+     "QQQM": 17.4
+    },
+    "yields": {
+     "MSFT": 0.0067,
+     "ASML": 0.00528,
+     "XLK": 0.0042,
+     "SMH": 0.0015,
+     "QQQM": 0.0046
+    },
+    "y_etf_part": 0.00227,
+    "y_stock_part": 0.00238,
+    "y_total": 0.00465,
+    "note": "比率は state.json の株数×npx（2026-09-23 の写真）。ETF の利回りは out/etf_profiles.json の dy、個別株は out/holdings_div.json の直近365日の配当÷out/dashboard.json の株価（事前登録の ETF の一覧の外＝参考）。今の保有は全部ドル建て。"
+   },
+   "model": "毎月同額を240か月。総リターン r（税引前の配当込み）。配当は源泉10%を引いて現金で入り（NISA なので日本の税は無し）、L か月 0% で遊んでから再投資。基準は「受け取った月にすぐ再投資」。最後に残っている現金は額面で数える。L は平均の代わりに一定の遅れで置いた。",
+   "idle_effect": {
+    "目標の米国ETF（事前登録の主）": {
+     "y_gross_pct": 0.168,
+     "r=8%": {
+      "6か月": {
+       "terminal_diff_pct": -0.069,
+       "irr_diff_pt": -0.006,
+       "idle_cash_share_at_end_pct": 0.085
+      },
+      "12か月": {
+       "terminal_diff_pct": -0.133,
+       "irr_diff_pt": -0.0115,
+       "idle_cash_share_at_end_pct": 0.155
+      },
+      "24か月": {
+       "terminal_diff_pct": -0.245,
+       "irr_diff_pt": -0.0212,
+       "idle_cash_share_at_end_pct": 0.283
+      },
+      "最後まで使わない（参考）": {
+       "terminal_diff_pct": -0.734,
+       "irr_diff_pt": -0.0637,
+       "idle_cash_share_at_end_pct": 1.132
+      }
+     },
+     "r=12%": {
+      "6か月": {
+       "terminal_diff_pct": -0.109,
+       "irr_diff_pt": -0.009,
+       "idle_cash_share_at_end_pct": 0.085
+      },
+      "12か月": {
+       "terminal_diff_pct": -0.208,
+       "irr_diff_pt": -0.0172,
+       "idle_cash_share_at_end_pct": 0.152
+      },
+      "24か月": {
+       "terminal_diff_pct": -0.378,
+       "irr_diff_pt": -0.0314,
+       "idle_cash_share_at_end_pct": 0.275
+      },
+      "最後まで使わない（参考）": {
+       "terminal_diff_pct": -1.035,
+       "irr_diff_pt": -0.0861,
+       "idle_cash_share_at_end_pct": 0.978
+      }
+     }
+    },
+    "今の保有（ETF＋個別株・参考）": {
+     "y_gross_pct": 0.465,
+     "r=8%": {
+      "6か月": {
+       "terminal_diff_pct": -0.19,
+       "irr_diff_pt": -0.0164,
+       "idle_cash_share_at_end_pct": 0.236
+      },
+      "12か月": {
+       "terminal_diff_pct": -0.364,
+       "irr_diff_pt": -0.0315,
+       "idle_cash_share_at_end_pct": 0.427
+      },
+      "24か月": {
+       "terminal_diff_pct": -0.671,
+       "irr_diff_pt": -0.0582,
+       "idle_cash_share_at_end_pct": 0.78
+      },
+      "最後まで使わない（参考）": {
+       "terminal_diff_pct": -1.995,
+       "irr_diff_pt": -0.1742,
+       "idle_cash_share_at_end_pct": 3.108
+      }
+     },
+     "r=12%": {
+      "6か月": {
+       "terminal_diff_pct": -0.3,
+       "irr_diff_pt": -0.0249,
+       "idle_cash_share_at_end_pct": 0.234
+      },
+      "12か月": {
+       "terminal_diff_pct": -0.571,
+       "irr_diff_pt": -0.0474,
+       "idle_cash_share_at_end_pct": 0.42
+      },
+      "24か月": {
+       "terminal_diff_pct": -1.037,
+       "irr_diff_pt": -0.0863,
+       "idle_cash_share_at_end_pct": 0.758
+      },
+      "最後まで使わない（参考）": {
+       "terminal_diff_pct": -2.812,
+       "irr_diff_pt": -0.2364,
+       "idle_cash_share_at_end_pct": 2.694
+      }
+     }
+    }
+   }
+  },
+  "E5_emergency": {
+   "楽天銀行 普通預金": {
+    "金利_税引前": 0.4,
+    "金利_税引後": 0.318,
+    "url": "https://www.rakuten-bank.co.jp/interest/details.html",
+    "accessed": "2026-10-14",
+    "性質": "変動金利・予告なく変わる。預金保険制度の「決済用預金」ではない（一般の預金として扱う）。利息に20.315%"
+   },
+   "楽天銀行 マネーブリッジ（優遇金利1）": {
+    "金利_税引前": {
+     "1円〜1,000万円": 0.48,
+     "1,000万円を超えた分": 0.42
+    },
+    "金利_税引後": {
+     "1円〜1,000万円": 0.382,
+     "1,000万円を超えた分": 0.334
+    },
+    "改定日": "2026-08-03（2026-06-17 のお知らせ）",
+    "url": "https://www.rakuten-bank.co.jp/interest/details.html",
+    "url_notice": "https://www.rakuten-bank.co.jp/info/2026/260617.html",
+    "accessed": "2026-10-14",
+    "性質": "楽天証券と口座を連携する（前月末までに設定→当月1か月適用）。普通預金なのでいつでも引き出せる。マネーブリッジの自動入金（スイープ）で証券口座の買付に使える。楽天カードの引き落としがある人は優遇金利2 年0.42%。「ボーナス金利」プログラムで最大年0.74%（条件あり・ここでは条件を測っていない）"
+   },
+   "個人向け国債 変動10年（第199回）": {
+    "初回の利率_税引前": 2.05,
+    "初回の利率_税引後": 1.6335425,
+    "基準金利": 3.1,
+    "式": "基準金利×0.66（下限0.05%）・半年毎に見直し",
+    "募集期間": "2026-10-08〜2026-10-30",
+    "発行日": "2026-11-16",
+    "利払日": "毎年5月15日・11月15日",
+    "中途換金": "第2期利子支払日（発行から1年経過）以後いつでも。直前2回分の各利子（税引前）×0.79685 が差し引かれる",
+    "単位": "1万円から1万円単位・額面100円につき100円（中途換金も同じ＝値段は動かない）",
+    "url": "https://www.mof.go.jp/jgbs/individual/kojinmuke/houdouhappyou/p20261007.pdf",
+    "url2": "https://www.mof.go.jp/jgbs/individual/kojinmuke/main/outline/hendou/",
+    "accessed": "2026-10-14",
+    "scout_check": "探索役の「第199回 2.05%」は財務省の報道発表（令和8年10月7日）と一致"
+   },
+   "楽天・マネーファンド（MRF・楽天証券）": {
+    "年利回り_税引前_信託報酬控除後": 1.079,
+    "計算期間": "2026-10-07〜2026-10-13（7日間の分配金実績から）",
+    "url": "https://www.rakuten-sec.co.jp/web/rakutenmoneyfund/",
+    "url_value": "https://www.rakuten-sec.co.jp/api/ss/menu_js/rakuten_money_fund.js",
+    "url_auto": "https://www.rakuten-sec.co.jp/web/service/rakumoney-mgmt/currency-yen/",
+    "accessed": "2026-10-14",
+    "性質": "公社債投信（MRF）・元本保証ではない（預金保険の対象でもない）・信託報酬は年率1%以内・1円以上1円単位・購入手数料無料・引き出しは申込みの翌営業日に預り金へ（16時締め）・特定口座（NISA口座は対象外）・分配金は毎日→月末に再投資・利子所得20.315%。マネーブリッジから買える。らくらくマネー運用（円）で国内株式・投資信託の買付代金に自動で充てられる（積立は対象外）"
+   },
+   "円MMF": {
+    "値": null,
+    "理由": "楽天証券のメニューにある円のマネーファンドは「楽天・マネーファンド（MRF）」で、円MMF（MRF でない MMF）を扱っているかは確かめていない。事前登録の「円の MMF」は楽天で買える円のマネーファンド＝MRF で読み替えた（deviations）"
+   }
+  }
+ },
+ "decision": {
+  "rule": "事前登録 groups.E_account_costs.decision: 事実と算術だけ。人の作業として todo に足す価値があるかを書く（足すのはユーザーに確かめてから）。",
+  "E1": {
+   "label": "事実と算術",
+   "todo_worth": true,
+   "why": "月5,000円では固定の手数料が年率 約0.37pt（r=8%・毎月の手数料は掛金の3.7%）。月1万円 0.18pt・2万円 0.09pt・2.3万円 0.08pt・6.2万円 0.03pt。所得控除の効果がこの率を上回るかは個人の収入で決まる（ここでは計算しない）。既存の todo ideco_raise_review_2028（掛金を上げるかの見直し）の材料としてこの表を添える価値がある。もう一つは操作の確認: 最初の引き落としの後に配分指定が「楽天・プラス・NASDAQ-100 100%」になっているか（指定が無いと約4か月現金のあと楽天・インデックス・バランス（DC年金）を買う）。既存の todo ideco_start_confirm に1行足す形が最小。"
+  },
+  "E2": {
+   "label": "事実と算術",
+   "todo_worth": true,
+   "why": "iFreeNEXT NASDAQ100 は販売会社の取り分 0.2365%（税込）＝0.4%未満の帯で、一般カード0.5%・ゴールド0.75%・プレミアム1%（ブラック2%）。月10万円まで・名義一致・こどもNISA と iDeCo は対象外。カード払いの積立設定にした分は内部収益率が 約+0.043pt/年（0.5%・r=8%）。小さいが設定1回で費用ゼロ。注文書の月ごとに変わる額とは噛み合わない（積立設定は固定額・スポット買いは対象外）ので、固定の積立額をカードにして端数だけスポットで買う形にできるかの確認が要る。ゴールドは月約73,333円以上でないと年会費の元が取れず、プレミアムは上限内では元が取れない。"
+  },
+  "E3": {
+   "label": "事実と算術",
+   "todo_worth": true,
+   "why": "25銭は 1ドル158.4円で各買付の約0.158%＝ドルで買う分の内部収益率 -0.0136pt/年（出口も円貨なら -0.0272pt）・ポートフォリオ全体で -0.0082〜-0.0163pt/年（r=8%）。リアルタイム為替（0銭）で先に両替すれば消せる（業者間の売り買いの差は残る）。1株単位の手動の買付の手順に「先に0銭で両替→外貨決済」を足すだけなので確認の todo の価値はあるが、優先は低い。"
+  },
+  "E4": {
+   "label": "事実と算術",
+   "todo_worth": true,
+   "why": "注文書は口座のドル（配当）を使わない（コードで確認・入金額だけを配る）。目標の米国 ETF の配当利回りは全体で年 約0.17%（税引前・iFreeNEXT 40% は分配なし）。遊ぶ期間が平均 6〜24 か月なら20年の最終額への効きは -0.07〜-0.38%（r=8〜12%）。小さいが、配当を「外貨建てMMFで受取り」にする設定（NISA の外の米ドルMMF に入る）や、配当のドルを次の米国 ETF の外貨決済の買付に充てる手順で消せる。コードの変更は提案しない（人の手順の確認として todo の価値はある・優先は低い）。"
+  },
+  "E5": {
+   "label": "事実のみ",
+   "todo_worth": false,
+   "why": "置き場所の利率（税引前）: 普通預金 0.4%・マネーブリッジ 0.48%・楽天・マネーファンド（MRF）1.079%（7日間の実績・元本保証なし）・個人向け国債 変動10年 第199回 2.05%（発行から1年は換金不可・その後は直前2回分の利子×0.79685 で換金）。額は書かない。既存の todo ideco_prestart_checks（生活防衛資金）があるので新しい todo は要らず、そこにこの表を参照として添えれば足りる。"
+  }
+ },
+ "deviations": [
+  "E1: 楽天・プラス・NASDAQ-100 は 2024-01-30 設定で 3年・5年の窓が無い。3年・5年は null（理由つき）とし、①同じ指数の iFreeNEXT NASDAQ100（iDeCo には無い・費用が高い）を参考に並べ、②楽天・プラスの設定来と同じ窓で両方を比べた。",
+  "E1: 事前登録の指示は night/fetch_tsumitate_funds.py の Lib だが、同じ投信総合検索ライブラリーを UA に個人の連絡先を載せない night/nx_jpfunds_data.Lib（同じ CSV の経路）で取った（共通の指示「新しい UA に個人のメールを載せない」に従う）。",
+  "E4: 「平均 6/12/24 か月遊ぶ」を、毎回ちょうど L か月遅れて再投資する一定の遅れで置いた（遅れの散らばりは入れていない）。",
+  "E5: 楽天証券で買える円のマネーファンドは「楽天・マネーファンド（MRF）」。事前登録の「円の MMF」はこれで読み替えた。"
+ ],
+ "caveats": [
+  "E2: 年会費は楽天カードのサイトの直接取得が拒否されたので、rakuten-card.co.jp の検索結果に出た公式ページの比較表の抜粋で確かめた。",
+  "一次資料の値は 2026-10-14 の取得。手数料・金利・還元率は予告なく変わる（国基連は 2026年12月分から 105→120円に上げたところ）。",
+  "E1 の年率の費用は手数料だけ（ファンドの信託報酬・実際の費用は別）。所得控除の効果・受け取りの税は個人の収入と退職金に依るので計算しない（ルール9）。",
+  "E1 の基準価額の窓は短い（楽天・プラスは2年8か月）。過去の騰落率は将来の予想ではない。楽天・インデックス・バランス（DC年金）は株と為替ヘッジ付きの債券の分散型で、NASDAQ100 とは別の賭け（比べているのは「指定を忘れたときに何が起きたか」）。",
+  "E4 の配当利回りは out/etf_profiles.json の dy（日付は本ごと・2026-08〜10）。利回りは動く。個別株（目標15%）の配当は事前登録の一覧の外なので主には入れず、今の保有の参考の行にだけ入れた（ASML は源泉が10%でなくオランダ15%だが、ここでは一律10%で置いた）。",
+  "E4 の効きは配当の現金が 0% で遊ぶ前提。米ドルMMF に自動で入れれば利回りが付く（楽天の米ドルMMF の利回りは未取得）。",
+  "E3 の 0銭でも業者間レートの売り買いの差は残る（幅は非公表）。円貨決済でSPU（楽天市場のポイント倍率）の条件を満たす場合の取り分は測っていない。"
+ ],
+ "runtime_sec": 0.4
+}
