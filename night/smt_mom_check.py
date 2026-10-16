@@ -242,7 +242,8 @@ def main():
     a1g = geo(conc, months(UC.FIRST, UC.END))
     a2g = geo(conc, months(*R.A2))
     cr.update(A1_gross=a1g, A2_gross=a2g, A1=a1g - SMT_ER - smt['tax_drag'], A2=a2g - SMT_ER - smt['tax_drag'],
-              ja='SMT の確かめ（French 大型×勢い上位20%・時価加重 − 0.77%）', proxy='FRENCH_25_ME5_PRIOR5', proxy_until=FR_LAST)
+              ja='SMT の確かめ（French 大型×勢い上位20%・時価加重 − 0.77%）', proxy='FRENCH_25_ME5_PRIOR5', proxy_until=FR_LAST,
+              vol_A1=None, maxdd_A1=None, vol_A2=None, maxdd_A2=None)   # MTUM の写しの表示用の値を残さない（単体の値は相関の表）
     rows['SMT_CONC'] = cr
     chains['SMT_CONC'] = conc
     R.C['SMT_CONC'] = dict(R.C['MTUM'])
