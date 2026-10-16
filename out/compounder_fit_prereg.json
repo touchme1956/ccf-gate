@@ -1,0 +1,84 @@
+{
+  "title": "長期複利株（年15%以上）に当てはまった原則の検定（compounder_fit）",
+  "registered": "2026-10-14",
+  "asked_by": "ユーザー 2026-10-14「長期複利を達成した銘柄だけでもっと当てはまったPが、何か調べたら？」",
+  "context": "同日の『世界が知らない投資の原則』の探索で、書庫から136の原則を拾い、文献と反証で確かめた（scratchpad の作業。結果は後で out/unknown_principles.json に残す）。そのうち個別株について入口の数字で確かめられる原則を、実際に長期の複利を出した社に当てて、どれが当てはまったかを測る。",
+  "why_preregister": "勝った社だけを見て共通点を探すと、負けた社も同じ特徴を持っていたかが分からない（結果で選んでから原因を探す誤り）。だから必ず『勝ち組』と『残り』を同じ物差しで比べ、原則ごとの予想の向き・物差し・合否の線を測る前に固定する。",
+  "data": {
+    "panel": "out/hist_wd_panel.json（2026-08-11 生成・5ビンテージ・読むだけ・新しい取得はしない）",
+    "benchmark_mdd": "out/retro_returns_{2013_all,2015_q,2016,2017,2018}.json の benchmark.mdd（SPY・同じ窓の最大下落）",
+    "rows_used": "has_outcome かつ window_full の行だけ",
+    "known_limits_fixed_before_measuring": [
+      "母集団は2026年まで生き残った社だけ（2013/2016/2017/2018 は同じ956社、2015 は質で絞った506社）。倒産・上場廃止の社は入らない＝左の裾は実際より薄い。",
+      "窓は入れ子ですべて2026-08に終わる。2018の窓は2013の窓の末尾8.09年そのもの。別のビンテージで同じ向きが出ても独立な証拠ではない（勝ち組の重なり Jaccard 0.55〜0.84）。",
+      "一つの時代（2013〜2026年・米国・巨大テックとAIの相場）。",
+      "P_quality の条件はビンテージで違う（2013/2015 は3条件、2016-2018 は2条件）。",
+      "irr・moat5 は読解のある社だけ（読む社の選び方そのものが偏っている）。",
+      "co_ の ROIC は門0式（のれん・無形を控除しない）で、門の ROIC ではない。"
+    ]
+  },
+  "definitions": {
+    "compounder": "勝ち組＝tr_cagr >= 0.15（配当込みの年率15%以上・既存の線 hist_wd の hurdles.win）",
+    "destroy": "大損＝tr_cagr <= -0.15（既存の線 hist_wd の hurdles.destroy）",
+    "secondary_hurdle": "年10%以上（tr_cagr >= 0.10）でも同じ表を出す。判定には使わない（感度の参考だけ）。",
+    "quantiles": "四分位・三分位・十分位は、そのビンテージ・その母集団の中で、結果を見ずに入口の値だけで切る（同値は大きい側に入れない＝ >= 上側の切れ目で上の群）。",
+    "delta": "Δ = P(事象 | S) − P(事象 | S でない)。S は各検定の『原則が名指しする群』。",
+    "tests": "Fisher の正確検定（両側）。Δ の95%区間は Newcombe の方法（ウィルソン区間の組み合わせ）。業種をそろえた差は sic2 で層にした Mantel-Haenszel のリスク差（両群がある層だけ）。"
+  },
+  "family_A_entry_signal_vs_compounder": [
+    {"id": "A01", "principle": "P01 高成長は続かず", "pop": "全社", "S": "売上5年CAGRの上位1/4（2013/2015: co_sales_cagr5、2016-2018: f2_cagr5）", "metric": "compounder", "predict": "null", "primary": 2013, "replicate": [2015, 2016, 2017, 2018]},
+    {"id": "A02", "principle": "P02 成長の鈍化は壊れる信号ではない", "pop": "f2_accel がある社", "S": "f2_accel <= -0.10（直近2年のCAGRが前の3年より10pt以上低い）", "metric": "compounder", "predict": "null", "primary": 2018, "replicate": [2016, 2017]},
+    {"id": "A03", "principle": "P04 質の床は勝者を増やさない", "pop": "P_quality が True/False の社", "S": "P_quality = True", "metric": "compounder", "predict": "null", "primary": 2013, "replicate": [2016, 2017, 2018]},
+    {"id": "A04", "principle": "P04 質の床は左の裾を減らす", "pop": "同上", "S": "P_quality = True", "metric": "destroy", "predict": "negative", "primary": 2013, "replicate": [2016, 2017, 2018]},
+    {"id": "A05", "principle": "P05 ROICの水準はリターンを分けない", "pop": "全社", "S": "co_roic_med5 >= 0.15", "metric": "compounder", "predict": "null", "primary": 2013, "replicate": [2015]},
+    {"id": "A06", "principle": "P90 資本コスト以下のROICは大損を避ける形で効く", "pop": "全社", "S": "co_roic_med5 <= 0.08", "metric": "destroy", "predict": "positive", "primary": 2013, "replicate": [2015]},
+    {"id": "A07", "principle": "P06 質の高い社の中では割安さは勝敗を分けない", "pop": "P_quality = True かつ hv_pe_z がある社", "S": "hv_pe_z < 0（自社の過去より割安）", "metric": "compounder", "predict": "null", "primary": 2013, "replicate": [2015, 2018]},
+    {"id": "A08", "principle": "P07 5年高値からの大きな下げは買い場でも避ける理由でもない", "pop": "pa_prox_hi がある社", "S": "pa_prox_hi <= 0.70（入口で5年の最高値から30%以上下）", "metric": "compounder", "predict": "null", "primary": 2018, "replicate": []},
+    {"id": "A09", "principle": "P82 過去の勝ちは長期の勝者を見分けない", "pop": "pa_rf5 がある社", "S": "pa_rf5 の上位1/4（入口の前5年の年率）", "metric": "compounder", "predict": "null", "primary": 2018, "replicate": []},
+    {"id": "A10", "principle": "P83 持続するのは負け側だけ", "pop": "pa_rf5 がある社", "S": "pa_rf5 の下位1/4", "metric": "compounder", "predict": "negative", "primary": 2018, "replicate": []},
+    {"id": "A11", "principle": "P55 顧客側の再認定が要る堀（irr=85）は上振れを分けた", "pop": "irr が 50/70/75/85 の社（100 を除く）", "S": "irr = 85", "metric": "compounder", "predict": "positive", "primary": 2018, "replicate": [2013, 2015]},
+    {"id": "A12", "principle": "P56 規制独占・唯一の供給者（irr=100）は年15%級の複利と結びつかない", "pop": "irr がある社", "S": "irr = 100", "metric": "compounder", "predict": "negative", "primary": 2015, "replicate": [2013]},
+    {"id": "A13", "principle": "P66 堀の全体の印象が高い社は大勝ちが少ない", "pop": "moat5 がある社", "S": "moat5 >= 4", "metric": "compounder", "predict": "negative", "primary": 2013, "replicate": [2015, 2018]},
+    {"id": "A14", "principle": "P69 粗利率の水準（探索的・原則そのものは利益率の持続の主張でリターンの主張ではない）", "pop": "f2_gm がある社", "S": "f2_gm の上位1/3", "metric": "compounder", "predict": "positive", "primary": 2018, "replicate": [2016, 2017]},
+    {"id": "A15", "principle": "P70 高ROIC企業の破れを分けるのは安定", "pop": "co_roic_med5 >= 0.15 の社", "S": "co_roic_worst5 >= 0.09（5年とも9%以上）", "metric": "destroy", "predict": "negative", "primary": 2013, "replicate": [2015]},
+    {"id": "A16", "principle": "P78 規模は生存を当て、大勝ちは当てない", "pop": "size_rev がある社", "S": "size_rev の上位1/3", "metric": "compounder", "predict": "null", "primary": 2013, "replicate": [2015, 2016, 2017, 2018]},
+    {"id": "A17", "principle": "P78 規模は大損を減らす", "pop": "同上", "S": "size_rev の上位1/3", "metric": "destroy", "predict": "negative", "primary": 2013, "replicate": [2015, 2016, 2017, 2018]},
+    {"id": "A18", "principle": "P85 利払いの余裕が薄い社は大損が多い", "pop": "f2_intcov がある社", "S": "f2_intcov < 3", "metric": "destroy", "predict": "positive", "primary": 2018, "replicate": [2016, 2017]},
+    {"id": "A19", "principle": "P99 利益率が極端に動いた社は大損が多い", "pop": "f2_opmD5 がある社", "S": "f2_opmD5 が上位1/10 または 下位1/10", "metric": "destroy", "predict": "positive", "primary": 2018, "replicate": [2016, 2017]},
+    {"id": "A20", "principle": "P134（反証済みの元の主張）長期複利株は買った時点で還元が少なかった", "pop": "f2_payout5 がある社", "S": "f2_payout5 の下位1/3", "metric": "compounder", "predict": "positive", "primary": 2018, "replicate": [2016, 2017]},
+    {"id": "A21", "principle": "P134（反証済みの元の主張）長期複利株は買った時点で PER が高かった", "pop": "per がある社", "S": "per の上位1/3", "metric": "compounder", "predict": "positive", "primary": 2013, "replicate": [2015, 2018]},
+    {"id": "A22", "principle": "P21 利益『率』そのものには上乗せが無い", "pop": "全社", "S": "co_opm の上位1/3", "metric": "compounder", "predict": "null", "primary": 2013, "replicate": [2015]}
+  ],
+  "family_A_verdict_rules": {
+    "multiple_testing": "主のビンテージの22本の Fisher p に Holm（族全体の誤り5%）をかける。",
+    "directional_predict_positive_or_negative": {
+      "当てはまった": "主のビンテージで Δ が予想の向き・|Δ| >= 0.05・Holm 後 p < 0.05・業種をそろえた MH の差も同じ向き・測れた再現ビンテージがすべて同じ向き",
+      "向きは合う（弱い）": "主で Δ が予想の向き（|Δ| は問わない）かつ測れた再現ビンテージがすべて同じ向き。ただし上の条件のどれかを欠く",
+      "当てはまらない": "主で Δ が予想と逆の向き（有意でない）、または再現ビンテージで向きが割れる",
+      "逆": "主で Δ が予想と逆の向きで Holm 後 p < 0.05"
+    },
+    "null_predict": {
+      "当てはまった（差が見えない）": "主で Holm 前の p >= 0.05 かつ Δ の95%区間が ±0.10 の中に収まる",
+      "判定できない（差は見えないが区間が広い）": "p >= 0.05 だが区間が ±0.10 からはみ出す",
+      "当てはまらない（差がある）": "Holm 後 p < 0.05"
+    },
+    "n_rule": "S または S でない側の社数が10社未満、または両側合わせた事象数が5件未満なら『判定できない（標本が足りない）』"
+  },
+  "family_B_inside_the_compounders": [
+    {"id": "B1", "principle": "P80 個別株は市場より深く下げる（勝者も）", "measure": "2013の勝ち組のうち、保有中の最大下落が SPY の同じ窓の最大下落（benchmark.mdd）より浅かった社の割合／勝ち組と残りの最大下落の中央値", "当てはまった": "割合 < 0.10 かつ 勝ち組の中央値 <= -0.40"},
+    {"id": "B2", "principle": "P80 勝者どうしの違いは年率ではなく谷の深さ", "measure": "2013の勝ち組の中で、最大下落の四分位範囲と、年率と最大下落の順位相関（Spearman）", "当てはまった": "四分位範囲 >= 0.15 かつ |順位相関| < 0.30"},
+    {"id": "B3", "principle": "P113 結果は右裾が作る", "measure": "2013の全社を等金額で持った最終資産（tr_total の和）のうち上位10%の社が占める割合／勝ち組の中で上位10%の勝ち組が占める割合", "当てはまった": "全社で上位10%の割合 >= 0.40"},
+    {"id": "B4", "principle": "P65/P66 堀の評価は谷の浅さと結びつく", "measure": "2013 で moat5 >= 4 と < 4 の最大下落の中央値の差（参考に 2015・2018 も）", "当てはまった": "moat5 >= 4 の中央値が 5pt 以上浅い（2013）"},
+    {"id": "B5", "principle": "P79 当てられるのは左の裾だけ（メタ）", "measure": "Family A の主の検定のうち、Holm 後 p < 0.05 になった本数を metric（compounder / destroy）別に数える", "当てはまった": "destroy の有意な本数 > compounder の有意な本数", "note": "検定の本数が側で違う（compounder 16本・destroy 6本）ので割合も併記する"}
+  ],
+  "must_report": [
+    "各検定の主と再現の全ビンテージの n・事象数・P(S)・P(S でない)・Δ・95%区間・p・Holm 後 p・MH の差",
+    "年10%の線での同じ表（判定に使わない）",
+    "判定のあとに気づいたことは『事後』と書いて分ける"
+  ],
+  "will_not_do": [
+    "線・群・母集団を結果を見てから変えない（変えるなら事後と明記して別の欄に）",
+    "門・採点・配分・売却規律は変えない（研究だけ）",
+    "新しいデータを取りに行かない（在庫のパネルを読むだけ）"
+  ]
+}
