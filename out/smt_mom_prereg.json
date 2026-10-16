@@ -1,0 +1,63 @@
+{
+ "name": "smt_mom（SMT 米国株式モメンタムファンドを今の配分に足すのは？）",
+ "date": "2026-10-16",
+ "question": "ユーザー「SMTモメンタムETFをポートフォリオに入れようと思うけどモメンタムETFを入れることについてどう評価する？」——直前の「楽天にqualやMTUMのような優良ETFないの？」（factor_etf_rakuten・書庫:20452）と「SPMOとは？」（spmo_profile・書庫:20478）の続き",
+ "status": "測る前に固定した（このファイルをコミットしてから night/smt_mom_check.py を書いて回す）",
+ "scope": "読むだけ。門・採点・配分（portfolio.json）・注文書には触れない。結果がどう出ても配分は変えない（入れるかはユーザーの明示指示のときだけ）",
+ "facts_known_before_measuring": {
+  "器": "SMT 米国株式モメンタムファンド（三井住友トラスト・アセットマネジメント）＝**投資信託**（ETF ではない）・ISIN JP90C000SCM7・協会コード 6431225C・当初設定 2025-12-16・無期限・信託報酬 年0.77%（税込）・信託財産留保額なし・購入時手数料は販売会社が決める・ベンチマークなし・年1回決算（設定来の分配0円）・純資産 153.12億円（2026-07-31）。出典: 交付目論見書（2026-09-15）",
+  "作り方": "米国の上場株の時価総額上位約500銘柄 → 流動性で絞る → 6か月・12か月・36か月の株価上昇率の上位7銘柄ずつ＝21銘柄を等金額。年4回（2月・5月・8月・11月末のデータ→翌月すみやかに）入れ替え。上昇率の窓は『各期間の株価上昇率』で、直近1か月を飛ばすとは書かれていない（交付目論見書 p.2）",
+  "中身（2026-07-31・交付目論見書）": "上位10社 WESTERN DIGITAL 5.9・TERADYNE 5.8・SEAGATE 5.7・DELL 5.7・COMFORT SYSTEMS 5.5・ROBINHOOD 5.4・MICRON 5.3・CREDO 5.0・CARVANA 5.0・LUMENTUM 4.8（%）",
+  "楽天": "楽天で買える・NISA 成長投資枠 ○・つみたて投資枠 ×（out/factor_etf_rakuten.json の投信ライブラリーの写し 2026-10-11）",
+  "本物の記録": "円・2026-01〜2026-09 の9か月で本体 +38.7%・MTUM（円）+27.7%・QQQ（円）+21.2%・SPY（円）+13.0%・2026-04 に1か月 +34.0%（out/factor_etf_rakuten.json）。暦年 2025（設定〜年末）+4.20%・2026（〜7-31）+23.27%（交付目論見書）",
+  "同じ賭けの器": "MTUM（iShares MSCI USA Momentum Factor・0.15%）・SPMO（Invesco S&P 500 Momentum・0.13%）——どちらも楽天では買えない（書庫:20452・:20478）",
+  "前の記録": "大型株の勢い（French の BIG HiPRIOR・時価加重）は1927年から市場に年+3.2pt・2007年以降 +0.15pt（spmo_profile・書庫:20478）。edge・mw の勢いの角度は2001年以降の米国で不合格（書庫:17334 ほか）",
+  "MTUM の行（unx_assets.build・bestpf_ext の R7・既にある）": "2013-04 まで French 6_Portfolios_ME_Prior_12_2 の BIG HiPRIOR − MTUM の経費率/12 でつなぐ（相関 0.946）。A1 9.40%・A2 16.79%・B 9.47%・C 7.60%（bestpf_ext の記録）・D は out/bestpf_cma_2026.json の D_net_by_asset の MTUM"
+ },
+ "row_construction（SMT_MOM の行の作り方）": {
+  "方法": "unx_assets.build の MTUM の行と毎月の値を写し、費用の差だけを変える（etf_forward_rank の fee_back＝データの経費率 − 器の経費率 と同じ考え: データは MTUM〔0.15%〕・器は SMT〔0.77%〕→ fee_back＝−0.62%）",
+  "A1・A2": "A1 = MTUM の A1 − 0.0062（A1_gross はそのまま＝measure の adj が 0.62pt 深くなる → A1・A2・過去の転がる積立・円の枠にかかる）",
+  "B・C・D": "B = MTUM の B − 0.0062・C = MTUM の C − 0.0062・D_override = D(MTUM) − 0.0062",
+  "毎月の値（chains）": "MTUM と同じ（費用は adj で引く）",
+  "外国税": "MTUM と同じ（ファンドが米国株を直接持つ＝配当の米国源泉10%は NISA で戻らない・k=0.10×配当利回り・配当利回りは MTUM の値）",
+  "半導体の基礎率（K4）": "MTUM の top_industries の Chips の比重（写しなので）。2026-07-31 の上位10社の業種は参考に並べる（判定に使わない）",
+  "米国の本の印": "R.C['SMT_MOM'] は R.C['MTUM'] の写し（chips_adj が米国の本と読む）",
+  "100年の代用": "MTUM・SMT_MOM とも French 6_Portfolios_ME_Prior_12_2 の BIG HiPRIOR（1927〜・時価加重）で写す。SMT_MOM は毎月 0.0062/12 を引く（行と同じく MTUM との費用の差だけ・他の部品は費用を引かない写しのまま）。unx_assets.century_parts の部品と MONTHLY_OK にこの道具の中だけで足す"
+ },
+ "check_proxy（確かめの代理・判定の決まりで裁くが読みは R の決まりどおり）": {
+  "SMT_CONC": "毎月の値＝French 25_Portfolios_ME_Prior_12_2 の 'BIG HiPRIOR'（大型の上位20%×勢いの上位20%・時価加重・費用を引かない）2000-09〜2026-08。French が 2026-08 までなので 2026-09 は MTUM の本物 + 0.0015/12（費用を引く前にそろえる）。fee_back＝0 − 0.0077＝−0.77%（A1 = A1_gross − 0.0077 − 外国税）。B・C・D と K4 と外国税は SMT_MOM と同じ（先の世界は代理を替えても変えない＝実績の窓のぶれと相関だけを集中型に替える確かめ）",
+  "100年の代用": "SMT_CONC は 25_Portfolios_ME_Prior_12_2 の BIG HiPRIOR − 0.0062/12"
+ },
+ "forms_etf_side_percent_of_total": {
+  "今": {"QQQM": 40, "SMH": 25, "ITA": 5, "SHLD": 5, "XLV": 7.5, "FBT": 7.5},
+  "+SMT_MOM（NASDAQ100 から5）": {"QQQM": 35, "SMH": 25, "ITA": 5, "SHLD": 5, "XLV": 7.5, "FBT": 7.5, "SMT_MOM": 5},
+  "+SMT_CONC（確かめ・集中型の代理）": {"QQQM": 35, "SMH": 25, "ITA": 5, "SHLD": 5, "XLV": 7.5, "FBT": 7.5, "SMT_CONC": 5},
+  "+MTUM（参考・同じ賭けの安い器・楽天で買えない）": {"QQQM": 35, "SMH": 25, "ITA": 5, "SHLD": 5, "XLV": 7.5, "FBT": 7.5, "MTUM": 5},
+  "+GDX（参考・etf_add の勧め）": {"QQQM": 35, "SMH": 25, "ITA": 5, "SHLD": 5, "XLV": 7.5, "FBT": 7.5, "GDX": 5}
+ },
+ "verdict_rule": "etf_add・avuv と同じ: Δ＝案 − 今 を etf_ita_xlk.verdict に通し、感度5本（主・A2を外す・半導体の基礎率・分散の上乗せなし・共分散を A2 の窓から＝ndx_swap_check.variants）を etf_ita_xlk.summarize でまとめる。主の枠 USD・崩れあり 2000-09〜、確かめの枠 USD・ドットコム級なし 2002-11〜 と 円・崩れあり。保険の3条件（unx_final.conds・(3) は上の100年の代用）",
+ "comparisons": {
+  "主": "SMT の価値＝ +SMT_MOM − 今",
+  "確かめ": "集中型の代理＝ +SMT_CONC − 今",
+  "参考（判定の決まりで裁くが勧めは R の決まりどおり）": ["器の差＝ +SMT_MOM − +MTUM（費用の差 年0.62pt だけ）", "勢いの賭けそのもの＝ +MTUM − 今", "GDX と比べる＝ +SMT_MOM − +GDX"]
+ },
+ "reading_rules_fixed_before_measuring": {
+  "R1": "+SMT_MOM − 今 が主の枠で『堅い価値あり』→『SMT も足す候補』。+GDX も『堅い価値あり』なので主の Δ平均 が大きいほう（同じなら Δ最悪）を上に並べる。確かめの枠で割れれば『窓・通貨で割れる』と添える",
+  "R2": "『前提しだい』で保険の3条件をすべて満たす →『保険として足すのは筋が通る（好みの差）』",
+  "R3": "それ以外 →『足す根拠はデータに無い（入れるなら好みの賭け）』",
+  "R4": "器の差（+SMT_MOM − +MTUM）は判定の決まりの結果を添え、『同じ勢いの賭けなら費用の差の分だけ MTUM が良いが、楽天で買える勢いの器は SMT だけ』と書く",
+  "R5": "+SMT_CONC − 今 のまとめが +SMT_MOM − 今 と違えば『代理で割れる（集中型の写しでは …）』と添える",
+  "R6": "楽天で買えるか（SMT は買える・MTUM・SPMO は買えない）は判定に入れず読みに添える",
+  "R7": "どの結果でも配分は変えない（報告するだけ）"
+ },
+ "regression": "① 今・+GDX の 15%以上・5%未満・最悪の世界・最大下落が out/etf_add_check.json と小数1桁で一致（MTUM・SMT_MOM・SMT_CONC を足しても既存の本の数字が動かない）② 感度の主が measure と 1e-9 以内（USD・円）③ SMT_MOM の行が MTUM の行と費用の差だけ違う（A1・B・C・D が −0.0062・A1_gross と毎月の値が同じ）。どれかが外れれば止める",
+ "reported_not_judged": [
+  "SMT の本物の記録（円・2026-01〜2026-09・投信ライブラリーの基準価額・分配金は再投資）を MTUM・SPMO・QQQ・SPY・SMH（円）と同じ月で——累計・月次の相関（9点＝判断に使えない短さと書く）",
+  "長い歴史（French・時価加重・1927〜2026-08）: ① 6_Portfolios_ME_Prior_12_2 の BIG HiPRIOR と 25_Portfolios_ME_Prior_12_2 の BIG HiPRIOR（大型×勢い上位20%）の市場（Mkt-RF＋RF）との差——全期間・〜2006・2007〜・2013-07〜 の幾何の年率差と月次の差の t、暦年の差の悪い5年、市場に対する最大の相対下落 ② 36か月の部品の手がかり: 6_Portfolios_ME_Prior_60_13 の BIG HiPRIOR（過去13〜60か月の勝ち）の市場との差と BIG LoPRIOR との差（長期の反転）③ 直近1か月を飛ばさない部品の手がかり: 6_Portfolios_ME_Prior_1_0 の BIG HiPRIOR（直近1か月の勝ち）の市場との差（短期の反転）——どれも SMT の窓（6・12・36か月の上昇率）そのものではない手がかりと書く",
+  "集中: 21銘柄の等金額・上位10社の業種・今の保有（QQQM・SMH の中身 out/etf_profiles.json）との重なり（上位10社のうち QQQ・SMH に入る社とその重さ）",
+  "費用: 0.77% 対 MTUM 0.15%・SPMO 0.13%・iFreeNEXT NASDAQ100 0.495%。年4回の入れ替えの売買の費用は信託報酬の外で測っていない",
+  "上振れ（20%以上・内部収益率の分位）・過去の転がる20年の積立・NASDAQ100 / SMH との相関・100年の代用の数字",
+  "足し方の感度（ETF 側全部から按分で5・NASDAQ100 から10）"
+ ],
+ "outputs": ["out/smt_mom_check.json", "night/smt_mom_check.py"]
+}
