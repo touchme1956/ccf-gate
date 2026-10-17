@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-16",
+ "generated": "2026-10-17",
  "note": "「今日、何をすればいいか」だけを集めた表示専用の在庫。**判定には一切使わない**——Ω・四関門・売却規律・配分のどれにも触れない。期限の判定は ops_status.build() をそのまま呼ぶ（二重実装を作らない）。**blind（読めなかった入力）を必ず出す**のがこの道具の本体で、盲目のときに「異常なし」へ倒れる fail-open を画面の側で塞ぐためにある。",
  "buy": [
   "CW",
@@ -11,9 +11,9 @@
  "next": [],
  "counts": {
   "now": 1,
-  "today": 1,
+  "today": 4,
   "month": 38,
-  "waiting": 48,
+  "waiting": 49,
   "blind": 0,
   "src": 18
  },
@@ -29,12 +29,36 @@
  ],
  "today": [
   {
+   "k": "alert:MCO:2026-10-15",
+   "level": "today",
+   "title": "8-K警報: MCO（2026-10-15）",
+   "why": "Item 5.02: 退任——取締役・主要役員の異動",
+   "how": "⚙自動化タブの「審査」で門2再審査の依頼文を作る",
+   "src": "8-K監視"
+  },
+  {
    "k": "alert:ASML:2026-10-14",
    "level": "today",
    "title": "8-K警報: ASML（2026-10-14）",
    "why": "6-K語ヒット｜業績下方——8-Kに対応項目は無いが門2再審査の気づき：….7 billion, towards the high end of our guidance, reflecting the strong execution of our ramp-up. Installed Base Management sales 1 came in above gu…",
    "how": "⚙自動化タブの「審査」で門2再審査の依頼文を作る",
    "src": "8-K監視"
+  },
+  {
+   "k": "earn:BMI",
+   "level": "today",
+   "title": "決算: BMI（2026-10-20）",
+   "why": "3日後",
+   "how": "発表後に python3 kessan_check.py（判定は警報のみ・株価は使わない）",
+   "src": "決算カレンダー"
+  },
+  {
+   "k": "earn:MANH",
+   "level": "today",
+   "title": "決算: MANH（2026-10-20）",
+   "why": "3日後",
+   "how": "発表後に python3 kessan_check.py（判定は警報のみ・株価は使わない）",
+   "src": "決算カレンダー"
   }
  ],
  "month": [
@@ -151,18 +175,18 @@
    "src": "日本語要約"
   },
   {
-   "k": "fresh:irr85hist:本体が68日動いていない",
+   "k": "fresh:irr85hist:本体が69日動いていない",
    "level": "month",
    "title": "中身/入力が前進していない: irr=85の実績台帳",
-   "why": "本体が68日動いていない（期限40日）",
+   "why": "本体が69日動いていない（期限40日）",
    "how": "python3 night/check_freshness.py",
    "src": "鮮度"
   },
   {
-   "k": "fresh:irr70mech:本体が10日動いていない",
+   "k": "fresh:irr70mech:本体が11日動いていない",
    "level": "month",
    "title": "中身/入力が前進していない: 機構文の年次diff(irr=70)",
-   "why": "本体が10日動いていない（期限4日）",
+   "why": "本体が11日動いていない（期限4日）",
    "how": "python3 night/check_freshness.py",
    "src": "鮮度"
   },
@@ -826,7 +850,7 @@
   {
    "k": "todo:xlv_nisa_check",
    "kind": "宿題",
-   "title": "XLV・FBT（各5%・2026-10-13 から／2026-10-15 から各7.5%）と SHLD（5%・2026-10-13 から・10-15 に一度 MISL に替えて同夜に戻した）が NISA 成長投資枠で買えるかを楽天のアプリで確かめる（最初に買う前）",
+   "title": "XLV・FBT（各5%・2026-10-13 から／2026-10-15 から各7.5%／2026-10-16 から各5%＝同日の最終でも各5%）と SHLD（5%・2026-10-13 から・10-15 に一度 MISL に替えて同夜に戻した）が NISA 成長投資枠で買えるかを楽天のアプリで確かめる（最初に買う前）",
    "due": "2026-11-30",
    "owner": "人",
    "tickers": []
@@ -893,6 +917,14 @@
    "title": "金鉱株 ETF（GDX）を NASDAQ100 から5%入れるか（etfcand の決まりでは『堅い価値あり』・保険の変更）",
    "due": null,
    "owner": "人",
+   "tickers": []
+  },
+  {
+   "k": "todo:fund_nav_csv_lag_1016",
+   "kind": "宿題",
+   "title": "投資信託協会の基準価額の CSV が2026-10-16 に 2026-08-31 までしか返さない（iFreeNEXT も SMT も）＝📈成績が投資信託の行を古い値で評価する恐れ。最初に投資信託を買って記録したら returns.json の投資信託の行の asof を見る",
+   "due": "2026-12-31",
+   "owner": "穴",
    "tickers": []
   }
  ],
