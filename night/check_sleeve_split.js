@@ -937,7 +937,8 @@ const srv = http.createServer((q, r) => {
     // 実データ（正本の保有と全パック・割り方 cat・入金17万）: 盤に値段の無い本は検査の中で値段を足す（盤にあればそちらを使う）
     if ((base.target || {}).unowned_first === 'all') {
       DASHX = { XLV: { px: 171.99, prev: 171.99, chg: 0, chgPct: 0, src: 'check' }, FBT: { px: 263.90, prev: 263.90, chg: 0, chgPct: 0, src: 'check' },
-                SHLD: { px: 59.83, prev: 59.83, chg: 0, chgPct: 0, src: 'check' }, MISL: { px: 41.11, prev: 41.11, chg: 0, chgPct: 0, src: 'check' } };
+                SHLD: { px: 59.83, prev: 59.83, chg: 0, chgPct: 0, src: 'check' }, MISL: { px: 41.11, prev: 41.11, chg: 0, chgPct: 0, src: 'check' },
+                VBR: { px: 236.48, prev: 236.48, chg: 0, chgPct: 0, src: 'check' } };   // VBR は 2026-10-17 に配分へ（盤に入るのは main の market.yml から）
       const load20 = async (over) => {
         OVER = over;
         await pg.goto('http://localhost:' + PORT + '/index.html'); await pg.waitForTimeout(600);
