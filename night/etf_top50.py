@@ -15,6 +15,9 @@
         W20 が無い家族は W10 の3つだけで（印を付ける）。合成点の高い順に50。
 注意: 過去の実績の並びで、これからの順位を約束しない。W10 は2016〜2026（テックと半導体の相場）なのでテック寄りが上に来やすい。
       4つの世界の判定（etfcand の第2段）はこの50本には掛けていない。
+回したあとの直し（2026-10-18・結果を見た後）: 初版は etf_longest.json（楽天の全取扱を長い記録で並べた表・291家族の本を含む）と
+      etfcand_short.json（記録10年未満の471本のふるい）も『調べた』に数えたため、209家族のうち185を外し残りは W10 だけの東証の本24になった。
+      この2つは全部をふるいに掛けた表で、候補として名指しして調べた記録ではないので外した。並べ方（物差し・合成点）は変えていない。
 使い方: python3 night/etf_top50.py → out/etf_top50.json
 """
 import datetime, json, os, re
@@ -23,9 +26,9 @@ BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(BASE, 'out', 'etf_top50.json')
 SRC = os.path.join(BASE, 'out', 'etfcand.json')
 SOURCES = ['etf_add_check.json', 'etf_add_prereg.json', 'smallcap_etf_compare.json', 'defense_alts.json', 'health_etf.json',
-           'morefunds.json', 'factor_etf_rakuten.json', 'etf_forward_rank.json', 'etf_forward_combo.json', 'etfcand_short.json',
+           'morefunds.json', 'factor_etf_rakuten.json', 'etf_forward_rank.json', 'etf_forward_combo.json',
            'avuv_check.json', 'smt_mom_check.json', 'spmo_profile.json', 'gdx_history.json', 'unx_slices.json', 'unx_final.json',
-           'bestpf_ext.json', 'bestpf_check.json', 'bestpf_final.json', 'etf_long_windows.json', 'etf_longest.json',
+           'bestpf_ext.json', 'bestpf_check.json', 'bestpf_final.json', 'etf_long_windows.json',
            'etf_ita_xlk.json', 'future30_options.json', 'alloc_check.json', 'castle10_check.json', 'portfolio_search.json']
 METRICS = [('W20', 'cagr'), ('W20', 'mdd'), ('W20', 'eff'), ('W10', 'cagr'), ('W10', 'mdd'), ('W10', 'eff')]
 TOP = 50
