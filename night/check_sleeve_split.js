@@ -922,7 +922,7 @@ const srv = http.createServer((q, r) => {
         const used = Object.values(p.buy).reduce((a, b) => a + b.cost, 0) + Object.values(p.frac).reduce((a, b) => a + b, 0) + p.rest;
         return { first: Object.keys(p.first), wait: p.firstWait.map(w => w.k), big: p.big.map(w => w.k), buy: Object.keys(p.buy), sh: Object.fromEntries(Object.entries(p.buy).map(([k, b]) => [k, b.sh])),
           used, w4: p.wait.some(w => w.k === 'N4'), cf: Object.fromEntries(Object.entries(p.cat).map(([g, c]) => [g, c.first])) }; };
-      return { a: run('all', 80000), b: run('all', 40000), c: run(true, 80000), d: run('castle', 80000), e: run(undefined, 80000) };
+      return { a: run('all', 80000), b: run('all', 40000), c: run(true, 80000), d: run('castle', 80000), e: run(undefined, 80000), f: run('etf', 80000) };
     });
     const j = a => a.join(',');
     ok(j(q20.a.first) === 'N3,N2,C1' && j(q20.a.wait) === 'C2' && ['N3', 'N2', 'C1'].every(k => q20.a.buy.includes(k)) && q20.a.used === 80000
@@ -934,8 +934,12 @@ const srv = http.createServer((q, r) => {
     ok(j(q20.c.first) === 'C1,C2' && j(q20.d.first) === 'C1,C2' && !q20.c.first.some(k => /^N/.test(k)) && !q20.e.first.length
        && [q20.a, q20.b, q20.c, q20.d, q20.e].every(x => !x.first.includes('N0') && !x.first.includes('N1') && !x.first.includes('N4') && !x.first.includes('C0')) && q20.a.w4,
        '   true／castle は個別株だけ（' + j(q20.c.first) + '）・設定なしは先に買わない・金額で買う本（N0）・持っている本（N1・C0）・不足が半株に届かない本（N4）はどの形でも候補にならない');
+    // ★2026-10-18「ETF目標値にすることを個別株一株買うことより優先して」: 'etf' は ETF だけ先に・持っていない個別株（C1・C2）は先に買わない
+    ok(j(q20.f.first) === 'N3,N2' && !q20.f.first.some(k => /^C/.test(k)) && !q20.f.wait.length && q20.f.used === 80000 && !q20.f.cf.c,
+       '   etf（2026-10-18）は ETF だけ先に（' + j(q20.f.first) + '）・持っていない個別株 C1・C2 は先に買わない（個別株の区分は目標超過で今月の先買いなし）・合計 ¥' + q20.f.used.toLocaleString());
     // 実データ（正本の保有と全パック・割り方 cat・入金17万）: 盤に値段の無い本は検査の中で値段を足す（盤にあればそちらを使う）
-    if ((base.target || {}).unowned_first === 'all') {
+    const UF20 = (base.target || {}).unowned_first;
+    if (UF20 === 'all' || UF20 === 'etf') {
       DASHX = { XLV: { px: 171.99, prev: 171.99, chg: 0, chgPct: 0, src: 'check' }, FBT: { px: 263.90, prev: 263.90, chg: 0, chgPct: 0, src: 'check' },
                 SHLD: { px: 59.83, prev: 59.83, chg: 0, chgPct: 0, src: 'check' }, MISL: { px: 41.11, prev: 41.11, chg: 0, chgPct: 0, src: 'check' },
                 VBR: { px: 236.48, prev: 236.48, chg: 0, chgPct: 0, src: 'check' } };   // VBR は 2026-10-17 に配分へ（盤に入るのは main の market.yml から）
@@ -965,12 +969,13 @@ const srv = http.createServer((q, r) => {
       const W20 = base.target.ami_weights || {}, F20 = base.target.ami_funds || {};
       const held20 = new Set(((JSON.parse((ST.data || {})['pf:portfolio'] || '{}').positions) || []).filter(p => (+p.sh || 0) > 0).map(p => p.t));
       const ETF4 = Object.keys(W20).filter(t => (+W20[t] || 0) > 0 && !F20[t] && !held20.has(t) && !/-USD$/.test(t)), has = (L, t) => L.some(x => x.includes(t));
-      ok(ETF4.every(t => has(r20.tagged, t)) && /持っていない本を先に/.test(r20.line) && /持っていない本（ETF・個別株）/.test(r20.note)
-         && r20.total >= 169000 && r20.total <= 170000
+      const lineRe = UF20 === 'etf' ? /持っていない ETF を先に/ : /持っていない本を先に/, noteRe = UF20 === 'etf' ? /持っていない ETF は区分の比率より先に/ : /持っていない本（ETF・個別株）/;
+      ok(ETF4.every(t => has(r20.tagged, t)) && lineRe.test(r20.line) && noteRe.test(r20.note)
+         && r20.total >= 169000 && r20.total <= 170000 && (UF20 !== 'etf' || r20.castle === 0)
          && !ETF4.some(t => has(r20c.tagged, t)) && r20c.tagged.length >= 1 && /持っていない個別株を先に/.test(r20c.line),
-         '⑳ 実データ（入金17万）: 先に買う本 ' + r20.tagged.join('・') + '（個別株 ¥' + r20.castle.toLocaleString() + '・合計 ¥' + r20.total.toLocaleString()
+         '⑳ 実データ（' + UF20 + '・入金17万）: 先に買う本 ' + r20.tagged.join('・') + '（個別株 ¥' + r20.castle.toLocaleString() + '・合計 ¥' + r20.total.toLocaleString()
          + '）／ castle なら ' + r20c.tagged.join('・') + '（個別株 ¥' + r20c.castle.toLocaleString() + '）');
-    } else ok(true, '   （正本の unowned_first が all でないので ⑳ の実データの部分は飛ばす）');
+    } else ok(true, '   （正本の unowned_first が all・etf でないので ⑳ の実データの部分は飛ばす）');
   }
 
   // ㉑ 投資信託の区分が2つ（2026-10-14 ユーザー明示指示「SMH15％SOX10に変えてマージして」＝楽天・プラス・SOX を足した）:
