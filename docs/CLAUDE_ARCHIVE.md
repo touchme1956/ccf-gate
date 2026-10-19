@@ -20671,4 +20671,5 @@ todo の追加（iDeCo の配分の指定の確認・手数料の表／カード
   - 今（VBR 入り）: 27.7%・19.1%・7.87%・10.98%・21.3%・−68.9%・74%・1.036
 - 私の答え: 今・ITA10/SHLD5・ITA7.5/XLV7.5・ITA7.5/SHLD7.5 は差が誤差の範囲で好みの差。防衛を厚くするなら記録の長い ITA に足すのが根拠は確か（SHLD は記録3年・代わりの指数は代理の門を通らない）。100年の代用では VBR を残す今の形がわずかに上。→ ユーザー「この形でマージして」。
 - 変えたもの: `portfolio.json` の `ami_names` から VBR を外し（一度も買っていない＝state.json の保有に無い・SHLD/MISL/SOX と同じ扱い）・`ami_weights` の ITA 5→10・`castle_rule_measure.sleeve` を QQQM 40 : SMH 25 : ITA 10 : SHLD 5 : XLV 5 : FBT 5・`nisa.rule` から VBR。旧の姿は `ami_mix_superseded_2026_10_19`。index.html の解説の配分の文（見出し・ETF の行・物差しの袖・区分の数 8→7）・todo `xlv_nisa_check`。門のコードは不変。
+- 検査: `night/check_sleeve_split.js` 全部通過（✗0）・audit_docs ✓・check_html ✓・validate_state ✓。【今月（入金17万・実データ）】XLV・FBT・ITA・SHLD 各1株・個別株 ¥0・合計 ¥169,907（VBR の1株が無くなり、ITA の区分は目標10%）。
 - 採点・四関門・席・割り方の式・売却規律・castle_rule の線は不変。
