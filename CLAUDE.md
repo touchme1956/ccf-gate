@@ -397,6 +397,7 @@ awk '/^## /{p=0} /^## .*キーワード/{p=1} p' docs/CLAUDE_ARCHIVE.md  # 節�
 | 20645 | 2026-10-18 | VBR 5% を XLV へ回すと？（vbr_to_xlv_check・参考・判定なし）——差は全部小さい: 案A（XLV10/FBT5）は今より 平均 −0.03・15%以上 27.7→27.3%・ぶれ 21.3→21.0・最大下落 −68.9→−69.2%・過去の20年で15%以上 74.3→81.1%・100年の代用 30年の最悪 1.036→1.000。VBR は模型と100年でわずかに上・XLV は2000〜2026の実績で上＝好みの差・配分は不変 |
 | 20656 | 2026-10-18 | 持っていない本を先に買う対象を ETF だけに（target.unowned_first='etf'・ユーザー明示指示「ETF目標値にすることを個別株一株買うことより優先して」）——持っていない個別株は先に買わず区分の比率の中で（個別株は目標10%超えで¥0）。入金17万で XLV・FBT・ITA・SHLD・VBR 各1株・個別株 ¥0。旧 'all' は unowned_first_superseded_2026_10_18・検査 check_sleeve_split ⑳ |
 | 20664 | 2026-10-19 | VBR 5 を ITA へ——NASDAQ100 40 / SMH 25 / ITA 10 / SHLD 5 / XLV 5 / FBT 5 / 個別株 10（ユーザー明示指示「この形でマージして」・直前の問い「ITA10SHLD5は？」）。同じ物差しで今と差は誤差の範囲（15%以上 27.7→27.8%・平均 10.98→11.01%・最大下落 −68.9% 同じ・100年の代用 30年の最悪 1.036→1.005）＝好みの差。VBR は一度も買っていないので名前ごと外した。年率15%を最も効率よく狙う形は SMH60:ITA40（15%以上 32.8%）と答えた上での人の判断。検討した4つの形の道具 night/smh30_check.py・defense15_check.py・itaxlv_check.py・ita10_check.py |
+| 20677 | 2026-10-20 | 今の配分より良い案はあるか（better_mix_check・参考・候補9つと勧めの決まりは 3bb4b414 で回す前に固定）——**測りで『堅い価値あり』は GDX を含む形だけ**: F4（QQQM 30 / SMH 30 / ITA 15 / XLV 10 / GDX 5）Δ平均 +0.31・Δ最悪 +0.39・15%以上 +0.83pt・5%未満 −2.2pt・最大下落 5.9pt 浅い／C（GDX 5 を NASDAQ100 から）+0.26・+0.39・+0.55pt。ただし分散の上乗せの仮定に頼り、過去の転がる20年で15%以上は 81→70〜73%・100年の代用の30年の中央は下がる（保険の3条件は満たさない）。E 半導体 +5 は前提しだい・D XLU は前提しだいで保険の3条件をすべて満たす・まとめる手（SHLD→ITA・FBT→XLV）は測りで少し悪い（−0.04〜−0.09）。前日の xlk10_check（NASDAQ100 の10を XLK へ）は誤差の範囲。配分は不変 |
 
 ## コマンド
 - 年1回（1-2月）発掘: `python run_gate0_local.py`
@@ -1410,6 +1411,7 @@ awk '/^## /{p=0} /^## .*キーワード/{p=1} p' docs/CLAUDE_ARCHIVE.md  # 節�
 - **楽天で買える米国の小型株 ETF を並べる（smallcap_etf_compare）: `python3 night/smallcap_etf_compare.py`** → `out/smallcap_etf_compare.json`（2026-10-18新設・読むだけ・参考・判定なし・回す前にコミット）。broker_lineup にある米国の小型株 ETF 17本と楽天に無い参考4本を、Yahoo の配当込み月次・ドル建てで設定来・共通の窓・暦年・同じ指数の器・転がる36か月（IWM と比べる）で並べる。全文 docs/CLAUDE_ARCHIVE.md:20621
 - **今まで調べていない ETF の上位50（etf_top50）: `python3 night/etf_top50.py`** → `out/etf_top50.json`（2026-10-18新設・読むだけ・参考・判定なし・回す前にコミット）。新しいデータは取らず out/etfcand.json の第1段の数字だけ。候補として名指しして調べた家族を外し、残りを今の形の NASDAQ100 から5を回した円の実績の差（W20・W10 の年率・最大下落・効率の百分位の平均）で並べる。全文 docs/CLAUDE_ARCHIVE.md:20634
 - **VBR 5% を XLV へ回す案（vbr_to_xlv_check）: `python3 night/vbr_to_xlv_check.py`** → `out/vbr_to_xlv_check.json`（2026-10-18新設・読むだけ・参考・判定なし・alloc_1017_vbr_check と同じ物差し・約20秒）。全文 docs/CLAUDE_ARCHIVE.md:20645
+- **今の配分より良い案はあるか（better_mix_check）: `python3 night/better_mix_check.py`** → `out/better_mix_check.json`（2026-10-20新設・読むだけ・参考・候補9つと勧めの決まり R1〜R4 は道具の頭に固定し 3bb4b414 で回す前にコミット・約35秒）。今（ITA10 の形）を基準に、まとめる手・GDX・XLU・半導体+5 とその組み合わせを、unx_assets.measure・感度5本（ndx_swap_check.judge）・3つの枠・保険の3条件（unx_final.conds）で裁く。回帰の検査は 今＝out/ita10_check.json の『案』・感度の主＝measure。同じ作りの1本ずつの比べ（2026-10-19）: `night/smh30_check.py`・`night/defense15_check.py`・`night/itaxlv_check.py`・`night/ita10_check.py`・`night/xlk10_check.py`（いずれも参考・判定なし）。全文 docs/CLAUDE_ARCHIVE.md:20677
 - 機械コアの疑似バックテスト: `python3 night/backtest_core.py`（`--cutoff 2015-07-01` / `--limit N`）
   → out/backtest_<year>.json。生存バイアスあり＝相対比較と成長減衰の分布にだけ使う
 
