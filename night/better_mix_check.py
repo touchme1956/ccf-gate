@@ -160,10 +160,15 @@ def main():
         table[nm] = dict(show(r), 上振れ=dict(pr_, 内部収益率の分位=q))
     roll = {nm: UC.rolling(f, rows, chains) for nm, f in F.items()}
     N.NET_ARG.update(NET_EXTRA)
+    # ★集中の参考値の城は今の個別株の比率で（2026-10-20 訂正・判定と他の数字は不変）。N.CASTLE_ARG は ndx_swap の
+    #   時点（個別株15%＝席5社×3%）の値で、そのまま使うと半導体の連鎖が LRCX・ASML の分だけ2pt 高く出ていた。
+    N.CASTLE_ARG = ','.join(f'{s}={cpct / len(seats):g}' for s in seats)
     look = {}
     for nm, f in F.items():
         try:
             look[nm] = N.lookthrough(f)
+            if '城' in look[nm]:
+                look[nm]['城'] = f'{N.CASTLE_ARG}（席{len(seats)}社×{cpct / len(seats):g}%）'
         except Exception as e:                       # 参考だけ・読めなければ名指し
             look[nm] = dict(読めず=str(e)[:200])
     bl = json.load(open(os.path.join(BASE, 'out', 'broker_lineup.json')))['etfs']
