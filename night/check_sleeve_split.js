@@ -33,6 +33,8 @@
  *   ⑲ その他の区分をなくした（2026-10-13「ITAはその他ETF投資信託はなくして」）: 正本に ami_other が無ければ、ITA は SHLD・XLV・FBT と
  *      同じく自分だけの区分（名前は ITA）・注文書のどこにも「その他 ETF・投資信託」が出ない・XLK は NASDAQ100 に数える・
  *      今の保有では区分の外の「その他（目標0%…）」の行も出ない
+ *   ★⑯⑰⑲ の実データで見る本（OTHER_BOOK）: ITA が正本で目標>0 なら ITA。2026-10-22「ITAをppaに5％移して」→ MISL へ替えて ITA を0%にした
+ *      ので、0%なら正本の目標>0 の ETF（NASDAQ100・SMH・投資信託・暗号資産以外）を ami_names の順で（名指しの ITA をやめた・⑳ と同じ作法）
  *   ⑳ 持っていない本を先に・ETF も（2026-10-13「個別株優先やめて持ってないやつ優先」）: catIn._unownedFirst==='all' なら、保有ゼロの
  *      ETF・投資信託の1株で買う本も個別株と一緒に区分の比率より先に1株ずつ（目標の大きい順→1株の安い順・金額で買う本と
  *      不足が半株に届かない本は候補にしない）・true/'castle' は個別株だけ（⑱）。実データは盤に値段の無い本（XLV・FBT・SHLD・
@@ -671,6 +673,12 @@ const srv = http.createServer((q, r) => {
        '   開始月の前: 行なし・入金額を全部配る・案内「' + (r3.next || r3.note).slice(0, 80) + '」');
   }
 
+  // ⑯⑰⑲ の実データで見る本（頭注の★）: ITA が目標>0 なら ITA・0%なら正本の目標>0 の ETF を ami_names の順で
+  const OTHER_BOOK = (() => {
+    const t = base.target || {}, w = t.ami_weights || {}, fund = t.ami_funds || {};
+    if (+w.ITA > 0) return 'ITA';
+    return (t.ami_names || []).find(n => +w[n] > 0 && n !== 'SMH' && !fund[n] && !/-USD$/.test(n)) || 'ITA';
+  })();
   // ⑯ その他 ETF・投資信託（v9.9.206・2026-10-09 ユーザー明示指示「QQQ50% SMH20% 個別株15% その他ETF投資信託15%に変更して」）:
   //   target.ami_other の buy の本の区分に、目標0%で持っている本と目標に無い本（drop）の保有を数える。同じ指数の本（QQQM）は数えない
   {
@@ -707,7 +715,7 @@ const srv = http.createServer((q, r) => {
     ST2.data['pf:portfolio'] = JSON.stringify(P2);
     // 実データの「その他」の買う本（2026-10-10 から ITA）。2026-10-13「ITAはその他ETF投資信託はなくして」で正本から ami_other を外した——
     //   コードの道は残っているので、正本に無ければ設定のある形（買う本 ITA）を検査の中で作って見続ける（正本は触らない）
-    const AO16 = base.target.ami_other || { buy: 'ITA', label: 'その他 ETF・投資信託' };
+    const AO16 = base.target.ami_other || { buy: OTHER_BOOK, label: 'その他 ETF・投資信託' };
     const BUY = AO16.buy;
     const load16 = async (over) => {
       OVER = over;
@@ -783,7 +791,7 @@ const srv = http.createServer((q, r) => {
     const SB = (base.target || {}).ami_same_bucket;
     if (SB && Array.isArray(SB['IFREE-NDX']) && SB['IFREE-NDX'].includes('XLK')) {
       // その他の区分との関係（XLK はその他でなく NASDAQ100 に数える）を見る検査なので、正本に ami_other が無ければ（2026-10-13〜）設定のある形を作る
-      const AO17 = base.target.ami_other || { buy: 'ITA', label: 'その他 ETF・投資信託' };
+      const AO17 = base.target.ami_other || { buy: OTHER_BOOK, label: 'その他 ETF・投資信託' };
       const OB = AO17.buy;
       const load17 = async (over) => {
         OVER = over;
@@ -809,7 +817,7 @@ const srv = http.createServer((q, r) => {
          && Math.abs((on.ndx.now - off.ndx.now) - (off.oth.now - on.oth.now)) < 0.05 && (on.ndx.now - off.ndx.now) > 1
          && /同じ指数の QQQM・同じ扱いの XLK を含む/.test(on.ndxRow) && /XLK（NASDAQ100 に数える）/.test(on.zero) && !/XLK（その他/.test(on.zero)
          && /XLK（その他 ETF・投資信託に数える）/.test(off.zero),
-         '⑰ 実データ: NASDAQ100 の区分 ' + off.ndx.now.toFixed(1) + ' → ' + on.ndx.now.toFixed(1) + '%・その他（' + OB + '）' + off.oth.now.toFixed(1) + ' → ' + on.oth.now.toFixed(1)
+         '⑰ 実データ: NASDAQ100 の区分 ' + (off.ndx ? off.ndx.now.toFixed(1) : '?') + ' → ' + (on.ndx ? on.ndx.now.toFixed(1) : '?') + '%・その他（' + OB + '）' + (off.oth ? off.oth.now.toFixed(1) : '?') + ' → ' + (on.oth ? on.oth.now.toFixed(1) : '?')
          + '%（XLK の分が移る）・表「' + on.ndxRow.split('\n')[0].slice(0, 70) + '」・「' + (on.zero.match(/XLK（[^）]*）/) || [''])[0] + '」');
     } else ok(true, '   （正本に ami_same_bucket の XLK が無いので実データの部分は飛ばす）');
   }
@@ -884,18 +892,19 @@ const srv = http.createServer((q, r) => {
     await pg.reload(); await pg.waitForTimeout(1500);
     await pg.evaluate(() => ccfImportAllPacks()); await pg.waitForTimeout(1800);
     await pg.evaluate(() => { localStorage.setItem('pf:monthly_total', '170000'); showPage(5); }); await pg.waitForTimeout(3200);
-    const q19 = await pg.evaluate(() => {
+    // 見る本は OTHER_BOOK（ITA が目標>0 なら ITA・0%なら正本の目標>0 の ETF＝頭注の★）
+    const q19 = await pg.evaluate((OB) => {
       const C = window.__ccfCat || {}, txt = ((document.querySelector('#pg5') || {}).innerText || '');
       const line = [...document.querySelectorAll('#pg5 div')].filter(d => /区分の比率が最優先・1株単位/.test(d.innerText) && d.innerText.length < 600).map(d => d.innerText).pop() || '';
-      const itaRow = ((document.querySelector('#pg5 .catrow[data-cat="n:ITA"]') || {}).innerText || '');
+      const itaRow = ((document.querySelector('#pg5 .catrow[data-cat="n:' + OB + '"]') || {}).innerText || '');
       const zeroRow = ((document.querySelector('#pg5 .catrow[data-cat="zero"]') || {}).innerText || '');
       const z = (txt.match(/[^\n]*目標0%（売らない・新規なし）[^\n]*/) || [''])[0];
-      return { ita: C['n:ITA'] || null, err: C._otherErr || '', zn: ((C._zero || {}).nm) || [], line, itaRow, zeroRow, z,
+      return { ita: C['n:' + OB] || null, err: C._otherErr || '', zn: ((C._zero || {}).nm) || [], line, itaRow, zeroRow, z,
         other: /その他 ETF・投資信託/.test(txt), keys: ccfCatKeys(C) };
-    });
-    ok(q19.ita && q19.ita.nm === 'ITA' && !q19.ita.other && !q19.err && / ／ ITA ¥[\d,]+/.test(q19.line) && !/その他/.test(q19.line)
-       && /^◈ ITA/.test(q19.itaRow.trim()) && !/その他/.test(q19.itaRow) && !q19.other && !q19.zeroRow && q19.zn.length === 0
-       && /XLK（NASDAQ100 に数える）/.test(q19.z) && q19.keys.includes('n:ITA'),
+    }, OTHER_BOOK);
+    ok(q19.ita && q19.ita.nm === OTHER_BOOK && !q19.ita.other && !q19.err && new RegExp(' ／ ' + OTHER_BOOK + ' ¥[\\d,]+').test(q19.line) && !/その他/.test(q19.line)
+       && new RegExp('^◈ ' + OTHER_BOOK).test(q19.itaRow.trim()) && !/その他/.test(q19.itaRow) && !q19.other && !q19.zeroRow && q19.zn.length === 0
+       && /XLK（NASDAQ100 に数える）/.test(q19.z) && q19.keys.includes('n:' + OTHER_BOOK),
        '⑲ 正本（その他の区分なし・入金17万）: 区分 ' + q19.keys.join(' / ') + '・表「' + q19.itaRow.split('\n')[0].slice(0, 40) + '」・上の1行「' + q19.line.trim().slice(0, 90)
        + '」・「その他 ETF・投資信託」の文字なし・区分の外の行なし・「' + ((q19.z.match(/XLK（[^）]*）/) || [''])[0]) + '」');
   } else ok(true, '   （正本に ami_other があるので ⑲ は飛ばす）');
