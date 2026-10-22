@@ -18,7 +18,9 @@ MISL の行: 2022-11 から本物（Yahoo の配当込みの月次）・2022-10 
   ＋ 本物の記録だけの窓（MISL と ITA は 2022-11〜・形は 2023-10〜〔SHLD の本物の最初の月から〕・ドルと円）＋ MISL の中身の重なり（ITA・QQQ・SHLD）。
 回帰の検査（どれかが外れれば止める）:
   (a0) MISL を足した build の MISL 以外の本の行と系列が、足さない build（別のプロセス）と1ビットも違わない
-       （順位の欄 rank・score・worst・top10_in_worlds は本の集まりで変わるので比べない＝unx_assets の回帰①と同じ）
+       （順位の欄 rank・score・worst・top10_in_worlds・world_rank は本の集まりで変わるので比べない＝unx_assets の回帰①と同じ。
+        ★1回目〔03d2d52c〕は world_rank を比べる欄に残しており、FBT・SHLD・SHLD_EU の world_rank〔R の25本＋新しい本の中の世界ごとの
+        順位＝MISL が加わると動く〕で止まった。world_rank は R・X の表示〔各世界の順位〕にだけ使い物差しは読まないので、比べない欄に足して回し直した）
   (a)  前が out/alloc_1022_check.json の『新（2026-10-22〜）』と一致（USD・崩れあり・小数1桁）
   (b)  感度の主が measure と 1e-9 以内（USD と円）
 使い方: python3 night/alloc_1022b_check.py → out/alloc_1022b_check.json
@@ -42,7 +44,7 @@ MISL_JA = '米国の航空宇宙・防衛（First Trust Indxx Aerospace & Defens
 MISL_LAST = 202210                   # 代理を使う最後の月（設定 2022-10-25・本物の月次は 2022-11 から）
 REAL_PAIR = (202211, 202609)         # MISL と ITA の本物どうし
 REAL_FORM = (202310, 202609)         # 形の本物どうし（SHLD の本物は 2023-10 から）
-RANK_KEYS = {'rank', 'score', 'worst', 'top10_in_worlds'}
+RANK_KEYS = {'rank', 'score', 'worst', 'top10_in_worlds', 'world_rank'}
 NOEXTRA = """
 import sys, pickle
 sys.path.insert(0, 'night')
@@ -88,7 +90,7 @@ def main():
             bad.append(('系列', c))
     rank_moved = sorted(c for c in ref0['rows'] if any(canon(ref0['rows'][c].get(k)) != canon(rows[c].get(k)) for k in RANK_KEYS))
     reg_a0 = dict(ok=(not bad and added == ['MISL']), 足した本=added, 食い違い=bad[:20], 比べた本=len(ref0['rows']),
-                  順位の欄が動いた本=rank_moved, 順位の欄='rank・score・worst・top10_in_worlds（本の集まりで変わる＝比べない）')
+                  順位の欄が動いた本=rank_moved, 順位の欄='rank・score・worst・top10_in_worlds・world_rank（本の集まりで変わる＝比べない）')
     U.log('(a0)', reg_a0['ok'], added, bad[:3])
 
     F = {k: dict(v) for k, v in FORMS.items()}
