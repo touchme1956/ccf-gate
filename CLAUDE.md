@@ -409,6 +409,7 @@ awk '/^## /{p=0} /^## .*キーワード/{p=1} p' docs/CLAUDE_ARCHIVE.md  # 節�
 | 20784 | 2026-10-26 | NASDAQ100 40 / SMH 30 / ITA 15 / SHLD 5 の案（smh30ita15_check・参考・判定なし）——平均 11.01→11.13%・15%以上 27.8→29.0%（上乗せはほぼ直近15年の世界から・外すと −0.02）・5%未満 19.1→19.8%・元本割れ 4.4→5.1%・最大下落 −68.9→−69.9%・100年の代用 30年積立が市場に勝った割合 100→84%・NVDA 10.1%・半導体の連鎖 44%。勧めは今のまま・配分は不変 |
 | 20791 | 2026-10-26 | 個別株なしの案（etfonly_check・参考・判定なし）——NASDAQ100 40 / SMH 30 / ITA 15 / SHLD 5 / XLV 5 / FBT 5：個別株を業種の写しで代えた今とほぼ同じ（平均 11.03→11.09%・15%以上 28.0→28.1%・最大下落 −69.1→−67.5%・100年の代用 30年の中央 1.224→1.253）・S&P500 で代えた今より平均 +0.25・NVDA 9.0→10.1%。会社ごとのぶれと選ぶ上乗せは物差しに映らない＝好みの差・配分は不変 |
 | 20798 | 2026-10-26 | 個別株なしの案その2（etfonly2_check・参考・判定なし）——NASDAQ100 50 / SMH 25 / ITA 10 / SHLD 5 / XLV 5 / FBT 5：個別株を業種の写しで代えた今より少し下（平均 11.03→10.90%・15%以上 28.0→27.4%・最大下落 −69.1→−70.2%・100年の代用 30年の最悪 1.005→0.979・市場に勝った割合 100→90%）・NVDA 9.0→9.8%。前の案（NDX40/SMH30/ITA15）のほうが全部の物差しで上・配分は不変 |
+| 20803 | 2026-10-26 | 100年の代用で最もよいポートフォリオ（century_best・参考・判定なし）——888,030通りで最良は防衛＋医薬品（縛りなし 釣り合い SMH15/ITA35/FBT50・30年の中央 1.671倍・守り SMH20/ITA45/FBT35 最悪 1.458）・NASDAQ100・半導体は1本では市場並み以下（0.98・1.00）・今 1.224／案1 1.253／案2 1.204。後知恵の強い物差し・配分は不変 |
 
 ## コマンド
 - 年1回（1-2月）発掘: `python run_gate0_local.py`
@@ -1431,6 +1432,7 @@ awk '/^## /{p=0} /^## .*キーワード/{p=1} p' docs/CLAUDE_ARCHIVE.md  # 節�
 - **XLV・FBT の5ずつを ITA へ回す案（ita20_check）: `python3 night/ita20_check.py`** → `out/ita20_check.json`（2026-10-26新設・読むだけ・参考・判定なし・回す前にコミット・約45秒）。alloc_1022_check と同じ物差しで 今（ITA10 の形）と 案（ITA 20 / SHLD 5・XLV・FBT 0）。回帰の検査は 今＝out/ret_lean_check.json の『今』・感度の主＝measure。全文 docs/CLAUDE_ARCHIVE.md:20775
 - **個別株なしの案（etfonly_check）: `python3 night/etfonly_check.py`** → `out/etfonly_check.json`（2026-10-26新設・読むだけ・参考・判定なし・回す前にコミット）。今を全体の形（個別株10を席の業種の写し／VOO）にそろえ、案（ETF 100%）と同じ物差しで並べる。回帰の検査は smh30ita15_check と同じ。全文 docs/CLAUDE_ARCHIVE.md:20791
 - **個別株なしの案その2（etfonly2_check）: `python3 night/etfonly2_check.py`** → `out/etfonly2_check.json`（2026-10-26新設・読むだけ・参考・判定なし・etfonly_check の案の形だけ替えた写し）。全文 docs/CLAUDE_ARCHIVE.md:20798
+- **100年の代用で最もよい形（century_best）: `python3 night/century_best.py`** → `out/century_best.json`（2026-10-26新設・読むだけ・参考・判定なし・部品と「よい」の決め方は b69d1a27 で回す前に固定・約3分）。unx_assets.century_monthly の8本の写しを5%刻みで総当たり（回帰の検査で century_monthly と一致）。全文 docs/CLAUDE_ARCHIVE.md:20803
 - **NASDAQ100 40 / SMH 30 / ITA 15 / SHLD 5 の案（smh30ita15_check）: `python3 night/smh30ita15_check.py`** → `out/smh30ita15_check.json`（2026-10-26新設・読むだけ・参考・判定なし・回す前にコミット）。ita20_check と同じ物差し・同じ回帰の検査。全文 docs/CLAUDE_ARCHIVE.md:20784
 - 機械コアの疑似バックテスト: `python3 night/backtest_core.py`（`--cutoff 2015-07-01` / `--limit N`）
   → out/backtest_<year>.json。生存バイアスあり＝相対比較と成長減衰の分布にだけ使う

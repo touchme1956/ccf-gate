@@ -76,6 +76,8 @@ def stats(ratio, W, sel=None):
     out = {}
     for lab in ('30', '20'):
         js = [j for j, w in enumerate(W) if w[0] == lab and (sel is None or sel(w))]
+        if not js:
+            continue
         x = ratio[:, js]
         out[lab] = dict(med=np.median(x, axis=1), p10=q10(x), worst=x.min(axis=1), beat=(x > 1).mean(axis=1))
     return out
