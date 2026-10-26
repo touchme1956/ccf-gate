@@ -408,6 +408,7 @@ awk '/^## /{p=0} /^## .*キーワード/{p=1} p' docs/CLAUDE_ARCHIVE.md  # 節�
 | 20775 | 2026-10-26 | XLV・FBT の5ずつを ITA へ回す案（ita20_check・参考・判定なし）——差は全部小さい: 平均 11.01→11.05%・15%以上 27.8→28.1%・最悪の世界 7.84→7.78%・最大下落 −68.9→−67.0%（ドットコム級なしでは −49.1→−51.3%）・過去の転がる20年で15%以上 81→74%・100年の代用 30年の中央 1.224→1.183。防衛25%・ヘルスケア0になる。勧めは今のまま・配分は不変 |
 | 20784 | 2026-10-26 | NASDAQ100 40 / SMH 30 / ITA 15 / SHLD 5 の案（smh30ita15_check・参考・判定なし）——平均 11.01→11.13%・15%以上 27.8→29.0%（上乗せはほぼ直近15年の世界から・外すと −0.02）・5%未満 19.1→19.8%・元本割れ 4.4→5.1%・最大下落 −68.9→−69.9%・100年の代用 30年積立が市場に勝った割合 100→84%・NVDA 10.1%・半導体の連鎖 44%。勧めは今のまま・配分は不変 |
 | 20791 | 2026-10-26 | 個別株なしの案（etfonly_check・参考・判定なし）——NASDAQ100 40 / SMH 30 / ITA 15 / SHLD 5 / XLV 5 / FBT 5：個別株を業種の写しで代えた今とほぼ同じ（平均 11.03→11.09%・15%以上 28.0→28.1%・最大下落 −69.1→−67.5%・100年の代用 30年の中央 1.224→1.253）・S&P500 で代えた今より平均 +0.25・NVDA 9.0→10.1%。会社ごとのぶれと選ぶ上乗せは物差しに映らない＝好みの差・配分は不変 |
+| 20798 | 2026-10-26 | 個別株なしの案その2（etfonly2_check・参考・判定なし）——NASDAQ100 50 / SMH 25 / ITA 10 / SHLD 5 / XLV 5 / FBT 5：個別株を業種の写しで代えた今より少し下（平均 11.03→10.90%・15%以上 28.0→27.4%・最大下落 −69.1→−70.2%・100年の代用 30年の最悪 1.005→0.979・市場に勝った割合 100→90%）・NVDA 9.0→9.8%。前の案（NDX40/SMH30/ITA15）のほうが全部の物差しで上・配分は不変 |
 
 ## コマンド
 - 年1回（1-2月）発掘: `python run_gate0_local.py`
@@ -1429,6 +1430,7 @@ awk '/^## /{p=0} /^## .*キーワード/{p=1} p' docs/CLAUDE_ARCHIVE.md  # 節�
 - **配分の変更（ITA の5を MISL へ・2026-10-22）の前後を並べる（alloc_1022b_check）: `python3 night/alloc_1022b_check.py`** → `out/alloc_1022b_check.json`（2026-10-22新設・読むだけ・参考・判定なし・形と物差しは 03d2d52c で回す前に固定・約25秒）。前（QQQM40/SMH30/ITA5/SHLD5/XLV5/FBT5）と新（ITA→MISL）を alloc_1022_check と同じ物差しに、本物の記録だけの窓（MISL と ITA 2022-11〜・形 2023-10〜・ドルと円）と MISL の中身の重なりを足して並べる。MISL は `night/unx_assets.py` の **`add_extra()`**（既定は空＝足さなければ 347d4365 の版と行・系列が1ビットも違わない）で足す——2022-10 以前は ITA の系列から経費率の差/12 を引く・保有と費用は out/etf_profiles.json・D は C で代える・100年の代用は ITA の写し。回帰の検査は (a0) MISL 以外の本が足さない build（別のプロセス）と1ビットも同じ（順位の欄 rank・score・worst・top10_in_worlds・world_rank は比べない）・(a) 前＝out/alloc_1022_check.json の『新』・(b) 感度の主＝measure（USD と円）。全文 docs/CLAUDE_ARCHIVE.md:20746
 - **XLV・FBT の5ずつを ITA へ回す案（ita20_check）: `python3 night/ita20_check.py`** → `out/ita20_check.json`（2026-10-26新設・読むだけ・参考・判定なし・回す前にコミット・約45秒）。alloc_1022_check と同じ物差しで 今（ITA10 の形）と 案（ITA 20 / SHLD 5・XLV・FBT 0）。回帰の検査は 今＝out/ret_lean_check.json の『今』・感度の主＝measure。全文 docs/CLAUDE_ARCHIVE.md:20775
 - **個別株なしの案（etfonly_check）: `python3 night/etfonly_check.py`** → `out/etfonly_check.json`（2026-10-26新設・読むだけ・参考・判定なし・回す前にコミット）。今を全体の形（個別株10を席の業種の写し／VOO）にそろえ、案（ETF 100%）と同じ物差しで並べる。回帰の検査は smh30ita15_check と同じ。全文 docs/CLAUDE_ARCHIVE.md:20791
+- **個別株なしの案その2（etfonly2_check）: `python3 night/etfonly2_check.py`** → `out/etfonly2_check.json`（2026-10-26新設・読むだけ・参考・判定なし・etfonly_check の案の形だけ替えた写し）。全文 docs/CLAUDE_ARCHIVE.md:20798
 - **NASDAQ100 40 / SMH 30 / ITA 15 / SHLD 5 の案（smh30ita15_check）: `python3 night/smh30ita15_check.py`** → `out/smh30ita15_check.json`（2026-10-26新設・読むだけ・参考・判定なし・回す前にコミット）。ita20_check と同じ物差し・同じ回帰の検査。全文 docs/CLAUDE_ARCHIVE.md:20784
 - 機械コアの疑似バックテスト: `python3 night/backtest_core.py`（`--cutoff 2015-07-01` / `--limit N`）
   → out/backtest_<year>.json。生存バイアスあり＝相対比較と成長減衰の分布にだけ使う
