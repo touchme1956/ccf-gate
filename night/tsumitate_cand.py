@@ -46,6 +46,12 @@ def main():
     W_CRASH = UC.W_CRASH
     res = U.build()
     rows, chains = res['rows'], res['chains']
+    # VYM の本物は 2006-12 から。主の窓（2000-09〜）に足りない月だけ French の配当利回りの上位30%（時価加重）− 経費率0.06%/12 でつなぐ（この道具の中だけ）
+    hd = M.french_series('Portfolios_Formed_on_D-P', want='Value Weight Returns')['Hi 30']
+    v0 = min(chains['VYM'])
+    splice = sorted(m for m in hd if m < v0 and m >= 199001)
+    for m in splice:
+        chains['VYM'][m] = hd[m] - 0.0006 / 12
     F = {k: dict(v) for k, v in FORMS.items()}
     assets = sorted({a for f in F.values() for a in f} | {'VOO'})
     miss = [a for a in assets if a not in rows]
@@ -95,7 +101,7 @@ def main():
     doc = dict(generated=datetime.date.today().isoformat(), tool='night/tsumitate_cand.py', kind='参考（配分は変えない・選び方は道具の頭に固定）',
                question='積立投資枠で変える中だと？', forms=F, proxies=PROXY, results=table, century=cent,
                sensitivity=diffs, choice=dict(per_candidate=why, passed=passed, pick=(passed[0] if passed else '足す候補なし（今のまま）')),
-               caveats=['物差しの行は米国 ETF の値動き（投信の信託報酬との差は写していない）', 'VYM の100年の写しは配当利回りの上位30%で指数の作り方と違う', 'VT・VEA・TOPIX は100年の月次の写しが無い'],
+               caveats=['VYM の 2006-11 以前は French の配当利回りの上位30%でつないだ（指数の作り方と違う）', '物差しの行は米国 ETF の値動き（投信の信託報酬との差は写していない）', 'VYM の100年の写しは配当利回りの上位30%で指数の作り方と違う', 'VT・VEA・TOPIX は100年の月次の写しが無い'],
                secs=round(time.time() - t0))
     json.dump(doc, open(OUT, 'w'), ensure_ascii=False, indent=1, default=str)
     for nm in F:
