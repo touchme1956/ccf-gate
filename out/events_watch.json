@@ -1,5 +1,5 @@
 {
- "asof": "2026-10-24",
+ "asof": "2026-10-27",
  "window_days": 7,
  "checked_us": 35,
  "fpi_6k": {
@@ -13,25 +13,52 @@
    "ASML": 0,
    "RACE": 1,
    "RELX": 3,
-   "SAP": 0
+   "SAP": 1
   },
   "scanned": {
-   "RELX": 3,
-   "RACE": 1
+   "RACE": 1,
+   "SAP": 1,
+   "RELX": 3
   },
   "partial": {},
   "unscanned": {},
   "fetch": {
    "limit": 120,
-   "used": 12,
+   "used": 15,
    "capped_filings": 0,
    "capped_docs": 0,
    "truncated": false
   },
   "note": "外国私募発行体は8-Kを出さず6-Kで重要事象も決算も報じる。6-KにはItem番号が無いので、提出の索引から主文書＋EX-99.xを読み、kessan_check の警報語（誠/減損/退任/指針）とFPI_ALERT（8-K Item相当: 存続/上場）を**語で**拾う（項目番号より弱いので警報の言葉も『6-K語ヒット』と弱くする）。門番は kessan_check._is_real（否定・定型・仮定法・金額）＋表の行。限/集は毎期の常設開示なので各行の ref に記録のみ。決算・報告の6-Kは earnings へ（8-K 2.02 相当）。**本文を読めなかった6-Kは errors（監視の穴）**＝『見ていない』と『見て何も無い』を区別する。"
  },
- "alerts": [],
+ "alerts": [
+  {
+   "t": "6857",
+   "form": "臨時報告書",
+   "date": "2026-10-23",
+   "items": [],
+   "flags": [
+    "臨時報告書＝重要事象（役員異動・訂正等）の可能性——原本を読む(EDINETでdocID検索)"
+   ],
+   "url": "",
+   "docID": "S100Z9ND"
+  }
+ ],
  "earnings": [
+  {
+   "t": "SAP",
+   "form": "6-K｜Quarterly Statement Q3 2026 Current cloud backlog of €24.1 billion, up 28% and u",
+   "date": "2026-10-26",
+   "items": [],
+   "flags": [],
+   "url": "https://www.sec.gov/Archives/edgar/data/1000184/000110465926118617/tm2628113d1_ex99-1.htm",
+   "scan": "ok",
+   "docs": [
+    "tm2628113d1_6k.htm",
+    "tm2628113d1_ex99-1.htm"
+   ],
+   "kind": "earnings"
+  },
   {
    "t": "RELX",
    "form": "6-K｜7.00am BST 22 October 2026 TRADING UPDATE – October 2026 RELX, the global provid",
@@ -96,6 +123,33 @@
  ],
  "others": [
   {
+   "t": "WST",
+   "form": "8-K",
+   "date": "2026-10-26",
+   "items": [
+    "1.01",
+    "1.02",
+    "2.03",
+    "9.01"
+   ],
+   "flags": [],
+   "url": "https://www.sec.gov/Archives/edgar/data/105770/000010577026000114/wst-20261026.htm"
+  },
+  {
+   "t": "RACE",
+   "form": "6-K｜FERRARI N.V.: PERIODIC REPORT ON THE BUYBACK PROGRAM Maranello (Italy), October",
+   "date": "2026-10-26",
+   "items": [],
+   "flags": [],
+   "url": "https://www.sec.gov/Archives/edgar/data/1648416/000164841626000136/fnvbb261026prex.htm",
+   "scan": "ok",
+   "docs": [
+    "fnvbb261026prcov.htm",
+    "fnvbb261026prex.htm"
+   ],
+   "kind": "other"
+  },
+  {
    "t": "RELX",
    "form": "6-K｜RELX PLC Director/ PDMR Shareholdings 1 Details of the person discharging manage",
    "date": "2026-10-23",
@@ -122,69 +176,15 @@
     "relx-ex99d1.htm"
    ],
    "kind": "other"
-  },
-  {
-   "t": "RACE",
-   "form": "6-K｜FERRARI N.V.: PERIODIC REPORT ON THE BUYBACK PROGRAM Maranello (Italy), October",
-   "date": "2026-10-19",
-   "items": [],
-   "flags": [],
-   "url": "https://www.sec.gov/Archives/edgar/data/1648416/000164841626000134/fnvbb191026prex.htm",
-   "scan": "ok",
-   "docs": [
-    "fnvbb191026prcov.htm",
-    "fnvbb191026prex.htm"
-   ],
-   "kind": "other"
-  },
-  {
-   "t": "MKSI",
-   "form": "8-K",
-   "date": "2026-10-19",
-   "items": [
-    "8.01",
-    "9.01"
-   ],
-   "flags": [],
-   "url": "https://www.sec.gov/Archives/edgar/data/1049502/000119312526424709/mksi-20261019.htm"
   }
  ],
  "pending_todo": [],
  "pending_todo_note": "判定圏(Ω72+)の Item 1.01/1.02/8.01。**警報ではなく作業リスト**——M&Aの合意・解除・判決はここに載るので、読んで該当すれば パックの _meta.pending へ書く（night/audit_pending.py が関門で読む）。8.01は雑多なので警報には格上げしない＝鳴りすぎる警報は鳴らないのと同じ",
- "errors": [
-  {
-   "t": "EDINET:2026-10-24",
-   "err": "Expecting value: line 1 column 1 (char 0)"
-  },
-  {
-   "t": "EDINET:2026-10-23",
-   "err": "Expecting value: line 1 column 1 (char 0)"
-  },
-  {
-   "t": "EDINET:2026-10-22",
-   "err": "Expecting value: line 1 column 1 (char 0)"
-  },
-  {
-   "t": "EDINET:2026-10-21",
-   "err": "Expecting value: line 1 column 1 (char 0)"
-  },
-  {
-   "t": "EDINET:2026-10-20",
-   "err": "Expecting value: line 1 column 1 (char 0)"
-  },
-  {
-   "t": "EDINET:2026-10-19",
-   "err": "Expecting value: line 1 column 1 (char 0)"
-  },
-  {
-   "t": "EDINET:2026-10-18",
-   "err": "Expecting value: line 1 column 1 (char 0)"
-  }
- ],
+ "errors": [],
  "cik_unresolved": [],
  "jp": {
   "covered": true,
-  "days_scanned": 0,
+  "days_scanned": 7,
   "tickers": [
    "3092",
    "3649",
