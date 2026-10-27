@@ -3624,9 +3624,12 @@ function ccfNetRows(np, pf){
 // ★**端数は不足の大きいほうへ寄せる**（ETF = 総額 − 個別）ので、二つの枠は**必ず総額にぴったり一致する**。
 // ★**割り方の目標は portfolio.json の target（shiro_castle_pct / ami_net_pct）から採る**——ここに 50 を
 //   書き写すと、目標を変えたとき割り方だけ古いまま残る（数字を書き写した箇所は必ず陳腐化する）。
+// ★2026-10-27 ユーザー明示指示（個別株「0%（ETFだけ）」）: 比率の 0 は「測って0」＝読めない（空欄・数でない）とは別。
+//   旧は `+v>0?v:50` で 0 を読めないものとして既定50へ倒していた（個別株0%が50%に化ける）。読めないときだけ null。
+function ccfPctOf(v){ if(v===null||v===undefined||v==='')return null; const x=+v; return (Number.isFinite(x)&&x>=0)?x:null; }
 function ccfSleeveTarget(){
   const t=(typeof window!=='undefined'&&window.__ccfSleeveTarget)?window.__ccfSleeveTarget:null;
-  const c=t&&+t.c>0?+t.c:50, n=t&&+t.n>0?+t.n:50;
+  const c=t&&ccfPctOf(t.c)!=null?+t.c:50, n=t&&ccfPctOf(t.n)!=null?+t.n:50;
   // ★割り方（2026-09-22 ユーザー指示「常にETF70%個別30%になるように配れるような仕様にしてほしい」）。
   //   'target'＝総額を常に目標比で割る（今月の姿に関係なく個別も必ず買う）
   //   'gap'   ＝不足している側に厚く（超過側は0）＝v9.9.167 の規約。置き換えたが消していない。
@@ -4630,7 +4633,7 @@ function ccfWholeShareBody(pass, tw, pxInfo, NO, T, catIn){
   //   注文書では買わない（目標0%）が、売らずに持ち続け、個別株の区分の「今」に数える——注文書の個別株の節に名指しで出す。renderPlan が置く window.__ccfCarry を読む。
   //   金額は出さない（保有の円は🙈金額を隠すの対象）。出口判定が S1/S2 なら🏦保有で確かめるよう添える（売りの判断は S1/S2/S3 だけ・ここでは何も売らない）
   const CY=((typeof window!=='undefined'&&window.__ccfCarry)||[]);
-  const cyH=CY.length?`<div class="carry-row" style="font-size:11.5px;padding:4px 7px;line-height:1.6;color:var(--ink-soft)">↪ <b>引き継ぎ</b>（席の外・売らずに持ち続ける）：`
+  const cyH=CY.length?`<div class="carry-row" style="font-size:11.5px;padding:4px 7px;line-height:1.6;color:var(--ink-soft)">↪ <b>引き継ぎ</b>（${CY.some(c=>/目標0%/.test(c.why||''))?'個別株の目標0%・':'席の外・'}売らずに持ち続ける）：`
     +CY.map(x=>`<span style="white-space:nowrap">${ccfBoughtEsc(x.t)} ${(+x.w).toFixed(1)}%</span>（${ccfBoughtEsc(x.why)}${x.exit==='s1'?'・<b style="color:#b91c1c">⚠出口 S1</b>':x.exit==='s2'?'・<b style="color:#b45309">⚠出口 S2</b>':''}）`).join('・')
     +`<br><span style="color:var(--dim);font-size:11px">個別株の区分に数え、新しいお金は回らない（目標0%）。売りは S1/S2/S3 だけ（🏦保有の出口判定）——席から出ただけでは売らない。</span></div>`:'';
   const html=`<div style="margin-top:10px;padding:9px 12px;border:1px solid rgba(201,166,74,.5);border-radius:8px;background:rgba(201,166,74,.06)">
@@ -6108,7 +6111,7 @@ function ccfPftModel(pfJ,exJ,led,buy,fxU,pfRows,nmOf,opt){   // opt.busy＝台�
   });
   (NET.drop||[]).forEach(d=>{ if(!d.otherOf&&LV&&(+d.pos||0)>0)etfExtra.push({k:'n:'+d.t,nm:d.t,sub:'目標に無い本（売らずに持ち続ける）',tw:0,now:+d.pos}); });
   // 個別株（🛒買付順位の twInfo と同じ材料・同じ関数）
-  const CT=(+T.shiro_castle_pct>0)?+T.shiro_castle_pct:50;     // renderPlan の CITY_TOTAL と同じ（読めなければ既定50も同じ）
+  const CT=(ccfPctOf(T.shiro_castle_pct)!=null)?+T.shiro_castle_pct:50;     // renderPlan の CITY_TOTAL と同じ（読めなければ既定50も同じ・0 は 0）
   const EX={}; ((exJ&&exJ.items)||[]).forEach(x=>{ if(x&&x.t)EX[String(x.t).toUpperCase()]=x; });
   const seat=(buy||[]), seatT=new Set(seat.map(v=>v.t));
   const exT=Object.keys(led||{}).filter(t=>EX[t]&&!seatT.has(t));   // renderPlan の exRows と同じ（台帳に居る門外例外・席の外）
@@ -8024,11 +8027,11 @@ async function renderPlan(){
   let __LV=null;
   try{
     const t=(__pf&&__pf.target)||null;
-    const c=t&&+t.shiro_castle_pct>0?+t.shiro_castle_pct:null, n=t&&+t.ami_net_pct>0?+t.ami_net_pct:null;
+    const c=t?ccfPctOf(t.shiro_castle_pct):null, n=t?ccfPctOf(t.ami_net_pct):null;   // 0 は 0（2026-10-27）
     // ★2026-09-22: 総額の割り方も portfolio.json が正本（'target'=常に目標比 / 'gap'=不足側に厚く）。
     //   ⚠ここに既定を書き写さない——読めなければ 'target' へ倒し、その旨を画面に出す。
     const sm0=String((t&&t.sleeve_split_mode)||'').toLowerCase(), sm=(sm0==='gap'||sm0==='name'||sm0==='cat')?sm0:'target';
-    window.__ccfSleeveTarget=(c&&n)?{c,n,src:'portfolio.json の target',mode:sm}:null;
+    window.__ccfSleeveTarget=(c!=null&&n!=null&&c+n>0)?{c,n,src:'portfolio.json の target',mode:sm}:null;
     // ★iDeCo（v9.9.202）: 設定（target.ideco）と、今月が開始月以降か。注文書は iDeCo の合計を入金額から引いて配る
     window.__ccfIdeco=ccfIdecoCfg(t);
     // ★こどもNISA（v9.9.203）: 子どもの口座の自動の積立（target.kodomo_nisa）。注文書は入金額から引いて配る。
@@ -8589,7 +8592,7 @@ async function renderPlan(){
   //   ⚠ portfolio.json の 09-18 の記録は「個別30%だと MSFT・V・LRCX の3社が8.00%で張り付く」と書いているが、
   //     **それは当時の席5（MSFT/V/LRCX/CW/RBC）での実測**。今の席は CW が T5・ASML が T2 に入れ替わったので
   //     張り付くのは MSFT だけ＝**Tier はほぼ素直に効いている**。古い実測を根拠に判断を固定しない。
-  const CITY_TOTAL=(()=>{const v=+(((__pf&&__pf.target)||{}).shiro_castle_pct); return v>0?v:50;})();
+  const CITY_TOTAL=(()=>{const v=ccfPctOf(((__pf&&__pf.target)||{}).shiro_castle_pct); return v!=null?v:50;})();   // 0 は 0（2026-10-27）
   const exFixed=exRows.reduce((a,r)=>{const e=exOf(r);return a+((e&&!e.in_castle_split)?(+e.weight_pct||0):0);},0);
   const CITY=Math.max(0,CITY_TOTAL-exFixed);
   // ── v9.9.146(2026-08-14 ユーザー明示指示「時価総額順にウエイト上げてほしい」) ──────────
@@ -8637,7 +8640,7 @@ async function renderPlan(){
   try{ const inPlan=new Set(planRows.filter(r=>(+tw(r)||0)>0).map(r=>r.t)), byRow={}, passT=new Set(pass.map(r=>r.t));
     rows.forEach(r=>{ if(!byRow[r.t])byRow[r.t]=r; });
     window.__ccfCarry=(__LV&&__LV.byT)?Object.keys(__LV.byT).filter(t=>__LV.byT[t].sleeve==='城'&&(+__LV.byT[t].w||0)>0&&!inPlan.has(t)).map(t=>{ const r=byRow[t];
-      const why=!r?'台帳に無い':passT.has(t)?`次点（四関門は通過・席${CCF_SEATS}社の外）`:'四関門の外';
+      const why=!r?'台帳に無い':(CITY_TOTAL<=0&&allocSet.has(t))?'席の中・個別株の目標0%':passT.has(t)?`次点（四関門は通過・席${CCF_SEATS}社の外）`:'四関門の外';   // 2026-10-27: 個別株0%なら席の中の社も目標0%＝引き継ぎ
       return {t, w:+__LV.byT[t].w, why, s:r?r.s:null, exit:r?r.exitLv:''}; }).sort((a,b)=>b.w-a.w):[];
   }catch(e){ window.__ccfCarry=[]; }
   const allocTag=r=>{if(!allocSet.has(r.t))return `<span style="font-size:11px;color:var(--dim);white-space:nowrap" title="四関門は通過（投下可）だが、Ωが上位${CCF_SEATS}社に入らないため配分対象外。順位が上がれば自動で枠入り">配分枠外（席順${CCF_SEATS+1}位以下）</span>`;
@@ -8682,7 +8685,7 @@ async function renderPlan(){
   //   個別株の目標は shiro_castle_pct（門外例外の重みも含む城全体）・今は城の全保有（MSFT・ASML など席の外の社も含む）。
   //   目標0%で持ち続けている本と目標から外れた本（drop）は区分に入れない（_zero に表示のためだけに持つ）。
   (()=>{ const R=__NET.rows||[], LV=__NET.live, ST=window.__ccfSleeveTarget;
-    if(!(LV&&(+LV.total>0)&&ST&&(+ST.c>0))){ window.__ccfCat=null; return; }
+    if(!(LV&&(+LV.total>0)&&ST&&(+ST.c>=0)&&(+ST.c+ +ST.n>0))){ window.__ccfCat=null; return; }   // 個別株0%でも区分の比率で割る（2026-10-27）
     const K={tot:+LV.total};
     // ★v9.9.215（2026-10-12 ユーザー明示指示「個別株の持っていない銘柄を優先して」）: 正本 target.castle_unowned_first が true なら、
     //   注文書（ccfCatSharePlan の ⓪）が保有ゼロの個別株を区分の比率より先に1株ずつ買う。区分の鍵ではない（ccfCatKeys は数の目標を持つ要素だけ読む）

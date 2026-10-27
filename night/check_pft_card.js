@@ -56,8 +56,14 @@ const jr = (r, o) => r.fulfill({ status: 200, contentType: 'application/json', b
 const PF = JSON.parse(fs.readFileSync(path.join(ROOT, 'portfolio.json'), 'utf8'));
 const T = PF.target || {};
 const U = s => String(s || '').trim().toUpperCase();
-const CT = (+T.shiro_castle_pct > 0) ? +T.shiro_castle_pct : 50;
-const WN = Object.fromEntries(Object.entries(T.ami_weights || {}).map(([k, v]) => [U(k), +v]));
+const REAL_CT = (T.shiro_castle_pct !== undefined && T.shiro_castle_pct !== null && T.shiro_castle_pct !== '' && +T.shiro_castle_pct >= 0) ? +T.shiro_castle_pct : null;   // 0 は 0（門の ccfPctOf と同じ）
+// ★2026-10-27: 正本の個別株が0%のとき、個別株の重みの検査（A3〜A8）は個別株10%・ETF 90%（ETF の比はそのまま×0.9）の形を検査の中で作って見る。
+//   正本の姿（個別株0%）は A0 で別に見る（席の社は目標0%・「席が空いている分」の行を作らない）
+const SIM0 = REAL_CT === 0, SIMF = SIM0 ? 0.9 : 1;
+const CT = SIM0 ? 10 : (REAL_CT != null ? REAL_CT : 50);
+const WN = Object.fromEntries(Object.entries(T.ami_weights || {}).map(([k, v]) => [U(k), +v * SIMF]));
+const SIMPF = SIM0 ? (() => { const q = JSON.parse(JSON.stringify(PF)); q.target.shiro_castle_pct = 10; q.target.ami_net_pct = 90;
+  for (const k in q.target.ami_weights) q.target.ami_weights[k] = +q.target.ami_weights[k] * 0.9; return q; })() : null;
 // 同じ区分に数える本＝同じ指数の本（ami_same_index・QQQM）と同じ扱いの本（ami_same_bucket・XLK・v9.9.214）。門の ccfSameAll と同じ読み方
 const SAMEOF = {}, SKIND = {};
 for (const [src, kind] of [[T.ami_same_index || {}, 'idx'], [T.ami_same_bucket || {}, 'bucket']])
@@ -97,6 +103,7 @@ const RANK = String(T.castle_weighting || '').toLowerCase() === 'rank' && Array.
     if (route) await p.route('**/*', r => {
       const u = r.request().url();
       if (/out\/dashboard\.json/.test(u)) return jr(r, DASH);
+      if (SIM0 && /\/portfolio\.json/.test(u) && !/real=1/.test(u)) return jr(r, SIMPF);   // 正本が個別株0%のときの検査用の形（上の SIM0）
       return r.continue();
     });
     await p.goto(`http://localhost:${PORT}/index.html`, { waitUntil: 'domcontentloaded' });
@@ -106,7 +113,7 @@ const RANK = String(T.castle_weighting || '').toLowerCase() === 'rank' && Array.
   // ページの中で ccfPftModel / ccfPftHTML を呼ぶ（台帳・席・門外例外はここで固定）
   const model = (p, o) => p.evaluate(async o => {
     localStorage.setItem('pf:portfolio', JSON.stringify(o.pf));
-    const pfJ = await (await fetch('portfolio.json?t=' + Date.now())).json();
+    const pfJ = await (await fetch('portfolio.json?' + (o.mut === 'real' ? 'real=1&' : '') + 't=' + Date.now())).json();
     if (o.mut === 'sum') pfJ.target.shiro_castle_pct = +pfJ.target.shiro_castle_pct + 5;
     if (o.mut === 'noOther') { delete pfJ.target.ami_other; delete pfJ.target.ami_same_bucket; }   // XLK をどの区分にも数えない形
     if (o.mut === 'equal') pfJ.target.castle_weighting = 'equal';
@@ -247,6 +254,13 @@ const RANK = String(T.castle_weighting || '').toLowerCase() === 'rank' && Array.
       ok(new Set(r.colors).size === r.colors.length, `円グラフの色に重複なし（${r.colors.length}色）`);
     }
 
+    if (SIM0) {
+      console.log('■ A0. 正本の姿（個別株0%）');
+      const r = await model(p, { pf: base, led: ledAll, seats: SEATS10.slice(0, 5), fx: FX, pfRows, nmOf, mut: 'real' });
+      const cs = r.M.castle.filter(x => x.k !== 'c:_rest');
+      ok(cs.every(x => near(x.tw, 0, 1e-9)) && !r.M.castle.some(x => x.k === 'c:_rest'), `席の社は目標0%・「席が空いている分」の行を作らない（${cs.length}社）`);
+      ok(!/目標の合計が/.test(r.text), '目標の合計は100（ETF 100%・個別株0%）＝警告なし');
+    }
     console.log('■ A7. 目標の合計が100でないとき');
     {
       const r = await model(p, { pf: base, led: ledAll, seats: SEATS10.slice(0, 5), fx: FX, pfRows, nmOf, mut: 'sum' });

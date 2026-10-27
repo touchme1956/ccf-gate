@@ -1296,7 +1296,8 @@ def castle_copy():
     import alloc_check as AC
     order, prox_w, prox = AC.seats()
     tg = json.load(open(os.path.join(BASE, 'portfolio.json')))['target']
-    c = float(tg.get('shiro_castle_pct') or 15)
+    c0 = tg.get('shiro_castle_pct')
+    c = 15.0 if c0 in (None, '') else float(c0)   # 0 は 0（2026-10-27・旧 `or 15` は個別株0%を15%に化けさせた）
     return {k: c * v for k, v in prox.items()}, order, c
 
 
