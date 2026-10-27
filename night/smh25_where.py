@@ -79,9 +79,9 @@ def main():
     diffs = {x: {fn: {k: v['差'] for k, v in N.judge(vt, wn, x, NOW)['感度'].items()} for fn, (vt, wn) in frames.items()}
              for x in F if x != NOW}
 
-    def c30(nm, key='中央'):
+    def c30(nm, key='中央値'):
         d = cent.get(nm) or {}
-        w = d.get('30年') or d.get('30') or {}
+        w = next((v for k, v in d.items() if k.startswith('30年')), {})
         return w.get(key) if isinstance(w, dict) else None
     pick, why = None, {}
     b = table[NOW]
@@ -109,7 +109,7 @@ def main():
     for nm in F:
         r = table[nm]
         U.log(f"{nm:<10} 平均 {r['π加重の平均の年率']:5.2f} P15 {r['P15π']:5.1f} P20 {r['P20']} P5 {r['P5π（5%未満）']:5.1f} 最悪 {r['最悪の世界']:5.2f} "
-              f"ぶれ {r['ぶれ']:5.1f} 下落 {r['最大下落']:6.1f} 過去20 {r['過去の転がる20年で15%以上']:5.1f} 100年30中央 {c30(nm)} 最悪 {c30(nm,'最悪')}")
+              f"ぶれ {r['ぶれ']:5.1f} 下落 {r['最大下落']:6.1f} 過去20 {r['過去の転がる20年で15%以上']:5.1f} 100年30中央 {c30(nm)} 最悪 {c30(nm,'最悪')} 勝ち {c30(nm,'市場に勝った割合')}")
     U.log('選び', json.dumps(why, ensure_ascii=False), '→', pick)
     for x, d in diffs.items():
         U.log(x, json.dumps({fn: {k: v['平均'] for k, v in dd.items()} for fn, dd in d.items()}, ensure_ascii=False))
