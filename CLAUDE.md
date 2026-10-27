@@ -417,6 +417,7 @@ awk '/^## /{p=0} /^## .*キーワード/{p=1} p' docs/CLAUDE_ARCHIVE.md  # 節�
 | 20837 | 2026-10-27 | SMH の5を移すならどこか（smh25_where・参考・判定なし）——7つの先で決まりの答えは ITA（平均 −0.08・最大下落 −67.5→−64.8%・100年の代用 30年の中央 1.253→1.277）・SHLD は同じ数字（つなぎが ITA）・FBT は100年で最良・GDX は100年で下がり外れ・QQQM はどの物差しも下。どこへ移しても期待値は少し下がる＝守りの変更・配分は不変 |
 | 20842 | 2026-10-27 | 小型株（VBR）5% をどこから入れるか（smallcap_add・参考・判定なし）——決まりの答えは NASDAQ100 の5を VBR へ（平均 11.09→11.12・最大下落 −67.5→−64.7%・100年の代用 30年の中央 1.253→1.336）。代金は過去の20年で15%以上 78→73%・上振れ少し下。SMH からは平均が下がる・ITA/SHLD からは守りが増えない。配分は不変 |
 | 20847 | 2026-10-27 | 100年で見て今の形に足す ETF の候補（century_cand・参考・判定なし）——NASDAQ100 の5を替える8本で、100年の代用の30年の中央は VBR 1.336＞XLP 1.304＞XLE 1.292…（今 1.253・GDX だけ下がる）。GDX 以外の7本が選び方を通る＝効いているのは NASDAQ100 の写しが100年で市場並みなこと。1位 VBR（物差しの平均 +0.03・最大下落 −67.5→−64.7%）。配分は不変 |
+| 20852 | 2026-10-27 | つみたて投資枠で買える投信から足す候補（tsumitate_cand・参考・判定なし）——つみたて投資枠に米国の小型株・業種の投信は無い。届出の5本で1位は楽天・米国高配当（VYM・平均 11.09→11.10・最大下落 −67.5→−64.6%・100年 1.253→1.285）。VBR（成長投資枠）より100年で劣る。配分は不変 |
 
 ## コマンド
 - 年1回（1-2月）発掘: `python run_gate0_local.py`
@@ -1440,6 +1441,7 @@ awk '/^## /{p=0} /^## .*キーワード/{p=1} p' docs/CLAUDE_ARCHIVE.md  # 節�
 - **SMH の5を移す先（smh25_where）: `python3 night/smh25_where.py`** → `out/smh25_where.json`（2026-10-27新設・読むだけ・参考・選び方は道具の頭に固定し回す前にコミット・約30秒）。etfonly_check と同じ物差しで今と SMH 25＋移す先7つ。全文 docs/CLAUDE_ARCHIVE.md:20837
 - **小型株（VBR）5% をどこから入れるか（smallcap_add）: `python3 night/smallcap_add.py`** → `out/smallcap_add.json`（2026-10-27新設・読むだけ・参考・選び方は道具の頭に固定し回す前にコミット・約30秒）。smh25_where と同じ物差し・100年の代用の VBR は French の SMALL HiBM。全文 docs/CLAUDE_ARCHIVE.md:20842
 - **100年で見て足す ETF の候補（century_cand）: `python3 night/century_cand.py`** → `out/century_cand.json`（2026-10-27新設・読むだけ・参考・選び方は道具の頭に固定し回す前にコミット・約30秒）。NASDAQ100 の5を XLP・XLE・XLF・XLI・XLY・VBR・GDX・XLU へ・100年の写しは French の業種の時価加重。全文 docs/CLAUDE_ARCHIVE.md:20847
+- **つみたて投資枠で買える投信から足す候補（tsumitate_cand）: `python3 night/tsumitate_cand.py`** → `out/tsumitate_cand.json`（2026-10-27新設・読むだけ・参考・選び方は道具の頭に固定し回す前にコミット・約30秒）。届出一覧にあり物差しの行がある VYM・VOO・VT・VEA・TOPIX・VYM の 2006-11 以前は French の配当利回り上位30%でつなぐ。全文 docs/CLAUDE_ARCHIVE.md:20852
 - **個別株なしの案（etfonly_check）: `python3 night/etfonly_check.py`** → `out/etfonly_check.json`（2026-10-26新設・読むだけ・参考・判定なし・回す前にコミット）。今を全体の形（個別株10を席の業種の写し／VOO）にそろえ、案（ETF 100%）と同じ物差しで並べる。回帰の検査は smh30ita15_check と同じ。全文 docs/CLAUDE_ARCHIVE.md:20791
 - **個別株なしの案その2（etfonly2_check）: `python3 night/etfonly2_check.py`** → `out/etfonly2_check.json`（2026-10-26新設・読むだけ・参考・判定なし・etfonly_check の案の形だけ替えた写し）。全文 docs/CLAUDE_ARCHIVE.md:20798
 - **100年の代用で最もよい形（century_best）: `python3 night/century_best.py`** → `out/century_best.json`（2026-10-26新設・読むだけ・参考・判定なし・部品と「よい」の決め方は b69d1a27 で回す前に固定・約3分）。unx_assets.century_monthly の8本の写しを5%刻みで総当たり（回帰の検査で century_monthly と一致）。全文 docs/CLAUDE_ARCHIVE.md:20803
