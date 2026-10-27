@@ -419,6 +419,7 @@ awk '/^## /{p=0} /^## .*キーワード/{p=1} p' docs/CLAUDE_ARCHIVE.md  # 節�
 | 20847 | 2026-10-27 | 100年で見て今の形に足す ETF の候補（century_cand・参考・判定なし）——NASDAQ100 の5を替える8本で、100年の代用の30年の中央は VBR 1.336＞XLP 1.304＞XLE 1.292…（今 1.253・GDX だけ下がる）。GDX 以外の7本が選び方を通る＝効いているのは NASDAQ100 の写しが100年で市場並みなこと。1位 VBR（物差しの平均 +0.03・最大下落 −67.5→−64.7%）。配分は不変 |
 | 20852 | 2026-10-27 | つみたて投資枠で買える投信から足す候補（tsumitate_cand・参考・判定なし）——つみたて投資枠に米国の小型株・業種の投信は無い。届出の5本で1位は楽天・米国高配当（VYM・平均 11.09→11.10・最大下落 −67.5→−64.6%・100年 1.253→1.285）。VBR（成長投資枠）より100年で劣る。配分は不変 |
 | 20858 | 2026-10-27 | 高配当の投資信託197本を洗った（hidiv_funds・参考・判定なし）——米国の高配当は5年で1本も S&P500 に勝っていない（VYM 型 18.8 対 21.3%・配当貴族 13%）・**日本の高配当は TOPIX に +5〜+10pt**（日経高配当50 28.1・TOPIX高配当40 27.3・日経平均高配当利回り株ファンド〔つみたて投資枠〕25.4 対 17.8%）・全世界の能動はオルカン並みで高い費用。元の ETF は2022年に守る（HDV +7%）が上げ相場で負ける。配分は不変 |
+| 20866 | 2026-10-27 | 日本の高配当 5% をどこから入れるか（jphidiv_where・参考・判定なし）——決まりの答えは NASDAQ100 から（本物の記録 1489 2017-03〜 年率 27.39→27.11%・2022年 −11.1→−8.9%・長い物差し〔TOPIX で代える〕平均 −0.07・最大下落 −67.5→−65.7%）。出す元による差はどれも年0.3pt 以内。SMH からは下がる・防衛やヘルスケアからは守りが減る。配分は不変 |
 
 ## コマンド
 - 年1回（1-2月）発掘: `python run_gate0_local.py`
@@ -1444,6 +1445,7 @@ awk '/^## /{p=0} /^## .*キーワード/{p=1} p' docs/CLAUDE_ARCHIVE.md  # 節�
 - **100年で見て足す ETF の候補（century_cand）: `python3 night/century_cand.py`** → `out/century_cand.json`（2026-10-27新設・読むだけ・参考・選び方は道具の頭に固定し回す前にコミット・約30秒）。NASDAQ100 の5を XLP・XLE・XLF・XLI・XLY・VBR・GDX・XLU へ・100年の写しは French の業種の時価加重。全文 docs/CLAUDE_ARCHIVE.md:20847
 - **つみたて投資枠で買える投信から足す候補（tsumitate_cand）: `python3 night/tsumitate_cand.py`** → `out/tsumitate_cand.json`（2026-10-27新設・読むだけ・参考・選び方は道具の頭に固定し回す前にコミット・約30秒）。届出一覧にあり物差しの行がある VYM・VOO・VT・VEA・TOPIX・VYM の 2006-11 以前は French の配当利回り上位30%でつなぐ。全文 docs/CLAUDE_ARCHIVE.md:20852
 - **高配当の投資信託を全部洗う（hidiv_funds）: `python3 night/hidiv_funds.py`** → `out/hidiv_funds.json`（2026-10-27新設・読むだけ・参考・判定なし・並べ方は回す前にコミット）。投資信託協会の全件の写し（out/_nx_cache/newfunds/jita_full.json〔gitignore・night/newfunds.py が作る〕）から名前で拾い地域別に5年の年率で並べる・元の ETF（Yahoo）の共通の窓・今の形に VYM を入れた場合。全文 docs/CLAUDE_ARCHIVE.md:20858
+- **日本の高配当 5% をどこから入れるか（jphidiv_where）: `python3 night/jphidiv_where.py`** → `out/jphidiv_where.json`（2026-10-27新設・読むだけ・参考・選び方は道具の頭に固定し回す前にコミット）。本物の記録（1489.T・1478.T・円）と長い物差し（TOPIX で代える）。全文 docs/CLAUDE_ARCHIVE.md:20866
 - **個別株なしの案（etfonly_check）: `python3 night/etfonly_check.py`** → `out/etfonly_check.json`（2026-10-26新設・読むだけ・参考・判定なし・回す前にコミット）。今を全体の形（個別株10を席の業種の写し／VOO）にそろえ、案（ETF 100%）と同じ物差しで並べる。回帰の検査は smh30ita15_check と同じ。全文 docs/CLAUDE_ARCHIVE.md:20791
 - **個別株なしの案その2（etfonly2_check）: `python3 night/etfonly2_check.py`** → `out/etfonly2_check.json`（2026-10-26新設・読むだけ・参考・判定なし・etfonly_check の案の形だけ替えた写し）。全文 docs/CLAUDE_ARCHIVE.md:20798
 - **100年の代用で最もよい形（century_best）: `python3 night/century_best.py`** → `out/century_best.json`（2026-10-26新設・読むだけ・参考・判定なし・部品と「よい」の決め方は b69d1a27 で回す前に固定・約3分）。unx_assets.century_monthly の8本の写しを5%刻みで総当たり（回帰の検査で century_monthly と一致）。全文 docs/CLAUDE_ARCHIVE.md:20803
