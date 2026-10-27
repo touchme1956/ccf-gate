@@ -66,6 +66,12 @@ def main():
     U.log('回帰の検査', ok_a, reg_b['ok'], reg_j['ok'])
     if not (ok_a and reg_b['ok'] and reg_j['ok']):
         raise SystemExit('回帰の検査に失敗')
+    # 100年の代用: VBR は French の SMALL HiBM（alloc_1017_vbr_check・avuv_check と同じ部品・この道具の中だけ）
+    import mw_common as M
+    from avuv_check import french_small_hibm
+    C = U.century_parts()
+    C['parts']['VBR'] = french_small_hibm(M, 0.0)
+    U.MONTHLY_OK.add('VBR')
     cent = {nm: U.strip_century(U.century_monthly(f)) for nm, f in F.items()}
 
     def show(r):
