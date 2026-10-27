@@ -118,6 +118,10 @@ const srv = http.createServer((q, r) => {
   //   ⚠初版は既定を 'target' と書き写していたので、2026-09-22 に正本を 'gap' へ戻した瞬間に
   //     4件が落ちた——コードは正しいのに検査だけが古い値で鳴る、この台帳が繰り返し踏んだ型。
   const withMode = (m) => { const o = JSON.parse(JSON.stringify(base)); o.target.sleeve_split_mode = m; return o; };
+  // ★2026-10-27: 正本の個別株が0%（ETFだけ）のとき、持っていない個別株を先に買う検査（⑱・⑳ の castle）は個別株10%・ETF×0.9 の形で見る
+  //   （個別株の目標が0なら先に買う個別株は無いのが正しい＝検査の前提が成り立たない）
+  const castleSim = (o) => { if (+o.target.shiro_castle_pct === 0) { o.target.shiro_castle_pct = 10; o.target.ami_net_pct = 90;
+    for (const k in o.target.ami_weights) o.target.ami_weights[k] = +o.target.ami_weights[k] * 0.9; } return o; };
 
   // ① mode='target' … 今の姿に関係なく常に目標比
   await load(withMode('target'));
@@ -871,9 +875,9 @@ const srv = http.createServer((q, r) => {
           return { tags, line, note: !!document.querySelector('#pg5 .first-note'), total: sum[1] || '', castle: sum[2] || '' };
         });
       };
-      const c18 = withMode('cat'); c18.target.unowned_first = 'castle';
+      const c18 = castleSim(withMode('cat')); c18.target.unowned_first = 'castle';
       const r1 = await load18(c18);
-      const offU = withMode('cat'); offU.target.unowned_first = false; delete offU.target.castle_unowned_first;
+      const offU = castleSim(withMode('cat')); offU.target.unowned_first = false; delete offU.target.castle_unowned_first;
       const r0 = await load18(offU);
       ok(r1.tags.length >= 1 && /持っていない個別株を先に/.test(r1.line) && r1.note && r1.castle && r1.castle !== '0'
          && !r0.tags.length && !/持っていない個別株を先に/.test(r0.line) && !r0.note && r0.castle === '0',
@@ -970,7 +974,7 @@ const srv = http.createServer((q, r) => {
         });
       };
       const r20 = await load20(withMode('cat'));
-      const c20 = withMode('cat'); c20.target.unowned_first = 'castle';
+      const c20 = castleSim(withMode('cat')); c20.target.unowned_first = 'castle';
       const r20c = await load20(c20);
       DASHX = null;
       // 先に買うはずの ETF は正本から読む（目標>0・金額で買う本〔ami_funds〕でない・持っていない本）＝本を入れ替えても検査を書き直さなくてよい
