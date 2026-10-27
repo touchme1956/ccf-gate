@@ -20,6 +20,8 @@ common・groups.A_final_allocation・groups.B_diversifier_slices どおりに、
   5. 物差し＝night/bestpf_check.py の1本ずつの塊そのもの（5つの世界・π・20年の積立の表・崩れの置き場所・過去の転がる20年・超大型株の感度）。
   6. 100年の代用: 月次＝alloc_check.century と同じ（FBT＝Drugs・SHLD＝Aero＋Guns・GDX＝Gold・XLU＝Util を足す）／
      年次＝Damodaran（T-bond・T-bill・Gold）と French の年次（月次を暦年で複利）で年1回の積立の市場との比。
+  7. 足す本（EXTRA・2026-10-22）: 既定は空。使う道具が build() の前に add_extra() で足す（MISL＝night/alloc_1022b_check.py）。
+     足さなければ 347d4365 の版と行・系列が1ビットも違わないことを確かめた（46本）。
 
 キャッシュ: 環境変数 UNX_AB_CACHE（既定 out/_nx_cache/unx/ab/・gitignore）。既存のキャッシュ（out/_mw_cache・out/_gaps_cache・out/_nx_cache）は
 読むだけ（同じ鮮度の決まりで新しければ読み、古ければこの道具のキャッシュへ取り直す）。
@@ -271,6 +273,23 @@ HAND_SHLD = {
     'KRAKEN ROBOTICS': 'Chips', 'DRONESHIELD': 'Chips', 'ELECTRO OPTIC': 'Guns', 'AUSTAL': 'Ships',
 }
 SHLD_NONCO = {'CASH', 'EQUITY LONG/SHORT'}           # 会社でない行（現金・スワップ）＝割り当てず、米国／米国外の比からも外す
+
+# 足す本（2026-10-22・night/alloc_1022b_check.py の MISL から）。**既定は空＝今までの道具の値は1ビットも変わらない**。
+# 使う道具が build() の前に add_extra() で足す。代理は X の結果の既存の本の系列から経費率の差を月ごとに引いたもの（FBT の ^BTK と同じ作法）・
+# 保有と費用は out/etf_profiles.json（米国の社だけ＝kind 'sector'・R の業種の作法）・100年の代用は代理の本の写し・代理の門を通らなくても残す（SHLD と同じ扱い）
+EXTRA = {}
+
+
+def add_extra(c, ja, proxy_of, last, jpm='USL', k=0.10):
+    """新しい本 c を足す（build() の前に呼ぶ）。last＝代理を使う最後の月（本物の最初の月の前の月）"""
+    assert 'res' not in _STATE and not _CENT, 'build()・century_parts() の後には足せない'
+    assert c not in NEW and c not in EXTRA, f'{c} は既にある'
+    NEW[c] = dict(ja=ja, veh=c, us=True, k=k, jpm=jpm, kind='sector')
+    NEW_DATA[c] = (c, f'UNX_PX_{c}', last)
+    PROXY_FORM[c] = f'{proxy_of} の系列（X の結果の {proxy_of}）− {c} と {proxy_of} の経費率の差/12（out/etf_profiles.json）'
+    GATE_FAILED_KEEP.add(c)
+    MONTHLY_OK.add(c)
+    EXTRA[c] = dict(proxy_of=proxy_of, last=last, jpm=jpm, k=k)
 # SHLD_EU の米国外上位10社（今の保有の重みの順・測る前に固定）: (名前, Yahoo, 通貨, FRED の為替の系列, その系列が『通貨1単位のドル』なら True)
 EU_TOP = [('BAE SYSTEMS PLC', 'BA.L', 'GBP', 'DEXUSUK', True), ('RHEINMETALL AG', 'RHM.DE', 'EUR', 'DEXUSEU', True),
           ('THALES', 'HO.PA', 'EUR', 'DEXUSEU', True), ('LEONARDO SPA', 'LDO.MI', 'EUR', 'DEXUSEU', True),
@@ -563,6 +582,8 @@ def hold_t_new():
             hs.append((t, w)); us_w += w
     out['SHLD'] = hs
     out['SHLD_EU'] = hs
+    for c in EXTRA:
+        out[c] = [(h[0], h[1]) for h in prof_old[c]['h']]
     s_us = us_w / (us_w + fo_w)
     return out, s_us, us_w, fo_w
 
@@ -702,7 +723,7 @@ def build():
     qdy = (pn['etfs'].get('QQQ') or prof_old.get('QQQ') or {}).get('dy') or 0.0044
     for nm in ('UNX_SYN_GOLDPLUS', 'GOLDPLUS_REF'):
         add[nm] = dict(er=qer, dy=qdy, holdings=[], src='unx: 参考＝データの器 QQQ の経費率・配当利回りのまま（実物の信託報酬は確かめていない）')
-    for c in ('FBT', 'SHLD'):
+    for c in ('FBT', 'SHLD') + tuple(EXTRA):
         costs[c] = dict(er=prof_old[c]['er'], dy=prof_old[c]['dy'], er_src=f'out/etf_profiles.json（{prof_old[c].get("asof")}）',
                         er_rakuten=(rk.get(c) or {}).get('er'))
     costs['SHLD_EU'] = dict(costs['SHLD'])
@@ -712,7 +733,7 @@ def build():
     # ── 系列 ──
     log('② 系列を集める')
     raw = {}
-    for t in ('FBT', 'SHLD', 'EDV', 'TLT', 'TIP', 'GDX', 'SLV', 'VNQ', 'EWY', 'VUSTX', 'VIPSX', 'FSAGX', 'VGSIX', 'FBIOX'):
+    for t in ('FBT', 'SHLD', 'EDV', 'TLT', 'TIP', 'GDX', 'SLV', 'VNQ', 'EWY', 'VUSTX', 'VIPSX', 'FSAGX', 'VGSIX', 'FBIOX') + tuple(EXTRA):
         raw[t] = yahoo(t)
     btk_note = None
     try:
@@ -734,6 +755,9 @@ def build():
         fbt_proxy = 'FBIOX（^BTK が取れない・2000-09 まで届かない）' + (f'・{btk_note}' if btk_note else '')
     px['UNX_PX_SHLD'] = dict(chains0['ITA'])
     px['UNX_PX_SHLD_EU'] = {m: 0.63 * chains0['ITA'][m] + 0.37 * eu[m] for m in chains0['ITA'] if m in eu}
+    for c, x in EXTRA.items():                    # 足す本: 代理の本の系列から経費率の差を月ごとに引く
+        x['er_diff'] = prof_old[c]['er'] - prof_old[x['proxy_of']]['er']
+        px[f'UNX_PX_{c}'] = {m: v - x['er_diff'] / 12 for m, v in chains0[x['proxy_of']].items()}
     for t in ('VUSTX', 'VIPSX', 'FSAGX', 'VGSIX'):
         px[t] = dict(raw[t])
     px['UNX_PX_SIF'] = dict(raw['SI=F'])
@@ -883,7 +907,7 @@ def build():
         if c == 'QQQM':
             h = R.holdings_of('QQQM', prof_old, prof_n2) or R.holdings_of('QQQ', prof_old, prof_n2)
         hold_all[c] = h
-    for c in ('FBT', 'SHLD', 'SHLD_EU'):
+    for c in ('FBT', 'SHLD', 'SHLD_EU') + tuple(EXTRA):
         if c in data:
             hold_all[c] = hold[c]
     tickers = {t.upper() for h in hold_all.values() for t, _ in h if not t.startswith('*')}
@@ -955,13 +979,13 @@ def build():
         jp3m=jp_info, tsmom=dict(sha1=tsm_sha, first=min(tsm), last=max(tsm), url=AQR_TSMOM), syn_cover=syn_cover,
         shld=dict(us_share=round(s_us, 4), us_w=round(us_w, 4), foreign_w=round(fo_w, 4), hand=HAND_SHLD,
                   k=round(s_us * 0.10 + (1 - s_us) * 0.20, 4), jpm_c=round(jpm_add['SHLD_MIX'], 3)),
-        eu_basket=eu_first,
+        eu_basket=eu_first, extra=copy.deepcopy(EXTRA),
         consts=dict(tbond_real_geo=round(100 * tb_real, 3), tbill_real_geo=round(100 * bill_real, 3), years=f'{y0}〜{y1}（{ny}年）',
                     tbond_B=round(100 * consts['tbond_B'], 3), tbill_B=round(100 * consts['tbill_B'], 3),
                     DGS30_2026_09_avg=round(y30, 4), DGS30_days=n30, DGS30_url=u30, DFII10_2026_09_avg=round(dfii, 4), DFII10_days=ndf, DFII10_url=udf,
                     hedge_gap=consts['hedge_gap'], damodaran=dmd_info, cpi_src=cpi_src),
         regression={'①_2回目のR.mainの25本_と_X.rank_result（1ビット）': reg1, '②_世界B・Cの写し_と_R.main（25本・1e-12）': reg2},
-        expo_new={c: {k: expo[c][k] for k in ('e', 'X_ind', 'X_ind_raw', 'coverage', 'top_industries')} for c in ('FBT', 'SHLD', 'SHLD_EU') if c in expo},
+        expo_new={c: {k: expo[c][k] for k in ('e', 'X_ind', 'X_ind_raw', 'coverage', 'top_industries')} for c in ('FBT', 'SHLD', 'SHLD_EU') + tuple(EXTRA) if c in expo},
         X_gold=bi['X_ind'].get('Gold'), X_gold_raw=bi['X_ind_raw'].get('Gold'),
         world_rows={c: {k: (round(100 * rows[c][k], 3) if isinstance(rows[c].get(k), float) else rows[c].get(k))
                         for k in ('A1', 'A2', 'B', 'C', 'B_gross', 'C_gross', 'B_X', 'B_rec', 'B_src', 'er_vehicle', 'dy_vehicle', 'tax_drag',
@@ -1153,6 +1177,8 @@ def century_parts():
              'XLV': F.capw(ret, capm, ['Drugs', 'MedEq', 'Hlth'], allm),
              'FBT': ret['Drugs'], 'SHLD': F.capw(ret, capm, ['Aero', 'Guns'], allm), 'GDX': ret['Gold'], 'XLU': ret['Util']}
     parts['SHLD_EU'] = parts['SHLD']
+    for c, x in EXTRA.items():                    # 足す本: 代理の本の写し
+        parts[c] = parts[x['proxy_of']]
     dmd, _ = damodaran()
     ann = {}
     for k, s in parts.items():
@@ -1270,7 +1296,8 @@ def castle_copy():
     import alloc_check as AC
     order, prox_w, prox = AC.seats()
     tg = json.load(open(os.path.join(BASE, 'portfolio.json')))['target']
-    c = float(tg.get('shiro_castle_pct') or 15)
+    c0 = tg.get('shiro_castle_pct')
+    c = 15.0 if c0 in (None, '') else float(c0)   # 0 は 0（2026-10-27・旧 `or 15` は個別株0%を15%に化けさせた）
     return {k: c * v for k, v in prox.items()}, order, c
 
 
