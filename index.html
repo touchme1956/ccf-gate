@@ -1161,7 +1161,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.219</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.220</span></h1>
     <div style="margin:6px 0 2px"><button id="hintBtn" onclick="ccfToggleHints()" style="padding:5px 11px;background:none;border:1px solid var(--line);border-radius:7px;color:var(--dim);font-size:11.5px;cursor:pointer">欄の注記を出す</button></div>
   <div class="sub"><details class="why plain" data-fold="6"><summary>ℹ この画面について</summary><div class="why-body"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——絶対MOAT指数をΩの直接項に加え(実効≒22%)、<b>四関門の一つ（絶対MOAT指数75+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%。⚠率そのものは退場社の抜けた母集団で測った下限の側で、2013年の質実証プールでは4.2〜19.2%の幅がある〔2026-09-23 に退場日を是正した後の値・是正前は2.0〜25.7%〕）。</div></details></div>
   </div>
@@ -3917,12 +3917,16 @@ function ccfBoughtEsc(s){ return String(s).replace(/"/g,'&quot;'); }
 function ccfCxQty(q){ q=+q||0; return (q>0)?String(+q.toPrecision(3)):'0'; }
 // 本の単位: 投資信託＝口・暗号資産（BTC-USD 等）＝その記号・ほか＝株
 function ccfUnitOf(t,fund){ return fund?'口':(/-USD$/i.test(String(t||''))?String(t).toUpperCase().replace(/-USD$/,''):'株'); }
-function ccfBoughtFields(t,nm,px,ccy,sh,sleeve,fund){
+const CCF_ACCT_CODE={'成長':'g','つみたて':'t','特定':'s'}, CCF_ACCT_DECODE={g:'成長',t:'つみたて',s:'特定'};
+function ccfBoughtFields(t,nm,px,ccy,sh,sleeve,fund,ac){
   const q=ccfBoughtEsc, sl=(sleeve==='net')?'net':'castle', fd=fund?'1':'';
+  // ★口座ごと（2026-10-27「買付を口座a.bに分けるようにして」）: ac={who,acct} を渡すと、その名義・口座のロットとして記録する
+  //   画面の HTML には口座の種類の語を出さない（2026-09-29「買付順位のNISAの文言は消して」）——data-acct は符号（CCF_ACCT_CODE）で持ち、記録のときに戻す
+  const wa=(ac&&(ac.who||ac.acct))?` data-who="${q(ac.who||'')}" data-acct="${q(CCF_ACCT_CODE[ac.acct]||ac.acct||'')}"`:'';
   // ★投資信託（2026-09-26 ユーザー「iFREENEXTは積立NISAで円で入れるよ」）は**買った円**を入れる。
   //   口数＝円÷1口あたりの基準価額（盤の値＝目安。正確な口数は約定後に🏦保有で直せる）・取得額(円)はそのまま記録。
   return `<input type="number" min="0" step="any" value="${sh||''}" data-t="${q(t)}" data-nm="${q(nm)}"`
-   +` data-px="${px||0}" data-ccy="${q(ccy||'USD')}" data-sleeve="${sl}" data-fund="${fd}"`
+   +` data-px="${px||0}" data-ccy="${q(ccy||'USD')}" data-sleeve="${sl}" data-fund="${fd}"${wa}`
    +` style="width:${fd?'92':'62'}px;padding:2px 6px;font-size:11.5px;font-family:inherit;background:var(--panel);`
    +`border:1px solid var(--line);border-radius:5px;color:var(--ink)">`
    +`<span style="font-size:10.5px;color:var(--dim)">${fd?'円':ccfUnitOf(t,false)}</span>`
@@ -4039,12 +4043,15 @@ function ccfBought(btn){
   if(!frame||!frame.contentWindow){ out.style.color='#d69a3c'; out.textContent='🏦保有が読み込まれていません（Ⅶを一度開いてから）'; return; }
   const id='b'+Date.now()+Math.random().toString(36).slice(2,6);
   let done=false;
+  const Q=window.__ccfBoughtQ||null; window.__ccfBoughtQ=null;   // 2人分まとめて記録する途中（ccfBoughtAcctAll）なら作り直しは最後に1回
   window.__ccfBuyWait[id]=async function(r){
     done=true;
+    if(Q&&!r.ok){ out.style.color='#d69a3c'; out.textContent='⚠ '+(r.msg||''); Q.done(r); return; }
     /* ⚠ 成功時は renderPlan() が注文書を作り直すので、**この行に書いた返事は消える**（実測）。
        だから結果は行の外＝画面に浮かぶ帯に出す。失敗時は再描画しないので行に出してよい。 */
     if(!r.ok){ out.style.color='#d69a3c'; out.textContent='⚠ '+(r.msg||''); ccfToast('⚠ '+(r.msg||''),false); return; }
     btn.disabled=true; btn.style.opacity=.5;
+    if(Q){ out.style.color='var(--jade)'; out.textContent='✓'; }
     /* 単価が無いまま記録した行は Ⅶで「金額未入力」になる。黙って0円の保有を作らない（ルール7）ので必ず言う */
     const noPx=!(parseFloat(inp.dataset.px)>0);
     const isNet=(inp.dataset.sleeve==='net');
@@ -4067,10 +4074,11 @@ function ccfBought(btn){
         try{const hr=await store.get('g7hold:set'); if(hr&&hr.value)hs=new Set(JSON.parse(hr.value)||[]);}catch(_){}
         if(!hs.has(key)){ hs.add(key); await store.set('g7hold:set',JSON.stringify([...hs]));
           if(typeof renderLedger==='function')await renderLedger();   // pf:verdicts を書き直す
-          try{ frame.contentWindow.location.reload(); }catch(_){}     // Ⅶの色丸を引き直す
+          if(Q)window.__ccfBoughtReload=true; else try{ frame.contentWindow.location.reload(); }catch(_){}     // Ⅶの色丸を引き直す（まとめて記録の途中は最後に1回）
         }
       }
     }catch(_){}
+    if(Q){ Q.done(r); return; }
     try{ if(typeof renderPlan==='function')await renderPlan(); }catch(_){}
     try{ const db=document.getElementById('dashBox');
          if(typeof ccfDash==='function'&&db&&db.innerHTML.trim())ccfDash(); }catch(_){}
@@ -4081,9 +4089,26 @@ function ccfBought(btn){
        （別の日に買った分は 🏦保有の「＋ 買った」で約定日を選んで記録する） */
   frame.contentWindow.postMessage({type:'ccfPfBuy',id:id,t:inp.dataset.t,nm:inp.dataset.nm,
     sh:sh,px:parseFloat(inp.dataset.px)||0,ccy:inp.dataset.ccy,sleeve:inp.dataset.sleeve,...(fJpy>0?{jpy:fJpy}:{}),
-    ...(isFund?{kind:'投資信託'}:/-USD$/.test(String(inp.dataset.t||''))?{kind:'暗号資産'}:{}),date:ccfTradeToday()},'*');
+    ...(isFund?{kind:'投資信託'}:/-USD$/.test(String(inp.dataset.t||''))?{kind:'暗号資産'}:{}),date:ccfTradeToday(),
+    ...(inp.dataset.who?{who:inp.dataset.who}:{}),...(inp.dataset.acct?{acct:CCF_ACCT_DECODE[inp.dataset.acct]||inp.dataset.acct}:{})},'*');
   setTimeout(()=>{ if(!done&&window.__ccfBuyWait[id]){ delete window.__ccfBuyWait[id];
-    out.style.color='#d69a3c'; out.textContent='🏦保有から返事がありません（Ⅶタブを一度開いてから）'; } },3000);
+    out.style.color='#d69a3c'; out.textContent='🏦保有から返事がありません（Ⅶタブを一度開いてから）'; if(Q)Q.done({ok:false}); } },3000);
+  return true;
+}
+// 口座 A・B（2026-10-27）: 行の名義ごとの欄を順に記録し（1件ずつ・Ⅶの保存を重ねない）、終わってから注文書を1回だけ作り直す
+async function ccfBoughtAcctAll(btn){
+  const box=btn.closest('.acct-split'); if(!box)return;
+  btn.disabled=true; let ok=0, ng=0;
+  for(const b of [...box.querySelectorAll('.acct-rec button')]){
+    if(b.disabled)continue;
+    const r=await new Promise(res=>{ window.__ccfBoughtQ={done:res}; if(!ccfBought(b)){ window.__ccfBoughtQ=null; res({ok:false}); } });
+    if(r&&r.ok)ok++; else ng++;
+  }
+  ccfToast(ng?`⚠ ${ok}件記録・${ng}件は記録できず（各欄の理由を見てください）`:`✓ ${ok}件を名義・口座つきで🏦保有に記録　→ repo へは赤い帯の「🚀 GitHub を開いて反映する」で`,!ng);
+  if(window.__ccfBoughtReload){ window.__ccfBoughtReload=false; try{ document.getElementById('pfFrame').contentWindow.location.reload(); }catch(_){} }
+  if(ng){ btn.disabled=false; return; }
+  try{ if(typeof renderPlan==='function')await renderPlan(); }catch(_){}
+  try{ const db=document.getElementById('dashBox'); if(typeof ccfDash==='function'&&db&&db.innerHTML.trim())ccfDash(); }catch(_){}
 }
 
 /* ── 🏦保有の「＋ 買った」「− 売った」（2026-09-23・ユーザー「新規で買付や売却がない。それで反映させたりしないとこれから門が更新されない」）
@@ -4503,6 +4528,56 @@ function ccfTradeWhoList(){
   ((K&&K.bucket&&K.members)||[]).forEach(m=>{ const w=String((m&&m.who)||''); if(w&&!h.includes(w))h.push(w); });
   return h;
 }
+/* ★買付を口座 A・B に分ける（2026-10-27 ユーザー明示指示「買付を口座a.bに分けるようにして」）
+   注文書の円・株数（区分の比率・1株単位の規則）は**1円も変えない**——決まった買付を名義ごとに割り振るだけ（表示と記録の道）。
+   名義は target.nisa.holders（2人以上のとき・target.nisa.order_split===false で止まる）。
+   割り方: ①1株で買う本は高い株から1株ずつ、その時点で合計の少ない名義へ（同額なら先の名義）
+           ②金額で買う投資信託は、2人の合計がそろうように残りを埋め（水位を合わせる）、余りは等分（100円単位・端数は最後の名義）。
+   ＝毎月2人の NISA の枠を同じ速さで使う。口座は 株・ETF→NISA 成長投資枠／投資信託→ami_funds の account（無ければつみたて投資枠）。
+   つみたて投資枠の月の上限（target.nisa.tsumitate_month_cap）を名義ごとに超えたら行に⚠で名指しする（自動で動かさない）。 */
+function ccfAcctSplitCfg(){
+  const n=(typeof window!=='undefined'&&window.__ccfNisa)||null;
+  if(!n||n.order_split===false)return null;
+  const h=ccfNisaCfg().holders; return h.length>=2?h:null;
+}
+function ccfAcctSplit(lines, holders){
+  const H=holders, tot={}, per={}; H.forEach(w=>tot[w]=0);
+  const units=[];
+  (lines||[]).forEach(L=>{ per[L.k]={}; H.forEach(w=>per[L.k][w]=0);
+    if(L.unit==='sh')for(let i=0;i<(+L.n||0);i++)units.push(L); });
+  units.sort((a,b)=>(b.price-a.price)||String(a.k).localeCompare(String(b.k)));
+  units.forEach(L=>{ let w=H[0]; H.forEach(x=>{ if(tot[x]<tot[w]-1e-9)w=x; }); per[L.k][w]+=1; tot[w]+=L.price; });
+  const F=(lines||[]).filter(L=>L.unit==='jpy'&&(+L.y||0)>0), FT=F.reduce((a,L)=>a+(+L.y||0),0);
+  if(FT>0){
+    // 水位 lv: Σ max(0, lv − tot_i) = FT
+    const s=H.map(w=>tot[w]).sort((a,b)=>a-b); let lv=s[0]+FT, acc=0;
+    for(let i=0;i<s.length;i++){ acc+=s[i]; const L=(acc+FT)/(i+1); if(i===s.length-1||L<=s[i+1]){ lv=L; break; } }
+    const want={}; H.forEach(w=>want[w]=Math.max(0,lv-tot[w]));
+    F.forEach(L=>{ let left=+L.y||0;
+      H.forEach((w,i)=>{ const y=(i===H.length-1)?left:Math.min(left,Math.floor((+L.y||0)*want[w]/FT/100)*100); per[L.k][w]=y; left-=y; tot[w]+=y; }); });
+  }
+  return {per, tot, holders:H};
+}
+function ccfAcctOfLine(L){ return L.unit==='jpy'?((L.fund&&['成長','つみたて','特定'].includes(L.fund.account))?L.fund.account:'つみたて'):'成長'; }
+// 行の中の「A 1株・B 2株」と、名義ごとの「✓ 保有へ」の欄
+function ccfAcctRowHTML(SPL, L, rec){
+  if(!SPL||!L)return '';
+  const q=ccfBoughtEsc, a=ccfAcctOfLine(L), d=SPL.per[L.k]||{}, cap=ccfNisaCfg().tsuMonth;
+  const parts=SPL.holders.filter(w=>(+d[w]||0)>0);
+  if(!parts.length)return '';
+  const amt=w=>L.unit==='jpy'?ccfYen(d[w]):`${d[w]}${ccfUnitOf(L.t,false)}`;
+  // 2026-09-29「買付順位のNISAの文言は消して」に合わせ、画面には口座の種類を書かない（名義だけ）。口座の種類はロットに静かに残す。
+  //   投資信託の名義ごとの金額が月の上限（target.nisa.tsumitate_month_cap）を超えるときだけ「⚠ 1人の月の上限」と知らせる
+  const warn=(L.unit==='jpy'&&a==='つみたて')?parts.filter(w=>d[w]>cap).map(w=>`⚠${q(w)} は1人の月の上限 ${ccfYen(cap)} を超える`).join('・'):'';
+  const ctl=rec?parts.map(w=>`<span class="acct-rec" data-who="${q(w)}" style="display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap;margin-right:8px">`
+      +`<span style="font-size:10.5px;color:var(--ink-soft)">${q(w)}</span>`
+      +ccfBoughtFields(L.t,L.nm,rec.px,rec.ccy,L.unit==='jpy'?d[w]:d[w],rec.sleeve,L.unit==='jpy',{who:w,acct:a})+`</span>`).join(''):'';
+  return `<div class="acct-split" style="margin-top:3px;font-size:11px;line-height:1.6">`
+    +`<span style="color:var(--dim)">口座：</span>`+parts.map(w=>`<b class="acct-amt" data-who="${q(w)}" style="white-space:nowrap;color:var(--ink)">${q(w)} ${amt(w)}</b>`).join('<span style="color:var(--dim)">・</span>')
+    +(warn?`　<span style="color:#b45309">${warn}</span>`:'')
+    +(ctl?`<div style="margin-top:3px;display:flex;flex-wrap:wrap;align-items:center;gap:4px"><span style="font-size:10.5px;color:var(--dim)">買ったら記録 →</span>${ctl}`
+      +(parts.length>1?`<button class="acct-all" onclick="ccfBoughtAcctAll(this)" title="名義ごとの欄をまとめて🏦保有へ（1件ずつ順に・ロットに名義と口座が残る）" style="padding:2px 10px;font-size:11px;font-family:inherit;cursor:pointer;background:rgba(143,201,164,.16);border:1px solid rgba(143,201,164,.5);border-radius:5px;color:var(--jade)">✓ ${parts.length}人分まとめて</button>`:'')+`</div>`:'')+`</div>`;
+}
 function ccfWholeShareBody(pass, tw, pxInfo, NO, T, catIn){
   const items=[], ref={};
   const EXW=(typeof window!=='undefined'&&window.__ccfExWatch)||{}, stopped=[];
@@ -4540,13 +4615,24 @@ function ccfWholeShareBody(pass, tw, pxInfo, NO, T, catIn){
   let cs=0, ns=0, fs=0, ob='', nbh='', nfh='', idle=[]; const ordNet={};
   // ★2026-10-14: 今月お金を受ける投資信託の行の数（2つ以上なら残りの円は取り分の比で分かれる＝「全部ここへ」と書かない）
   const nFundPaid=items.filter(it=>it.frac&&ref[it.k]&&ref[it.k].r&&ref[it.k].r.fund&&(P.frac[it.k]||0)>0).length;
+  // ★口座 A・B（2026-10-27）: 決まった買付を名義ごとに割り振る（暗号資産は NISA の外なので分けない）
+  const HOL=ccfAcctSplitCfg(), LN={};
+  if(HOL)items.forEach(it=>{ const f=ref[it.k], b=P.buy[it.k];
+    if(f.c){ if(b&&b.sh>0)LN[it.k]={k:it.k,unit:'sh',n:b.sh,price:b.cost/b.sh,t:f.r.t,nm:f.nm}; return; }
+    if(f.cx)return;
+    if(it.frac){ const y=P.frac[it.k]||0; if(y>0&&f.r.fund)LN[it.k]={k:it.k,unit:'jpy',y,t:f.r.t,nm:f.r.nm||f.r.t,fund:f.r.fund}; return; }
+    if(b&&b.sh>0)LN[it.k]={k:it.k,unit:'sh',n:b.sh,price:b.cost/b.sh,t:f.r.t,nm:f.r.nm||f.r.t}; });
+  const SPL=(HOL&&Object.keys(LN).length)?ccfAcctSplit(Object.values(LN),HOL):null;
+  if(typeof window!=='undefined')window.__ccfAcctSplit=SPL?{per:SPL.per,tot:SPL.tot,holders:SPL.holders,lines:LN}:null;
+  const acctH=(k,rec)=>SPL&&LN[k]?ccfAcctRowHTML(SPL,LN[k],rec):'';
   items.forEach(it=>{ const f=ref[it.k], b=P.buy[it.k];
     if(f.c){
       if(b){ cs+=b.cost;
         const bb={x:{r:f.r,n:f.nm},pi:f.pi,sh:b.sh};
         ob+=row(f.nm,`<b style="color:var(--jade)">${b.sh}株</b>`,
           `<span style="color:var(--dim)"><span style="white-space:nowrap">約${ccfYen(b.cost)}</span>　<span style="white-space:nowrap">指値は当日の値の近く（成行でも可）</span>　${tgtTxt(it)}　<span style="white-space:nowrap">1株 ${f.pi.label}</span>`
-          +((P.first&&P.first[it.k])?`　<span class="first-tag" style="white-space:nowrap;color:var(--jade)">持っていない銘柄を先に（区分の比率より先）</span>`:'')+`</span>`+ccfBoughtCtl(bb));
+          +((P.first&&P.first[it.k])?`　<span class="first-tag" style="white-space:nowrap;color:var(--jade)">持っていない銘柄を先に（区分の比率より先）</span>`:'')+`</span>`
+          +((SPL&&LN[it.k])?acctH(it.k,(f.pi&&f.pi.px>0)?{px:f.pi.px,ccy:f.pi.ccy||'USD',sleeve:'castle'}:null):ccfBoughtCtl(bb)));
       }else if(why[it.k]){
         ob+=row(f.nm,`<span style="color:#d69a3c;font-size:11.5px">今月なし</span>`,`<span style="color:#d69a3c">${why[it.k]}</span>　<span style="color:var(--dim)">${tgtTxt(it)}</span>`,'var(--muted)');
       }else idle.push(f.nm);
@@ -4564,7 +4650,8 @@ function ccfWholeShareBody(pass, tw, pxInfo, NO, T, catIn){
                   :f.cx?`　${(r.jpy>0)?`<span style="white-space:nowrap">約${ccfCxQty(y/r.jpy)} ${r.t.replace(/-USD$/,'')}</span>（<span style="white-space:nowrap">${r.label}</span>）`:'<span style="white-space:nowrap">価格未取得</span>'}`
                     +`　<span style="white-space:nowrap">取引所で金額で買う</span><span style="white-space:nowrap">（NISAの外）</span>`:'')
           +`</span>`
-          +`<span style="display:inline-flex;align-items:center;flex-wrap:wrap">${ccfNetBoughtCtl(r,(r.px>0?{px:r.px,ccy:r.ccy}:null))}</span>`);
+          +((SPL&&LN[it.k])?acctH(it.k,(r.px>0)?{px:r.px,ccy:r.ccy,sleeve:'net'}:null)
+            :`<span style="display:inline-flex;align-items:center;flex-wrap:wrap">${ccfNetBoughtCtl(r,(r.px>0?{px:r.px,ccy:r.ccy}:null))}</span>`));
         if(catIn&&r.fund)nfh+=rowH; else nbh+=rowH;
       }else if((+it.tw||0)>0) idle.push(r.nm||r.t);
       return;
@@ -4573,7 +4660,8 @@ function ccfWholeShareBody(pass, tw, pxInfo, NO, T, catIn){
       nbh+=row(r.t,`<b style="color:#6fa8c9">${b.sh}株</b>`,
         `<span style="color:var(--dim)"><span style="white-space:nowrap">約${ccfYen(b.cost)}</span>　${tgtTxt(it)}　<span style="white-space:nowrap">${r.label}</span>${othTxt(r)}`
         +((P.first&&P.first[it.k])?`　<span class="first-tag" style="white-space:nowrap;color:var(--jade)">持っていない銘柄を先に（区分の比率より先）</span>`:'')+`</span>`
-        +`<span style="display:inline-flex;align-items:center;flex-wrap:wrap">${ccfNetBoughtCtl(r,(r.px>0?{px:r.px,ccy:r.ccy}:null))}</span>`);
+        +((SPL&&LN[it.k])?acctH(it.k,(r.px>0)?{px:r.px,ccy:r.ccy,sleeve:'net'}:null)
+          :`<span style="display:inline-flex;align-items:center;flex-wrap:wrap">${ccfNetBoughtCtl(r,(r.px>0?{px:r.px,ccy:r.ccy}:null))}</span>`));
     }else if(why[it.k]){
       nbh+=row(r.t,`<span style="color:#d69a3c;font-size:11.5px">今月なし</span>`,`<span style="color:#d69a3c">${why[it.k]}</span>　<span style="color:var(--dim)">${tgtTxt(it)}${othTxt(r)}</span>`,'var(--muted)');
     }else if((+it.tw||0)>0) idle.push(r.t+(r.otherBuy?`（${othNm(r)}）`:''));
@@ -4636,6 +4724,14 @@ function ccfWholeShareBody(pass, tw, pxInfo, NO, T, catIn){
   const cyH=CY.length?`<div class="carry-row" style="font-size:11.5px;padding:4px 7px;line-height:1.6;color:var(--ink-soft)">↪ <b>引き継ぎ</b>（${CY.some(c=>/目標0%/.test(c.why||''))?'個別株の目標0%・':'席の外・'}売らずに持ち続ける）：`
     +CY.map(x=>`<span style="white-space:nowrap">${ccfBoughtEsc(x.t)} ${(+x.w).toFixed(1)}%</span>（${ccfBoughtEsc(x.why)}${x.exit==='s1'?'・<b style="color:#b91c1c">⚠出口 S1</b>':x.exit==='s2'?'・<b style="color:#b45309">⚠出口 S2</b>':''}）`).join('・')
     +`<br><span style="color:var(--dim);font-size:11px">個別株の区分に数え、新しいお金は回らない（目標0%）。売りは S1/S2/S3 だけ（🏦保有の出口判定）——席から出ただけでは売らない。</span></div>`:'';
+  // 名義ごとの合計。2人の合計がそろうように割っている——行ごとの株数・金額は各行の「口座：」
+  const acctBox=SPL?(()=>{ const q=ccfBoughtEsc;
+    return `<div class="acct-box" style="margin:7px 0 2px;padding:5px 9px;border:1px solid rgba(143,201,164,.45);border-radius:7px;background:rgba(143,201,164,.06)">`
+      +`<div style="font-size:12px;font-weight:700;color:var(--jade);margin-bottom:2px">👥 口座ごと（2人の合計がそろうように分けた）</div>`
+      +SPL.holders.map(w=>`<div class="acct-tot" data-who="${q(w)}" style="display:flex;justify-content:space-between;gap:4px 10px;flex-wrap:wrap;font-size:12px;padding:2px 0">`
+        +`<span><b>${q(w)}</b>${SPL.tot[w]>0?'':'　<span style="color:var(--dim)">今月なし</span>'}</span>`
+        +`<b style="white-space:nowrap">約${ccfYen(Math.round(SPL.tot[w]))}</b></div>`).join('')
+      +`<div style="font-size:10.5px;color:var(--dim);margin-top:2px">株数・金額の合計は上の注文書と同じ（分け方を変えるだけ）。記録は各行の名義ごとの「✓ 保有へ」で（ロットに名義が残る）。</div></div>`; })():'';
   const html=`<div style="margin-top:10px;padding:9px 12px;border:1px solid rgba(201,166,74,.5);border-radius:8px;background:rgba(201,166,74,.06)">
     <div style="font-size:12.5px;color:var(--gold-bright);margin-bottom:4px"><b>📋 今月の注文書</b></div>
     ${idecoBox}
@@ -4644,6 +4740,7 @@ function ccfWholeShareBody(pass, tw, pxInfo, NO, T, catIn){
     ${(ob||stopped.length||cyH)?`<div style="font-size:11.5px;color:var(--gold-bright);margin:0 0 2px;font-weight:600">${catIn?'🏰 個別株':'🏰 個別'}</div>${ob}${stopped.map(x=>`<div style="font-size:11px;color:#b91c1c;padding:3px 7px">${x}</div>`).join('')}${cyH}`:''}
     ${nbh?`<div style="font-size:11.5px;color:#6fa8c9;margin:7px 0 2px;font-weight:600">◈ ETF</div>${nbh}`:''}
     ${nfh?`<div style="font-size:11.5px;color:#6fa8c9;margin:7px 0 2px;font-weight:600">📈 投資信託</div>${nfh}`:''}
+    ${acctBox}
     ${(idle.length||zero.length)?`<div style="font-size:11px;color:var(--dim);padding:3px 7px">${idle.length?idle.join('・')+'：目標に届いているので今月なし':''}${idle.length&&zero.length?'　':''}${zero.length?zero.join('・')+'：目標0%（売らない・新規なし）':''}</div>`:''}
     <div style="font-size:11px;color:var(--dim);margin-top:5px"><b>合計 約${ccfYen(Math.round(cs+ns))}</b>（${catIn?`個別株 ${ccfYen(Math.round(cs))}／ETF ${ccfYen(Math.round(ns-fs))}／投資信託 ${ccfYen(Math.round(fs))}`:`個別 ${ccfYen(Math.round(cs))}／ETF ${ccfYen(Math.round(ns))}`}）${P.rest>=100?`／残り${ccfYen(Math.floor(P.rest/100)*100)}`:''}${ID?`<br>＋ iDeCo ${ccfYen(ID.jpy)}（自動引き落とし・NASDAQ100）`:''}${KD?`<br>＋ こどもNISA ${ccfYen(KD.jpy)}（子どもの口座の自動の積立・${KD.inCat?ccfBoughtEsc(ccfAutoBucketNm(KD)):'比率の外'}）`:''}</div>
   </div>`;

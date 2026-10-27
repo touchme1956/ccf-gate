@@ -1057,6 +1057,55 @@ const srv = http.createServer((q, r) => {
   }
 
   ok(errs.length === 0, 'pageerror 0件' + (errs.length ? '（' + errs[0].slice(0, 120) + '）' : ''));
+  // ㉒ 買付を口座 A・B に分ける（2026-10-27 ユーザー明示指示「買付を口座a.bに分けるようにして」）:
+  //   ① 純関数 ccfAcctSplit: 株は1株単位のまま・投資信託は合計がそろうように埋める・名義ごとの合計の和＝注文書の合計
+  //   ② 実データ（正本・割り方 cat・入金20万）: 注文書の合計は分ける前と同じ・各行の「口座：」の株数／円の和＝その行の株数／円・
+  //      名義ごとの「✓ 保有へ」の欄に data-who/data-acct・👥口座ごとの箱の2人の合計の和＝注文書の合計
+  //   ③ target.nisa.order_split=false なら分けない（従来の1つの欄）
+  {
+    await pg.goto('http://localhost:' + PORT + '/index.html'); await pg.waitForTimeout(600);
+    const u = await pg.evaluate(() => {
+      const L = [{ k: 'a', unit: 'sh', n: 3, price: 30000, t: 'XLV' }, { k: 'b', unit: 'sh', n: 1, price: 90000, t: 'SMH' },
+                 { k: 'c', unit: 'jpy', y: 41300, t: 'IFREE-NDX', fund: { account: 'つみたて' } }];
+      const S = ccfAcctSplit(L, ['A', 'B']);
+      return { per: S.per, tot: S.tot };
+    });
+    const sh = u.per.a.A + u.per.a.B, fy = u.per.c.A + u.per.c.B, sum = u.tot.A + u.tot.B;
+    ok(sh === 3 && u.per.b.A + u.per.b.B === 1 && fy === 41300 && sum === 3 * 30000 + 90000 + 41300 && Math.abs(u.tot.A - u.tot.B) <= 30000,
+       '㉒ ccfAcctSplit（XLV 3株・SMH 1株・投資信託 ¥41,300）: A ¥' + u.tot.A.toLocaleString() + '・B ¥' + u.tot.B.toLocaleString()
+       + '（株数・円の合計は不変・差は1株以内）');
+    const load22 = async (over, amt) => {
+      OVER = over;
+      await pg.goto('http://localhost:' + PORT + '/index.html'); await pg.waitForTimeout(600);
+      await pg.evaluate(stt => { localStorage.clear(); for (const k in stt.data) localStorage.setItem(k, stt.data[k]);
+        localStorage.setItem('ccf:stateSavedAt', stt.savedAt); }, ST);
+      await pg.reload(); await pg.waitForTimeout(1500);
+      await pg.evaluate(() => ccfImportAllPacks()); await pg.waitForTimeout(1800);
+      await pg.evaluate(a => { localStorage.setItem('pf:monthly_total', String(a)); showPage(5); }, amt); await pg.waitForTimeout(3200);
+      return pg.evaluate(() => {
+        const txt = (document.querySelector('#pg5') || {}).innerText || '';
+        const tot = +((txt.match(/合計 約?¥([\d,]+)/) || [0, '0'])[1]).replace(/,/g, '');
+        const S = window.__ccfAcctSplit, rows = [];
+        if (S) for (const k in S.lines) { const L = S.lines[k], d = S.per[k];
+          rows.push({ t: L.t, unit: L.unit, want: L.unit === 'jpy' ? L.y : L.n, got: S.holders.reduce((a, w) => a + (+d[w] || 0), 0) }); }
+        const recs = [...document.querySelectorAll('#pg5 .acct-rec input')].map(i => ({ who: i.dataset.who, acct: i.dataset.acct, v: +i.value }));
+        const boxTot = [...document.querySelectorAll('#pg5 .acct-tot b:last-child')].map(e => +e.textContent.replace(/[^\d]/g, ''));
+        return { tot, rows, recs, boxTot, has: !!document.querySelector('#pg5 .acct-box'), holders: S ? S.holders : null };
+      });
+    };
+    const r22 = await load22(withMode('cat'), 200000);
+    const rowOk = r22.rows.length > 0 && r22.rows.every(x => x.want === x.got);
+    const bsum = r22.boxTot.reduce((a, x) => a + x, 0);
+    ok(r22.has && rowOk && Math.abs(bsum - r22.tot) <= 2 * r22.boxTot.length && r22.recs.length >= r22.rows.length
+       && r22.recs.every(x => (x.who === 'A' || x.who === 'B') && /^[gts]$/.test(x.acct) && x.v > 0),
+       '㉒ 実データ（正本・cat・入金20万）: ' + r22.rows.map(x => x.t + ' ' + x.got + (x.unit === 'jpy' ? '円' : '株')).join('・')
+       + ' を名義ごとに（欄 ' + r22.recs.length + '・' + [...new Set(r22.recs.map(x => x.who + '/' + x.acct))].join('・') + '）・2人の合計 ¥'
+       + bsum.toLocaleString() + ' ＝ 注文書の合計 ¥' + r22.tot.toLocaleString());
+    const off = withMode('cat'); off.target.nisa = Object.assign({}, off.target.nisa, { order_split: false });
+    const r22o = await load22(off, 200000);
+    ok(!r22o.has && r22o.recs.length === 0 && r22o.tot === r22.tot, '㉒ order_split=false: 口座の箱と名義ごとの欄が出ない・合計は同じ ¥' + r22o.tot.toLocaleString());
+    OVER = null;
+  }
   await pg.evaluate(() => localStorage.removeItem('pf:monthly_total'));
   await b.close(); srv.close();
   console.log(ng ? '\n✗ ' + ng + '件 失敗' : '\n✓ 全項目 通過');
