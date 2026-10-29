@@ -115,7 +115,7 @@ const RANK = String(T.castle_weighting || '').toLowerCase() === 'rank' && Array.
     localStorage.setItem('pf:portfolio', JSON.stringify(o.pf));
     const pfJ = await (await fetch('portfolio.json?' + (o.mut === 'real' ? 'real=1&' : '') + 't=' + Date.now())).json();
     if (o.mut === 'sum') pfJ.target.shiro_castle_pct = +pfJ.target.shiro_castle_pct + 5;
-    if (o.mut === 'noOther') { delete pfJ.target.ami_other; delete pfJ.target.ami_same_bucket; }   // XLK をどの区分にも数えない形
+    if (o.mut === 'noOther') { delete pfJ.target.ami_other; delete pfJ.target.ami_same_bucket; if (pfJ.target.ami_weights && pfJ.target.ami_weights.XLK) pfJ.target.ami_weights.XLK = 0; }   // XLK をどの区分にも数えない形
     if (o.mut === 'equal') pfJ.target.castle_weighting = 'equal';
     if (o.mut === 'badRank') pfJ.target.castle_rank_weights = [5, 0, 'x'];
     if (o.mut === 'noSnap') pfJ.positions = [];
