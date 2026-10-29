@@ -908,7 +908,7 @@ const srv = http.createServer((q, r) => {
     }, OTHER_BOOK);
     ok(q19.ita && q19.ita.nm === OTHER_BOOK && !q19.ita.other && !q19.err && new RegExp(' ／ ' + OTHER_BOOK + ' ¥[\\d,]+').test(q19.line) && !/その他/.test(q19.line)
        && new RegExp('^◈ ' + OTHER_BOOK).test(q19.itaRow.trim()) && !/その他/.test(q19.itaRow) && !q19.other && !q19.zeroRow && q19.zn.length === 0
-       && /XLK（NASDAQ100 に数える）/.test(q19.z) && q19.keys.includes('n:' + OTHER_BOOK),
+       && (((base.target.ami_weights || {}).XLK > 0) ? q19.keys.includes('n:XLK') : /XLK（NASDAQ100 に数える）/.test(q19.z)) && q19.keys.includes('n:' + OTHER_BOOK),
        '⑲ 正本（その他の区分なし・入金17万）: 区分 ' + q19.keys.join(' / ') + '・表「' + q19.itaRow.split('\n')[0].slice(0, 40) + '」・上の1行「' + q19.line.trim().slice(0, 90)
        + '」・「その他 ETF・投資信託」の文字なし・区分の外の行なし・「' + ((q19.z.match(/XLK（[^）]*）/) || [''])[0]) + '」');
   } else ok(true, '   （正本に ami_other があるので ⑲ は飛ばす）');
