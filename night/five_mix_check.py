@@ -93,7 +93,7 @@ def main():
     import bestpf_check as BC
     import etf_forward_combo as CB
     import ndx_swap_check as N
-    from ndx_sv_check import Roll, stats
+    from ndx_sv_check import Roll, stats, mrange
     with contextlib.redirect_stdout(io.StringIO()):
         res = U.build()
     rows, chains = res['rows'], res['chains']
@@ -295,12 +295,16 @@ def main():
     Cc = U.century_parts()
     Fm, parts, mkt, endm = Cc['F'], Cc['parts'], Cc['mkt'], Cc['endm']
     allm = sorted(mkt)
-    ms = [m for m in allm if 196601 <= m <= endm]
-    ser = {'MKT': {m: mkt[m] for m in ms}}
+    mix = {}
     for nm, f in show.items():
         tw = sum(f.values())
-        s = Fm.mix([(w / tw, parts[k]) for k, w in f.items() if w > 0], allm)
-        ser[nm] = {m: s[m] for m in ms}
+        mix[nm] = Fm.mix([(w / tw, parts[k]) for k, w in f.items() if w > 0], allm)
+    ms = [m for m in allm if 196601 <= m <= endm and all(m in s for s in mix.values())]   # どの形にもそろう月だけ（写しの最後の月が市場より早い）
+    if ms != mrange(ms[0], ms[-1]):
+        raise SystemExit('100年の写しの月に抜けがある（転がる窓が使えない）')
+    ser = {'MKT': {m: mkt[m] for m in ms}}
+    for nm in show:
+        ser[nm] = {m: mix[nm][m] for m in ms}
     Rr = Roll(ser, ms)
     detail = {}
     for j, (nm, f) in enumerate(show.items()):
@@ -310,6 +314,7 @@ def main():
         for n, lab in ((120, '10年'), (240, '20年')):
             ex = [Rr.ann(nm, i, n) - Rr.ann('MKT', i, n) for i in range(len(ms) - n + 1)]
             roll[lab] = stats(ex)
+        roll['月'] = f'{ms[0]}〜{ms[-1]}'
         detail[nm] = dict(
             形=f, 名前=name5(f),
             元の物差し=dict(P15π=o['P15π'], 平均=o['π加重の平均の年率'], 五パーセント未満=o['P5π（5%未満）'], 最悪の世界=o['最悪の世界'],
