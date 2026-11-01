@@ -6,6 +6,13 @@ best15r（out/best15r_check.json）は決まりどおりなら「今のまま」
   今／決まりの上位1位／第2段で感度6本をすべて通った形／厳しい形（どの業種も市場の比重＋15pt まで）の答え／
   GDX を入れない形の中の s の最良／FBT を25%までにした形の中の s の最良／S&P500 だけ
   （どれも第2段の同じ形の中から・条件 T1r と⑨を通る形）
+  ＋（2026-11-01 追記・回す前にこの形を固定）今の NASDAQ100 を芯に残して半導体の上乗せだけを減らす穏やかな形 MID の5つ
+  （条件を通るかは問わない・第2段の外の VOO も使う）:
+    中1 NASDAQ100 50/ITA 25/XLV 25（SMH 20 を ITA・XLV へ半分ずつ）／中2 NASDAQ100 50/ITA 20/XLV 20/FBT 10／
+    中3 NASDAQ100 50/SMH 10/ITA 20/XLV 20（半導体の上乗せを半分に）／中4 NASDAQ100 40/ITA 30/XLV 30／
+    中5 NASDAQ100 30/S&P500 30/ITA 20/XLV 20（業種に賭けない分を市場で）
+  ＋「二重に数えた分」: B の世界には元から記録の業種の割り引き（unx_assets の B_rec＝0.204%−0.52%×記録の二業種の比率）が入っており、
+    best15r の補正はそれに重ねている。その重なり＝Σ 重み×B_rec×π_B（未来の3つの中の B の重み）を形ごとに出す（%pt/年・判定に使わない）
 出すもの: この物差しの値・感度6本それぞれの今との差（15%以上・平均・5%未満・最大下落）・「平均が感度6本すべてで今以上か」・
   元の物差し（A1・A2 を含む unx_assets.measure）・100年の代用・勝ち業種の中身の比重・最大の業種・中身の集中
 使い方: python3 night/best15r_posthoc.py → out/best15r_posthoc.json
@@ -20,6 +27,11 @@ FIXED = {'決まりの上位1位 FBT40/ITA20/SMH20/GDX15/XLV5': {'FBT': 40, 'ITA
          '感度6本をすべて通った形 FBT40/QQQM25/XLV20/SMH15': {'FBT': 40, 'QQQM': 25, 'XLV': 20, 'SMH': 15},
          '厳しい形の答え ITA35/FBT25/GDX20/QQQM10/SMH10': {'ITA': 35, 'FBT': 25, 'GDX': 20, 'QQQM': 10, 'SMH': 10},
          'S&P500 だけ': {'VOO': 100}}
+MID = {'中1 NASDAQ100 50/ITA 25/XLV 25': {'QQQM': 50, 'ITA': 25, 'XLV': 25},
+       '中2 NASDAQ100 50/ITA 20/XLV 20/FBT 10': {'QQQM': 50, 'ITA': 20, 'XLV': 20, 'FBT': 10},
+       '中3 NASDAQ100 50/SMH 10/ITA 20/XLV 20': {'QQQM': 50, 'SMH': 10, 'ITA': 20, 'XLV': 20},
+       '中4 NASDAQ100 40/ITA 30/XLV 30': {'QQQM': 40, 'ITA': 30, 'XLV': 30},
+       '中5 NASDAQ100 30/S&P500 30/ITA 20/XLV 20': {'QQQM': 30, 'VOO': 30, 'ITA': 20, 'XLV': 20}}
 
 
 def main():
@@ -66,7 +78,9 @@ def main():
         if len(jj):
             b = BCc.order_s(jj, E2, s2, A2)[0]
             forms[f'{lab} {BR.name_of(A2[b])}'] = BR.form_of(A2[b])
+    forms.update(MID)
     forms['S&P500 だけ'] = FIXED['S&P500 だけ']
+    piB = float(main_doc['pi_forward']['B'])
     W = np.array([[f.get(c, 0) for c in P] for f in forms.values()], dtype=np.float64)
     Wn = W / W.sum(axis=1, keepdims=True)
 
@@ -102,7 +116,8 @@ def main():
                        百年=(None if cm is None else U.strip_century(cm)),
                        勝ち業種の中身の比重={k: round(100 * float(Wn[j] @ IND[:, i]), 1) for i, k in enumerate(win)},
                        最大の業種=max(((k, round(100 * float(Wn[j] @ INDall[:, i]), 1)) for i, k in enumerate(inds)), key=lambda t: t[1]),
-                       中身の集中=B.lookthrough(f))
+                       中身の集中=B.lookthrough(f),
+                       二重に数えた分_B_rec=round(100 * piB * sum(w / sum(f.values()) * float(rows[c].get('B_rec') or 0.0) for c, w in f.items()), 3))
         print(nm, json.dumps({k: out[nm][k] for k in ('この物差し', '平均が感度6本すべてで今以上', '十五パーセント以上が感度6本すべてで今以上')}, ensure_ascii=False))
     json.dump(dict(generated=time.strftime('%Y-%m-%d'), tool='night/best15r_posthoc.py', kind='事後の診断（判定に使わない）',
                    stage2_本=assets2, 条件を通った形=int(f2.sum()), forms=out, secs=round(time.time() - t0)),
