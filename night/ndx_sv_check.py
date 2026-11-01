@@ -27,6 +27,7 @@
      〔主＝20年の値〕と感度6本の今との差／100年の代用 century_monthly〔VBR は SMALL HiBM〕／B の世界の記録の割り引きとの重なり／中身の集中）:
      今 NASDAQ100 50/SMH 20/ITA 20/XLV 10 ／ 中1 NASDAQ100 50/ITA 25/XLV 25 ／ 小1 NASDAQ100 50/VBR 20/ITA 20/XLV 10（SMH を VBR へ）／
      小2 NASDAQ100 50/VBR 30/ITA 10/XLV 10 ／ 小3 NASDAQ100 60/VBR 40 ／ 小4 NASDAQ100 50/VBR 50
+（事後・結果を見た後に足した・判定に使わない）③b 本物どうしの期間（1998-06〜）の10年の窓の相関と両方負け／5年の窓の両方負けと混ぜた形が市場に勝った割合
 ⚠ 限界: NASDAQ100 の1985年より前は代わり（つなぎ目の点検で本物の ^NDX より 1985-11〜 で年約1.5pt 低い）・SMALL HiBM は紙の上
   （売買の費用なし・VISVX は重なる期間で年約1pt 低い）・転がる窓は重なる（独立な数は少ない）・山は少なく時期が重なる・米国だけ・
   混ぜた形の比は私が決めた・税は入らない
@@ -191,6 +192,29 @@ def complement(r, R, ks):
     return out
 
 
+def posthoc(R, ks):
+    """事後（結果を見た後に足した・判定に使わない）: 本物どうしの期間の10年の窓／5年の窓"""
+    out = {}
+    i0 = R.ix[SV_REAL]
+    idx = range(i0, len(ks) - 120 + 1)
+    en = np.array([R.ann('NDX', i, 120) - R.ann('MKT', i, 120) for i in idx])
+    es = np.array([R.ann('SV', i, 120) - R.ann('MKT', i, 120) for i in idx])
+    out['本物どうしの期間（1998-06〜）の10年の窓'] = dict(窓=len(en), 市場との差の相関=round(float(np.corrcoef(en, es)[0, 1]), 3),
+                                                両方負け=round(float(((en <= 0) & (es <= 0)).mean()), 3),
+                                                両方勝ち=round(float(((en > 0) & (es > 0)).mean()), 3))
+    for pn, p0 in PERIODS.items():
+        i0 = R.ix[p0]
+        idx = range(i0, len(ks) - 60 + 1)
+        en = np.array([R.ann('NDX', i, 60) - R.ann('MKT', i, 60) for i in idx])
+        es = np.array([R.ann('SV', i, 60) - R.ann('MKT', i, 60) for i in idx])
+        o = dict(窓=len(en), 両方負け=round(float(((en <= 0) & (es <= 0)).mean()), 3))
+        for k in MIXES:
+            e = np.array([R.ann(k, i, 60) - R.ann('MKT', i, 60) for i in idx])
+            o[k] = dict(市場に勝った割合=round(float((e > 0).mean()), 3), 最悪=pct(float(e.min())))
+        out[f'5年の窓・{pn}'] = o
+    return out
+
+
 def peaks(r, R, ks, last):
     pk = json.load(open(os.path.join(BASE, 'out', 'industry_peak.json')))['山']
     rows = []
@@ -335,6 +359,7 @@ def main():
     res['⑤二十年の積立'] = dca(R, ks)
     res['⑥器の確かめ'] = vehicles(r, ks, net, meta)
     res['⑦今の物差しでの形の比べ'] = forms_part()
+    res['事後（判定に使わない）'] = posthoc(R, ks)
     res['secs'] = round(time.time() - t0)
     json.dump(res, open(OUT, 'w'), ensure_ascii=False, indent=1, default=str)
     for row in res['①時代ごと']:
