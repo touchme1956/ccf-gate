@@ -2423,6 +2423,15 @@
    "added": "2026-10-16",
    "title": "投資信託協会の基準価額の CSV が2026-10-16 に 2026-08-31 までしか返さない（iFreeNEXT も SMT も）＝📈成績が投資信託の行を古い値で評価する恐れ。最初に投資信託を買って記録したら returns.json の投資信託の行の asof を見る",
    "note": "2026-10-16 に SMT を配分に入れたときに見つけた（この変更とは別の穴）。night/fetch_returns.py の fund_series は csv-file-download（年月日・基準価額・分配金）だけを読む。同じ日の検索の画面（fundDataSearch）の基準価額は 2026-10-15 まで新しい（盤の out/dashboard.json は fetch_dashboard.fund_quotes がこちらを読むので最新）。CSV がいつ更新されるか（月に1回か・遅れか）は確かめていない。今は投資信託を1本も持っていない（state.json の保有は MSFT・ASML・XLK・SMH・QQQM）ので📈成績には影響なし。直すなら案: fund_series の最後の日より新しい分を、盤の quotes（fund_quotes が毎営業日入れる1口あたりの円）で継ぎ足す（分配金のある日は CSV を待つ）——ただし盤は1日1点しか残らないので、過去の日を埋めるには market.yml で日ごとの値を貯める段が要る。⚠ fund_series は fetch_tsumitate_funds.Lib を使う＝名乗り（User-Agent）にメールが入っている（未解決の別件・unx の G3）　【2026-10-16 追記（同日）】同日の最終で SMT は配分から外した（この穴は iFreeNEXT にも同じく当たるので残す）"
+  },
+  {
+   "id": "dividends_to_ndx",
+   "kind": "定期(手動)",
+   "title": "米国株・米国ETFの配当は全部 NASDAQ100（iFreeNEXT）に回す",
+   "due": "配当が入ったら（年に数回）",
+   "note": "2026-11-01 ユーザー決定「全て配当はNASDAQ100に回すよ」。楽天証券で配当を円で受け取る（またはドルを円に替える）→ iFreeNEXT NASDAQ100 を金額指定で買う → 🏦保有の「＋ 買った」で記録（区分の比率は NASDAQ100 の保有として数える＝翌月の注文書が自動で調整する）。門の注文書は配当を配らない（コードは不変）。規模の目安: 直近1年の配当は税引前 約¥12,100（MSFT 4,600・XLK 3,200・QQQM 1,900・ASML 1,800・SMH 700）＝NISA なら手取り約¥10,900・毎月の入金の約0.4%。",
+   "done": false,
+   "owner": "人"
   }
  ]
 }

@@ -154,7 +154,7 @@ def yh_monthly_levels_etfjp(sym):
     for t, v in zip(r['timestamp'], ser):
         if v is None:
             continue
-        d = datetime.datetime.utcfromtimestamp(t + gmt)
+        d = datetime.datetime.utcfromtimestamp(t + gmt + 6 * 3600)  # +6h: 月足は現地の月初0時。gmtoffset は今の時差なので夏時間の月の足が前月末に落ちる（2026-11-01 の冬時間で発覚）
         o[f'{d.year:04d}-{d.month:02d}'] = float(v)
     now = datetime.datetime.utcfromtimestamp(time.time() + gmt)
     return {k: v for k, v in o.items() if int(k[:4]) * 100 + int(k[5:]) < now.year * 100 + now.month}

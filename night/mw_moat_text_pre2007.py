@@ -2112,7 +2112,7 @@ def series(y):
             ts = r.get('timestamp') or []
             adj = ((r['indicators'].get('adjclose') or [{}])[0].get('adjclose')) or ((r['indicators'].get('quote') or [{}])[0].get('close')) or []
             off = (r.get('meta') or {}).get('gmtoffset') or 0
-            pm = [datetime.datetime.utcfromtimestamp(t + off) for t, a in zip(ts, adj) if a is not None]
+            pm = [datetime.datetime.utcfromtimestamp(t + off + 6 * 3600) for t, a in zip(ts, adj) if a is not None]  # +6h: 月足は現地の月初0時。gmtoffset は今の時差なので夏時間の月の足が前月末に落ちる（2026-11-01 の冬時間で発覚）
             if pm:
                 ret = M.yahoo(y)
                 spike = next((k for k in sorted(ret) if ret[k] > SPIKE), None)

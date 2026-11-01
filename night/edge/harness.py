@@ -226,7 +226,7 @@ def yahoo(sym, start_year=1970):
     for t, v in zip(res['timestamp'], ser):
         if v is None:
             continue
-        d = datetime.datetime.utcfromtimestamp(t + gmt)
+        d = datetime.datetime.utcfromtimestamp(t + gmt + 6 * 3600)  # +6h: 月足は現地の月初0時。gmtoffset は今の時差なので夏時間の月の足が前月末に落ちる（2026-11-01 の冬時間で発覚）
         o[d.year * 100 + d.month] = float(v)
     return guard(o)
 

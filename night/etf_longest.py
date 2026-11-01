@@ -34,7 +34,7 @@ def fetch(sym):
             gmt = (res.get("meta") or {}).get("gmtoffset") or 0; o = {}
             for t, v in zip(res["timestamp"], ser):
                 if v is None or v <= 0: continue
-                d = datetime.datetime.utcfromtimestamp(t + gmt); o[f"{d.year:04d}-{d.month:02d}"] = float(v)
+                d = datetime.datetime.utcfromtimestamp(t + gmt + 6 * 3600); o[f"{d.year:04d}-{d.month:02d}"] = float(v)  # +6h: 月足は現地の月初0時。gmtoffset は今の時差なので夏時間の月の足が前月末に落ちる（2026-11-01 の冬時間で発覚）
             return o or None
         except urllib.error.HTTPError as e:
             if e.code in (400, 404): return None

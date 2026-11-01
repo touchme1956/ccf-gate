@@ -96,7 +96,7 @@ def yh_prices(ticker, interval='1mo'):
     for t, a in zip(ts, adj):
         if a is None or a <= 0:
             continue
-        d = datetime.datetime.utcfromtimestamp(t + off)
+        d = datetime.datetime.utcfromtimestamp(t + off + 6 * 3600)  # +6h: 月足は現地の月初0時。gmtoffset は今の時差なので夏時間の月の足が前月末に落ちる（2026-11-01 の冬時間で発覚）
         k = d.year * 100 + d.month if interval == '1mo' else d.year * 10000 + d.month * 100 + d.day
         px[k] = a
     spl = []

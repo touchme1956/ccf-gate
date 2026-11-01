@@ -945,7 +945,7 @@ def yahoo_close_div(t):
     for ts, c in zip(r['timestamp'], r['indicators']['quote'][0]['close']):
         if c is None:
             continue
-        d = datetime.datetime.utcfromtimestamp(ts + off)
+        d = datetime.datetime.utcfromtimestamp(ts + off + 6 * 3600)  # +6h: 月足は現地の月初0時。gmtoffset は今の時差なので夏時間の月の足が前月末に落ちる（2026-11-01 の冬時間で発覚）
         px[d.year * 100 + d.month] = c
     ks = sorted(px)
     rc = {k: px[k] / px[p] - 1 for p, k in zip(ks, ks[1:]) if madd(p, 1) == k}
