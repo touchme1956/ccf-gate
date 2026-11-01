@@ -405,7 +405,7 @@ def yahoo_shape(ticker):
     utc_keys, loc_keys, odd = [], [], []
     for i, t in enumerate(ts):
         du = datetime.datetime.utcfromtimestamp(t)
-        dl = datetime.datetime.utcfromtimestamp(t + gmt)
+        dl = datetime.datetime.utcfromtimestamp(t + gmt + 6 * 3600)  # +6h: 月足は現地の月初0時。gmtoffset は今の時差なので夏時間の月の足が前月末に落ちる（2026-11-01 の冬時間で発覚）
         utc_keys.append(du.year * 100 + du.month)
         loc_keys.append(dl.year * 100 + dl.month)
         # 月足の時刻は New York の月初0時＝UTC の 4時（夏時間）か 5時（冬時間）。meta.gmtoffset は今の時差（夏時間の −4h）なので

@@ -215,7 +215,7 @@ def yahoo_full(t):
     now = datetime.datetime.utcfromtimestamp(time.time() + off)
     cur = now.year * 100 + now.month
     for t_, c, a in zip(ts, q['close'], adj):
-        d = datetime.datetime.utcfromtimestamp(t_ + off)
+        d = datetime.datetime.utcfromtimestamp(t_ + off + 6 * 3600)  # +6h: 月足は現地の月初0時。gmtoffset は今の時差なので夏時間の月の足が前月末に落ちる（2026-11-01 の冬時間で発覚）
         k = d.year * 100 + d.month
         if k >= cur or c is None or a is None:
             continue

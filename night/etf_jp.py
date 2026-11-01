@@ -63,7 +63,7 @@ def fetch(sym):
             for t, v in zip(res["timestamp"], ser):
                 if v is None:
                     continue
-                d = datetime.datetime.utcfromtimestamp(t + gmt)
+                d = datetime.datetime.utcfromtimestamp(t + gmt + 6 * 3600)  # +6h: 月足は現地の月初0時。gmtoffset は今の時差なので夏時間の月の足が前月末に落ちる（2026-11-01 の冬時間で発覚）
                 o[f"{d.year:04d}-{d.month:02d}"] = float(v)
             return PXG.vet(sym, o, "etf_jp.fetch", req_start=t0) or None  # ★px_guard: 台帳より遅く始まる応答は採らない（2026-09-23）
         except urllib.error.HTTPError as e:

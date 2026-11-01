@@ -220,7 +220,7 @@ def yahoo_divs_ttm(t, end=LAST):
             tot += d['amount']
     px = None
     for ts, c in zip(r['timestamp'], r['indicators']['quote'][0]['close']):
-        dt = datetime.datetime.utcfromtimestamp(ts + off)
+        dt = datetime.datetime.utcfromtimestamp(ts + off + 6 * 3600)  # +6h: 月足は現地の月初0時。gmtoffset は今の時差なので夏時間の月の足が前月末に落ちる（2026-11-01 の冬時間で発覚）
         if dt.year * 100 + dt.month == end and c:
             px = c
     return (tot / px if px else None), tot, px

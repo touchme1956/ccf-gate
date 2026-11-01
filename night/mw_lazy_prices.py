@@ -898,7 +898,7 @@ def yh_series(sym):
             for t, a in zip(ts, adj):
                 if a is None:
                     continue
-                d = datetime.datetime.utcfromtimestamp(t + off)
+                d = datetime.datetime.utcfromtimestamp(t + off + 6 * 3600)  # +6h: 月足は現地の月初0時。gmtoffset は今の時差なので夏時間の月の足が前月末に落ちる（2026-11-01 の冬時間で発覚）
                 px[d.year * 100 + d.month] = a
             now = datetime.datetime.utcfromtimestamp(time.time() + off)
             px = {k: v for k, v in px.items() if k < now.year * 100 + now.month}

@@ -660,7 +660,7 @@ def yh(t):
         cl = ((r['indicators'].get('quote') or [{}])[0].get('close')) or []
         px, cx = {}, {}
         for i, a in enumerate(ts):
-            k = datetime.datetime.utcfromtimestamp(a + off)
+            k = datetime.datetime.utcfromtimestamp(a + off + 6 * 3600)  # +6h: 月足は現地の月初0時。gmtoffset は今の時差なので夏時間の月の足が前月末に落ちる（2026-11-01 の冬時間で発覚）
             k = k.year * 100 + k.month
             v = adj[i] if i < len(adj) else None
             if v is not None and v > 0:
