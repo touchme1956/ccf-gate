@@ -27,7 +27,9 @@
      〔主＝20年の値〕と感度6本の今との差／100年の代用 century_monthly〔VBR は SMALL HiBM〕／B の世界の記録の割り引きとの重なり／中身の集中）:
      今 NASDAQ100 50/SMH 20/ITA 20/XLV 10 ／ 中1 NASDAQ100 50/ITA 25/XLV 25 ／ 小1 NASDAQ100 50/VBR 20/ITA 20/XLV 10（SMH を VBR へ）／
      小2 NASDAQ100 50/VBR 30/ITA 10/XLV 10 ／ 小3 NASDAQ100 60/VBR 40 ／ 小4 NASDAQ100 50/VBR 50
-（事後・結果を見た後に足した・判定に使わない）③b 本物どうしの期間（1998-06〜）の10年の窓の相関と両方負け／5年の窓の両方負けと混ぜた形が市場に勝った割合
+（事後・結果を見た後に足した・判定に使わない）③b 本物どうしの期間（1998-06〜）の10年の窓の相関と両方負け／5年の窓の両方負けと混ぜた形が市場に勝った割合／
+  ⑦b 小型バリューの上乗せが消えていたら: 基礎率の物差しで (S1) B の世界の VBR から100年の小型バリューの上乗せ（unx_assets の B_X×0.5）を引く・
+  (S2) さらに C・D の VBR を VOO と同じにする（未来の3つの世界のどれも小型バリューに上乗せを置かない）
 ⚠ 限界: NASDAQ100 の1985年より前は代わり（つなぎ目の点検で本物の ^NDX より 1985-11〜 で年約1.5pt 低い）・SMALL HiBM は紙の上
   （売買の費用なし・VISVX は重なる期間で年約1pt 低い）・転がる窓は重なる（独立な数は少ない）・山は少なく時期が重なる・米国だけ・
   混ぜた形の比は私が決めた・税は入らない
@@ -322,6 +324,17 @@ def forms_part():
     with contextlib.redirect_stdout(io.StringIO()):
         tab = U.measure(FORMS, rows, chains, mega=U.mega_map(rows, sorted({a for f in FORMS.values() for a in f} | {'VOO'})))
     piB = float(json.load(open(os.path.join(BASE, 'out', 'best15r_check.json')))['pi_forward']['B'])
+    # ⑦b（事後）小型バリューの上乗せが消えていたら
+    iv, ivoo = P.index('VBR'), P.index('VOO')
+    gB0, gC0, gD0 = fbr.gB.copy(), fbr.gC.copy(), fbr.gD.copy()
+    noprem = {}
+    try:
+        fbr.gB[iv] -= 0.5 * float(rows['VBR']['B_X'])
+        noprem['S1 B の世界の小型バリューの上乗せを0'] = fbr.eval(W, a0)
+        fbr.gC[iv], fbr.gD[iv] = fbr.gC[ivoo], fbr.gD[ivoo]
+        noprem['S2 未来の3つの世界のどれも小型バリューに上乗せなし'] = fbr.eval(W, a0)
+    finally:
+        fbr.gB, fbr.gC, fbr.gD = gB0, gC0, gD0
     out = {}
     for j, nm in enumerate(names):
         f = FORMS[nm]
@@ -341,6 +354,12 @@ def forms_part():
                     詳細=(None if cm is None else U.strip_century(cm))),
             勝ち業種の中身の比重={k: round(100 * float(Wn[j] @ IND[:, i]), 1) for i, k in enumerate(win)},
             二重に数えた分_B_rec=round(100 * piB * sum(w / sum(f.values()) * float(rows[c].get('B_rec') or 0.0) for c, w in f.items()), 3),
+            事後_小型バリューの上乗せが消えていたら={k: dict(P15π=round(100 * float(e['P15'][j]), 2), 平均=round(100 * float(e['mean_pi'][j]), 2),
+                                                五パーセント未満=round(100 * float(e['P5'][j]), 2),
+                                                今との差=dict(P15=round(100 * float(e['P15'][j] - e['P15'][0]), 2),
+                                                           平均=round(100 * float(e['mean_pi'][j] - e['mean_pi'][0]), 3),
+                                                           五パーセント未満=round(100 * float(e['P5'][j] - e['P5'][0]), 2)))
+                                       for k, e in noprem.items()},
             中身の集中=B.lookthrough(f))
     return out
 
