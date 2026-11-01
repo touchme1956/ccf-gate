@@ -17,6 +17,11 @@
   暦年の差・単体の最大下落／100年の代用（FBT＝French の医薬品 Drugs・XLV＝Drugs・MedEq・Hlth の時価加重＝unx_assets.century_parts）
   事後（判定に使わない）: ②・① の XLV 版を best15 の T1 の8つの物差しと最終の確かめ（感度5本・円の枠）で今と比べる
 ⚠ 下書き（scratchpad）で一度回してから道具にした（形と部品は問いから決まる）。部品の分け方は一つの見方。
+追記（同日・ユーザー「100年の歴史検証は参考にされてないの？」）: 「長い記録」の節を足した（判定に使わない）——
+  B の世界（100年の平均）の FBT と XLV の中身（費用の前の年率・業種の上乗せ・記録の業種・費用）／
+  100年の写しの単体（1927〜・French の医薬品・医療機器・医療サービス・その時価加重・市場）の年率・ぶれ・最大下落・30年の積立／
+  バイオ自体の一番長い実物の記録 FBIOX（Fidelity Select Biotechnology・1986-01〜・費用込み）と同じ期間の写しの比べ（20年の積立）／
+  out/etf_longest.json（2026-09-25）の健康・バイオの本の行の写し
 使い方: python3 night/best15_fbt_why.py → out/best15_fbt_why.json
 """
 import contextlib, io, itertools, json, math, os, sys, time
@@ -105,6 +110,65 @@ class Parts:
                     s += wt * (self.metric(mix(set(S) | {i}), **kw)[key] - self.metric(mix(set(S)), **kw)[key])
             phi[i] = s
         return phi
+
+
+def long_record(U, res, rows):
+    """100年の写しとバイオの一番長い実物の記録（判定に使わない）"""
+    import statistics as St
+    C = U.century_parts()
+    F, parts, mkt = C['F'], C['parts'], C['mkt']
+    _, ret, _, _, _, _, _ = F.load()
+    allm = sorted(mkt)
+    fb = res['raw']['FBIOX']
+    ser = {'医薬品 Drugs（FBT の100年の写し）': ret['Drugs'], '医療機器 MedEq': ret['MedEq'], '医療サービス Hlth': ret['Hlth'],
+           '医薬品・医療機器・医療サービスの時価加重（XLV の100年の写し）': parts['XLV'], '市場（French の米国株全体）': mkt}
+
+    def stats(s, ms):
+        L = np.log1p(np.array([s[m] for m in ms]))
+        w = np.exp(np.cumsum(L))
+        peak, uw, best = -1.0, 0, 0
+        for v in w:
+            if v >= peak:
+                peak, uw = v, 0
+            else:
+                uw += 1
+                best = max(best, uw)
+        return {'期間': f'{ms[0]}〜{ms[-1]}', '年率': pct(math.expm1(L.sum() * 12 / len(L))), 'ぶれ': pct(float(L.std() * math.sqrt(12)), 1),
+                '最大下落': pct(float((w / np.maximum.accumulate(w) - 1).min()), 1), '高値を下回った最長（年）': round(best / 12, 1)}
+
+    def dca(s, starts, n, end):
+        v = []
+        for y in starts:
+            ms = F.months((y + 1) * 100 + 1, n)
+            if ms[-1] > end or any(m not in s for m in ms):
+                continue
+            v.append(F.dca_mult(s, ms) / F.dca_mult(mkt, ms))
+        v.sort()
+        return {'窓': len(v), '中央': round(St.median(v), 3), '最悪': round(v[0], 3), '市場に勝った割合': round(sum(x > 1 for x in v) / len(v), 2)}
+
+    out = {}
+    out['B の世界（100年の平均）の中身'] = {c: {'費用の前の年率': pct(rows[c]['B_gross']), '業種の100年の上乗せ（半分にする前）': pct(rows[c]['B_X']),
+                                         '記録の業種の分': pct(rows[c]['B_rec']), '経費率': pct(rows[c]['er_vehicle']),
+                                         'NISA で戻らない配当の税': pct(rows[c]['tax_drag']), '費用の後（物差しに入る値）': pct(rows[c]['B']),
+                                         '中身の業種（上位）': rows[c].get('top_industries')} for c in ('FBT', 'XLV')}
+    out['式'] = 'B＝UBS の先進国株の100年（R_EQ %.2f%%）＋ 0.5×業種の100年の上乗せ ＋ 記録の業種の分 − 費用' % (100 * U.R.R_EQ)
+    m100 = [m for m in allm if m >= 192701]
+    out['100年の写しの単体（1927〜）'] = {nm: {**stats(s, [m for m in m100 if m in s]), '30年の積立（起点1965〜1995）の市場との比': dca(s, range(1965, 1996), 360, allm[-1])}
+                                    for nm, s in ser.items()}
+    mc = [m for m in allm if m >= 198601 and m in fb and all(m in x for x in ser.values())]
+    both = dict(ser, **{'FBIOX（実物のバイオ投信・Fidelity Select Biotechnology・費用込み・運用者が選ぶ）': fb})
+    out['同じ期間（バイオの一番長い実物の記録と）'] = {nm: {**stats(s, mc), '20年の積立（起点1985〜2006）の市場との比': dca(s, range(1985, 2007), 240, mc[-1])}
+                                         for nm, s in both.items()}
+    Lc = np.log1p(np.array([[ser['医薬品 Drugs（FBT の100年の写し）'][m] for m in mc], [fb[m] for m in mc]]))
+    out['相関（医薬品業種と FBIOX・同じ期間）'] = round(float(np.corrcoef(Lc)[0, 1]), 3)
+    try:
+        el = json.load(open(os.path.join(BASE, 'out', 'etf_longest.json')))
+        keep = ('name', 'kind', 'start', 'years', 'cagr', 'bench', 'excess', 'max_dd', 'underwater_yrs', 'dca20_win', 'dca20_ratio_med', 'dca20_ratio_min')
+        out['etf_longest の写し（S&P500＝VFINX と同じ窓）'] = {'generated': el.get('generated'),
+                                                       **{t: {k: el['rows'][t].get(k) for k in keep} for t in ('FSPHX', 'VGHCX', 'FBIOX', 'BBH', 'IBB', 'FBT', 'XLV') if t in el['rows']}}
+    except Exception as x:  # noqa
+        out['etf_longest の写し（S&P500＝VFINX と同じ窓）'] = f'読めず: {x}'
+    return out
 
 
 def pct(x, d=2):
@@ -258,6 +322,7 @@ def main():
     doc['事後（判定に使わない）XLV 版を今と比べる'] = post
     doc['今'] = {'形': dict(B.NOW), '15%以上': pct(now['P15']), '5%未満': pct(now['P5']), '平均': pct(now['mean_pi']), '最大下落': pct(now['mdd'], 1),
                  '過去の20年で15%以上': pct(now['past20'], 1), '100年の代用（中央・最悪）': [round(now['c30med'], 3), round(now['c30min'], 3)]}
+    doc['長い記録（判定に使わない）'] = long_record(U, res, rows)
     doc['secs'] = round(time.time() - t0)
     json.dump(doc, open(OUT, 'w'), ensure_ascii=False, indent=1, default=str)
     log('完了', doc['secs'], '秒 →', OUT)
