@@ -7,6 +7,8 @@ best15_check の答え（T1 SMH40/FBT25/QQQM15/GDX10/ITA5/XLK5）を見たあと
   D3 感度5本ごとの P15π・P5π・π加重の平均・最悪の世界（今・T1 の答え・D1・D2・D4・D5・核4本だけの最良）
   D4・D5 SMH を20%（今と同じ）・30%までに抑えたときの T1 の答え（第1段から同じ手順で探し直す＝候補の選び直しも同じ決まり・
          最終の確かめ F1・F2 も同じ）。10-29 に「半導体30%はやりすぎでは？」で SMH を20%にした経緯を受けて足した
+  D6 注文書の形: 門の注文書は XLK を NASDAQ100 の区分に数える（ami_same_bucket）ので、答えの XLK を NASDAQ100（物差しでは QQQM）に
+     まとめた形（T1・D1・D4・D5）を同じ物差しで測る。中身の集中（lookthrough・城0%）も全部の形に
 使い方: python3 night/best15_posthoc.py → out/best15_posthoc.json
 """
 import io, contextlib, json, os, sys, time
@@ -108,6 +110,15 @@ def main():
         f = out[key].get('最良') or (out[key].get('答え') if isinstance(out[key].get('答え'), dict) else None)
         if f:
             forms[key] = f
+    def merge_xlk(f):
+        g = {k: v for k, v in f.items() if k != 'XLK'}
+        if 'XLK' in f:
+            g['QQQM'] = g.get('QQQM', 0) + f['XLK']
+        return g
+    for key, src in (('D6 T1 の答え（XLK を NASDAQ100 に）', forms['T1 の答え']), ('D6 D1（XLK を NASDAQ100 に）', out['D1 GDX を入れない']['最良']),
+                     ('D6 D4（XLK を NASDAQ100 に）', out['D4 SMH は20%まで（今と同じ）']['答え']), ('D6 D5（XLK を NASDAQ100 に）', out['D5 SMH は30%まで']['答え'])):
+        if isinstance(src, dict) and 'XLK' in src:
+            forms[key] = merge_xlk(src)
     s0 = j['stage0']['T1']['最良の形']
     forms['核4本だけの最良'] = {p[:len(p.rstrip('0123456789'))]: int(p[len(p.rstrip('0123456789')):]) for p in s0.split('/')}
     assets = sorted({a for f in forms.values() for a in f} | {'VOO'})
@@ -123,6 +134,7 @@ def main():
                                                     '過去の転がる20年で15%以上', '積立20年の内部収益率')}}
         cm = U.century_monthly(forms[nm])
         d3[nm]['100年の代用'] = None if cm is None else U.strip_century(cm)
+        d3[nm]['中身の集中'] = B.lookthrough(forms[nm])
     doc = dict(generated=time.strftime('%Y-%m-%d'), tool='night/best15_posthoc.py', kind='事後の診断（best15 の選び方の外・判定に使わない）',
                base='out/best15_check.json', T1の答え=t1, 探し直し=out, 感度ごと=d3, secs=round(time.time() - t0))
     json.dump(doc, open(OUT, 'w'), ensure_ascii=False, indent=1, default=str)
