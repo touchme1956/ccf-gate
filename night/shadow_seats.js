@@ -19,6 +19,8 @@
  *             iDeCo・こどもNISA（v9.9.203）を含めた月の合計。今日が開始月の後なら、門と同じく自動の積立を引いた残りを毎月配り、
  *             区分に数える分（iDeCo と、2026-10-08「比率に数えて」からのこどもNISA＝門の catIn.pre）は毎月その区分の保有に足す
  *             （⚠ 12か月の途中で開始月をまたぐ切り替えは模していない——今日の状態で12か月を回す）
+ *   --then    2か月目からの毎月の入金額（既定: --monthly と同じ）。2026-11-02 ユーザーが今月の入金額を ¥1,200,000 にした（Issue #294）——
+ *             今月だけの額で12か月を回すと先の姿が誇張されるので、今月は --monthly・2か月目からは計画の額（例 200000）で回せるようにした
  *   --out     結果の書き先（既定: out/shadow_seats.json）
  *   --weights 配信する portfolio.json の target.ami_weights を差し替える（例 'IFREE-NDX=45,ITA=0'・正本のファイルには触らない）
  *             2026-10-14 ユーザー「ITAかSHLDをNASDAQに変えるのは？」（night/ndx_swap_check.py が呼ぶ）。無ければ今の目標のまま＝既定は不変。
@@ -44,6 +46,8 @@ if (!MONTHLY) {
   } catch (e) {}
 }
 if (!MONTHLY) { console.error('✗ 毎月の入金額が読めない（--monthly で渡す）'); process.exit(1); }
+const THEN = arg('--then') != null ? +arg('--then') : MONTHLY;
+if (!(THEN >= 0) || !isFinite(THEN)) { console.error('✗ --then の額が読めない'); process.exit(1); }
 const OUT = arg('--out') || path.join(ROOT, 'out', 'shadow_seats.json');
 const PF0 = JSON.parse(fs.readFileSync(path.join(ROOT, 'portfolio.json'), 'utf8'));
 let WEIGHTS = null;
@@ -89,9 +93,9 @@ const srv = http.createServer((q, r) => {
     const n = await p.evaluate(() => { let c = 0; for (let i = 0; i < localStorage.length; i++) if (localStorage.key(i).startsWith('g7:')) c++; return c; });
     if (n === prev) { if (++stable >= 3) break; } else { stable = 0; prev = n; }
   }
-  console.log(`■ 席の数を変えたら（night/shadow_seats.js・影の計測）  台帳 ${prev}件 / 入金 ¥${MONTHLY.toLocaleString()}（${MONTHLY_SRC}）`);
+  console.log(`■ 席の数を変えたら（night/shadow_seats.js・影の計測）  台帳 ${prev}件 / 入金 ¥${MONTHLY.toLocaleString()}（${MONTHLY_SRC}）${THEN !== MONTHLY ? `・2か月目から ¥${THEN.toLocaleString()}（--then）` : ''}`);
 
-  const out = { asof: new Date().toISOString(), monthly: MONTHLY, monthly_src: MONTHLY_SRC, seats_now: NOW, runs: {},
+  const out = { asof: new Date().toISOString(), monthly: MONTHLY, monthly_src: MONTHLY_SRC, then: THEN, seats_now: NOW, runs: {},
                 weights_override: WEIGHTS, ami_weights: (PFX || PF0).target.ami_weights };
   if (WEIGHTS) console.log('  目標を差し替えて配信: ' + JSON.stringify(WEIGHTS) + ' → ami_weights ' + JSON.stringify(out.ami_weights));
   let bad = 0;
@@ -120,7 +124,7 @@ const srv = http.createServer((q, r) => {
       await p.evaluate(() => { const t = document.getElementById('tab5'); if (t) t.click(); });
     }
     await p.waitForTimeout(2500);
-    const run = await p.evaluate(({ M }) => {
+    const run = await p.evaluate(({ M, M2 }) => {
       const cap = window.__cap || null, buy = window.__ccfBuyList || null;
       if (!cap) return { seats: CCF_SEATS, buy, cap: null };
       const label = {}, pass = window.__pass || [];
@@ -147,7 +151,7 @@ const srv = http.createServer((q, r) => {
       const KID = (typeof window.ccfKodomoAmt === 'function') ? (+window.ccfKodomoAmt() || 0) : 0;
       for (let m = 1; m <= 12; m++) {
         items.forEach(it => it.pos = 100 * H[it.k] / TOT);
-        const T = M - AUTO + carry;
+        const T = (m === 1 ? M : M2) - AUTO + carry;
         const P = CI ? window.__wcpOrig(items, T, TOT, catNow()) : window.__wspOrig(items, T, TOT);
         let spent = 0, cs = 0, ns = 0; const got = [], cy = {};
         if (HC) items.forEach(it => { const g = it.g, bb = P.buy[it.k], fy = P.frac[it.k]; if (HC[g] == null) return;
@@ -171,7 +175,7 @@ const srv = http.createServer((q, r) => {
                split_mode: (typeof ccfSleeveTarget === 'function') ? ccfSleeveTarget().mode : null,
                castle_w: window.__ccfCastleW || null,   // 門が配った目標％（席の順位の重みなど・v9.9.198）
                pre_list: PL };                          // 区分に数えた自動の積立（iDeCo・こどもNISA）
-    }, { M: MONTHLY });
+    }, { M: MONTHLY, M2: THEN });
     if (run.seats !== N) { bad++; console.log(`  ✗ 席 ${N}: 門の CCF_SEATS が ${run.seats}（差し替えが効いていない）`); continue; }
     // 関門が眠ったまま描いた注文書は「測れなかった」であって結果ではない（check_gate_parity と同じ・ルール7）
     if (!Array.isArray(blind) || blind.length) { bad++; console.log(`  ✗ 席 ${N}: 関門が眠ったまま（${Array.isArray(blind) ? blind.join(' / ') : '未公開'}）＝測れなかった`); continue; }
