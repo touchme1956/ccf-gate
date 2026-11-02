@@ -72,6 +72,10 @@ const NAMES = (T.ami_names || []).map(U);
 const ETF_EXP = NAMES.filter(t => (WN[t] || 0) > 0 && !SAMEOF[t]);            // 円グラフに出る ETF の区分（ami_names の順）
 const OB = (T.ami_other && T.ami_other.buy) ? U(T.ami_other.buy) : '';
 const heldNet = POS.filter(p => p.sleeve === 'net').map(p => p.t);
+// ★2026-11-02 ユーザー明示指示「ASMLはSMHに入れて」: 個別株の保有でも ami_same_bucket に名前があれば、その ETF の区分に数える（門の ccfPfLive の cin）
+//   ＝区分の注記に名前が出て、個別株の「今」からは引く。名前が無ければ従来どおり個別株
+const heldIn = POS.filter(p => p.sleeve === 'net' || (p.sleeve === 'castle' && SAMEOF[p.t])).map(p => p.t);
+const castleOwn = POS.filter(p => p.sleeve === 'castle' && !SAMEOF[p.t]).map(p => p.t);
 const nowEtf = k => {                                                         // 区分の今（注文書と同じ数え方）
   let v = W(k); for (const a in SAMEOF) if (SAMEOF[a] === k) v += W(a);
   if (k === OB) heldNet.forEach(t => { if (!ETF_EXP.includes(t) && !SAMEOF[t]) v += W(t); });
@@ -166,7 +170,7 @@ const RANK = String(T.castle_weighting || '').toLowerCase() === 'rank' && Array.
         ok(near(x.tw, WN[t], 1e-9) && near(x.now, nowEtf(t), 0.001), `${t}: 目標 ${x.tw}%・今 ${x.now.toFixed(2)}%（期待 ${nowEtf(t).toFixed(2)}%）`);
       }
       for (const x of r.M.etf) {                                              // 区分に数えた保有は注記に名前が出る（同じ扱いの本は「（同じ扱い）」）
-        const t = x.k.slice(2), mem = heldNet.filter(a => SAMEOF[a] === t);
+        const t = x.k.slice(2), mem = heldIn.filter(a => SAMEOF[a] === t);
         if (t === OB) heldNet.forEach(a => { if (!ETF_EXP.includes(a) && !SAMEOF[a]) mem.push(a); });
         if (!mem.length) { ok(!/を含む/.test(x.sub), `${t}: 区分に数える保有が無ければ「を含む」と書かない（${x.sub}）`); continue; }
         ok(mem.every(a => x.sub.includes(SKIND[a] === 'bucket' ? a + '（同じ扱い）' : a)) && /を含む/.test(x.sub), `${t}: 区分に数えた保有を注記に出す（${x.sub}）`);
@@ -175,7 +179,8 @@ const RANK = String(T.castle_weighting || '').toLowerCase() === 'rank' && Array.
       if (OB && oth) ok(/その他/.test(oth.nm), `その他の区分の名前（${oth.nm}）`);
       // 2026-10-13 ユーザー明示指示「ITAはその他ETF投資信託はなくして」で正本から ami_other を外した——どの区分の名前にも「その他」が出ない
       else if (!OB) ok(r.M.etf.every(x => !/その他/.test(String(x.nm) + String(x.label))), `その他の区分なし（正本に ami_other が無い）: 区分の名前は ${r.M.etf.map(x => x.label).join('・')}`);
-      ok(near(r.M.etfNow + r.M.castleNow, 100, 1e-6) && near(r.M.castleNow, W('MSFT') + W('ASML'), 0.001), `ETF と個別株の今の合計100（個別株 ${r.M.castleNow.toFixed(2)}%）`);
+      ok(near(r.M.etfNow + r.M.castleNow, 100, 1e-6) && near(r.M.castleNow, castleOwn.reduce((a, t) => a + W(t), 0), 0.001),
+         `ETF と個別株の今の合計100（個別株 ${r.M.castleNow.toFixed(2)}%＝${castleOwn.join('・')}${heldIn.some(t => !heldNet.includes(t)) ? '・' + heldIn.filter(t => !heldNet.includes(t)).map(t => t + ' は ' + SAMEOF[t] + ' に数える').join('・') : ''}）`);
       ok(r.M.etfExtra.length === 0, OB ? 'その他の区分があれば目標0%の ETF の行は出ない（区分に数えた）'
         : '目標0%で持つ ETF（QQQM・XLK）は同じ指数・同じ扱いで NASDAQ100 に数えた＝目標0%の行は出ない');
       const r2 = await model(p, { pf: base, led: ledAll, seats: SEATS10.slice(0, 5), fx: FX, pfRows, nmOf, mut: 'noOther' });
@@ -244,7 +249,7 @@ const RANK = String(T.castle_weighting || '').toLowerCase() === 'rank' && Array.
       const cur = {}; pfRows.slice().sort((a, b) => b.val - a.val).forEach((q, i) => { cur[q.t] = COL[i % COL.length]; });
       const col = Object.fromEntries(r.M.etf.concat(r.M.castle).map(x => [x.k, x.color]));
       for (const t of ETF_EXP) {                                               // 区分は中の保有のうち今いちばん大きい本の色（保有が無ければ残りの色）
-        const mem = [t].concat(heldNet.filter(a => SAMEOF[a] === t));
+        const mem = [t].concat(heldIn.filter(a => SAMEOF[a] === t));
         if (t === OB) heldNet.forEach(a => { if (!ETF_EXP.includes(a) && !SAMEOF[a]) mem.push(a); });
         const big = mem.filter(a => VAL[a] > 0).sort((a, b) => VAL[b] - VAL[a])[0];
         if (big) ok(col['n:' + t] === cur[big], `${t} の区分は中のいちばん大きい ${big} の色（${col['n:' + t]}）`);
@@ -319,7 +324,9 @@ const RANK = String(T.castle_weighting || '').toLowerCase() === 'rank' && Array.
           ok(diffs.every(([, a, b]) => a != null && b != null && near(a, b, 0.001)), `区分の今＝注文書の区分の比率（${diffs.map(([k, a]) => k + ' ' + (a == null ? '—' : a.toFixed(1))).join(' / ')}）`);
           ok(M.etf.every(x => plan.cat[x.k] && near(x.tw, +plan.cat[x.k].t, 1e-9)) && plan.cat.c && near(M.castleT, +plan.cat.c.t, 1e-9), '区分の目標＝注文書の区分の目標');
         } else ok(false, '注文書の区分の比率（__ccfCat）が無い');
-        ok(n === M.etf.length + M.castle.length && near(M.sum, 100, 0.5), `円の数 ${n}・割合の合計 ${M.sum}%`);
+        // 円は目標>0 の行だけ（ccfPftHTML と A1 と同じ）。2026-10-27 から個別株0%＝席の社は目標0%の行で円に出ない——旧の式は全行を数えて main でも落ちていた
+        const nExp = M.etf.concat(M.castle).filter(x => x.tw > 0).length;
+        ok(n === nExp && near(M.sum, 100, 0.5), `円の数 ${n}（目標>0 の行 ${nExp}）・割合の合計 ${M.sum}%`);
       }
       await o.ctx.close();
     }
