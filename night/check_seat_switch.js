@@ -18,6 +18,10 @@
  *   ⑥ 印の無い古い記録（v9.9.218 までに取り込んだ記録）→ 一度だけ全部を取り込み直す（かかった時間を出す）
  *   ⑦ 'ccf:autoRefresh'='off' → 何もしない
  *
+ * ★2026-11-02 から正本の portfolio.json は個別株の MSFT・ASML を ETF の区分に数える（target.ami_same_bucket・v9.9.221〜222）＝席を出ても「引き継ぎ」に
+ *   ならない。この検査は**席の入れ替わりと引き継ぎの仕組み**を見るので、配る portfolio.json から MSFT だけを外す（MSFT を個別株の区分に数える形）。
+ *   区分に数える社の帯の文（「売らずに持ち続ける・NASDAQ100 の区分に数える」）は check_sleeve_split.js ㉔ が見る。
+ *
  * playwright が要るので CI には入れていない（check_auto_import.js と同じ扱い）。
  *   使い方: NODE_PATH=$(npm root -g) node night/check_seat_switch.js
  */
@@ -46,6 +50,9 @@ const srv = http.createServer((q, r) => {
     if (rel === '/out/packs_index.json') return send(indexBuf(), 'application/json');
     if (/_gate_pack\.json$/.test(base)) { fetched[base] = (fetched[base] || 0) + 1; return send(packBuf(base), 'application/json'); }
     if (rel === '/out/today.json' && TODAY_BUY) { const j = JSON.parse(fs.readFileSync(f, 'utf8')); j.buy = TODAY_BUY.slice(); return send(Buffer.from(JSON.stringify(j)), 'application/json'); }
+    if (rel === '/portfolio.json') { const j = JSON.parse(fs.readFileSync(f, 'utf8')), sb = j.target && j.target.ami_same_bucket;   // 頭注の★: MSFT を個別株の区分に数える形で配る
+      if (sb) for (const k of Object.keys(sb)) if (Array.isArray(sb[k])) sb[k] = sb[k].filter(t => String(t).toUpperCase() !== 'MSFT');
+      return send(Buffer.from(JSON.stringify(j)), 'application/json'); }
     if (rel === '/index.html' && SIG_MARK) { const h = fs.readFileSync(f, 'utf8').replace('const $=id=>document.getElementById(id);', 'const $=id=>document.getElementById(id);// ' + SIG_MARK); return send(Buffer.from(h), 'text/html'); }
     send(fs.readFileSync(f));
   } catch (e) { r.writeHead(404); r.end('x'); }

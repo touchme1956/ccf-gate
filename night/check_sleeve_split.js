@@ -47,6 +47,12 @@
  *      再び2つ（iFreeNEXT と SMT 米国株式モメンタム）になったので、正本に2つ以上あれば正本の形のまま見る（楽天・プラス・SOX を足して3つにしない）。
  *      同日の最終「… 個別株10％ これが最終で」で SMT を外して1本に戻った＝旧の設定から2本の形を作る道へ戻る（コードは変えていない）
  *
+ *   ㉔ 個別株の MSFT を NASDAQ100 の区分に数える（2026-11-02 ユーザー明示指示「MSFTはNASDAQ100に入れて」・v9.9.222）:
+ *      ① 合成: 数える先の表示名（cinNm）は投資信託の本なら指数の名前（IFREE-NDX → NASDAQ100）・ETF はティッカー（SMH）。
+ *         席の入れ替わりの帯は、区分に数える社が出ても「引き継ぐ」と言わず「売らずに持ち続ける・NASDAQ100 の区分に数える」
+ *      ② 実データ（正本・cat・入金20万）: NASDAQ100 の区分の今が MSFT の分だけ増え、個別株の区分の今が同じだけ減る（MSFT・ASML の2社とも ETF の区分＝個別株は0%）・
+ *         引き継ぎに MSFT が出ない・表の名前に MSFT・🛒買付順位の印「NASDAQ100 に数える」・目標ポートフォリオの MSFT の行も「NASDAQ100 に数える」・
+ *         画面のどこにも「IFREE-NDX に数える」と出ない
  *   ㉓ 個別株の保有を ETF の区分に数える（2026-11-02 ユーザー明示指示「ASMLはSMHに入れて」）: target.ami_same_bucket に個別株（城）の名前があれば、
  *      その保有は ETF の区分（ASML → SMH）の「今」に足し、個別株の区分の「今」から引く（ccfPfLive の cin・ccfNetRows）。行そのものは個別株のまま。
  *      ① 合成の保有で純関数（区分の保有・個別株の比率・ETF の名前の一覧に入れない・区分の名前「◈ SMH（同じ扱いの ASML を含む）」）
@@ -124,13 +130,20 @@ const srv = http.createServer((q, r) => {
   //   ⚠初版は既定を 'target' と書き写していたので、2026-09-22 に正本を 'gap' へ戻した瞬間に
   //     4件が落ちた——コードは正しいのに検査だけが古い値で鳴る、この台帳が繰り返し踏んだ型。
   const withMode = (m) => { const o = JSON.parse(JSON.stringify(base)); o.target.sleeve_split_mode = m; return o; };
+  // ★2026-11-02: 正本は持っている個別株（MSFT・ASML）を2社とも ETF の区分に数える（ami_same_bucket・v9.9.221〜222）＝今の袖は 城0% / 網100% で
+  //   どちらも目標どおり（不足が無い＝門は 'full'＝目標比で割る・正しい挙動）。①②⑥ と cat の倒れ方は「城が目標を超えている月」の割り方を見る検査なので、
+  //   個別株（state.json の castle の行）を ETF の区分に数えない形（11-02 より前の数え方）で見る
+  const CASTLE_T = (() => { try { const st = JSON.parse(fs.readFileSync(path.join(ROOT, 'state.json'), 'utf8')).data || {};
+      return (JSON.parse(st['pf:portfolio'] || '{}').positions || []).filter(p => p.sleeve === 'castle').map(p => String(p.t).toUpperCase()); } catch (e) { return []; } })();
+  const ownCastle = (o) => { const sb = o && o.target && o.target.ami_same_bucket;
+    if (sb) for (const k of Object.keys(sb)) if (Array.isArray(sb[k])) sb[k] = sb[k].filter(t => !CASTLE_T.includes(String(t).toUpperCase())); return o; };
   // ★2026-10-27: 正本の個別株が0%（ETFだけ）のとき、持っていない個別株を先に買う検査（⑱・⑳ の castle）は個別株10%・ETF×0.9 の形で見る
   //   （個別株の目標が0なら先に買う個別株は無いのが正しい＝検査の前提が成り立たない）
   const castleSim = (o) => { if (+o.target.shiro_castle_pct === 0) { o.target.shiro_castle_pct = 10; o.target.ami_net_pct = 90;
     for (const k in o.target.ami_weights) o.target.ami_weights[k] = +o.target.ami_weights[k] * 0.9; } return o; };
 
   // ① mode='target' … 今の姿に関係なく常に目標比
-  await load(withMode('target'));
+  await load(ownCastle(withMode('target')));
   let sp = await split(1000000);
   const now = sp && sp.now ? sp.now : null;
   console.log('   今の袖: ' + (now ? '城' + now.c.toFixed(1) + '% / 網' + now.n.toFixed(1) + '%' : '(読めず)')
@@ -149,7 +162,7 @@ const srv = http.createServer((q, r) => {
   ok(/足りないほうから/.test(txt), '   採らなかったほう（不足按分）も併記＝どちらも隠さない');
 
   // ② mode='gap' … 不足側に厚く（超過側は0）
-  await load(withMode('gap'));
+  await load(ownCastle(withMode('gap')));
   sp = await split(1000000);
   ok(sp && sp.mode === 'gap', "② mode='gap' → 不足側に厚く");
   ok(sp && sp.castle === 0 && sp.net === 1000000,
@@ -189,7 +202,7 @@ const srv = http.createServer((q, r) => {
      + ' → 城 ¥' + (sp && sp.castle && sp.castle.toLocaleString()) + ' / 網 ¥' + (sp && sp.net && sp.net.toLocaleString()));
 
   // ⑥ mode='name' … 銘柄ごとの不足の合計の比で割る（材料を与えて判定そのものを見る）
-  await load(withMode('name'));
+  await load(ownCastle(withMode('name')));
   sp = await pg.evaluate(() => { window.__ccfNameGap = { c: 1, n: 3 }; localStorage.setItem('pf:monthly_total', '1000000'); return ccfSleeveSplit(); });
   ok(sp && sp.mode === 'name' && sp.castle === 250000 && sp.net === 750000,
      "⑥ mode='name' → 銘柄の不足 個別1:ETF3 なら 城¥250,000 / 網¥750,000（判定 " + (sp && sp.mode) + ' / 城 ¥' + (sp && sp.castle && sp.castle.toLocaleString()) + '）');
@@ -327,7 +340,7 @@ const srv = http.createServer((q, r) => {
      && (catHtml.castle + catHtml.net + catHtml.rest) === 170000,
      '   区分が目標超過で買わない本は理由を名指し・個別株＋ETF＋投資信託＋残り＝入金額（' + [catHtml.castle, catHtml.etf, catHtml.fund, catHtml.rest].join(' / ') + '）');
   // 画面: 正本を 'cat' にした門で「区分の比率が最優先」と出る（台帳が空なので注文書は無いが、割り方の1行は出る）
-  await load(withMode('cat'));
+  await load(ownCastle(withMode('cat')));
   sp = await pg.evaluate(() => { window.__ccfCat = { tot: 2440000, 'n:IFREE-NDX': { t: 40, now: 15.8, nm: 'NASDAQ100', fund: true },
       'n:XLK': { t: 20, now: 30.3, nm: 'XLK' }, 'n:SMH': { t: 20, now: 15.8, nm: 'SMH' }, c: { t: 20, now: 38.2, nm: '個別株' } };
     window.__ccfNameGap = { c: 9, n: 30 }; localStorage.setItem('pf:monthly_total', '170000'); return ccfSleeveSplit(); });
@@ -821,11 +834,13 @@ const srv = http.createServer((q, r) => {
       };
       const onC = withMode('cat'); onC.target.ami_other = AO17;
       const on = await load17(onC);
-      const offC = withMode('cat'); offC.target.ami_other = AO17; delete offC.target.ami_same_bucket;
+      // 2026-11-02 から ami_same_bucket に個別株（MSFT・ASML）も入る——off は XLK だけを外す（個別株の数え方は on/off で同じ＝その他との行き来だけを見る）
+      const offC = withMode('cat'); offC.target.ami_other = AO17;
+      offC.target.ami_same_bucket = Object.assign({}, offC.target.ami_same_bucket, { 'IFREE-NDX': (offC.target.ami_same_bucket['IFREE-NDX'] || []).filter(t => t !== 'XLK') });
       const off = await load17(offC);
       ok(on.ndx && off.ndx && on.oth && off.oth
          && Math.abs((on.ndx.now - off.ndx.now) - (off.oth.now - on.oth.now)) < 0.05 && (on.ndx.now - off.ndx.now) > 1
-         && /同じ指数の QQQM・同じ扱いの XLK を含む/.test(on.ndxRow) && /XLK（NASDAQ100 に数える）/.test(on.zero) && !/XLK（その他/.test(on.zero)
+         && /同じ指数の QQQM・同じ扱いの XLK(・[A-Z0-9.-]+)* を含む/.test(on.ndxRow) && /XLK（NASDAQ100 に数える）/.test(on.zero) && !/XLK（その他/.test(on.zero)
          && /XLK（その他 ETF・投資信託に数える）/.test(off.zero),
          '⑰ 実データ: NASDAQ100 の区分 ' + (off.ndx ? off.ndx.now.toFixed(1) : '?') + ' → ' + (on.ndx ? on.ndx.now.toFixed(1) : '?') + '%・その他（' + OB + '）' + (off.oth ? off.oth.now.toFixed(1) : '?') + ' → ' + (on.oth ? on.oth.now.toFixed(1) : '?')
          + '%（XLK の分が移る）・表「' + on.ndxRow.split('\n')[0].slice(0, 70) + '」・「' + (on.zero.match(/XLK（[^）]*）/) || [''])[0] + '」');
@@ -881,9 +896,10 @@ const srv = http.createServer((q, r) => {
           return { tags, line, note: !!document.querySelector('#pg5 .first-note'), total: sum[1] || '', castle: sum[2] || '' };
         });
       };
-      const c18 = castleSim(withMode('cat')); c18.target.unowned_first = 'castle';
+      // 2026-11-02〜: 「個別株の区分が目標超過」の月を見る検査なので、個別株を ETF の区分に数えない形（ownCastle・頭の★）で見る
+      const c18 = ownCastle(castleSim(withMode('cat'))); c18.target.unowned_first = 'castle';
       const r1 = await load18(c18);
-      const offU = castleSim(withMode('cat')); offU.target.unowned_first = false; delete offU.target.castle_unowned_first;
+      const offU = ownCastle(castleSim(withMode('cat'))); offU.target.unowned_first = false; delete offU.target.castle_unowned_first;
       const r0 = await load18(offU);
       ok(r1.tags.length >= 1 && /持っていない個別株を先に/.test(r1.line) && r1.note && r1.castle && r1.castle !== '0'
          && !r0.tags.length && !/持っていない個別株を先に/.test(r0.line) && !r0.note && r0.castle === '0',
@@ -1033,7 +1049,8 @@ const srv = http.createServer((q, r) => {
       const d = Math.min(+W.SMH || 0, 10); W.SMH = (+W.SMH || 0) - d; W['RPLUS-SOX'] = d; return o; };
     if (has21 || old21) {
       if (!has21) DASHX = { 'RPLUS-SOX': { px: 3.0943, prev: 3.0943, chg: 0, chgPct: 0, src: 'check' } };   // 盤に基準価額が無ければ足す（1口あたりの円・2026-10-14）
-      const two = (m) => { const o = withSox(withMode(m)), W = o.target.ami_weights;   // NASDAQ100 も目標を下回る形（合計は ami_net_pct のまま）
+      // 2026-11-02〜: 正本は MSFT を NASDAQ100 の区分に数える（NASDAQ100 75%）＝「NASDAQ100 も目標を下回る形」を作るため、個別株を ETF の区分に数えない形（ownCastle・頭の★）で見る
+      const two = (m) => { const o = ownCastle(withSox(withMode(m))), W = o.target.ami_weights;   // NASDAQ100 も目標を下回る形（合計は ami_net_pct のまま）
         const d = Math.min(+W.SMH || 0, 15); W['IFREE-NDX'] = (+W['IFREE-NDX'] || 0) + d; W.SMH = (+W.SMH || 0) - d; return o; };
       const load21 = async (over, amt) => {
         OVER = over;
@@ -1167,6 +1184,74 @@ const srv = http.createServer((q, r) => {
          + '（外すと ' + off.carry.join('・') + '）・印「' + on.chip + '」・表「' + on.smhRow.split('\n')[0].slice(0, 40) + '」');
       OVER = null;
     } else ok(true, '   （正本に ami_same_bucket の SMH:[ASML] が無いので ㉓ の実データの部分は飛ばす）');
+  }
+  // ㉔ 個別株の MSFT を NASDAQ100 の区分に数える（2026-11-02 ユーザー明示指示「MSFTはNASDAQ100に入れて」・v9.9.222）
+  {
+    await pg.goto('http://localhost:' + PORT + '/index.html'); await pg.waitForTimeout(600);
+    const q24 = await pg.evaluate(() => {
+      localStorage.clear();
+      const mk = (sb) => ({ asof: '2026-11-02', positions: [
+          { ticker: 'IFREE-NDX', value_jpy: 300000, sleeve: '網' }, { ticker: 'XLK', value_jpy: 150000, sleeve: '網' },
+          { ticker: 'SMH', value_jpy: 150000, sleeve: '網' }, { ticker: 'MSFT', value_jpy: 200000, sleeve: '城' },
+          { ticker: 'ASML', value_jpy: 100000, sleeve: '城' }],
+        target: { ami_net_pct: 100, ami_names: ['IFREE-NDX', 'XLK', 'SMH'], ami_weights: { 'IFREE-NDX': 80, XLK: 0, SMH: 20 },
+          ami_funds: { 'IFREE-NDX': { name: 'iFreeNEXT NASDAQ100インデックス', short: 'iFreeNEXT NASDAQ100', index: 'NASDAQ100' } },
+          ...(sb ? { ami_same_bucket: sb } : {}) } });
+      const on = ccfNetRows(null, mk({ 'IFREE-NDX': ['XLK', 'MSFT'], SMH: ['ASML'] }));
+      const I = on.rows.find(y => y.t === 'IFREE-NDX');
+      // 席の入れ替わりの帯（純関数に近い: 覚えた席を置いてから呼ぶ）
+      localStorage.setItem('ccf:seats', JSON.stringify({ seats: ['CW', 'MSFT', 'LRCX'], at: '2026-11-01T00:00:00Z' }));
+      const banOn = ccfSeatBannerHTML(['CW', 'LRCX', 'KLAC'], { pos: { MSFT: 28.4 }, castlePct: 0, cin: { MSFT: 'NASDAQ100' } });
+      const banOff = ccfSeatBannerHTML(['CW', 'LRCX', 'KLAC'], { pos: { MSFT: 28.4 }, castlePct: 0 });
+      const txt = h => { const d = document.createElement('div'); d.innerHTML = h; return d.innerText || d.textContent; };
+      localStorage.removeItem('ccf:seats');
+      return { nI: I.pos, c: on.live.c, msCin: on.live.byT.MSFT.cin || null, msNm: on.live.byT.MSFT.cinNm || null, asNm: on.live.byT.ASML.cinNm || null,
+        parts: I.alParts.map(p => p.t + ':' + p.kind), net: on.live.net, note: ccfAliasNote(I), banOn: txt(banOn), banOff: txt(banOff) };
+    });
+    const r1 = v => Math.round(v * 100) / 100;
+    ok(r1(q24.nI) === 72.22 && r1(q24.c) === 0 && q24.msCin === 'IFREE-NDX' && q24.msNm === 'NASDAQ100' && q24.asNm === 'SMH'
+       && q24.parts.join(',') === 'XLK:bucket,MSFT:bucket' && !q24.net.includes('MSFT') && q24.note === '（うち XLK 16.7%・MSFT 22.2%＝同じ扱い）',
+       '㉔ 合成: NASDAQ100 の区分 ' + r1(q24.nI) + '%（iFreeNEXT 33.3＋XLK 16.7＋MSFT 22.2）・個別株 ' + r1(q24.c) + '%・数える先の表示名 MSFT→' + q24.msNm
+       + '（鍵 ' + q24.msCin + '）・ASML→' + q24.asNm + '・「' + q24.note + '」');
+    ok(/出 MSFT（保有 28\.4%→売らずに持ち続ける・NASDAQ100 の区分に数える）/.test(q24.banOn) && !/MSFT（保有 28\.4%→売らずに引き継ぐ/.test(q24.banOn)
+       && /保有を ETF の区分に数える社〔MSFT→NASDAQ100〕はその区分に数えたまま/.test(q24.banOn)
+       && /出 MSFT（保有 28\.4%→売らずに引き継ぐ）/.test(q24.banOff) && !/ETF の区分に数える社/.test(q24.banOff),
+       '   席の入れ替わりの帯: 区分に数える社は「' + ((q24.banOn.match(/出 MSFT（[^）]*）/) || [''])[0]) + '」（数えない社は「' + ((q24.banOff.match(/出 MSFT（[^）]*）/) || [''])[0]) + '」のまま）');
+    const SB = (base.target || {}).ami_same_bucket;
+    if (SB && Array.isArray(SB['IFREE-NDX']) && SB['IFREE-NDX'].includes('MSFT')) {
+      const load24 = async (over) => {
+        OVER = over;
+        await pg.goto('http://localhost:' + PORT + '/index.html'); await pg.waitForTimeout(600);
+        await pg.evaluate(stt => { localStorage.clear(); for (const k in stt.data) localStorage.setItem(k, stt.data[k]);
+          localStorage.setItem('ccf:stateSavedAt', stt.savedAt); }, ST);
+        await pg.reload(); await pg.waitForTimeout(1500);
+        await pg.evaluate(() => ccfImportAllPacks()); await pg.waitForTimeout(1800);
+        await pg.evaluate(() => { localStorage.setItem('pf:monthly_total', '200000'); showPage(5); }); await pg.waitForTimeout(3200);
+        const a = await pg.evaluate(() => {
+          const C = window.__ccfCat || {}, txt = ((document.querySelector('#pg5') || {}).innerText || '');
+          const ndxRow = ((document.querySelector('#pg5 .catrow[data-cat="n:IFREE-NDX"]') || {}).innerText || '');
+          return { ndx: C['n:IFREE-NDX'] ? C['n:IFREE-NDX'].now : null, c: C.c ? C.c.now : null, carry: (window.__ccfCarry || []).map(x => x.t),
+            ndxRow, chip: (txt.match(/◆保有\d+%・NASDAQ100 に数える/) || [''])[0], bad: /IFREE-NDX に数える|IFREE-NDX の区分に数える/.test(txt),
+            tot: +((txt.match(/合計 約?¥([\d,]+)/) || [0, '0'])[1]).replace(/,/g, '') };
+        });
+        await pg.evaluate(() => showPage(6)); await pg.waitForTimeout(3000);
+        const b6 = await pg.evaluate(() => { const e = document.querySelector('#pftCard [data-k="c:MSFT"]'); const t6 = ((document.querySelector('#pg6') || {}).innerText || '');
+          return { pft: e ? e.innerText : '', bad6: /IFREE-NDX に数える|IFREE-NDX の区分に数える/.test(t6) }; });
+        return Object.assign(a, b6);
+      };
+      const on = await load24(withMode('cat'));
+      const offC = withMode('cat');
+      offC.target.ami_same_bucket = Object.assign({}, offC.target.ami_same_bucket, { 'IFREE-NDX': (offC.target.ami_same_bucket['IFREE-NDX'] || []).filter(t => t !== 'MSFT') });
+      const off = await load24(offC);
+      const dN = (on.ndx - off.ndx), dC = (off.c - on.c);
+      ok(on.ndx != null && off.ndx != null && dN > 1 && Math.abs(dN - dC) < 0.05 && Math.abs(on.c) < 0.05 && !on.carry.includes('MSFT') && off.carry.includes('MSFT')
+         && /同じ扱いの [^）]*MSFT/.test(on.ndxRow) && !/MSFT/.test(off.ndxRow) && !!on.chip && !on.bad && !on.bad6
+         && /NASDAQ100 に数える/.test(on.pft) && !/引き継ぎ|多い/.test(on.pft) && on.tot > 0 && off.tot > 0,
+         '㉔ 実データ（正本・cat・入金20万）: NASDAQ100 の区分 ' + (off.ndx != null ? off.ndx.toFixed(1) : '?') + ' → ' + (on.ndx != null ? on.ndx.toFixed(1) : '?')
+         + '%・個別株 ' + (off.c != null ? off.c.toFixed(1) : '?') + ' → ' + (on.c != null ? on.c.toFixed(1) : '?') + '%（MSFT ' + dN.toFixed(1) + '% が移る）・引き継ぎ ' + (on.carry.join('・') || 'なし')
+         + '（外すと ' + off.carry.join('・') + '）・印「' + on.chip + '」・目標ポートフォリオの MSFT「' + on.pft.replace(/\s+/g, ' ').slice(-24) + '」・画面に「IFREE-NDX に数える」は無い');
+      OVER = null;
+    } else ok(true, '   （正本に ami_same_bucket の IFREE-NDX:[MSFT] が無いので ㉔ の実データの部分は飛ばす）');
   }
   await pg.evaluate(() => localStorage.removeItem('pf:monthly_total'));
   await b.close(); srv.close();
