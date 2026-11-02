@@ -47,6 +47,12 @@
  *      再び2つ（iFreeNEXT と SMT 米国株式モメンタム）になったので、正本に2つ以上あれば正本の形のまま見る（楽天・プラス・SOX を足して3つにしない）。
  *      同日の最終「… 個別株10％ これが最終で」で SMT を外して1本に戻った＝旧の設定から2本の形を作る道へ戻る（コードは変えていない）
  *
+ *   ㉓ 個別株の保有を ETF の区分に数える（2026-11-02 ユーザー明示指示「ASMLはSMHに入れて」）: target.ami_same_bucket に個別株（城）の名前があれば、
+ *      その保有は ETF の区分（ASML → SMH）の「今」に足し、個別株の区分の「今」から引く（ccfPfLive の cin・ccfNetRows）。行そのものは個別株のまま。
+ *      ① 合成の保有で純関数（区分の保有・個別株の比率・ETF の名前の一覧に入れない・区分の名前「◈ SMH（同じ扱いの ASML を含む）」）
+ *      ② 実データ（正本・cat・入金20万）: SMH の区分の今が ASML の分だけ増え、個別株の区分の今が同じだけ減る・引き継ぎに ASML を出さない・
+ *         🛒買付順位の ASML の印「SMH に数える」・設定を外すと元へ戻る
+ *
  * playwright が要るので CI には入れていない。使い方: node night/check_sleeve_split.js
  */
 const { chromium } = require('playwright');
@@ -1105,6 +1111,62 @@ const srv = http.createServer((q, r) => {
     const r22o = await load22(off, 200000);
     ok(!r22o.has && r22o.recs.length === 0 && r22o.tot === r22.tot, '㉒ order_split=false: 口座の箱と名義ごとの欄が出ない・合計は同じ ¥' + r22o.tot.toLocaleString());
     OVER = null;
+  }
+  // ㉓ 個別株の保有を ETF の区分に数える（2026-11-02 ユーザー明示指示「ASMLはSMHに入れて」）
+  {
+    await pg.goto('http://localhost:' + PORT + '/index.html'); await pg.waitForTimeout(600);
+    const q23 = await pg.evaluate(() => {
+      localStorage.clear();
+      const mk = (sb) => ({ asof: '2026-11-02', positions: [
+          { ticker: 'IFREE-NDX', value_jpy: 300000, sleeve: '網' }, { ticker: 'XLK', value_jpy: 150000, sleeve: '網' },
+          { ticker: 'SMH', value_jpy: 150000, sleeve: '網' }, { ticker: 'MSFT', value_jpy: 200000, sleeve: '城' },
+          { ticker: 'ASML', value_jpy: 100000, sleeve: '城' }],
+        target: { ami_net_pct: 100, ami_names: ['IFREE-NDX', 'XLK', 'SMH'], ami_weights: { 'IFREE-NDX': 80, XLK: 0, SMH: 20 },
+          ...(sb ? { ami_same_bucket: sb } : {}) } });
+      const on = ccfNetRows(null, mk({ 'IFREE-NDX': ['XLK'], SMH: ['ASML'] })), off = ccfNetRows(null, mk({ 'IFREE-NDX': ['XLK'] }));
+      const x = (r, t) => r.rows.find(y => y.t === t), S = x(on, 'SMH');
+      const lab = ccfCatLabel({ 'n:SMH': { t: 20, nm: 'SMH', alParts: S.alParts } }, 'n:SMH', { full: true });
+      const labP = ccfCatLabel({ 'n:SMH': { t: 20, nm: 'SMH', alParts: S.alParts } }, 'n:SMH', { plain: true });
+      return { onS: S.pos, offS: x(off, 'SMH').pos, onI: x(on, 'IFREE-NDX').pos, parts: S.alParts.map(p => p.t + ':' + p.kind),
+        onC: on.live.c, offC: off.live.c, onN: on.live.n, cin: on.live.cin, asCin: on.live.byT.ASML.cin || null, offCin: off.live.byT.ASML.cin || null,
+        net: on.live.net, drop: on.drop.map(d => d.t), note: ccfAliasNote(S), lab, labP };
+    });
+    const r1 = v => Math.round(v * 100) / 100;
+    ok(r1(q23.onS) === 27.78 && r1(q23.offS) === 16.67 && r1(q23.onI) === 50 && q23.parts.join(',') === 'ASML:bucket'
+       && r1(q23.onC) === 22.22 && r1(q23.offC) === 33.33 && r1(q23.onN) === 77.78 && r1(q23.cin) === 11.11
+       && q23.asCin === 'SMH' && q23.offCin === null && !q23.net.includes('ASML') && !q23.drop.includes('ASML'),
+       '㉓ 合成: SMH の区分 ' + r1(q23.offS) + ' → ' + r1(q23.onS) + '%（ASML 11.11 を足す）・個別株 ' + r1(q23.offC) + ' → ' + r1(q23.onC)
+       + '%・ETF 側 ' + r1(q23.onN) + '%・ETF の名前の一覧に ASML を入れない・設定が無ければ ASML は個別株のまま');
+    ok(q23.note === '（うち ASML 11.1%＝同じ扱い）' && q23.lab === '◈ SMH（同じ扱いの ASML を含む）' && q23.labP === 'SMH',
+       '   表示: 「' + q23.note + '」・区分の名前「' + q23.lab + '」（文の中では「' + q23.labP + '」）');
+    const SB = (base.target || {}).ami_same_bucket;
+    if (SB && Array.isArray(SB.SMH) && SB.SMH.includes('ASML')) {
+      const load23 = async (over) => {
+        OVER = over;
+        await pg.goto('http://localhost:' + PORT + '/index.html'); await pg.waitForTimeout(600);
+        await pg.evaluate(stt => { localStorage.clear(); for (const k in stt.data) localStorage.setItem(k, stt.data[k]);
+          localStorage.setItem('ccf:stateSavedAt', stt.savedAt); }, ST);
+        await pg.reload(); await pg.waitForTimeout(1500);
+        await pg.evaluate(() => ccfImportAllPacks()); await pg.waitForTimeout(1800);
+        await pg.evaluate(() => { localStorage.setItem('pf:monthly_total', '200000'); showPage(5); }); await pg.waitForTimeout(3200);
+        return pg.evaluate(() => {
+          const C = window.__ccfCat || {}, txt = ((document.querySelector('#pg5') || {}).innerText || '');
+          const smhRow = ((document.querySelector('#pg5 .catrow[data-cat="n:SMH"]') || {}).innerText || '');
+          return { smh: C['n:SMH'] ? C['n:SMH'].now : null, c: C.c ? C.c.now : null, carry: (window.__ccfCarry || []).map(x => x.t),
+            smhRow, chip: (txt.match(/◆保有\d+%・SMH に数える/) || [''])[0], tot: +((txt.match(/合計 約?¥([\d,]+)/) || [0, '0'])[1]).replace(/,/g, '') };
+        });
+      };
+      const on = await load23(withMode('cat'));
+      const offC = withMode('cat'); offC.target.ami_same_bucket = Object.assign({}, offC.target.ami_same_bucket); delete offC.target.ami_same_bucket.SMH;
+      const off = await load23(offC);
+      const dS = (on.smh - off.smh), dC = (off.c - on.c);
+      ok(on.smh != null && off.smh != null && dS > 1 && Math.abs(dS - dC) < 0.05 && !on.carry.includes('ASML') && off.carry.includes('ASML')
+         && /同じ扱いの ASML を含む/.test(on.smhRow) && !/ASML/.test(off.smhRow) && !!on.chip && on.tot > 0 && off.tot > 0,
+         '㉓ 実データ（正本・cat・入金20万）: SMH の区分 ' + (off.smh != null ? off.smh.toFixed(1) : '?') + ' → ' + (on.smh != null ? on.smh.toFixed(1) : '?')
+         + '%・個別株 ' + (off.c != null ? off.c.toFixed(1) : '?') + ' → ' + (on.c != null ? on.c.toFixed(1) : '?') + '%（ASML ' + dS.toFixed(1) + '% が移る）・引き継ぎ ' + (on.carry.join('・') || 'なし')
+         + '（外すと ' + off.carry.join('・') + '）・印「' + on.chip + '」・表「' + on.smhRow.split('\n')[0].slice(0, 40) + '」');
+      OVER = null;
+    } else ok(true, '   （正本に ami_same_bucket の SMH:[ASML] が無いので ㉓ の実データの部分は飛ばす）');
   }
   await pg.evaluate(() => localStorage.removeItem('pf:monthly_total'));
   await b.close(); srv.close();
