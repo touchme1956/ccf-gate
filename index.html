@@ -1,5 +1,13 @@
 <!DOCTYPE html>
-<html lang="ja"><head><script>try{document.documentElement.setAttribute("data-theme",localStorage.getItem("ccf_theme")||"light");}catch(e){document.documentElement.setAttribute("data-theme","light");}</script><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#ffffff"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="門"><meta name="apple-mobile-web-app-status-bar-style" content="default"><link rel="apple-touch-icon" href="assets/icon-180.png"><link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
+<html lang="ja"><head><script>try{document.documentElement.setAttribute("data-theme",localStorage.getItem("ccf_theme")||"light");}catch(e){document.documentElement.setAttribute("data-theme","light");}</script><script>/* ★ETF版の入口（2026-11-03 ユーザー指示「別サイトで作って買付順位などは同じような作りで作ってほしい」）:
+   index.html?site=etf（etf.html から来る）なら門を「ETF版」で開く——タブは 🏦保有・📈成績・🛒買付順位（今月の買付プランと ◈ETF だけ）・📊分析（ami.html）。
+   **計算は門と同じ1つの実装**（注文書・区分の比率・口座 A/B・iDeCo は門の関数をそのまま使う＝写さない）。変えるのは見せ方だけ（採点・四関門・配分・売却規律は不変）。
+   この頭で名前・アイコン・manifest を差し替える（ホーム画面に追加するときに読まれる）。 */
+(function(){try{var q=new URLSearchParams(location.search);if(q.get('site')!=='etf')return;var d=document.documentElement;d.setAttribute('data-site','etf');
+document.addEventListener('DOMContentLoaded',function(){try{document.title='ETFの門 ｜ CCF Ω';
+var set=function(sel,attr,v){var e=document.querySelector(sel);if(e)e.setAttribute(attr,v);};
+set('link[rel="manifest"]','href','manifest-etf.webmanifest');set('meta[name="apple-mobile-web-app-title"]','content','ETF');
+set('link[rel="apple-touch-icon"]','href','assets/icon-etf-180.png');set('link[rel="icon"]','href','assets/icon-etf-192.png');}catch(e){}});}catch(e){}})();</script><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#ffffff"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="門"><meta name="apple-mobile-web-app-status-bar-style" content="default"><link rel="apple-touch-icon" href="assets/icon-180.png"><link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
 <title>CCF Ω — 壊れない複利の門 × 未来の門（完全版・詳解）</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -618,7 +626,14 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 <link rel="stylesheet" href="skin.css?v=20261012-1">
 <!-- v9.9.131: 人の決定(state.json)の読み書き。**両ページが同じ実装を読む**（写すと必ず割れる・v9.9.65）。
      本体より前に読むのは localStorage.setItem の包み(dirty検出)を先に効かせるため -->
-<script src="state.js?v=20261010-2"></script><script src="icon.js"></script></head><body><div id="pgBg" aria-hidden="true"></div>
+<style>/* ETF版（data-site=etf）だけに効く。門の通常の姿には何も効かない */
+html:not([data-site="etf"]) .site-etf-only{display:none!important}
+html[data-site="etf"] #grp1,html[data-site="etf"] #grp5,html[data-site="etf"] #grp6{display:none!important}
+html[data-site="etf"] .gate-hero{display:none!important}
+html[data-site="etf"] #pg10{display:none!important}
+html[data-site="etf"] .etf-hide{display:none!important}
+.site-etf-badge{display:inline-flex;align-items:center;font-weight:800;font-size:14px;padding:0 10px 0 4px;white-space:nowrap}
+</style><script src="state.js?v=20261010-2"></script><script src="icon.js"></script></head><body><div id="pgBg" aria-hidden="true"></div>
 <!-- v9.9.177 息づく地（表示だけ・判定に不使用）。三つの淡い光が別々の周期で漂う＝追加ダウンロード0バイトで「裏で動く背景」を作る -->
 <!-- v9.9.171（2026-08-23 ユーザー指示「使わないタブをなくして統合」）:
      12タブ → **6つの群**へ。⚠ pgN の div と tabN の id は**一つも変えていない**——
@@ -629,12 +644,15 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
      群を 今日・保有・成績・買付順位・台帳（📚台帳だけ）・その他 の6つにし、章の帯（二段目）は「その他」のときだけ出す。
      pgN/tabN の id は変えていない（検査器が tabN を押すため）。 -->
 <nav class="pgnav" id="grpNav">
+ <span class="site-etf-only site-etf-badge">◈ ETF</span>
  <button id="grp1" onclick="showGroup(1)">📋 今日</button>
  <button id="grp2" onclick="showGroup(2)">🏦 保有</button>
  <button id="grp3" onclick="showGroup(3)">📈 成績</button>
  <button id="grp4" onclick="showGroup(4)">🛒 買付順位</button>
  <button id="grp5" onclick="showGroup(5)">📚 台帳</button>
  <button id="grp6" onclick="showGroup(6)">☰ その他</button>
+ <button id="grpEtfA" class="site-etf-only" onclick="location.href='ami.html'">📊 分析</button>
+ <button id="grpEtfG" class="site-etf-only" onclick="location.href='index.html'" title="個別株の門（通常の門）を開く">🏯 門Ω</button>
 </nav>
 <!-- 章のチップ。**常にDOMに在る**（群が閉じていても getElementById で見つかる＝検査器が壊れない）。
      ⚠ v9.9.173 で**章が1つの群でも出す**ようにした（隠すと二段目の存在が画面から消えるため）。 -->
@@ -9911,6 +9929,33 @@ function ccfDownload(btn){
   };
   paint();
   (document.body||document.documentElement).appendChild(b);
+})();
+</script>
+<script>
+/* ★ETF版（2026-11-03・頭の site=etf の説明を見よ）。門の起動の流れには手を入れず、外から見せ方だけを変える。
+   ① 🛒買付順位（#planBox）は「今月の買付プラン」（最初の見出しより前）と「◈ ETF」の節だけを見せる
+      ——門が描き直すたびに MutationObserver で付け直す（renderPlan は innerHTML を入れ替えるので childList の変化で拾える）。
+   ② 起動時は 🛒買付順位（?pg=6 で🏦保有・?pg=12 で📈成績）を開く。📋今日・📚台帳・☰その他のタブは出さない。 */
+(function(){
+  if(document.documentElement.getAttribute('data-site')!=='etf')return;
+  function ccfEtfFilter(box){
+    if(!box)return; let show=true;
+    [...box.children].forEach(c=>{
+      if(c.tagName==='H2')show=/^\s*◈/.test(c.textContent||'');
+      c.classList.toggle('etf-hide',!show);
+    });
+  }
+  window.ccfEtfFilter=ccfEtfFilter;
+  let want=5; try{ const g=+new URLSearchParams(location.search).get('pg'); if([5,6,7,12].includes(g))want=g; }catch(e){}
+  function go(){ try{ if(typeof showPage==='function')showPage(want); }catch(e){} }
+  document.addEventListener('DOMContentLoaded',function(){
+    const box=document.getElementById('planBox');
+    if(box){ new MutationObserver(()=>ccfEtfFilter(box)).observe(box,{childList:true}); ccfEtfFilter(box); }
+    go();
+    /* 門の起動（台帳・state.json の読み込み）が終わったら、まだ同じページなら描き直す */
+    let n=0; const t=setInterval(function(){ n++;
+      if(window.__ccfBooted||n>120){ clearInterval(t); const p=window.__ccfPage; if(p===want||p===10||!p)go(); } },250);
+  });
 })();
 </script>
 </body></html>

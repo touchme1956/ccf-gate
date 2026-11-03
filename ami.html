@@ -2,440 +2,774 @@
 <html lang="ja"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>ETFの門 — ETFの審査 ｜ CCF Ω</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600;700&family=Zen+Kaku+Gothic+New:wght@300;400;500;700&family=Marcellus&display=swap" rel="stylesheet">
+<title>ETFの門 ｜ CCF Ω</title>
+<meta name="description" content="ETF・投資信託の側の門。目標と今・配合を歴史で試す・配分の変遷・これまでの歴史検証・ETF図鑑・規約と費用。表示だけで判定と配分には使わない。">
+<link rel="manifest" href="manifest-etf.webmanifest">
+<link rel="apple-touch-icon" href="assets/icon-etf-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!--
+  ETFの門 v2（2026-11-03 作り直し・ユーザー指示「1でやって〔ami.html を今の門にそろえて作り直す〕
+  それとこれまで私が見てきた歴史検証をグラフで分かりやすくみれるようになど新機能をたくさん盛り込んで」）
+
+  ■ 何をしているか（**表示だけ**）
+    門Ω（index.html）の採点・四関門・売却規律 S1/S2/S3・配分・注文書には一切触れない。ここで動かせるのは
+    「配合を試す」の重み（この端末の localStorage `ami:mix`・state.json には同期しない）だけで、portfolio.json は書き換えない。
+  ■ 読むもの（同一オリジンの静的 JSON）
+    portfolio.json（目標の正本 target.ami_weights・旧の姿 ami_mix_superseded_*）／state.json（株数）／out/dashboard.json（値段・ドル円）／
+    out/etf_profiles.json（中身）／out/ami_series.json（月次リターン・night/ami_series.py）／out/ami_digest.json（歴史検証の要約・night/ami_digest.py）
+  ■ 旧版（v1.0）の文
+    ETFの思想・キル（論外線）・採点の廃止（2026-08-19）の記録は「📏 規約と費用」へ移した（消していない）。
+    v1.0 のルックスルーの「¼ケリー上限8%」の言い方は v9.9.188 で上限を撤廃したので外した。
+-->
 <style>
-:root{
- --bg:#080a0e;--bg2:#0c0f16;--panel:#121826;--panel2:#0e131d;--line:#28344a;--line2:#1b2333;
- --ink:#f0ecdf;--ink-soft:#cfc5ab;--muted:#94a0b4;--dim:#7c879a;
- --gold:#c9a64a;--gold-bright:#ecd494;--gold-deep:#9c7a2c;--gold-line:rgba(201,166,74,.40);
- --jade:#54b88a;--steel:#5d8cc2;--rust:#cf5f48;--amber:#d69a3c;
- --pass:#8cc091;--fail:#cf7a60;--maxw:1080px;
- --mincho:"Shippori Mincho",serif;
+html[data-theme="light"],html:not([data-theme]){
+ color-scheme:light;
+ --bg:#f6f7f9;--card:#ffffff;--hover:#f3f4f6;--line:#e7e9ec;--line2:#d9dce1;
+ --ink:#0f1114;--ink2:#3b4048;--mute:#5a6069;--dim:#6a7079;
+ --up:#08873a;--down:#d0281a;--warn:#9a5b00;--info:#1e5fd1;
+ --up-bg:rgba(0,200,5,.08);--down-bg:rgba(208,40,26,.07);--warn-bg:rgba(214,140,0,.09);--info-bg:rgba(30,95,209,.07);
+ --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;--s5:#e87ba4;--s6:#008300;--s7:#6250d6;--s8:#e34948;--sx:#9aa0a8;
+ --grid:#eceef1;--axis:#8a9099;
 }
-html[data-theme="light"]{
- --bg:#f7f4ec;--bg2:#f2eee3;--panel:#fffdf7;--panel2:#faf7ef;--line:#ded5c0;--line2:#e8e0cd;
- --ink:#22201b;--ink-soft:#4a4438;--muted:#6b6558;--dim:#8b8477;
- --gold:#a8842f;--gold-bright:#8a6a20;--gold-deep:#7a5c18;--gold-line:rgba(168,132,47,.36);
- --jade:#2f8b60;--steel:#3d6a9e;--rust:#b34728;--amber:#a8721c;--pass:#2f8b60;--fail:#b34728;
+html[data-theme="dark"],html[data-theme="soft"]{
+ color-scheme:dark;
+ --bg:#0b0c0e;--card:#141619;--hover:#1c1f23;--line:#24272b;--line2:#30343a;
+ --ink:#f4f5f6;--ink2:#cdd0d4;--mute:#a3a9b1;--dim:#8d939c;
+ --up:#29d35a;--down:#ff6a4d;--warn:#f0a93a;--info:#6ea8ff;
+ --up-bg:rgba(0,200,5,.10);--down-bg:rgba(255,80,0,.10);--warn-bg:rgba(240,169,58,.10);--info-bg:rgba(110,168,255,.10);
+ --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--s6:#008300;--s7:#9085e9;--s8:#e66767;--sx:#6b7179;
+ --grid:#1f2226;--axis:#7d838c;
 }
+html[data-theme="soft"]{--bg:#121417;--card:#1a1d21}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);
- font-family:"Zen Kaku Gothic New","Hiragino Kaku Gothic ProN",sans-serif;
- font-size:15px;line-height:1.85;-webkit-text-size-adjust:100%;}
-.wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
-h1,h2,h3{font-family:var(--mincho);font-weight:600;letter-spacing:.02em;margin:0}
-a{color:var(--gold-bright)}
-header{padding:44px 0 18px;border-bottom:1px solid var(--line);background:
- radial-gradient(1200px 340px at 50% -120px,rgba(201,166,74,.13),transparent 70%)}
-.eyebrow{text-align:center;color:var(--gold);letter-spacing:.42em;font-size:11.5px;margin-bottom:12px}
-h1.top{text-align:center;font-size:clamp(28px,5vw,42px)}
-h1.top .o{color:var(--gold-bright)}
-.lead{max-width:760px;margin:14px auto 0;text-align:center;color:var(--ink-soft);font-size:14px}
-nav.tabs{position:sticky;top:0;z-index:99;display:flex;gap:7px;align-items:center;
- padding:9px 12px;background:color-mix(in srgb,var(--bg) 86%,transparent);
- backdrop-filter:blur(14px) saturate(1.4);-webkit-backdrop-filter:blur(14px) saturate(1.4);
- border-bottom:1px solid var(--gold-line);overflow-x:auto;scrollbar-width:none}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,"Noto Sans JP","Hiragino Kaku Gothic ProN",sans-serif;
+ font-size:15px;line-height:1.7;-webkit-text-size-adjust:100%;font-feature-settings:"tnum" 1}
+a{color:var(--info)}
+.wrap{max-width:1080px;margin:0 auto;padding:0 16px}
+header.top{padding:18px 0 8px}
+header.top .row1{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+header.top h1{font-size:24px;margin:0;font-weight:800;letter-spacing:-.01em}
+header.top .sub{color:var(--mute);font-size:13px;margin:2px 0 0}
+.chip{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line2);border-radius:999px;padding:2px 10px;font-size:12px;color:var(--ink2);background:var(--card);text-decoration:none;white-space:nowrap}
+nav.tabs{position:sticky;top:0;z-index:50;display:flex;gap:4px;padding:8px 16px;background:color-mix(in srgb,var(--bg) 88%,transparent);
+ backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
 nav.tabs::-webkit-scrollbar{display:none}
-nav.tabs.has-more{-webkit-mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 34px),transparent 100%);
-                  mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 34px),transparent 100%)}
-nav.tabs button{background:transparent;border:1px solid transparent;color:var(--muted);border-radius:999px;
- padding:10px 15px;min-height:40px;font-size:13px;font-family:inherit;cursor:pointer;white-space:nowrap;flex:0 0 auto;
- transition:color .18s,background .18s,border-color .18s}
-nav.tabs button:hover{color:var(--ink)}
-nav.tabs button.on{color:var(--gold-bright);border-color:var(--gold-line);background:rgba(201,166,74,.10)}
-.pg{display:none}.pg.on{display:block}
-.block{padding:34px 0}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;margin:16px 0}
-.panel h2{font-size:19px;color:var(--gold-bright);margin-bottom:6px}
-.sub{color:var(--muted);font-size:12.5px}
+nav.tabs button{flex:0 0 auto;border:0;background:transparent;color:var(--mute);font:inherit;font-size:14px;font-weight:600;padding:8px 12px;border-radius:999px;cursor:pointer;white-space:nowrap}
+nav.tabs button.on{background:var(--ink);color:var(--card)}
+.pg{display:none;padding:14px 0 70px}.pg.on{display:block}
+h2{font-size:19px;margin:22px 0 6px;font-weight:800}
+h3{font-size:15.5px;margin:0 0 4px;font-weight:700}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin:12px 0}
+.mute{color:var(--mute)}.small{font-size:12.5px}.dim{color:var(--dim)}
+.up{color:var(--up)}.down{color:var(--down)}.warn{color:var(--warn)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:8px 0}
+.tile{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.tile .k{font-size:12px;color:var(--mute)}.tile .v{font-size:22px;font-weight:800;line-height:1.25}.tile .h{font-size:11.5px;color:var(--dim)}
 table{width:100%;border-collapse:collapse;font-size:13px}
-th,td{padding:8px 9px;border-bottom:1px solid var(--line2);text-align:right}
+th,td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
 th:first-child,td:first-child{text-align:left}
-th{color:var(--gold);font-weight:500;font-size:11.5px;letter-spacing:.05em;white-space:nowrap}
-tbody tr:hover{background:rgba(201,166,74,.05)}
+th{color:var(--mute);font-weight:600;font-size:12px}
+td.l,th.l{text-align:left;white-space:normal}
 .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
-.flag{display:flex;gap:10px;align-items:flex-start;padding:11px 13px;border-radius:9px;margin:8px 0;
- font-size:13px;border:1px solid var(--line);background:var(--panel2)}
-.flag i{font-style:normal;flex:0 0 auto;font-size:15px}
-.f-ok{border-color:rgba(84,184,138,.45);background:rgba(84,184,138,.09)}
-.f-warn{border-color:rgba(214,154,60,.45);background:rgba(214,154,60,.09)}
-.f-cut{border-color:rgba(207,95,72,.5);background:rgba(207,95,72,.10)}
-.big{font-family:var(--mincho);font-size:34px;line-height:1.1}
-.row{display:flex;gap:12px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line2)}
-.row .rl{flex:1;font-size:13.5px}
-.row .rl .h{display:block;color:var(--dim);font-size:11.5px;line-height:1.6}
-.row .rc{flex:0 0 210px;display:flex;gap:6px;align-items:center;justify-content:flex-end}
-input,select{background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:8px;
- padding:9px 11px;font-family:inherit;font-size:14px;width:100%;max-width:190px}
-input:focus,select:focus{outline:none;border-color:var(--gold)}
-.u{color:var(--dim);font-size:12px;flex:0 0 auto}
-.btn{background:linear-gradient(180deg,var(--gold-bright),var(--gold));color:#1a1408;border:none;
- border-radius:10px;padding:12px 20px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer}
-.btn.ghost{background:transparent;color:var(--gold-bright);border:1px solid var(--gold-line)}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.kpi{background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:14px}
-.kpi .k{color:var(--gold);font-size:11px;letter-spacing:.08em}
-.kpi .v{font-family:var(--mincho);font-size:26px;line-height:1.25;margin-top:2px}
-.bar{height:7px;border-radius:4px;background:var(--line2);overflow:hidden;margin-top:6px}
-.bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--gold-deep),var(--gold-bright))}
-code{background:var(--panel2);border:1px solid var(--line2);border-radius:5px;padding:1px 6px;font-size:12.5px}
-footer{border-top:1px solid var(--line);padding:26px 0 60px;color:var(--dim);font-size:11.5px}
-#themeToggle{position:fixed;right:18px;bottom:18px;z-index:200;background:var(--panel);
- border:1px solid var(--gold-line);color:var(--gold-bright);border-radius:999px;padding:9px 15px;
- font-family:inherit;font-size:13px;cursor:pointer;box-shadow:0 6px 22px rgba(0,0,0,.3)}
-@media(max-width:640px){
- .wrap{padding:0 15px}.grid2{grid-template-columns:1fr}
- .row{flex-wrap:wrap}.row .rc{flex:1 0 100%;justify-content:flex-start}
- nav.tabs{gap:3px;padding:7px 6px}nav.tabs button{padding:9px 9px;font-size:12px}
- #themeToggle{right:10px;bottom:12px;transform:scale(.9);transform-origin:100% 100%}
+.note{border-radius:12px;padding:10px 12px;margin:10px 0;font-size:13px;border:1px solid var(--line);background:var(--bg)}
+.note.w{background:var(--warn-bg);border-color:transparent}.note.i{background:var(--info-bg);border-color:transparent}
+.note.ng{background:var(--down-bg);border-color:transparent}.note.ok{background:var(--up-bg);border-color:transparent}
+button.btn,select,input[type=number]{font:inherit;font-size:14px;border:1px solid var(--line2);background:var(--card);color:var(--ink);border-radius:10px;padding:7px 10px}
+button.btn{cursor:pointer;font-weight:600}
+button.btn.pri{background:var(--ink);color:var(--card);border-color:var(--ink)}
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line2);border-radius:10px;overflow:hidden}
+.seg button{white-space:nowrap;border:0;background:var(--card);color:var(--mute);font:inherit;font-size:13px;font-weight:600;padding:6px 11px;cursor:pointer}
+.seg button.on{background:var(--ink);color:var(--card)}
+.ctrls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--ink2);margin:6px 0}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.legend i.ln{height:3px;width:14px;border-radius:2px;vertical-align:3px}
+.legend i.dash{background:repeating-linear-gradient(90deg,currentColor 0 4px,transparent 4px 7px)!important}
+.chart{position:relative;width:100%}
+.chart svg{display:block;width:100%;overflow:visible}
+.chart text{fill:var(--mute);font-size:11px;font-family:inherit}
+#tip{position:fixed;z-index:999;pointer-events:none;background:var(--card);color:var(--ink);border:1px solid var(--line2);border-radius:10px;
+ padding:7px 10px;font-size:12.5px;line-height:1.5;box-shadow:0 6px 24px rgba(0,0,0,.18);display:none;max-width:280px}
+#tip b{font-weight:700}
+.wrow{display:grid;grid-template-columns:14px minmax(90px,1.4fr) 2fr 64px;gap:8px;align-items:center;padding:4px 0;border-bottom:1px solid var(--line)}
+.wrow input[type=range]{width:100%;accent-color:var(--ink)}
+.wrow input[type=number]{width:64px;padding:4px 6px;text-align:right}
+.wrow .sw{width:12px;height:12px;border-radius:3px}
+.wrow .nm{font-size:13px;line-height:1.3}.wrow .nm span{display:block;color:var(--dim);font-size:11px}
+.bar100{display:flex;height:22px;border-radius:6px;overflow:hidden;gap:2px;background:var(--line)}
+.bar100 > div{height:100%}
+.hrow{display:grid;grid-template-columns:118px 1fr auto;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line)}
+.hrow .d{font-size:12.5px;line-height:1.35}.hrow .d span{display:block;color:var(--dim);font-size:11px}
+select{max-width:100%;min-width:0}
+.ctrls select{flex:1 1 220px}
+details summary{cursor:pointer;color:var(--info);font-size:13px;margin-top:6px}
+.gal-filter{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.gal-filter button{border:1px solid var(--line2);background:var(--card);color:var(--ink2);border-radius:999px;font:inherit;font-size:12.5px;padding:4px 11px;cursor:pointer}
+.gal-filter button.on{background:var(--ink);color:var(--card);border-color:var(--ink)}
+.q{font-size:13px;color:var(--mute);margin:2px 0 8px}
+.ans{font-size:14px;font-weight:600;margin:8px 0}
+.src{font-size:11.5px;color:var(--dim);margin-top:6px}
+.pill{display:inline-block;border-radius:999px;padding:1px 8px;font-size:12px;font-weight:700}
+.pill.ok{background:var(--up-bg);color:var(--up)}.pill.ng{background:var(--down-bg);color:var(--down)}.pill.w{background:var(--warn-bg);color:var(--warn)}
+footer{color:var(--dim);font-size:12px;padding:20px 0 60px;border-top:1px solid var(--line)}
+@media(max-width:700px){
+ .grid2,.grid3{grid-template-columns:1fr}
+ header.top h1{font-size:21px}
+ .wrow{grid-template-columns:12px minmax(84px,1.3fr) 1.4fr 58px}
+ .hrow{grid-template-columns:92px 1fr auto}
+ th,td{padding:6px 6px}
 }
 </style></head><body>
 
-<nav class="tabs" id="tabs">
- <button class="on" onclick="show(1,this)">Ⅰ ETFの思想</button>
- <button onclick="show(2,this)">Ⅱ ルックスルー点検</button>
- <button onclick="show(3,this)">Ⅲ 採点の廃止（記録）</button>
- <button onclick="show(4,this)">Ⅳ 現在のETF（生の数字）</button>
- <button onclick="location.href='index.html'">↩ 門Ω（個別）</button>
-</nav>
-
-<header><div class="wrap">
- <div class="eyebrow">土 台 を 疑 う</div>
- <h1 class="top">ETF の <span class="o">門</span> <span style="font-size:.42em;color:var(--muted)">v1.0</span></h1>
- <p class="lead">門Ωが<b>個別</b>を裁くのに対し、ここは<b>ETF</b>を裁く。<br>
- ETFに堀もROICも無い——だから測るものが違う。<b style="color:var(--gold-bright)">確実に効くのはコストだけ</b>で、
- 残りは「土台が本当に広いか」「20年存続するか」「器の効率」。<br>
- <b style="color:var(--gold-bright)">そして門Ωが一度も測っていなかったもの——個別との重複</b>を、この門が測る。</p>
+<header class="top"><div class="wrap">
+ <div class="row1"><h1>◈ ETFの門 · 分析</h1><span class="chip">表示だけ</span>
+  <a class="chip" href="etf.html">🛒 買付順位</a><a class="chip" href="etf.html?pg=6">🏦 保有</a><a class="chip" href="etf.html?pg=12">📈 成績</a>
+  <button class="chip" id="themeBtn" onclick="amiTheme()" style="cursor:pointer">テーマ</button></div>
+ <p class="sub">ETF版の「📊 分析」。ETF・投資信託の側を見る画面。目標と今の比率、配合を歴史で試す、配分の変遷、これまでの歴史検証、ETF図鑑。<b>ここでは何も決めない</b>——配分の正本は portfolio.json、今月の注文は門の🛒買付順位。</p>
 </div></header>
 
-<!-- ═══════════════ Ⅰ 思想 ═══════════════ -->
-<div id="pg1" class="pg on"><div class="wrap block">
+<nav class="tabs" id="tabs">
+ <button class="on" onclick="amiShow(1,this)">🏠 ホーム</button>
+ <button onclick="amiShow(2,this)">🧪 配合を試す</button>
+ <button onclick="amiShow(3,this)">🕰 配分の変遷</button>
+ <button onclick="amiShow(4,this)">📚 歴史検証</button>
+ <button onclick="amiShow(5,this)">🔍 ETF図鑑</button>
+ <button onclick="amiShow(6,this)">📏 規約と費用</button>
+</nav>
 
- <div class="panel">
-  <h2>なぜ個別株の門をそのまま使えないか</h2>
-  <p style="font-size:13.5px;color:var(--ink-soft)">
-  門Ωは <code>堀・ROIC・複利の持続</code> を測る。ETFにはそのどれも無い——ETFは器であって事業ではない。
-  20-30年のETFのリターンを決めるものを、門と同じ作法（<b>白黒にできる死因だけキル、程度問題はすべて坂</b>）で並べ直すと、こうなる。</p>
+<main class="wrap">
 
-  <div class="scroll"><table>
-   <thead><tr><th>門Ω（個別・個別）</th><th style="text-align:left">ETFの門（ETF）</th><th style="text-align:left">なぜ対応するか</th></tr></thead>
-   <tbody>
-    <tr><td>ROIC（実効36%・単独最大）</td><td style="text-align:left"><b style="color:var(--gold-bright)">コスト</b>（経費率＋実質コスト）</td><td style="text-align:left">唯一<b>確実に</b>複利へ効く数字。推定でなく確定値</td></tr>
-    <tr><td>絶対MOAT指数（関門75）</td><td style="text-align:left"><b style="color:var(--gold-bright)">土台の広さ</b></td><td style="text-align:left">「広い土台」を名乗るなら広くなければならない。狭いETFは個別の増幅器</td></tr>
-    <tr><td>キル（Z''・負債・ROIC≤WACC）</td><td style="text-align:left"><b>存続性</b>（純資産・年数・レバレッジ）</td><td style="text-align:left">償還されたら複利は途切れる。20年持つ器かどうか</td></tr>
-    <tr><td>門X（E[r]の遮断器）</td><td style="text-align:left"><b>器の効率</b>（二重課税・分配）</td><td style="text-align:left">税は確定した漏れ。ETFでは価格でなくここが効く</td></tr>
-    <tr><td>—（門Ωに無い）</td><td style="text-align:left"><b style="color:var(--rust)">個別との重複</b></td><td style="text-align:left">門Ωは個別の中でしか上限を見ない。<u>資産全体の集中は誰も測っていなかった</u></td></tr>
-   </tbody>
-  </table></div>
+<!-- ═════ 1 ホーム ═════ -->
+<section id="pg1" class="pg on">
+ <div id="homeBox"><p class="mute">読み込み中…</p></div>
+</section>
+
+<!-- ═════ 2 配合を試す ═════ -->
+<section id="pg2" class="pg">
+ <h2 style="margin-top:6px">配合を歴史で試す</h2>
+ <p class="q">好きな配合（ETF・投資信託の側）を、2000年前後からの本物の値動き（配当込み）で毎月組み直したとして測る。比べる相手は S&amp;P500 と、もう1つの形。<b>過去の成績であって予想ではない</b>。</p>
+ <div class="card">
+  <div class="ctrls">
+   <label class="small mute">形を読み込む</label>
+   <select id="simPreset" onchange="amiSimLoadPreset(this.value)"></select>
+   <button class="btn" onclick="amiSimEqual()">等分</button>
+   <button class="btn" onclick="amiSimClear()">全部0</button>
+  </div>
+  <div id="simW"></div>
+  <div class="ctrls" style="justify-content:space-between">
+   <div id="simSum" class="small"></div>
+   <div class="small mute">重みはこの端末だけに残る（配分は変わらない）</div>
+  </div>
  </div>
+ <div class="card">
+  <div class="ctrls">
+   <span class="small mute">比べる形</span><select id="simCmp" onchange="amiSimRun()"></select>
+   <span class="seg" id="simCcy"><button class="on" data-v="JPY">円</button><button data-v="USD">ドル</button></span>
+   <span class="seg" id="simWin"></span>
+   <label class="small"><input type="checkbox" id="simNdx" onchange="amiSimRun()"> NASDAQ100 も</label>
+  </div>
+  <div id="simOut"></div>
+ </div>
+</section>
 
- <div class="panel">
-  <h2>コストが「ROICの位置」に座る理由 — 算術</h2>
-  <p class="sub">経費率は毎年・確実に元本から引かれる。20年・30年で終価がどれだけ削られるかを実測で置く。</p>
+<!-- ═════ 3 配分の変遷 ═════ -->
+<section id="pg3" class="pg">
+ <h2 style="margin-top:6px">配分の変遷</h2>
+ <p class="q">portfolio.json に残してある旧の姿（<code>ami_mix_superseded_*</code>・消さずに残す決まり）を古い順に並べ、<b>同じ物差しで測り直す</b>。帯は ETF・投資信託の側を100%にした比。個別株の%は記録にあるときだけ。</p>
+ <div id="histBox"><p class="mute">読み込み中…</p></div>
+</section>
+
+<!-- ═════ 4 歴史検証 ═════ -->
+<section id="pg4" class="pg">
+ <h2 style="margin-top:6px">これまでの歴史検証</h2>
+ <p class="q">会話で測ってきた検証のうち、配分の判断に効いたものをグラフにした。数字は元のファイル（各カードの下）の値そのまま——この画面は計算し直さない。</p>
+ <div class="gal-filter" id="galFilter"></div>
+ <div id="galBox"><p class="mute">読み込み中…</p></div>
+</section>
+
+<!-- ═════ 5 ETF図鑑 ═════ -->
+<section id="pg5" class="pg">
+ <h2 style="margin-top:6px">ETF図鑑</h2>
+ <div class="ctrls"><select id="encSel" onchange="amiEnc(this.value)"></select></div>
+ <div id="encBox"></div>
+</section>
+
+<!-- ═════ 6 規約と費用 ═════ -->
+<section id="pg6" class="pg">
+ <h2 style="margin-top:6px">費用の計算</h2>
+ <div class="card">
+  <p class="q">経費率は毎年・確実に元本から引かれる。<b>推定ではなく確定した漏れ</b>なので、2本の器を同じ前提で比べる。</p>
+  <div class="grid3">
+   <label class="small">毎月の積立（円）<br><input type="number" id="cMon" value="100000" step="10000" oninput="amiCost()"></label>
+   <label class="small">年数<br><input type="number" id="cYrs" value="20" step="1" oninput="amiCost()"></label>
+   <label class="small">費用の前の年率（%）<br><input type="number" id="cRet" value="8" step="0.5" oninput="amiCost()"></label>
+   <label class="small">器A の経費率（%）<br><input type="number" id="cA" value="0.15" step="0.01" oninput="amiCost()"></label>
+   <label class="small">器B の経費率（%）<br><input type="number" id="cB" value="0.495" step="0.01" oninput="amiCost()"></label>
+  </div>
+  <div id="costOut"></div>
   <div id="costTable" class="scroll"></div>
-  <div class="flag f-warn" style="margin-top:12px"><i>!</i><div>
-   <b>E[r]は推定だが、経費率は確定している。</b>門Ωは総合E[r]の0.2ptを較正するのに影の計測を何度も回してきた。
-   同じ0.2ptが、ETFでは<b>経費率0.20%の差として何の不確実性もなく</b>手に入る（または失われる）。</div></div>
  </div>
 
- <div class="panel">
-  <h2>この門のキル（論外線）</h2>
-  <div class="flag f-cut"><i>✕</i><div><b>レバレッジ・インバース型</b>——日次リセットは<u>ボラティリティ減価</u>で長期保有すると数学的に目減りする。「壊れない複利」と定義上両立しない</div></div>
-  <div class="flag f-cut"><i>✕</i><div><b>純資産 &lt; 100億円</b>——償還リスク。20-30年の器として使えない</div></div>
-  <div class="flag f-cut"><i>✕</i><div><b>設定から3年未満</b>——実績が無い（門Ωが「原本の鮮度」を要求するのと同じ作法）</div></div>
-  <div class="flag f-cut"><i>✕</i><div><b>経費率 &gt; 0.75%/年</b>——20年で終価の約14%が消える。個別株の恒久毀損に匹敵する</div></div>
-  <div class="flag f-warn"><i>!</i><div><b>合成型（スワップ）</b>——カウンターパーティリスク。キルではないが減点し、現物型を優先する</div></div>
+ <h2>この門のキル（論外線）</h2>
+ <div class="card">
+  <div class="note ng">✕ <b>レバレッジ・インバース型</b>——日次リセットはボラティリティ減価で長期保有すると数学的に目減りする。「壊れない複利」と定義上両立しない</div>
+  <div class="note ng">✕ <b>純資産 &lt; 100億円</b>——償還リスク。20-30年の器として使えない</div>
+  <div class="note ng">✕ <b>設定から3年未満</b>——実績が無い（門Ωが「原本の鮮度」を要求するのと同じ作法）</div>
+  <div class="note ng">✕ <b>経費率 &gt; 0.75%/年</b>——20年で終価の約14%が消える。個別株の恒久毀損に匹敵する</div>
+  <div class="note w">! <b>合成型（スワップ）</b>——カウンターパーティリスク。キルではないが現物型を優先する</div>
+  <p class="small mute">数字は night/net_plan.py が同じ値を写して使っている（KILL_AUM_OKU=100・KILL_AGE_Y=3・KILL_ER_PCT=0.75）。変えるなら両方を同時に。🔍 ETF図鑑は各本にこの4本を当てて見せる。</p>
  </div>
 
- <div class="panel">
-  <h2>不変のもの（門Ωから引き継ぐ掟）</h2>
-  <div class="flag f-ok"><i>✓</i><div><b>株価では売らない。</b>ETFの売却理由は「コストの悪化」「土台の変質」「償還・併合」だけ。下落は理由にならない</div></div>
-  <div class="flag f-ok"><i>✓</i><div><b>ETFは常に買ってよい対象。</b>DCAの土台なので、この門は「どのETFを選ぶか」を裁くのであって「今買うか」は裁かない（＝価格の関門を持たない）</div></div>
-  <div class="flag f-ok"><i>✓</i><div><b>この門は門Ωの採点・売却規律・四関門を一切上書きしない。</b>別枠であって正本ではない</div></div>
- </div>
-</div></div>
-
-<!-- ═══════════════ Ⅱ ルックスルー ═══════════════ -->
-<div id="pg2" class="pg"><div class="wrap block">
- <h1 style="font-size:24px">ルックスルー点検</h1>
- <p class="sub" style="margin:6px 0 0">ETFを中身へ分解し、<b>個別の個別株と合算</b>して資産全体の実際の集中を出す。
-  門Ωの1銘柄上限8%（¼ケリー相当）は<u>個別の中でしか効いていない</u>——ETFを分解すると何が起きているかをここで見る。</p>
- <div id="ltBox"></div>
-</div></div>
-
-<!-- ═══════════════ Ⅲ 採点の廃止（記録） ═══════════════ -->
-<div id="pg3" class="pg"><div class="wrap block">
- <h1 style="font-size:24px">ETFΩの採点は廃止した（2026-08-19）</h1>
- <p class="sub" style="margin:6px 0 14px">ユーザー明示指示「ETFの門の採点は使えない」→「畳んで」。
-  <b>採点機とETFΩの合成点・関門を撤去した。</b>ページは残す——<u>なぜ廃止したかを消すと、同じものをまた作るから</u>
-  （門Ωの「規則は失効したが経緯は消さない」と同じ作法）。<b>Ⅰ思想 と Ⅱルックスルー は生きている。</b></p>
-
- <div class="panel">
-  <h2>廃止した理由 — 三つとも実測</h2>
-  <p style="font-size:13.5px;color:var(--ink-soft)">
-  <b>① 一度も検証されていなかった。</b>門Ωは13年・5系統・204通り・7アンカー・事前登録つきの検定を通っている。
-  ETFΩの重み(.40/.30/.20/.10)・刻み・キル・関門の線は<b>すべて設計の類推で書かれ、何にも当てられていない</b>
-  （CLAUDE.md のETFΩ言及11行を走査して、検証・較正・実測・ビンテージ・事前登録の語が<b>ゼロ</b>）。
-  しかも門Ωで実証した「<u>重みを変えても順位はほとんど動かない（ρ0.994+）／動かせるのは欄が何を測っているか</u>」という
-  教訓が、ETFΩには一度も当たっていなかった。</p>
-  <p style="font-size:13.5px;color:var(--ink-soft)">
-  <b>② 分散の代理が弱かった。</b>「これは分散になっているか」を担うのは <code>個別との重複</code>＝<b>名前の重なり</b>ひとつ。
-  月次パネル(2018-07〜2026-08・97ヶ月)で<b>実際の相関</b>と突き合わせると——
-  IHF ρ0.248（重複0.0%）／ XLV 0.408（0.5%）／ ITA 0.455（0.0%）／ MISL 0.475（0.0%）／ PAVE 0.532（1.0%）／
-  SMH 0.563（5.1%）／ IHI 0.598（4.5%）／ GRID 0.628（0.0%）／ QQQ 0.671（5.4%）／ XLK 0.683（<b>8.5%</b>）／
-  <b>VT 0.819（3.6%）</b>。名前の重複と実際の相関の相関は <b>+0.626</b> で、
-  <b style="color:var(--rust)">最大の外れ値が、唯一 関門を通っていた VT</b>——名前の重なりは最小なのに実際の動きは個別と最も似ている。
-  ⚠ただし VT の行は<b>測れていない</b>（9500銘柄中41件しか採れず、それがメガキャップに偏る）＝
-  「VTは分散にならない」の証明ではなく「<b>この代理では判定できない</b>」の証明。</p>
-  <p style="font-size:13.5px;color:var(--ink-soft)">
-  <b>③ 11本中1本しか通らず、その1本は誰でも知っている既定解だった。</b>
-  広さ≥60 は構造的な締め出しではない（50銘柄でも上位10が25%・最大セクター25%なら 73.4）。
-  それでも通るのは全世界インデックスだけで、<b>「買うべきは広くて安い指数」を言い直しているだけ</b>——
-  門Ωと違って、その前提の根拠を持っていない。</p>
+ <h2>不変のもの（門Ωから引き継ぐ掟）</h2>
+ <div class="card">
+  <div class="note ok">✓ <b>株価では売らない。</b>ETFの売却理由は「コストの悪化」「土台の変質」「償還・併合」だけ。下落は理由にならない</div>
+  <div class="note ok">✓ <b>ETFは常に買ってよい対象。</b>この門は「どのETFを選ぶか」を見るのであって「今買うか」は裁かない（価格の関門を持たない）</div>
+  <div class="note ok">✓ <b>この門は門Ωの採点・売却規律・四関門・配分を一切上書きしない。</b>別枠であって正本ではない</div>
  </div>
 
- <div class="panel">
-  <h2>設計上の欠陥 — 二つの役目を一つの点数に押し込んでいた</h2>
-  <p style="font-size:13.5px;color:var(--ink-soft)">
-  ETFが<b>市場そのもの</b>（自分に優位が無いと認める場所）なら、問うのは<u>コストと被覆だけ</u>で、
-  点数は要らない——答えは一つに決まる。<br>
-  ETFが<b>第二の賭け</b>（テック・電化などに張る）なら、それは<u>第二の個別</u>であって、
-  門Ωの論法で裁くべきで、ETFΩの物差しではない。<br>
-  今のETF（XLK/QQQ/SMH＝テックへの賭け）を<b>前者の規則で採点したから、全部⛔になった</b>。
-  <b style="color:var(--gold-bright)">決めるべきは「どのETFか」ではなく「ETFはどちらなのか」</b>——これは点数ではなく人の決断。</p>
+ <h2>なぜ個別株の門をそのまま使えないか</h2>
+ <div class="card"><div class="scroll"><table>
+  <thead><tr><th>門Ω（個別株）</th><th class="l">ETFの門</th><th class="l">なぜ対応するか</th></tr></thead>
+  <tbody>
+  <tr><td>ROIC</td><td class="l"><b>コスト</b>（経費率＋実質コスト）</td><td class="l">唯一<b>確実に</b>複利へ効く数字。推定でなく確定値</td></tr>
+  <tr><td>絶対MOAT指数</td><td class="l"><b>土台の広さ</b></td><td class="l">「広い土台」を名乗るなら広くなければならない。狭いETFは個別の増幅器</td></tr>
+  <tr><td>キル（Z''・負債・ROIC≤WACC）</td><td class="l"><b>存続性</b>（純資産・年数・レバレッジ）</td><td class="l">償還されたら複利は途切れる</td></tr>
+  <tr><td>門X</td><td class="l"><b>器の効率</b>（二重課税・分配）</td><td class="l">税は確定した漏れ</td></tr>
+  <tr><td>—（門Ωに無い）</td><td class="l"><b>個別との重複</b></td><td class="l">ETFの中身まで分解して初めて資産全体の集中が見える（🏠 ホームのルックスルー）</td></tr>
+  </tbody></table></div></div>
+
+ <h2>ETFΩの採点は廃止した（2026-08-19・記録）</h2>
+ <div class="card small">
+  <p>ユーザー明示指示「ETFの門の採点は使えない」→「畳んで」で、採点機とETFΩの合成点・関門を撤去した。<b>なぜ廃止したかを消すと、同じものをまた作るから</b>記録を残す。</p>
+  <p><b>① 一度も検証されていなかった。</b>重み(.40/.30/.20/.10)・刻み・キル・関門の線はすべて設計の類推で、何にも当てられていない。</p>
+  <p><b>② 分散の代理が弱かった。</b>「個別との重複」＝名前の重なりは、月次97ヶ月の実際の相関と合わなかった（XLK ρ0.683・重複8.5%／GRID ρ0.628・重複0.0%／VT ρ0.819・重複3.6%）。</p>
+  <p><b>③ 11本中1本しか通らず、その1本は誰でも知っている既定解（全世界インデックス）だった。</b></p>
+  <p><b>設計上の欠陥</b>: ETFが<b>市場そのもの</b>なら問うのはコストと被覆だけで点数は要らない。ETFが<b>第二の賭け</b>（テック・半導体に張る）なら、それは第二の個別株であって ETFΩ の物差しではない。<b>決めるべきは「どのETFか」ではなく「ETFはどちらなのか」</b>——これは点数ではなく人の決断。</p>
+  <p class="mute">作り直したくなったら: 必要なのは重みの調整ではなく (a)名前の重複を実測の相関へ置き換える か (b)合成点をやめて生の数字を並べるだけにする。そして<b>何に対して当てるのかを先に決める</b>。v2 は (b) の形（🔍 ETF図鑑は生の数字とキルだけ・順位を作らない）。</p>
  </div>
+</section>
 
- <div class="panel">
-  <h2>残したもの / 消したもの</h2>
-  <p style="font-size:13.5px;color:var(--ink-soft)">
-  <b>残した</b>: Ⅰ思想（コストの算術は今も正しい——唯一、事前に確実に判り複利で効く数字）／
-  <b>Ⅱ ルックスルー点検</b>（これは採点ではなく<u>測定</u>。MSFT 28.4%・半導体38.2〜41.8%・上位5で56.5% を出したのはここ）／
-  Ⅳ 現在のETFの<b>生の数字</b>（経費率・純資産・銘柄数・上位10・最大セクター・個別との重複）。<br>
-  <b>消した</b>: ETFΩの合成点／土台の関門（広さ≥60 ∧ コスト≥68 ∧ 重複&lt;30%）／1本ずつ入力する採点機／
-  端末側の一括採点 <code>night/score_ami.js</code>（2026-08-19 に作って同日に畳んだ）。<br>
-  <b>キル（レバレッジ／純資産100億円未満／設定3年未満／経費率0.75%超）は Ⅰ に文として残す</b>——
-  これは点数ではなく<u>論外線</u>で、較正が要る種類のものではない。</p>
- </div>
-
- <div class="flag f-warn"><i>!</i><div><b>もう一度作りたくなったら、先にこれを読むこと。</b>
-  作り直すなら必要なのは「重みの調整」ではなく<b>(a)名前の重複を実測の相関へ置き換える</b>か
-  <b>(b)合成点をやめて生の数字（コスト／個別との相関／存続性）を並べるだけにする</b>。
-  ⚠そして<b>何に対して当てるのかを先に決める</b>——ETFΩが検定できなかったのは、
-  「良いETFとは何か」の答えが測定ではなく<u>前提</u>だったから。</div></div>
-</div></div>
-
-<!-- ═══════════════ Ⅳ 現在のETF ═══════════════ -->
-<div id="pg4" class="pg"><div class="wrap block">
- <h1 style="font-size:24px">現在のETF（生の数字）</h1>
- <p class="sub" style="margin:6px 0 0">portfolio.json のETFの<b>実測値をそのまま並べる</b>。
-  <b style="color:var(--rust)">ETFΩの合成点と関門は 2026-08-19 に廃止した</b>（Ⅲ参照）——
-  <u>順位を作らず、判断材料だけを出す</u>。ETFの入替は門の外（DCA側）の決断。</p>
- <div id="curBox"></div>
-</div></div>
+</main>
 
 <footer><div class="wrap">
- ETFの門 v1.0 ・ CCF Ω の別枠。<b>正本ではない</b>——門Ωの採点・売却規律S1/S2/S3・四関門をここは一切上書きしない。
- <b>ETFΩの採点は 2026-08-19 に廃止した（Ⅲ 参照）</b>——検証されておらず、分散の代理（名前の重なり）が実際の相関を説明せず、
- 11本中1本しか通らずその1本は既定解だったため。残しているのは<b>思想・ルックスルーの測定・生の数字</b>だけ。
- キル（レバレッジ／純資産100億円未満／設定3年未満／経費率0.75%超）は論外線として Ⅰ に文で残す。
- データ源: out/etf_profiles.json（Alpha Vantage ETF_PROFILE 実採取）・portfolio.json。
- 本書は個人の投資基準の整理であり投資助言ではない。スコア・数式は枠組みであり将来を保証しない。
+ETFの門 v2 ・ CCF Ω の別枠。<b>正本ではない</b>——門Ωの採点・売却規律S1/S2/S3・四関門・配分をここは一切上書きしない。
+過去の値動きは Yahoo の調整後終値（配当込み・ドル建て、円はドル円の月末で換算）。代理（2000年前後より前を埋めた投資信託）の期間は各所に明示。
+本書は個人の投資基準の整理であり投資助言ではない。過去の成績は将来を保証しない。
 </div></footer>
 
-<button id="themeToggle" onclick="toggleTheme()">☀ 明るい</button>
+<div id="tip"></div>
 
 <script>
-/* ── テーマ ────────────────────────────────────────────── */
-function toggleTheme(){const r=document.documentElement;
- const now=r.getAttribute('data-theme')==='light'?'dark':'light';
- r.setAttribute('data-theme',now);localStorage.setItem('ami:theme',now);
- document.getElementById('themeToggle').textContent=now==='light'?'🌙 暗い':'☀ 明るい';}
-(function(){const s=localStorage.getItem('ami:theme');if(s){document.documentElement.setAttribute('data-theme',s);
- document.addEventListener('DOMContentLoaded',()=>{document.getElementById('themeToggle').textContent=s==='light'?'🌙 暗い':'☀ 明るい';});}})();
+/* ═══════════════ 共通 ═══════════════ */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ym2i=ym=>Math.floor(ym/100)*12+ym%100-1, i2ym=i=>Math.floor(i/12)*100+i%12+1;
+const fYM=ym=>`${Math.floor(ym/100)}-${String(ym%100).padStart(2,'0')}`;
+const pct=(x,d=1)=>x==null||!isFinite(x)?'—':(x*100).toFixed(d)+'%';
+const sgn=(x,d=1,u='%')=>x==null||!isFinite(x)?'—':(x>0?'+':'')+x.toFixed(d)+u;
+const cssv=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const DATA={};
 
-/* ── タブ ──────────────────────────────────────────────── */
-function show(n,btn){
- for(let i=1;i<=4;i++){const p=document.getElementById('pg'+i);if(p)p.className='pg'+(i===n?' on':'');}
- document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('on'));
- if(btn)btn.classList.add('on');
- if(btn&&btn.scrollIntoView)btn.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'});
- navFade();window.scrollTo({top:0});
+/* テーマ: 門Ω（index.html）と同じ鍵 ccf_theme を読む＝どちらで切り替えてもそろう */
+function amiTheme(){
+ const r=document.documentElement, now=r.getAttribute('data-theme')||'light';
+ const nx=now==='light'?'dark':'light';
+ r.setAttribute('data-theme',nx);try{localStorage.setItem('ccf_theme',nx);}catch(e){}
+ $('#themeBtn').textContent=nx==='light'?'🌙 暗い':'☀ 明るい';
+ amiRedraw();
 }
-function navFade(){const n=document.getElementById('tabs');if(!n)return;
- n.classList.toggle('has-more',n.scrollWidth-n.clientWidth-n.scrollLeft>4);}
-document.getElementById('tabs').addEventListener('scroll',navFade,{passive:true});
-window.addEventListener('resize',navFade);
+(function(){let t='light';try{t=localStorage.getItem('ccf_theme')||'light';}catch(e){}
+ document.documentElement.setAttribute('data-theme',t);
+ document.addEventListener('DOMContentLoaded',()=>{$('#themeBtn').textContent=t==='light'?'🌙 暗い':'☀ 明るい';});})();
 
-/* ── 採点の核 ──────────────────────────────────────────────
-   門Ωと同じ作法で書く:
-     ・幾何平均（弱い項が全体を殺す）
-     ・白黒にできる死因だけキル、程度問題は ramp（坂）
-     ・単調性を壊さない（良くしたのに点が下がる、を作らない）        */
+let AMI_PG=1;
+function amiShow(n,btn){
+ AMI_PG=n;
+ for(let i=1;i<=6;i++){const p=document.getElementById('pg'+i);if(p)p.className='pg'+(i===n?' on':'');}
+ document.querySelectorAll('#tabs button').forEach(b=>b.classList.remove('on'));
+ if(btn){btn.classList.add('on');if(btn.scrollIntoView)btn.scrollIntoView({inline:'center',block:'nearest'});}
+ try{localStorage.setItem('ami:tab',String(n));}catch(e){}
+ window.scrollTo({top:0});amiRedraw();
+}
 
+/* 色は銘柄に付ける（順位ではなく）——見る画面が変わっても同じ本は同じ色 */
+const AMI_COL={QQQ:'--s1','IFREE-NDX':'--s1',QQQM:'--s1',SMH:'--s2',ITA:'--s3',XLV:'--s4',VBR:'--s5',SPY:'--s6',XLK:'--s7',
+ FBT:'--s8',SHLD:'--s3',MISL:'--s3','個別株':'--sx'};
+const colOf=k=>cssv(AMI_COL[k]||'--sx');
 
+/* ═══════════════ 図（SVG・依存なし） ═══════════════ */
+const TIP=()=>$('#tip');
+function tipShow(ev,html){const t=TIP();t.innerHTML=html;t.style.display='block';
+ const w=t.offsetWidth,h=t.offsetHeight;let x=ev.clientX+14,y=ev.clientY+14;
+ if(x+w>innerWidth-8)x=ev.clientX-w-14;if(y+h>innerHeight-8)y=ev.clientY-h-14;t.style.left=Math.max(6,x)+'px';t.style.top=Math.max(6,y)+'px';}
+function tipHide(){TIP().style.display='none';}
+document.addEventListener('scroll',tipHide,{passive:true});
 
-/* コスト: 経費率が低いほど高得点。0.03%=満点 / 0.75%=論外線 */
+function niceTicks(lo,hi,n){if(lo===hi){hi=lo+1;}const span=hi-lo,step0=span/n,mag=Math.pow(10,Math.floor(Math.log10(step0)));
+ const st=[1,2,2.5,5,10].map(m=>m*mag).find(s=>span/s<=n)||10*mag;const a=Math.floor(lo/st)*st,b=Math.ceil(hi/st)*st;const out=[];
+ for(let v=a;v<=b+st/2;v+=st)out.push(+v.toFixed(10));return out;}
+function el(tag,attrs,txt){const e=document.createElementNS('http://www.w3.org/2000/svg',tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(txt!=null)e.textContent=txt;return e;}
 
-/* 土台の広さ: 銘柄数・上位10集中・最大セクターの幾何平均 */
+/* 折れ線: series=[{name,color,dash,pts:[[x,y]...]}]・x は月の通し番号・log で対数軸・crosshair の吹き出し */
+function lineChart(box,o){
+ box.innerHTML='';box.classList.add('chart');
+ const W=Math.max(280,box.clientWidth||600),H=o.h||260,m={l:46,r:12,t:10,b:24};
+ const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,height:H});box.appendChild(svg);
+ let xs=[],ys=[];o.series.forEach(s=>s.pts.forEach(p=>{if(p[1]!=null&&isFinite(p[1])){xs.push(p[0]);ys.push(p[1]);}}));
+ if(!xs.length){box.innerHTML='<p class="mute small">データが無い</p>';return;}
+ const x0=Math.min(...xs),x1=Math.max(...xs);let y0=Math.min(...ys),y1=Math.max(...ys);
+ const tf=o.log?(v=>Math.log10(v)):(v=>v);
+ if(o.zero){y0=Math.min(y0,0);y1=Math.max(y1,0);}
+ let ticks;if(o.log){const a=Math.floor(Math.log10(y0)),b=Math.ceil(Math.log10(y1));ticks=[];for(let e=a;e<=b;e++){[1,2,5].forEach(k=>{const v=k*Math.pow(10,e);if(v>=y0*0.8&&v<=y1*1.25)ticks.push(v);});}}
+ else ticks=niceTicks(y0,y1,5);
+ const Y0=o.log?tf(Math.min(y0,...ticks)):Math.min(y0,ticks[0]),Y1=o.log?tf(Math.max(y1,...ticks)):Math.max(y1,ticks[ticks.length-1]);
+ const sx=x=>m.l+(x-x0)/((x1-x0)||1)*(W-m.l-m.r), sy=y=>H-m.b-(tf(y)-Y0)/((Y1-Y0)||1)*(H-m.t-m.b);
+ ticks.forEach(v=>{svg.appendChild(el('line',{x1:m.l,x2:W-m.r,y1:sy(v),y2:sy(v),stroke:cssv(v===0&&!o.log?'--axis':'--grid'),'stroke-width':1}));
+  svg.appendChild(el('text',{x:m.l-6,y:sy(v)+4,'text-anchor':'end'},o.yfmt?o.yfmt(v):v));});
+ const yr0=Math.floor(i2ym(x0)/100),yr1=Math.floor(i2ym(x1)/100),stepY=Math.max(1,Math.ceil((yr1-yr0)/(W/70)));
+ for(let y=yr0;y<=yr1;y++){if((y-yr0)%stepY)continue;const xi=ym2i(y*100+1);if(xi<x0||xi>x1)continue;
+  svg.appendChild(el('text',{x:sx(xi),y:H-6,'text-anchor':'middle'},String(y)));}
+ (o.bands||[]).forEach(b=>{const a=Math.max(x0,b[0]),c=Math.min(x1,b[1]);if(c<=a)return;
+  svg.insertBefore(el('rect',{x:sx(a),y:m.t,width:sx(c)-sx(a),height:H-m.t-m.b,fill:cssv('--grid'),opacity:.8}),svg.firstChild);});
+ o.series.forEach(s=>{let d='',pen=false;s.pts.forEach(p=>{if(p[1]==null||!isFinite(p[1])){pen=false;return;}d+=(pen?'L':'M')+sx(p[0]).toFixed(1)+','+sy(p[1]).toFixed(1);pen=true;});
+  const a={d,fill:'none',stroke:s.color,'stroke-width':2,'stroke-linejoin':'round','stroke-linecap':'round'};if(s.dash)a['stroke-dasharray']='5 4';
+  svg.appendChild(el('path',a));});
+ const cross=el('line',{y1:m.t,y2:H-m.b,stroke:cssv('--axis'),'stroke-width':1,opacity:0});svg.appendChild(cross);
+ const dots=o.series.map(s=>{const c=el('circle',{r:4,fill:s.color,stroke:cssv('--card'),'stroke-width':2,opacity:0});svg.appendChild(c);return c;});
+ const hit=el('rect',{x:m.l,y:0,width:W-m.l-m.r,height:H,fill:'transparent'});svg.appendChild(hit);
+ const move=ev=>{const r=svg.getBoundingClientRect(),px=(ev.clientX-r.left)*W/r.width;const xi=Math.round(x0+(px-m.l)/(W-m.l-m.r)*(x1-x0));
+  if(xi<x0||xi>x1){return;}cross.setAttribute('x1',sx(xi));cross.setAttribute('x2',sx(xi));cross.setAttribute('opacity',.6);
+  let h=`<b>${fYM(i2ym(xi))}</b>`;o.series.forEach((s,i)=>{const p=s.pts.find(q=>q[0]===xi);
+   if(p&&p[1]!=null){dots[i].setAttribute('cx',sx(xi));dots[i].setAttribute('cy',sy(p[1]));dots[i].setAttribute('opacity',1);
+    h+=`<br><span style="color:${s.color}">●</span> ${esc(s.name)} <b>${o.tfmt?o.tfmt(p[1]):p[1].toFixed(2)}</b>`;}else dots[i].setAttribute('opacity',0);});
+  tipShow(ev,h);};
+ hit.addEventListener('mousemove',move);hit.addEventListener('touchmove',e=>{if(e.touches[0])move(e.touches[0]);},{passive:true});
+ hit.addEventListener('mouseleave',()=>{tipHide();cross.setAttribute('opacity',0);dots.forEach(d=>d.setAttribute('opacity',0));});
+}
 
-/* 存続性: 純資産・年数 */
+/* 棒: labels・series=[{name,color,values}]・horizontal・diverge（0をまたぐ）・base（基準線） */
+function barChart(box,o){
+ box.innerHTML='';box.classList.add('chart');
+ const n=o.labels.length,k=o.series.length,W=Math.max(280,box.clientWidth||600);
+ const vals=[];o.series.forEach(s=>s.values.forEach(v=>{if(v!=null&&isFinite(v))vals.push(v);}));
+ if(!vals.length){box.innerHTML='<p class="mute small">データが無い</p>';return;}
+ const base=o.base!=null?o.base:0;let lo=Math.min(base,...vals),hi=Math.max(base,...vals);if(lo===hi)hi=lo+1;
+ const ticks=niceTicks(lo,hi,o.horizontal?4:5);lo=Math.min(lo,ticks[0]);hi=Math.max(hi,ticks[ticks.length-1]);
+ const fmt=o.fmt||(v=>(Math.abs(v)>=100?v.toFixed(0):Math.abs(v)>=10?v.toFixed(1):v.toFixed(2)).replace(/\.?0+$/,'')||'0');
+ if(o.horizontal){
+  const lw=Math.min(W*0.42,Math.max(...o.labels.map(s=>String(s).length))*11+8),rowH=k>1?12*k+10:22,gap=(o.gapAfter!=null)?14:0;
+  const H=24+n*rowH+gap,m={l:lw,r:40,t:4,b:20};
+  const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,height:H});box.appendChild(svg);
+  const sx=v=>m.l+(v-lo)/(hi-lo)*(W-m.l-m.r);
+  ticks.forEach(v=>{svg.appendChild(el('line',{x1:sx(v),x2:sx(v),y1:m.t,y2:H-m.b,stroke:cssv(v===base?'--axis':'--grid')}));
+   svg.appendChild(el('text',{x:sx(v),y:H-5,'text-anchor':'middle'},fmt(v)));});
+  o.labels.forEach((lab,i)=>{const yb=m.t+i*rowH+(o.gapAfter!=null&&i>o.gapAfter?gap:0);
+   const t=el('text',{x:m.l-6,y:yb+rowH/2+4,'text-anchor':'end'},String(lab).length>26?String(lab).slice(0,25)+'…':lab);t.style.fill=cssv('--ink2');svg.appendChild(t);
+   o.series.forEach((s,j)=>{const v=s.values[i];if(v==null||!isFinite(v))return;const bh=k>1?10:14,y=yb+(k>1?5+j*12:(rowH-bh)/2);
+    const a=Math.min(sx(v),sx(base)),w=Math.max(1,Math.abs(sx(v)-sx(base)));
+    svg.appendChild(el('rect',{x:a,y,width:w,height:bh,rx:3,fill:s.color}));
+    if(k===1){const tx=el('text',{x:v>=base?sx(v)+4:sx(v)-4,y:y+bh-3,'text-anchor':v>=base?'start':'end'},fmt(v));tx.style.fill=cssv('--ink2');svg.appendChild(tx);}});
+   const hb=el('rect',{x:0,y:yb,width:W,height:rowH,fill:'transparent'});
+   hb.addEventListener('mousemove',ev=>{let h=`<b>${esc(lab)}</b>`;o.series.forEach((s,j)=>{const v=s.values[i];h+=`<br><span style="color:${s.color}">●</span> ${esc(s.name)} <b>${v==null?'—':fmt(v)}${o.unit?' '+esc(o.unit):''}</b>`;});if(o.sub&&o.sub[i])h+='<br>'+esc(o.sub[i]);tipShow(ev,h);});
+   hb.addEventListener('mouseleave',tipHide);svg.appendChild(hb);});
+  return;}
+ const H=o.h||240,m={l:44,r:8,t:10,b:o.rotate?54:26};
+ const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,height:H});box.appendChild(svg);
+ const sy=v=>H-m.b-(v-lo)/(hi-lo)*(H-m.t-m.b),bw=(W-m.l-m.r)/n,inner=Math.max(2,Math.min(28,(bw-6)/k-2));
+ ticks.forEach(v=>{svg.appendChild(el('line',{x1:m.l,x2:W-m.r,y1:sy(v),y2:sy(v),stroke:cssv(v===base?'--axis':'--grid')}));
+  svg.appendChild(el('text',{x:m.l-6,y:sy(v)+4,'text-anchor':'end'},fmt(v)));});
+ const every=Math.max(1,Math.ceil(n/(W/(o.rotate?24:46))));
+ o.labels.forEach((lab,i)=>{const cx=m.l+bw*i+bw/2;
+  if(i%every===0){const t=el('text',o.rotate?{x:cx,y:H-m.b+12,'text-anchor':'end',transform:`rotate(-40 ${cx} ${H-m.b+12})`}:{x:cx,y:H-8,'text-anchor':'middle'},String(lab).length>14?String(lab).slice(0,13)+'…':lab);svg.appendChild(t);}
+  o.series.forEach((s,j)=>{const v=s.values[i];if(v==null||!isFinite(v))return;const x=cx-(k*(inner+2))/2+j*(inner+2);
+   svg.appendChild(el('rect',{x,y:Math.min(sy(v),sy(base)),width:inner,height:Math.max(1,Math.abs(sy(v)-sy(base))),rx:Math.min(3,inner/3),fill:s.color}));});
+  const hb=el('rect',{x:m.l+bw*i,y:m.t,width:bw,height:H-m.t-m.b,fill:'transparent'});
+  hb.addEventListener('mousemove',ev=>{let h=`<b>${esc(lab)}</b>`;o.series.forEach((s,j)=>{const v=s.values[i];h+=`<br><span style="color:${s.color}">●</span> ${esc(s.name)} <b>${v==null?'—':fmt(v)}${o.unit?' '+esc(o.unit):''}</b>`;});if(o.sub&&o.sub[i])h+='<br>'+esc(o.sub[i]);tipShow(ev,h);});
+  hb.addEventListener('mouseleave',tipHide);svg.appendChild(hb);});
+}
 
-/* 器の効率: 日本の個人投資家として。分配のたびに課税される器は複利が漏れる */
+/* 散布: points=[{x,y,label,hl,star}] */
+function scatterChart(box,o){
+ box.innerHTML='';box.classList.add('chart');
+ const W=Math.max(280,box.clientWidth||600),H=o.h||300,m={l:46,r:14,t:12,b:36};
+ const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,height:H});box.appendChild(svg);
+ const xs=o.points.map(p=>p.x),ys=o.points.map(p=>p.y);
+ const tx=niceTicks(Math.min(...xs),Math.max(...xs),5),ty=niceTicks(Math.min(...ys),Math.max(...ys),5);
+ const sx=v=>m.l+(v-tx[0])/(tx[tx.length-1]-tx[0])*(W-m.l-m.r), sy=v=>H-m.b-(v-ty[0])/(ty[ty.length-1]-ty[0])*(H-m.t-m.b);
+ tx.forEach(v=>{svg.appendChild(el('line',{x1:sx(v),x2:sx(v),y1:m.t,y2:H-m.b,stroke:cssv('--grid')}));svg.appendChild(el('text',{x:sx(v),y:H-m.b+14,'text-anchor':'middle'},v));});
+ ty.forEach(v=>{svg.appendChild(el('line',{x1:m.l,x2:W-m.r,y1:sy(v),y2:sy(v),stroke:cssv('--grid')}));svg.appendChild(el('text',{x:m.l-6,y:sy(v)+4,'text-anchor':'end'},v));});
+ svg.appendChild(el('text',{x:(W+m.l)/2,y:H-4,'text-anchor':'middle'},o.xlab||''));
+ const yl=el('text',{x:12,y:(H-m.b+m.t)/2,'text-anchor':'middle',transform:`rotate(-90 12 ${(H-m.b+m.t)/2})`},o.ylab||'');svg.appendChild(yl);
+ const pts=[...o.points].sort((a,b)=>(a.hl?1:0)-(b.hl?1:0));
+ pts.forEach(p=>{const c=el('circle',{cx:sx(p.x),cy:sy(p.y),r:p.star?8:p.hl?6:4.5,fill:p.star?cssv('--s1'):p.hl?cssv('--s2'):cssv('--sx'),stroke:cssv('--card'),'stroke-width':2});
+  svg.appendChild(c);
+  if(p.hl){const t=el('text',{x:sx(p.x)+(sx(p.x)>W*0.7?-10:10),y:sy(p.y)-8,'text-anchor':sx(p.x)>W*0.7?'end':'start'},p.label);t.style.fill=cssv('--ink');t.style.fontWeight='600';svg.appendChild(t);}
+  const hb=el('circle',{cx:sx(p.x),cy:sy(p.y),r:12,fill:'transparent'});
+  hb.addEventListener('mousemove',ev=>tipShow(ev,`<b>${esc(p.label)}</b><br>${esc(o.xlab||'x')}: <b>${p.x}</b><br>${esc(o.ylab||'y')}: <b>${p.y}</b>`));
+  hb.addEventListener('mouseleave',tipHide);svg.appendChild(hb);});
+}
 
+/* ドーナツ: items=[{label,v,color}] */
+function donut(box,items,center){
+ box.innerHTML='';box.classList.add('chart');
+ const S=Math.min(220,Math.max(160,box.clientWidth||200)),R=S/2-4,r=R*0.62,cx=S/2,cy=S/2;
+ const svg=el('svg',{viewBox:`0 0 ${S} ${S}`,height:S,style:`width:${S}px;margin:0 auto`});box.appendChild(svg);
+ const tot=items.reduce((a,b)=>a+b.v,0)||1;let a0=-Math.PI/2;
+ items.forEach(it=>{if(it.v<=0)return;const a1=a0+it.v/tot*Math.PI*2-0.012;
+  const p=(a,rr)=>[cx+rr*Math.cos(a),cy+rr*Math.sin(a)],large=a1-a0>Math.PI?1:0,[x1,y1]=p(a0,R),[x2,y2]=p(a1,R),[x3,y3]=p(a1,r),[x4,y4]=p(a0,r);
+  const path=el('path',{d:`M${x1},${y1}A${R},${R} 0 ${large} 1 ${x2},${y2}L${x3},${y3}A${r},${r} 0 ${large} 0 ${x4},${y4}Z`,fill:it.color});
+  path.addEventListener('mousemove',ev=>tipShow(ev,`<b>${esc(it.label)}</b><br>${(it.v/tot*100).toFixed(1)}%`));path.addEventListener('mouseleave',tipHide);
+  svg.appendChild(path);a0=a1+0.012;});
+ if(center){const t=el('text',{x:cx,y:cy+2,'text-anchor':'middle'},center[0]);t.style.fill=cssv('--ink');t.style.fontSize='17px';t.style.fontWeight='800';svg.appendChild(t);
+  if(center[1]){const u=el('text',{x:cx,y:cy+20,'text-anchor':'middle'},center[1]);svg.appendChild(u);}}
+}
+const legend=(items,line)=>`<div class="legend">${items.map(it=>`<span><i class="${line?'ln':''}${it.dash?' dash':''}" style="background:${it.color};color:${it.color}"></i>${esc(it.label)}</span>`).join('')}</div>`;
 
+/* ═══════════════ データ ═══════════════ */
+async function amiLoad(){
+ const get=async u=>{try{const r=await fetch(u,{cache:'no-store'});if(!r.ok)throw 0;return await r.json();}catch(e){return null;}};
+ const [P,E,S,D,Q,ST]=await Promise.all([get('portfolio.json'),get('out/etf_profiles.json'),get('out/ami_series.json'),
+  get('out/ami_digest.json'),get('out/dashboard.json'),get('state.json')]);
+ Object.assign(DATA,{P,E,S,D,Q,ST});
+}
 
+/* 目標・旧の姿の本を、値動きの系列の鍵へ写す。系列の無い本は外して名指しする（0と読まない） */
+const SIM_MAP={'IFREE-NDX':'QQQ',QQQM:'QQQ',QQQ:'QQQ','RPLUS-NDX':'QQQ','RPLUS-SOX':'SMH',SHLD:'ITA',MISL:'ITA'};
+const SIM_NOTE={SHLD:'SHLD は記録3年なので ITA で代えた',MISL:'MISL は記録が短いので ITA で代えた','RPLUS-SOX':'楽天・プラス・SOX は SMH で代えた',
+ 'IFREE-NDX':'iFreeNEXT NASDAQ100 は QQQ（同じ指数）で代えた',QQQM:'QQQM は QQQ（同じ指数・長い記録）で代えた'};
+function mapMix(w){const out={},miss=[],notes=new Set();const A=(DATA.S&&DATA.S.assets)||{};
+ for(const [k,v] of Object.entries(w||{})){if(!(v>0))continue;const t=SIM_MAP[k]||k;
+  if(A[t]){out[t]=(out[t]||0)+v;if(SIM_NOTE[k])notes.add(SIM_NOTE[k]);}else miss.push(`${k} ${v}%`);}
+ return {w:out,miss,notes:[...notes]};}
+function mixName(w){return Object.entries(w).filter(e=>e[1]>0).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k} ${+v.toFixed(1)}`).join(' / ');}
 
-/* 実採取(out/etf_profiles.json)から機械算出した値。手で置いた数字は一つも無い——
-   憶測の数値を既定値に混ぜると「測っていない」が「測って良い」に化ける（門Ωの絶対のルール2/7と同じ作法）。
-   個別との重複は portfolio.json の個別(MSFT/ASML/RMD)基準・純資産はUSD×155で億円換算・年数は2026-08-06基準。 */
+/* 旧の姿の一覧（古い順）＋今 */
+function histList(){
+ const T=(DATA.P&&DATA.P.target)||{},out=[];
+ for(const k of Object.keys(T)){const m=k.match(/^ami_mix_superseded_(\d{4})_(\d{2})_(\d{2})(.*)$/);if(!m)continue;const o=T[k]||{};
+  const w=o.ami_weights||o.pct_of_total||o.castle_rule_measure_sleeve||null;if(!w)continue;
+  const ww={};for(const [a,b] of Object.entries(w))if(b>0)ww[a]=b;
+  out.push({key:k,until:`${m[1]}-${m[2]}-${m[3]}`,suf:m[4].replace(/^_/,''),w:ww,castle:o.shiro_castle_pct,
+   note:String(o.note||o.source||'').replace(/\*\*/g,'').slice(0,240)});}
+ out.sort((a,b)=>(a.until+a.suf).localeCompare(b.until+b.suf));
+ const cur={};for(const [a,b] of Object.entries(T.ami_weights||{}))if(b>0)cur[a]=b;
+ out.push({key:'now',until:'今',w:cur,castle:T.shiro_castle_pct,note:'portfolio.json の target.ami_weights（正本）',now:true});
+ return out;}
 
+/* ═══════════════ 計算（月次・毎月組み直し） ═══════════════ */
+function serAt(k,ym){const a=DATA.S.assets[k];if(!a)return null;const i=ym2i(ym)-ym2i(a.start);return i>=0&&i<a.r.length?a.r[i]:null;}
+function fxAt(ym){const f=DATA.S.fx;const i=ym2i(ym)-ym2i(f.start);return i>=0&&i<f.r.length?f.r[i]:null;}
+function realStart(k){const a=DATA.S.assets[k];return a.proxy?i2ym(ym2i(a.proxy.until)+1):a.start;}
+function mixStart(w,real){let s=0;for(const k in w){if(!(w[k]>0))continue;const a=DATA.S.assets[k];if(!a)return null;s=Math.max(s,real?realStart(k):a.start);}return s||null;}
+/* 形の月次リターン（ym0〜ym1）。1か月でも欠ければその月は null＝0で埋めない */
+function mixRets(w,ym0,ym1,ccy){const tot=Object.values(w).reduce((a,b)=>a+(b>0?b:0),0);const out=[];
+ for(let i=ym2i(ym0);i<=ym2i(ym1);i++){const ym=i2ym(i);let r=0,ok=tot>0;
+  for(const k in w){if(!(w[k]>0))continue;const x=serAt(k,ym);if(x==null){ok=false;break;}r+=w[k]/tot*x;}
+  if(ok&&ccy==='JPY'){const f=fxAt(ym);if(f==null)ok=false;else r=(1+r)*(1+f)-1;}
+  out.push(ok?r:null);}
+ return out;}
+function stats(r){const n=r.length;if(!n||r.some(x=>x==null))return null;let v=1,pk=1,mdd=0,s=0,s2=0;const idx=[],dd=[];
+ r.forEach(x=>{v*=1+x;pk=Math.max(pk,v);mdd=Math.min(mdd,v/pk-1);idx.push(v);dd.push(v/pk-1);s+=x;s2+=x*x;});
+ const mu=s/n,vol=Math.sqrt(Math.max(0,s2/n-mu*mu))*Math.sqrt(12);
+ return {cagr:Math.pow(v,12/n)-1,vol,mdd,mult:v,idx,dd,n};}
+/* 毎月1を月初に入れる積立の内部収益率（年率）と倍率 */
+function dca(r){let V=0;r.forEach(x=>{V=(V+1)*(1+x);});const n=r.length;
+ const f=m=>{let s=0;for(let k=0;k<n;k++)s+=Math.pow(1+m,n-k);return s-V;};
+ let lo=-0.09,hi=0.2;for(let it=0;it<60;it++){const mid=(lo+hi)/2;if(f(mid)>0)hi=mid;else lo=mid;}
+ return {irr:Math.pow(1+(lo+hi)/2,12)-1,mult:V/n,V};}
+function rolling(rA,rB,N){const L=N*12,out=[];for(let s=0;s+L<=rA.length;s++){const a=rA.slice(s,s+L),b=rB?rB.slice(s,s+L):null;
+  if(a.some(x=>x==null)||(b&&b.some(x=>x==null)))continue;out.push({s,a:dca(a).irr,b:b?dca(b).irr:null});}return out;}
+const med=a=>{const s=[...a].sort((x,y)=>x-y),n=s.length;return n?(n%2?s[(n-1)/2]:(s[n/2-1]+s[n/2])/2):null;};
+const CRISES=[['ITバブル崩壊',200009,200210],['金融危機',200711,200902],['コロナ',202001,202003],['2022年の下げ',202201,202209]];
 
-/* ── コストの表（Ⅰ） ─────────────────────────────────── */
-(function costTable(){
+/* ═══════════════ 1 ホーム ═══════════════ */
+function bucketOf(t){const T=DATA.P.target||{};const same=Object.assign({},T.ami_same_index||{});
+ for(const [b,l] of Object.entries(T.ami_same_bucket||{}))same[b]=(same[b]||[]).concat(l);
+ for(const [b,l] of Object.entries(same))if(l.includes(t))return b;return t;}
+function nameOf(t){const T=DATA.P.target||{},f=(T.ami_funds||{})[t];if(f)return f.short||f.name;const e=DATA.E&&DATA.E.etfs[t];return e?e.nm:t;}
+function erOf(t){const T=DATA.P.target||{},f=(T.ami_funds||{})[t];if(f&&f.fee_pct_tax_incl!=null)return f.fee_pct_tax_incl/100;
+ const e=DATA.E&&DATA.E.etfs[t];return e&&e.er!=null?e.er:null;}
+function homeRender(){
+ const box=$('#homeBox');const P=DATA.P;if(!P){box.innerHTML='<div class="note ng">portfolio.json を読めなかった（前回値やゼロで埋めない）。</div>';return;}
+ const T=P.target||{},W=T.ami_weights||{},castle=+T.shiro_castle_pct||0;
+ const tgt=Object.entries(W).filter(e=>e[1]>0).sort((a,b)=>b[1]-a[1]);
+ if(castle>0)tgt.push(['個別株',castle]);
+ /* 今: state.json の株数 × 盤の値段（ドル建ては × ドル円）。区分は門と同じ数え方（同じ指数・同じ扱いの本を寄せる） */
+ let cur=null,curNote='',miss=[];
+ try{const pf=JSON.parse(DATA.ST.data['pf:portfolio']);const q=(DATA.Q&&DATA.Q.quotes)||{},fx=(DATA.Q&&DATA.Q.fx&&DATA.Q.fx.USDJPY)||pf.fx;
+  cur={};let tot=0;(pf.positions||[]).forEach(p=>{const qq=q[p.t];let px=qq&&qq.px!=null?qq.px:p.npx;if(px==null||!(p.sh>0)){miss.push(p.t);return;}
+   let v=p.sh*px*(p.ccy==='USD'?fx:1);const b=(p.sleeve==='castle'&&bucketOf(p.t)===p.t)?'個別株':bucketOf(p.t);cur[b]=(cur[b]||0)+v;tot+=v;});
+  for(const k in cur)cur[k]=cur[k]/tot*100;
+  curNote=`repo の state.json の株数（保存 ${String(DATA.ST.savedAt||'').slice(0,10)}）× 盤の値段（${esc((DATA.Q&&DATA.Q.asof)||'')}）・$1=¥${fx}。端末で記録して repo に入れていない売り買いは入らない。`;
+ }catch(e){cur=null;}
+ const keys=[...new Set([...tgt.map(e=>e[0]),...Object.keys(cur||{})])];
+ const lab=k=>k==='個別株'?'個別株':(k==='IFREE-NDX'?'NASDAQ100（iFreeNEXT）':k);
+ /* 加重経費率（目標） */
+ let erw=0,ers=0,erMiss=[];tgt.forEach(([t,v])=>{if(t==='個別株')return;const e=erOf(t);if(e==null){erMiss.push(t);return;}erw+=e*v;ers+=v;});
+ const er=ers?erw/ers:null;
+ /* ルックスルー（目標の ETF 側）。iFreeNEXT は QQQM の中身で代える */
+ const E=(DATA.E&&DATA.E.etfs)||{},look={};let lcov=0,lmiss=[];const etfSum=tgt.filter(e=>e[0]!=='個別株').reduce((a,b)=>a+b[1],0);
+ tgt.forEach(([t,v])=>{if(t==='個別株')return;const p=E[t]||(t==='IFREE-NDX'?E.QQQM:null);if(!p){lmiss.push(t);return;}
+  p.h.forEach(([s,hw])=>{look[s]=(look[s]||0)+v/etfSum*hw*100;lcov+=v/etfSum*hw*100;});});
+ const lrows=Object.entries(look).sort((a,b)=>b[1]-a[1]).slice(0,12);
+ const SEMI=new Set(['NVDA','TSM','AVGO','AMD','MU','ASML','AMAT','TXN','KLAC','LRCX','INTC','ADI','QCOM','MRVL','CDNS','SNPS','MPWR','TER','NXPI','STM','ARM','MCHP','ON','SNDK','WDC','STX']);
+ const semi=Object.entries(look).filter(e=>SEMI.has(e[0])).reduce((a,b)=>a+b[1],0);
+ const asof=histList().slice(-2)[0];
+ let h=`<div class="tiles">
+  <div class="tile"><div class="k">ETF・投資信託の側</div><div class="v">${100-castle}%</div><div class="h">個別株 ${castle}%（target.shiro_castle_pct）</div></div>
+  <div class="tile"><div class="k">本数（目標>0）</div><div class="v">${tgt.filter(e=>e[0]!=='個別株').length}本</div><div class="h">${esc(tgt.filter(e=>e[0]!=='個別株').map(e=>e[0]).join('・'))}</div></div>
+  <div class="tile"><div class="k">加重の経費率（目標）</div><div class="v">${er==null?'—':(er*100).toFixed(3)+'%'}</div><div class="h">20年で終価の約 ${er==null?'—':((1-Math.pow(1-er,20))*100).toFixed(1)+'%'}${erMiss.length?'・不明 '+esc(erMiss.join(',')):''}</div></div>
+  <div class="tile"><div class="k">半導体（中身まで・ETF側）</div><div class="v">${semi.toFixed(1)}%</div><div class="h">上位の掲載分だけ（被覆 ${lcov.toFixed(0)}%）</div></div>
+ </div>
+ <div class="grid2">
+  <div class="card"><h3>目標の形</h3><p class="small mute">正本 portfolio.json の target.ami_weights${asof?`（${esc(asof.until)} に今の形へ）`:''}</p><div id="dTgt"></div><div id="lTgt"></div></div>
+  <div class="card"><h3>今の比率</h3><p class="small mute">${cur?curNote:'state.json を読めなかった'}</p><div id="dCur"></div><div id="lCur"></div></div>
+ </div>
+ <div class="card"><h3>目標と今の差</h3><p class="small mute">新しいお金は「あと」が大きい区分へ回る（門の注文書・割り方 cat）。<b>売って戻すことはしない</b>（🕰 と📚の「戻し方」の検証）。</p>
+ <div class="scroll"><table><thead><tr><th>区分</th><th>目標</th><th>今</th><th>差</th><th style="width:40%"></th></tr></thead><tbody>
+ ${keys.map(k=>{const t=(tgt.find(e=>e[0]===k)||[0,0])[1],c=cur?(cur[k]||0):null,d=c==null?null:t-c;
+  return `<tr><td><span class="legend" style="margin:0"><span><i style="background:${colOf(k)}"></i>${esc(lab(k))}</span></span></td><td>${t}%</td><td>${c==null?'—':c.toFixed(1)+'%'}</td>
+  <td class="${d==null?'':d>0.5?'up':d<-0.5?'down':''}">${d==null?'—':d>0.5?'あと '+d.toFixed(1):d<-0.5?(-d).toFixed(1)+' 多い':'ほぼ目標'}</td>
+  <td><div style="position:relative;height:10px;background:var(--line);border-radius:5px"><div style="position:absolute;left:0;top:0;height:10px;border-radius:5px;width:${Math.min(100,c||0)}%;background:${colOf(k)}"></div><div style="position:absolute;top:-3px;width:2px;height:16px;background:var(--ink);left:${Math.min(100,t)}%"></div></div></td></tr>`;}).join('')}
+ </tbody></table></div>
+ ${miss.length?`<p class="small warn">値段が無く数えていない: ${esc(miss.join('・'))}</p>`:''}
+ <p class="small mute">個別株の MSFT・ASML は門と同じく NASDAQ100・SMH の区分に数える（target.ami_same_bucket）。棒の黒い線が目標。</p></div>
+ <div class="card"><h3>中身まで分解すると（目標の形・ETF 側）</h3>
+  <p class="small mute">ETFの上位の掲載分を目標の比で足した（out/etf_profiles.json・iFreeNEXT は QQQM の中身で代用）。${lmiss.length?'中身の無い本: '+esc(lmiss.join('・'))+'＝数えていない。':''}</p>
+  <div id="lookChart"></div></div>
+ <div class="card"><h3>次にすること</h3>
+  <div class="note i">🛒 今月の注文（株数・円・口座 A/B）は <a href="etf.html">ETF版の🛒買付順位</a>（計算は門と同じ）。🧪 で今の形と前の形を同じ期間で比べられる。</div></div>`;
+ box.innerHTML=h;
+ const ti=tgt.map(([k,v])=>({label:lab(k),v,color:colOf(k)}));
+ donut($('#dTgt'),ti,['目標',`${tgt.length}区分`]);$('#lTgt').innerHTML=legend(ti.map(x=>({label:`${x.label} ${x.v}%`,color:x.color})));
+ if(cur){const ci=Object.entries(cur).sort((a,b)=>b[1]-a[1]).map(([k,v])=>({label:lab(k),v,color:colOf(k)}));
+  donut($('#dCur'),ci,['今','']);$('#lCur').innerHTML=legend(ci.map(x=>({label:`${x.label} ${x.v.toFixed(1)}%`,color:x.color})));}
+ barChart($('#lookChart'),{horizontal:true,labels:lrows.map(r=>r[0]),series:[{name:'ETF 側に占める%',color:cssv('--s1'),values:lrows.map(r=>+r[1].toFixed(2))}],unit:'%'});
+}
+
+/* ═══════════════ 2 配合を試す ═══════════════ */
+let SIM={w:{},cmp:'prev',ccy:'JPY',win:'max'};
+function simPresets(){const H=histList(),out=[];
+ const now=H[H.length-1];out.push({id:'now',label:'今の目標（portfolio.json）',w:mapMix(now.w)});
+ if(H.length>1)out.push({id:'prev',label:`前の形（${H[H.length-2].until} まで）`,w:mapMix(H[H.length-2].w)});
+ out.push({id:'spy',label:'S&P500 だけ',w:{w:{SPY:100},miss:[],notes:[]}},{id:'qqq',label:'NASDAQ100 だけ',w:{w:{QQQ:100},miss:[],notes:[]}});
+ [...H].reverse().slice(2).forEach(h=>out.push({id:'h:'+h.key,label:`〜${h.until}${h.suf?' '+h.suf:''}: ${mixName(h.w)}`.slice(0,70),w:mapMix(h.w)}));
+ return out;}
+function simInit(){
+ const A=DATA.S.assets,keys=Object.keys(A),ps=simPresets();
+ $('#simPreset').innerHTML='<option value="">— 選ぶ —</option>'+ps.map(p=>`<option value="${esc(p.id)}">${esc(p.label)}</option>`).join('');
+ $('#simCmp').innerHTML=ps.filter(p=>p.id!=='spy').map(p=>`<option value="${esc(p.id)}">${esc(p.label)}</option>`).join('')+'<option value="none">比べない</option>';
+ let saved=null;try{saved=JSON.parse(localStorage.getItem('ami:mix')||'null');}catch(e){}
+ SIM.w=saved&&typeof saved==='object'?saved:Object.assign({},ps[0].w.w);
+ $('#simCmp').value=ps.find(p=>p.id==='prev')?'prev':'qqq';
+ const wins=[['max','最長'],['200009','2000-09〜'],['200606','2006-06〜'],['201101','2011〜'],['201601','直近10年']];
+ $('#simWin').innerHTML=wins.map(([v,l])=>`<button data-v="${v}" class="${v==='max'?'on':''}">${l}</button>`).join('');
+ const seg=(id,key)=>$(id).addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;$(id).querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');SIM[key]=b.dataset.v;amiSimRun();});
+ seg('#simCcy','ccy');seg('#simWin','win');
+ $('#simW').innerHTML=keys.map(k=>{const a=A[k];return `<div class="wrow"><div class="sw" style="background:${colOf(k)}"></div>
+  <div class="nm">${esc(k)}<span>${esc(a.nm.replace(/\s*[A-Z]{2,4}$/,''))}・${fYM(a.proxy?realStart(k):a.start)}〜${a.proxy?'（前は代理）':''}</span></div>
+  <input type="range" min="0" max="100" step="5" data-k="${k}" oninput="amiSimSet('${k}',this.value)">
+  <input type="number" min="0" max="100" step="1" data-k="${k}" oninput="amiSimSet('${k}',this.value)"></div>`;}).join('');
+ simSyncInputs();amiSimRun();
+}
+function simSyncInputs(){document.querySelectorAll('#simW input').forEach(i=>{i.value=SIM.w[i.dataset.k]||0;});
+ const s=Object.values(SIM.w).reduce((a,b)=>a+(+b||0),0);
+ $('#simSum').innerHTML=`合計 <b>${+s.toFixed(1)}</b>（100でなくても比で読む）`;}
+let simT=null;
+function amiSimSet(k,v){v=Math.max(0,Math.min(100,+v||0));if(v)SIM.w[k]=v;else delete SIM.w[k];
+ document.querySelectorAll(`#simW input[data-k="${k}"]`).forEach(i=>{if(+i.value!==v)i.value=v;});
+ const s=Object.values(SIM.w).reduce((a,b)=>a+(+b||0),0);$('#simSum').innerHTML=`合計 <b>${+s.toFixed(1)}</b>（100でなくても比で読む）`;
+ try{localStorage.setItem('ami:mix',JSON.stringify(SIM.w));}catch(e){}
+ clearTimeout(simT);simT=setTimeout(amiSimRun,120);}
+function amiSimLoadPreset(id){const p=simPresets().find(x=>x.id===id);if(!p)return;SIM.w=Object.assign({},p.w.w);
+ try{localStorage.setItem('ami:mix',JSON.stringify(SIM.w));}catch(e){}simSyncInputs();amiSimRun();
+ if(p.w.miss.length||p.w.notes.length)$('#simOut').insertAdjacentHTML('afterbegin',`<div class="note w small">${p.w.miss.length?'値動きの記録が無いので外した: '+esc(p.w.miss.join('・'))+'。':''}${esc(p.w.notes.join('・'))}</div>`);}
+function amiSimEqual(){const ks=Object.keys(SIM.w).filter(k=>SIM.w[k]>0);if(!ks.length)return;ks.forEach(k=>SIM.w[k]=+(100/ks.length).toFixed(1));simSyncInputs();amiSimRun();}
+function amiSimClear(){SIM.w={};simSyncInputs();amiSimRun();}
+function amiSimRun(){
+ const out=$('#simOut');if(AMI_PG!==2&&out.dataset.done)return;
+ const w=SIM.w;if(!Object.values(w).some(v=>v>0)){out.innerHTML='<p class="mute">重みを入れる</p>';return;}
+ const cmpId=$('#simCmp').value,cp=cmpId==='none'?null:simPresets().find(p=>p.id===cmpId),cw=cp?cp.w.w:null;
+ const last=DATA.S.last;let s0=Math.max(mixStart(w)||0,cw?mixStart(cw)||0:0,mixStart({SPY:1}),SIM.ccy==='JPY'?DATA.S.fx.start:0);
+ if(SIM.win!=='max')s0=Math.max(s0,+SIM.win);
+ const ndx=$('#simNdx').checked;if(ndx)s0=Math.max(s0,mixStart({QQQ:1}));
+ const rA=mixRets(w,s0,last,SIM.ccy),rS=mixRets({SPY:1},s0,last,SIM.ccy),rC=cw?mixRets(cw,s0,last,SIM.ccy):null,rN=ndx?mixRets({QQQ:1},s0,last,SIM.ccy):null;
+ const A=stats(rA),Sx=stats(rS),C=rC?stats(rC):null,N=rN?stats(rN):null;
+ if(!A||!Sx){out.innerHTML='<div class="note ng">この期間に欠けた月がある（0で埋めない）。期間を変える。</div>';out.dataset.done=1;return;}
+ const lines=[{name:'試す形',color:cssv('--s1'),st:A,r:rA}];if(C)lines.push({name:'比べる形',color:cssv('--s2'),st:C,r:rC,dash:true});
+ lines.push({name:'S&P500',color:cssv('--s6'),st:Sx,r:rS});if(N)lines.push({name:'NASDAQ100',color:cssv('--s7'),st:N,r:rN,dash:true});
+ const proxies=Object.keys(w).filter(k=>w[k]>0&&DATA.S.assets[k].proxy&&realStart(k)>s0).map(k=>`${k}（${fYM(s0)}〜${fYM(DATA.S.assets[k].proxy.until)} は ${DATA.S.assets[k].proxy.t}＝${DATA.S.assets[k].proxy.nm}）`);
+ const yrs=(A.n/12).toFixed(1),xs0=ym2i(s0);
+ const dc=lines.map(l=>dca(l.r));
+ let h=`<p class="small mute">${fYM(s0)}〜${fYM(last)}（${yrs}年・${SIM.ccy==='JPY'?'円建て':'ドル建て'}・毎月組み直し・配当込み・税と売買の費用は引いていない）</p>
+ ${proxies.length?`<div class="note w small">代理を使っている期間: ${esc(proxies.join('／'))}。代理は能動の投資信託で、実物の成績ではない。「実物だけ」で見るなら期間を 2006-06〜 にする。</div>`:''}
+ <div class="scroll"><table><thead><tr><th></th>${lines.map(l=>`<th><span style="color:${l.color}">●</span> ${esc(l.name)}</th>`).join('')}</tr></thead><tbody>
+ <tr><td>一括の年率</td>${lines.map(l=>`<td><b>${pct(l.st.cagr)}</b></td>`).join('')}</tr>
+ <tr><td>1が何倍に</td>${lines.map(l=>`<td>${l.st.mult.toFixed(2)}倍</td>`).join('')}</tr>
+ <tr><td>ぶれ（年率）</td>${lines.map(l=>`<td>${pct(l.st.vol)}</td>`).join('')}</tr>
+ <tr><td>最大下落</td>${lines.map(l=>`<td class="down">${pct(l.st.mdd)}</td>`).join('')}</tr>
+ <tr><td>毎月積立の年率（内部収益率）</td>${dc.map(d=>`<td><b>${pct(d.irr)}</b></td>`).join('')}</tr>
+ <tr><td>積立の倍率（入れた額に対して）</td>${dc.map(d=>`<td>${d.mult.toFixed(2)}倍</td>`).join('')}</tr>
+ </tbody></table></div>
+ ${C?`<p class="small mute">比べる形: ${esc(mixName(cw))}${cp.w.miss.length?'（記録の無い本を外した: '+esc(cp.w.miss.join('・'))+'）':''}</p>`:''}
+ <h3 style="margin-top:14px">1円が何円になったか（一括・対数目盛り）</h3>${legend(lines.map(l=>({label:l.name,color:l.color,dash:l.dash})),true)}<div id="simG"></div>
+ <h3 style="margin-top:14px">高値からの下げ</h3><div id="simD"></div>
+ <h3 style="margin-top:14px">暦年のリターン</h3>${legend(lines.map(l=>({label:l.name,color:l.color})))}<div id="simY"></div>
+ <h3 style="margin-top:14px">いつ始めても：毎月積立の年率（転がる窓）</h3>
+ <p class="small mute">その月から N 年、毎月同じ額を積み立てた場合の内部収益率を、始めた月を1か月ずつずらして全部測った。窓は重なるので独立な回数ではない。</p>
+ <div id="simR"></div><div id="simRC"></div>
+ <h3 style="margin-top:14px">大きな下げの局面（その期間の累計）</h3><div id="simC"></div>`;
+ out.innerHTML=h;out.dataset.done=1;
+ const bands=CRISES.map(c=>[ym2i(c[1]),ym2i(c[2])]);
+ lineChart($('#simG'),{log:true,bands,series:lines.map(l=>({name:l.name,color:l.color,dash:l.dash,pts:l.st.idx.map((v,i)=>[xs0+i,v])})),yfmt:v=>v>=1?v+'':v.toFixed(1),tfmt:v=>v.toFixed(2)+'倍'});
+ lineChart($('#simD'),{h:200,zero:true,bands,series:lines.map(l=>({name:l.name,color:l.color,dash:l.dash,pts:l.st.dd.map((v,i)=>[xs0+i,v*100])})),yfmt:v=>v+'%',tfmt:v=>v.toFixed(1)+'%'});
+ /* 暦年 */
+ const yrsL=[];for(let y=Math.ceil(s0/100);y<=Math.floor(last/100);y++){if(ym2i(y*100+1)>=xs0&&ym2i(y*100+12)<=ym2i(last))yrsL.push(y);}
+ const yv=l=>yrsL.map(y=>{let v=1;for(let m=1;m<=12;m++)v*=1+l.r[ym2i(y*100+m)-xs0];return +((v-1)*100).toFixed(1);});
+ barChart($('#simY'),{labels:yrsL.map(String),series:lines.map(l=>({name:l.name,color:l.color,values:yv(l)})),unit:'%',h:240});
+ /* 転がる窓 */
+ const RW=[20,15,10].filter(N=>A.n>=N*12);
+ const rr=RW.map(N=>({N,r:rolling(rA,rS,N),c:rC?rolling(rC,null,N):null}));
+ $('#simR').innerHTML=RW.length?`<div class="scroll"><table><thead><tr><th>窓</th><th>窓の数</th><th>最悪</th><th>中央</th><th>最良</th><th>年15%以上</th><th>S&amp;P500 に勝った窓</th>${rC?'<th>比べる形の中央</th>':''}<th>S&amp;P500 の中央</th></tr></thead><tbody>
+  ${rr.map(o=>{const a=o.r.map(x=>x.a),b=o.r.map(x=>x.b);return `<tr><td>${o.N}年</td><td>${o.r.length}</td><td>${pct(Math.min(...a))}</td><td><b>${pct(med(a))}</b></td><td>${pct(Math.max(...a))}</td>
+   <td>${pct(a.filter(x=>x>=0.15).length/a.length,0)}</td><td>${pct(o.r.filter(x=>x.a>x.b).length/o.r.length,0)}</td>${rC?`<td>${pct(med(o.c.map(x=>x.a)))}</td>`:''}<td>${pct(med(b))}</td></tr>`;}).join('')}</tbody></table></div>`
+  :'<p class="small mute">期間が10年に届かない</p>';
+ if(rr.length){const o=rr[0];const pts=[{name:`試す形（${o.N}年）`,color:cssv('--s1'),pts:o.r.map(x=>[xs0+x.s,x.a*100])},{name:`S&P500（${o.N}年）`,color:cssv('--s6'),pts:o.r.map(x=>[xs0+x.s,x.b*100])}];
+  if(o.c)pts.splice(1,0,{name:`比べる形（${o.N}年）`,color:cssv('--s2'),dash:true,pts:o.c.map(x=>[xs0+x.s,x.a*100])});
+  $('#simRC').innerHTML=`<p class="small mute" style="margin-top:8px">横軸＝積立を始めた月（${o.N}年の窓）</p>${legend(pts.map(p=>({label:p.name,color:p.color,dash:p.dash})),true)}<div id="simRC2"></div>`;
+  lineChart($('#simRC2'),{h:210,series:pts,yfmt:v=>v+'%',tfmt:v=>v.toFixed(1)+'%/年'});}
+ /* 局面 */
+ const cr=CRISES.filter(c=>ym2i(c[1])>=xs0&&c[2]<=last);
+ $('#simC').innerHTML=cr.length?`<div class="scroll"><table><thead><tr><th>局面</th>${lines.map(l=>`<th>${esc(l.name)}</th>`).join('')}</tr></thead><tbody>${cr.map(c=>`<tr><td>${c[0]}<br><span class="small dim">${fYM(c[1])}〜${fYM(c[2])}</span></td>${lines.map(l=>{let v=1;for(let i=ym2i(c[1]);i<=ym2i(c[2]);i++)v*=1+l.r[i-xs0];return `<td class="${v<1?'down':'up'}">${sgn((v-1)*100)}</td>`;}).join('')}</tr>`).join('')}</tbody></table></div>`:'<p class="small mute">この期間に入る局面は無い</p>';
+}
+
+/* ═══════════════ 3 配分の変遷 ═══════════════ */
+/* 帯の色は「賭け」の単位で付ける（本の数が色の数より多いので、同じ賭けの本は同じ色・名前は吹き出し） */
+const GRP_ORDER=['ndx','xlk','semi','def','xlv','fbt','vbr','other'];
+const GRP_LAB={ndx:'NASDAQ100（QQQM・iFreeNEXT）',xlk:'XLK',semi:'半導体（SMH・楽天SOX）',def:'防衛（ITA・SHLD・MISL）',xlv:'XLV',fbt:'FBT',vbr:'VBR',other:'その他（GRID・NASA・暗号資産・SMT）'};
+const GRP_COL={ndx:'--s1',xlk:'--s7',semi:'--s2',def:'--s3',xlv:'--s4',fbt:'--s8',vbr:'--s5',other:'--sx'};
+function grpOf(t){return ({QQQM:'ndx','IFREE-NDX':'ndx',QQQ:'ndx',XLK:'xlk',SMH:'semi','RPLUS-SOX':'semi',ITA:'def',SHLD:'def',MISL:'def',XLV:'xlv',FBT:'fbt',VBR:'vbr'})[t]||'other';}
+function histRender(){
+ const box=$('#histBox'),H=histList();if(!H.length){box.innerHTML='<div class="note">旧の姿の記録が無い</div>';return;}
+ const tickers=[...new Set(H.flatMap(h=>Object.keys(h.w)))];
+ /* 同じ物差し: 2006-06〜（ITA・VBR が実物になってから）の円建て・一括の年率／最大下落／20年…は窓が足りないので10年の積立の中央 */
+ const last=DATA.S?DATA.S.last:null;
+ /* 期間はどの形も測れる最初の月にそろえる（いちばん遅い本＝FBT 2006-07〜）。実物の記録だけ（代理を使わない） */
+ let s0=200606;if(DATA.S)H.forEach(x=>{const m=mapMix(x.w);for(const k in m.w)s0=Math.max(s0,realStart(k));});
+ const meas=h=>{if(!DATA.S)return null;const m=mapMix(h.w);if(!Object.keys(m.w).length)return null;const r=mixRets(m.w,s0,last,'JPY');const st=stats(r);if(!st)return null;
+  const ro=rolling(r,null,10).map(x=>x.a);return {st,r10:med(ro),miss:m.miss,notes:m.notes};};
+ const ms=H.map(meas);
+ let h=`<div class="card"><h3>年率と最大下落の移り変わり</h3><p class="small mute">それぞれの形を同じ期間（${fYM(s0)}〜${last?fYM(last):''}・円建て・毎月組み直し）で測り直した。記録の無い本（BTC・SMT・GRID・NASA）は外し、SHLD・MISL は ITA、楽天・プラス・SOX は SMH で代えた。</p>
+  ${legend([{label:'一括の年率',color:cssv('--s1')},{label:'10年積立の年率の中央',color:cssv('--s3')}],true)}<div id="histLine"></div></div>
+  <div class="card"><h3>形の一覧（古い順）</h3>${legend(GRP_ORDER.filter(g=>tickers.some(t=>grpOf(t)===g)).map(g=>({label:GRP_LAB[g],color:cssv(GRP_COL[g])})))}`;
+ H.forEach((x,i)=>{const tot=Object.values(x.w).reduce((a,b)=>a+b,0)||1,m=ms[i];
+  h+=`<div class="hrow"><div class="d"><b>${x.now?'★ 今':'〜'+esc(x.until)}</b>${x.suf?`<span>${esc(x.suf)}</span>`:''}${x.castle!=null?`<span>個別株 ${x.castle}%</span>`:''}</div>
+   <div><div class="bar100">${Object.entries(x.w).sort((a,b)=>b[1]-a[1]).map(([t,v])=>`<div title="${esc(t)} ${v}%" style="width:${v/tot*100}%;background:${cssv(GRP_COL[grpOf(t)])}"></div>`).join('')}</div>
+   <div class="small mute" style="margin-top:3px">${esc(mixName(x.w))}</div></div>
+   <div class="small" style="text-align:right">${m?`<b>${pct(m.st.cagr)}</b><br><span class="down">${pct(m.st.mdd,0)}</span>`:'—'}<br><button class="btn" style="padding:2px 8px;font-size:12px;margin-top:3px" onclick="amiTry(${i})">試す</button></div></div>`;});
+ h+=`<p class="small mute">右の数字＝一括の年率と最大下落（同じ期間）。「試す」で 🧪 に読み込む。⚠ 毎回の変更の理由と測った物差しは CLAUDE.md の索引と書庫（docs/CLAUDE_ARCHIVE.md）にある。</p></div>`;
+ box.innerHTML=h;
+ const pts=(f)=>H.map((x,i)=>[i,ms[i]?f(ms[i]):null]);
+ /* x は形の通し番号（日付の間隔は不揃いなので時間軸にしない） */
+ const lc=$('#histLine');lc.innerHTML='';
+ barChart(lc,{labels:H.map(x=>x.now?'今':x.until.slice(5)),series:[{name:'一括の年率',color:cssv('--s1'),values:ms.map(m=>m?+(m.st.cagr*100).toFixed(2):null)},{name:'10年積立の中央',color:cssv('--s3'),values:ms.map(m=>m&&m.r10!=null?+(m.r10*100).toFixed(2):null)}],unit:'%/年',h:230,rotate:true,sub:H.map((x,i)=>mixName(x.w)+(ms[i]?` ・最大下落 ${pct(ms[i].st.mdd)}`:''))});
+}
+function amiTry(i){const H=histList(),x=H[i];const m=mapMix(x.w);SIM.w=Object.assign({},m.w);try{localStorage.setItem('ami:mix',JSON.stringify(SIM.w));}catch(e){}
+ amiShow(2,document.querySelectorAll('#tabs button')[1]);simSyncInputs();amiSimRun();}
+
+/* ═══════════════ 4 歴史検証 ═══════════════ */
+const GAL_TAG={forms:'配分',worlds:'ETF',century:'業種',techdecades:'業種',peak:'業種',underwater:'ETF',exposure:'配分',candidates:'ETF',rebalance:'買い方',drawdowns:'配分',search:'規則探し'};
+let GAL_F='すべて';
+function galRender(){
+ const box=$('#galBox'),D=DATA.D;if(!D){box.innerHTML='<div class="note ng">out/ami_digest.json を読めなかった（night/ami_digest.py が作る）。</div>';return;}
+ const tags=['すべて',...new Set(D.cards.map(c=>GAL_TAG[c.id]||'その他'))];
+ $('#galFilter').innerHTML=tags.map(t=>`<button class="${t===GAL_F?'on':''}" onclick="GAL_F='${t}';galRender()">${t}</button>`).join('');
+ const cs=D.cards.filter(c=>GAL_F==='すべて'||(GAL_TAG[c.id]||'その他')===GAL_F);
+ box.innerHTML=cs.map((c,i)=>c.err?`<div class="card"><h3>${esc(c.title)}</h3><div class="note ng small">読めなかった: ${esc(c.err)}（元のファイルの形が変わった）</div></div>`:
+  `<div class="card"><h3>${esc(c.title)}</h3><p class="q">問い: ${esc(c.q)}</p><div id="gc${i}"></div><p class="ans">→ ${esc(c.a)}</p>
+  ${(c.notes||[]).filter(Boolean).map(n=>`<p class="small mute">${esc(n)}</p>`).join('')}
+  ${c.table?`<details><summary>表で見る</summary><div class="scroll"><table><thead><tr>${c.table.head.map(x=>`<th>${esc(x)}</th>`).join('')}</tr></thead><tbody>${c.table.rows.map(r=>`<tr>${r.map((x,j)=>`<td${j<2?' class="l"':''}>${esc(x)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></details>`:''}
+  <p class="src">出所 ${esc(c.src)}・${esc(c.date)}</p></div>`).join('')+`<p class="small mute">要約は night/ami_digest.py が作る（${esc(D.generated)}）。新しい検証を足すときはそこへカードを1つ足す。</p>`;
+ cs.forEach((c,i)=>{if(c.err)return;const b=$('#gc'+i),ch=c.chart;const pal=['--s1','--s2','--s3','--s4'].map(cssv);
+  if(ch.type==='scatter'){scatterChart(b,ch);b.insertAdjacentHTML('beforebegin',legend([{label:'★今の形',color:cssv('--s1')},{label:'名前の付いた形',color:cssv('--s2')},{label:'隣の形',color:cssv('--sx')}]));}
+  else if(ch.type==='tiles'){b.innerHTML=`<div class="tiles">${ch.tiles.map(t=>`<div class="tile"><div class="k">${esc(t.k)}</div><div class="v" style="font-size:18px">${esc(t.v)}</div></div>`).join('')}</div>`;}
+  else{const ser=ch.series.map((s,j)=>({name:s.name,values:s.values,color:ch.diverge&&ch.series.length===1?pal[0]:pal[j%4]}));
+   if(ser.length>1)b.insertAdjacentHTML('beforebegin',legend(ser.map(s=>({label:s.name,color:s.color}))));
+   barChart(b,{labels:ch.labels,series:ser,unit:ch.unit,horizontal:ch.type==='hbar',base:ch.base,gapAfter:ch.gapAfter,sub:ch.sub,rotate:ch.type==='bar'&&ch.labels.some(l=>String(l).length>6)});}});
+}
+
+/* ═══════════════ 5 ETF図鑑 ═══════════════ */
+function encInit(){const E=(DATA.E&&DATA.E.etfs)||{},A=(DATA.S&&DATA.S.assets)||{};
+ const keys=[...new Set([...Object.keys(A),...Object.keys(E)])];const T=(DATA.P&&DATA.P.target)||{},W=T.ami_weights||{};
+ const own=k=>(W[k]>0||W[k==='QQQ'?'IFREE-NDX':k]>0);
+ keys.sort((a,b)=>(own(b)-own(a))||a.localeCompare(b));
+ $('#encSel').innerHTML=keys.map(k=>`<option value="${esc(k)}">${own(k)?'★ ':''}${esc(k)} — ${esc((E[k]&&E[k].nm)||(A[k]&&A[k].nm)||'')}</option>`).join('');
+ amiEnc(keys[0]);}
+function amiEnc(k){const box=$('#encBox');$('#encSel').value=k;const E=(DATA.E&&DATA.E.etfs)||{},e=E[k],a=DATA.S&&DATA.S.assets[k];
+ let h='';
+ if(e){const age=e.inc?((Date.now()-new Date(e.inc))/3.156e10):null,aumOku=e.aum?e.aum*157/1e8:null;
+  const kills=[['レバレッジ・インバース型でない',!e.lev],['純資産 100億円以上',aumOku==null?null:aumOku>=100],['設定から3年以上',age==null?null:age>=3],['経費率 0.75%以下',e.er==null?null:e.er*100<=0.75]];
+  const top10=e.h.slice(0,10).reduce((s,x)=>s+x[1],0)*100;
+  h+=`<div class="card"><h3>${esc(k)} ${esc(e.nm)}</h3>
+   <div class="tiles">
+    <div class="tile"><div class="k">経費率</div><div class="v">${e.er!=null?(e.er*100).toFixed(2)+'%':'—'}</div><div class="h">20年で終価の ${e.er!=null?((1-Math.pow(1-e.er,20))*100).toFixed(1)+'%':'—'}</div></div>
+    <div class="tile"><div class="k">純資産</div><div class="v">${aumOku!=null?(aumOku>=10000?(aumOku/10000).toFixed(1)+'兆円':aumOku.toFixed(0)+'億円'):'—'}</div><div class="h">$1=¥157 の概算</div></div>
+    <div class="tile"><div class="k">設定</div><div class="v">${esc(e.inc||'—')}</div><div class="h">${age!=null?age.toFixed(1)+'年':''}</div></div>
+    <div class="tile"><div class="k">銘柄数・上位10</div><div class="v">${e.n||'—'}</div><div class="h">上位10で ${top10.toFixed(0)}%${e.eff_n?'・実効 '+e.eff_n+'社':''}</div></div>
+    <div class="tile"><div class="k">配当利回り</div><div class="v">${e.dy!=null?(e.dy*100).toFixed(2)+'%':'—'}</div><div class="h">NISA でも米国の源泉10%は戻らない</div></div>
+   </div>
+   <div>${kills.map(([t,ok])=>`<span class="pill ${ok==null?'w':ok?'ok':'ng'}" style="margin:2px 4px 2px 0">${ok==null?'?':ok?'✓':'✕'} ${t}</span>`).join('')}</div>
+   <p class="small mute" style="margin-top:6px">論外線（📏）をそのまま当てた。順位や点数は作らない（v1 の採点の廃止）。中身の日付 ${esc(e.asof||DATA.E.asof||'')}。</p>
+   <div class="grid2"><div><h3 style="margin-top:8px">上位の保有</h3><div id="encH"></div></div><div><h3 style="margin-top:8px">業種</h3><div id="encS"></div></div></div></div>`;}
+ if(a){h+=`<div class="card"><h3>値動きの記録（${esc(a.nm)}）</h3><p class="small mute">${fYM(realStart(k))}〜${fYM(a.end)} が実物${a.proxy?`・それより前（${fYM(a.start)}〜${fYM(a.proxy.until)}）は代理 ${esc(a.proxy.t)}＝${esc(a.proxy.nm)}`:''}。ドル建て・配当込み。</p><div id="encT"></div>
+  <h3 style="margin-top:10px">暦年（S&amp;P500 と）</h3>${legend([{label:k,color:colOf(k)==cssv('--sx')?cssv('--s1'):colOf(k)},{label:'S&P500',color:cssv('--s6')}])}<div id="encY"></div>
+  <button class="btn" style="margin-top:8px" onclick="SIM.w={'${k}':100};amiShow(2,document.querySelectorAll('#tabs button')[1]);simSyncInputs();amiSimRun()">🧪 この本だけで試す</button></div>`;}
+ else h+='<div class="note small">値動きの系列はこの画面に入れていない（out/ami_series.json の ASSETS に足すと出る）。</div>';
+ box.innerHTML=h;
+ if(e){barChart($('#encH'),{horizontal:true,labels:e.h.slice(0,10).map(x=>x[0]),series:[{name:'比率',color:cssv('--s1'),values:e.h.slice(0,10).map(x=>+(x[1]*100).toFixed(2))}],unit:'%'});
+  const sec=Object.entries(e.sec||{}).sort((x,y)=>y[1]-x[1]).slice(0,8);
+  barChart($('#encS'),{horizontal:true,labels:sec.map(x=>x[0]),series:[{name:'比率',color:cssv('--s3'),values:sec.map(x=>+(x[1]*100).toFixed(1))}],unit:'%'});}
+ if(a){const rs=realStart(k),last=a.end;const wins=[['実物の全期間',rs],['直近10年',i2ym(ym2i(last)-119)],['直近5年',i2ym(ym2i(last)-59)],['直近3年',i2ym(ym2i(last)-35)]];
+  $('#encT').innerHTML=`<div class="scroll"><table><thead><tr><th>期間</th><th>年率</th><th>最大下落</th><th>ぶれ</th><th>S&amp;P500 の年率</th></tr></thead><tbody>${wins.filter(w=>w[1]>=rs).map(([n,s])=>{const x=stats(mixRets({[k]:1},s,last,'USD')),y=stats(mixRets({SPY:1},s,last,'USD'));
+   return `<tr><td>${n}<br><span class="small dim">${fYM(s)}〜</span></td><td><b>${x?pct(x.cagr):'—'}</b></td><td class="down">${x?pct(x.mdd,0):'—'}</td><td>${x?pct(x.vol,0):'—'}</td><td>${y?pct(y.cagr):'—'}</td></tr>`;}).join('')}</tbody></table></div>`;
+  const yrs=[];for(let y=Math.ceil(rs/100);y<=Math.floor(last/100);y++)if(rs<=y*100+1&&y*100+12<=last)yrs.push(y);
+  const cy=t=>yrs.map(y=>{let v=1;for(let m=1;m<=12;m++){const x=serAt(t,y*100+m);if(x==null)return null;v*=1+x;}return +((v-1)*100).toFixed(1);});
+  const c0=colOf(k)==cssv('--sx')?cssv('--s1'):colOf(k);
+  barChart($('#encY'),{labels:yrs.map(String),series:[{name:k,color:c0,values:cy(k)},{name:'S&P500',color:cssv('--s6'),values:cy('SPY')}],unit:'%',h:220});}
+}
+
+/* ═══════════════ 6 費用 ═══════════════ */
+function amiCost(){
+ const M=+$('#cMon').value||0,Y=Math.max(1,Math.min(50,+$('#cYrs').value||20)),R=(+$('#cRet').value||0)/100,a=(+$('#cA').value||0)/100,b=(+$('#cB').value||0)/100;
+ const fv=er=>{let V=0;const m=Math.pow(1+R,1/12)*Math.pow(1-er,1/12)-1;for(let i=0;i<Y*12;i++)V=(V+M)*(1+m);return V;};
+ const A=fv(a),B=fv(b),P=M*Y*12;const yen=v=>'¥'+Math.round(v).toLocaleString('ja-JP');
+ $('#costOut').innerHTML=`<div class="tiles"><div class="tile"><div class="k">入れた額</div><div class="v">${yen(P)}</div></div>
+  <div class="tile"><div class="k">器A（${(a*100).toFixed(3)}%）</div><div class="v">${yen(A)}</div></div>
+  <div class="tile"><div class="k">器B（${(b*100).toFixed(3)}%）</div><div class="v">${yen(B)}</div></div>
+  <div class="tile"><div class="k">差（A−B）</div><div class="v ${A>=B?'up':'down'}">${yen(A-B)}</div><div class="h">Bの最終額の ${(Math.abs(A-B)/B*100).toFixed(1)}%</div></div></div>
+  <p class="small mute">税・為替・費用以外の連動のずれは入れていない。参考: iFreeNEXT NASDAQ100 0.495%・QQQM 0.15%・楽天・プラス・NASDAQ-100 0.198%（portfolio.json と out/etf_profiles.json の値）。</p>`;
  const ers=[0.03,0.06,0.10,0.18,0.35,0.50,0.75,1.00];
- let h='<table><thead><tr><th>経費率</th><th>20年で消える割合</th><th>30年で消える割合</th><th>月10万積立・20年での概算</th></tr></thead><tbody>';
- for(const er of ers){
-  const d20=(1-Math.pow(1-er/100,20))*100, d30=(1-Math.pow(1-er/100,30))*100;
-  const col=er<=0.10?'var(--jade)':er<=0.35?'var(--ink)':'var(--rust)';
-  h+=`<tr><td style="color:${col}"><b>${er.toFixed(2)}%</b></td><td>${d20.toFixed(1)}%</td><td>${d30.toFixed(1)}%</td><td>約 ${(2400*d20/100).toFixed(0)} 万円</td></tr>`;
- }
- h+='</tbody></table>';
- document.getElementById('costTable').innerHTML=h;
-})();
-
-/* ── ルックスルー（Ⅱ）と 現在のETF（Ⅳ） ────────────────── */
-const SEMI=new Set(['NVDA','TSM','AVGO','AMD','MU','ASML','AMAT','TXN','KLAC','LRCX','INTC','ADI','QCOM',
- 'MRVL','CDNS','SNPS','MPWR','TER','NXPI','STM','ARM','ALAB','MCHP','ON','SWKS','SNDK','WDC','STX','6857','6146','6920']);
-const CAP=8; // 門Ωの1銘柄上限（¼ケリー相当）
-
-async function boot(){
- let E=null,P=null;
- try{E=await (await fetch('out/etf_profiles.json?t='+Date.now())).json();}catch(e){}
- try{P=await (await fetch('portfolio.json?t='+Date.now())).json();}catch(e){}
- const lt=document.getElementById('ltBox'), cur=document.getElementById('curBox');
- if(!E||!P){
-  const msg='<div class="flag f-warn"><i>!</i><div><b>データを読めなかった。</b>'+
-   'このページは同一オリジンの <code>out/etf_profiles.json</code> と <code>portfolio.json</code> を読む。'+
-   'ローカルで開くときは <code>python3 -m http.server</code> 経由で（file:// はCORSで読めない）。'+
-   '<u>前回値やゼロで埋めることはしない</u>（絶対のルール7）。</div></div>';
-  lt.innerHTML=msg;cur.innerHTML=msg;return;
- }
- const etfs=E.etfs, pos=P.positions||[];
- const w={};pos.forEach(p=>w[p.ticker]=p.weight_pct);
-
- /* ---- ルックスルー ---- */
- const look={},src={};
- let covered=0;
- for(const p of pos){
-  const t=p.ticker, pw=p.weight_pct;
-  if(etfs[t]){
-   for(const[s,hw] of etfs[t].h){const v=pw*hw;look[s]=(look[s]||0)+v;(src[s]=src[s]||[]).push(`${t} ${v.toFixed(1)}`);covered+=v;}
-  }else{
-   look[t]=(look[t]||0)+pw;(src[t]=src[t]||[]).push(`個別 ${pw.toFixed(1)}`);covered+=pw;
-  }
- }
- const rows=Object.entries(look).sort((a,b)=>b[1]-a[1]);
- const semi=rows.filter(r=>SEMI.has(r[0])).reduce((a,b)=>a+b[1],0);
- const over=rows.filter(r=>r[1]>CAP);
- const amiPct=pos.filter(p=>etfs[p.ticker]||p.sleeve==='網').reduce((a,b)=>a+b.weight_pct,0);
-
- let h=`<div class="grid2" style="margin:14px 0">
-  <div class="kpi"><div class="k">半導体連鎖のルックスルー</div><div class="v" style="color:${semi>35?'var(--rust)':'var(--ink)'}">${semi.toFixed(1)}%</div>
-   <div class="sub">資産全体に対して</div></div>
-  <div class="kpi"><div class="k">門Ωの1銘柄上限 8% を超える銘柄</div><div class="v" style="color:${over.length?'var(--rust)':'var(--jade)'}">${over.length}銘柄</div>
-   <div class="sub">${over.length?over.map(o=>o[0]).join(' / '):'なし'}</div></div>
- </div>`;
-
- if(over.length){
-  h+=`<div class="flag f-cut"><i>⚠</i><div><b>門Ωが守っている上限が、資産全体では守れていない。</b>
-   門Ωは個別の中で1銘柄8%（¼ケリー相当）を厳密に守っているが、ETFを中身へ分解すると
-   ${over.map(o=>`<b>${o[0]} ${o[1].toFixed(1)}%（上限の${(o[1]/CAP).toFixed(1)}倍）</b>`).join('・')} になる。
-   <u>上限を守っているのは個別の中だけ</u>——これは門Ωの欠陥ではなく、
-   <b>ETFを誰も分解していなかった</b>ことの結果。</div></div>`;
- }
- h+='<div class="panel"><h2 style="font-size:16px">ルックスルー上位</h2>'+
-    `<p class="sub">カバー率 ${covered.toFixed(1)}%（残りはETFの下位保有で、ここには出ていない＝実際の集中はこれ以上）</p>`+
-    '<div class="scroll"><table><thead><tr><th>銘柄</th><th>合計</th><th>上限8%比</th><th style="text-align:left">内訳</th></tr></thead><tbody>';
- for(const[s,v] of rows.slice(0,18)){
-  const r=v/CAP, col=v>CAP?'var(--rust)':v>CAP*0.6?'var(--amber)':'var(--ink)';
-  h+=`<tr><td><b>${s}</b>${SEMI.has(s)?' <span class="sub">半導体</span>':''}</td>
-   <td style="color:${col}"><b>${v.toFixed(2)}%</b></td><td style="color:${col}">${r.toFixed(1)}倍</td>
-   <td style="text-align:left" class="sub">${(src[s]||[]).join(' + ')}</td></tr>`;
- }
- h+='</tbody></table></div></div>';
- h+=`<div class="flag f-warn"><i>!</i><div><b>門の本文が予約議題に挙げている問題の実数がこれ。</b>
-  「ETFの中身（テック集中4本は"広い土台"の定義と不整合）」——ETFは資産の ${amiPct.toFixed(1)}% あるが、
-  そのほぼ全部が同じ1セクターで、個別もまた半導体連鎖に集中している。
-  <b>土台と個別が同じ賭けになっている</b>＝ETFは分散ではなく<u>個別の増幅器</u>として働いている。</div></div>`;
- h+=`<div class="flag"><i>◇</i><div>これは<b>実測であって指示ではない</b>。ETFの入替は門の外（DCA側）の決断で、
-  門Ωの採点・売却規律・四関門はこの数字で1点も動かない。</div></div>`;
- lt.innerHTML=h;
-
- /* ---- 現在のETFの判定 ---- */
- const castle=new Set(pos.filter(p=>!etfs[p.ticker]&&p.sleeve!=='網').map(p=>p.ticker));
- let c='<div class="scroll" style="margin-top:14px"><table><thead><tr>'+
-  '<th>ETF</th><th>資産比</th><th>経費率</th><th>20年で消える</th><th>純資産</th><th>銘柄数</th><th>上位10</th><th>最大セクター</th><th>個別との重複</th></tr></thead><tbody>';
- const list=pos.filter(p=>etfs[p.ticker]);
- for(const p of list){
-  const e=etfs[p.ticker];
-  const top10=e.h.slice(0,10).reduce((a,b)=>a+b[1],0)*100;
-  const maxSec=Math.max(...Object.values(e.sec))*100;
-  const ov=e.h.filter(x=>castle.has(x[0])).reduce((a,b)=>a+b[1],0)*100;
-  const aumOku=e.aum*155/1e8; // USD→円(概算155)→億円
-  const drag20=(1-Math.pow(1-e.er,20))*100;   // 20年で経費率が確実に持っていく分＝唯一の確定値
-  c+=`<tr><td><b>${p.ticker}</b><br><span class="sub">${e.nm}</span></td>
-   <td>${p.weight_pct.toFixed(1)}%</td><td>${(e.er*100).toFixed(2)}%</td>
-   <td style="color:${drag20>=5?'var(--rust)':drag20>=2?'var(--ink)':'var(--jade)'}"><b>${drag20.toFixed(1)}%</b></td>
-   <td>${(aumOku/10000).toFixed(1)}兆</td><td>${e.n}</td><td>${top10.toFixed(0)}%</td>
-   <td>${maxSec.toFixed(0)}%</td><td>${ov.toFixed(1)}%</td></tr>`;
- }
- c+='</tbody></table></div>';
-
- /* ---- ★決めた「目標のETF」を記録として出す（2026-08-19）----
-    ⚠ここでは**再計算しない**。同じ数字を二つの実装が持つと必ず割れる（v9.9.65）——
-      実際、この画面の個別は portfolio.json の 2026-08-07 スナップショット（MSFT/ASML/RMD）で、
-      night/lookthrough.py の個別は state.json の実保有（+RBC/IRMD）。同じ「目標のETFの半導体%」を
-      両方で計算させたら 33.7〜42.2% と 27.6〜36.2% に割れた。**測った数字は道具ひとつが持つ。**
-      この画面が持つのは『何を決めたか』だけで、『それがどうなるか』は道具が出す。 */
- /* ⚠正本は `target.ami_weights`（**2026-09-18 ユーザー明示指示 QQQM40/XLK30/SMH10 ＋ GRID0/ITA0/NASA0**。
-    旧: 2026-08-20 の XLK15/SMH10/GRID10/ITA10/NASA5）。
-    門(index.html) も night/net_plan.py も night/lookthrough.py もここを読む＝**同じ量を一つの場所で持つ**。
-    旧 `ami_mix`（2026-08-19 の指示）は置き換わったので、無いときだけ拾う。
-    ⚠**0% は「測って0」であって「未指定」ではない**——この画面は決めた値をそのまま並べるだけなので
-    0 も 0 として出す（判定も正規化もしない）。 */
- const _T=(P.target||{});
- // 目標を決めた日＝いちばん新しい ami_mix_superseded_YYYY_MM_DD* の日（その日に今の重みへ置き換えた・旧の姿をその鍵に残す作法）。
- //   日付を手で書かない——旧は '2026-09-18' を書き込んでいて、2026-10-12 の重みの横に古い日付が出ていた。
- const _wAsof=Object.keys(_T).map(k=>(k.match(/^ami_mix_superseded_(\d{4})_(\d{2})_(\d{2})/)||[]).slice(1,4).join('-')).filter(Boolean).sort().pop()||'';
- const TM=_T.ami_weights?{asof:_wAsof,src:'target.ami_weights'}:((_T.ami_mix)||{});
- const tmix=_T.ami_weights||((_T.ami_mix||{}).pct_of_total)||{};
- if(Object.keys(tmix).length){
-  const miss=Object.keys(tmix).filter(t=>!etfs[t]);
-  c+=`<div class="panel" style="margin-top:14px"><h2 style="font-size:16px">★決めた「目標のETF」（記録）</h2>
-   <p class="sub"><b>これは目標であって保有ではない。</b>上の表は証券アプリのスナップショット（実額）で、
-   目標を書いても実額は動かない——<u>起きていない取引を記録しない</u>ため。
-   出所: <code>portfolio.json</code> の <code>${TM.src||'target.ami_mix'}</code>（${TM.asof||''}・ユーザー明示指示）</p>
-   <p style="margin:8px 0"><b>${Object.entries(tmix).map(([t,v])=>`${t} ${v}%`).join('　/　')}</b>
-   　<span class="sub">＝総資産に対する% ・ ETF 計 ${Object.values(tmix).reduce((a,b)=>a+b,0)}%</span></p>
-   ${miss.length?`<p class="sub">⚠ 中身が未取得: <b>${miss.join(', ')}</b>＝この画面でも道具でも「未取得」として別に数える（0と読まない）</p>`:''}
-   <p class="sub">この目標で資産全体がどうなるか（半導体・つるはし比率・8%超）は
-   <code>python3 night/lookthrough.py --pick</code> と <code>--what-if</code> が出す。
-   <b>この画面は再計算しない</b>——同じ数字を二つの実装が持つと必ず割れるため。</p></div>`;
- }
-
- c+=`<div class="flag f-warn" style="margin-top:12px"><i>!</i><div>
-  <b>⚠「個別との重複」は名前の重なりであって、実際の相関ではない。</b>
-  月次97ヶ月の実測では XLK ρ0.683（重複8.5%）に対し <b>GRID ρ0.628（重複0.0%）</b>、
-  <b>VT ρ0.819（重複3.6%）</b>——<u>名前が重ならなくても同じ動きをする</u>。
-  この欄は<b>参考</b>として残してあり、2026-08-19 にETFΩの関門から外した（Ⅲ参照）。
-  <u>コストが安いことと土台が広いことは別</u>で、XLKは経費率0.08%と極めて安いが土台としては1セクターに99%寄っている。</div></div>`;
- c+=`<div class="flag"><i>◇</i><div>ここに出ていない候補（VT・VTI・国内の全世界インデックス投信など）はⅢの採点機で個別に裁ける。
-  <b>国内の再投資型投信は「器の効率」で有利</b>——分配のたびに課税される器は複利が漏れるため。</div></div>`;
- cur.innerHTML=c;
+ $('#costTable').innerHTML='<table><thead><tr><th>経費率</th><th>20年で消える割合</th><th>30年で消える割合</th></tr></thead><tbody>'+
+  ers.map(er=>`<tr><td class="${er<=0.10?'up':er>0.35?'down':''}"><b>${er.toFixed(2)}%</b></td><td>${((1-Math.pow(1-er/100,20))*100).toFixed(1)}%</td><td>${((1-Math.pow(1-er/100,30))*100).toFixed(1)}%</td></tr>`).join('')+'</tbody></table>';
 }
-document.addEventListener('DOMContentLoaded',()=>{navFade();boot();});
+
+/* ═══════════════ 起動・描き直し ═══════════════ */
+let REDRAW={};
+function amiRedraw(){if(!DATA.P)return;const f={1:homeRender,2:()=>{$('#simOut').dataset.done='';if(DATA.S)amiSimRun();},3:histRender,4:galRender,5:()=>{if($('#encSel').value)amiEnc($('#encSel').value);},6:amiCost}[AMI_PG];
+ try{f&&f();}catch(e){console.error(e);}}
+let rzT=null;window.addEventListener('resize',()=>{clearTimeout(rzT);rzT=setTimeout(amiRedraw,200);});
+document.addEventListener('DOMContentLoaded',async()=>{
+ await amiLoad();
+ if(!DATA.S){['#simOut','#histBox'].forEach(s=>$(s).innerHTML='<div class="note ng">out/ami_series.json を読めなかった（night/ami_series.py が作る）。値動きの画面は出せない。</div>');}
+ else simInit();
+ if(DATA.E||DATA.S)encInit();
+ amiCost();
+ let t=1;try{t=+localStorage.getItem('ami:tab')||1;}catch(e){}
+ const m=location.hash.match(/^#(\d)$/);if(m)t=+m[1];
+ amiShow(Math.min(6,Math.max(1,t)),document.querySelectorAll('#tabs button')[Math.min(6,Math.max(1,t))-1]);
+});
 </script>
 </body></html>
