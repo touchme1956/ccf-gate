@@ -129,6 +129,13 @@ jobs:
       - name: 網(ETF)の材料（表示専用・合否に不使用）
         continue-on-error: true
         run: timeout 900 python3 night/net_plan.py
+      # ETFの門（ami.html v2・2026-11-03新設・鍵不要）の材料。表示専用・判定に不使用
+      #   ami_series＝『配合を試す』の月次リターン（Yahoo・配当込み）／ami_digest＝『歴史検証』の要約（out/*.json から抜き出すだけ）
+      - name: ETFの門の材料（表示専用・合否に不使用）
+        continue-on-error: true
+        run: |
+          timeout 600 python3 night/ami_series.py
+          timeout 120 python3 night/ami_digest.py
       # 銘柄ごとの企業説明（v9.9.125・2026-08-09新設・鍵不要）
       #   原本(10-K/20-F)の Item1 冒頭と、台帳の _meta.evidence（事業の事実）を同一オリジンで配る。
       #   **表示専用**——Ω・堀・買付の判定には一切使わない。日本株のPDF経路は穴として明示している。
@@ -400,7 +407,7 @@ jobs:
           ccf_git_add 'out/*_gate_input.json' 'out/*_hits.txt' out/fetch_run.json
           #   ⚠ `out/market_data.json` は**存在しない**（market_fetch.py は repo 直下の
           #     `market_data.json` に書く）。これが38パス全部を巻き添えにしていた元凶なので外した。
-          ccf_git_add out/next_earnings.json kessan_calendar.ics kanshi_list.json gate1_x_watch.json out/kessan out/divy.json out/v10_shadow.json out/v11_shadow.json out/v11_facts.json out/v11_backtest.json out/ops_status.json out/hist_val_now.json out/irr85_history.json out/irr85_mech_test.json out/profiles.json out/exception_watch.json out/castle_correlation.json out/irr85_scope_life.json out/new_listings_irr.json out/wacc_drift.json out/net_plan.json out/backfill_diff.json out/backfill_stamps.json out/sp500_pe_monthly.json out/growth_trend.json out/calibration.json out/sht_report.json out/_sic_cache.json out/packs_index.json out/logos 'night/chunk*.txt' 'night/rechunk*.txt' night/reaudit_queue.json night/progress.json out/er_ledger.json market_data.json 'out/shadow_*.json' out/gate0_run.json out/industry_trends.json out/industry_long.json out/sic_by_cik.json out/industry_peak.json out/industry_exposure.json
+          ccf_git_add out/next_earnings.json kessan_calendar.ics kanshi_list.json gate1_x_watch.json out/kessan out/divy.json out/v10_shadow.json out/v11_shadow.json out/v11_facts.json out/v11_backtest.json out/ops_status.json out/hist_val_now.json out/irr85_history.json out/irr85_mech_test.json out/profiles.json out/exception_watch.json out/castle_correlation.json out/irr85_scope_life.json out/new_listings_irr.json out/wacc_drift.json out/net_plan.json out/ami_series.json out/ami_digest.json out/backfill_diff.json out/backfill_stamps.json out/sp500_pe_monthly.json out/growth_trend.json out/calibration.json out/sht_report.json out/_sic_cache.json out/packs_index.json out/logos 'night/chunk*.txt' 'night/rechunk*.txt' night/reaudit_queue.json night/progress.json out/er_ledger.json market_data.json 'out/shadow_*.json' out/gate0_run.json out/industry_trends.json out/industry_long.json out/sic_by_cik.json out/industry_peak.json out/industry_exposure.json
           # ⚠ 前向きの検定の出力（out/mw_forward.json・out/nx_forward.json・out/forward_run.json）はここで add しない
           #   ——forward ジョブが別のコミットで先に push する（同じコミットに乗せると rebase の衝突で道連れに捨てられる）。
           git diff --staged --quiet || git commit -m "$MSG"
