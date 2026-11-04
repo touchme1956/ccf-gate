@@ -20,13 +20,18 @@
   「候補に残る」＝両方が通る。実績だけ通る＝「過去だけ」・未来だけ通る＝「未来の物差しだけ」・未来が測れない＝その旨。
 ⚠ 限界: 実績は2006年以降の一つの時代（テックが勝った時代）・未来の物差しは予想と仮定・同じ賭けの代用は近似・5%の差は雑音に近い・円・税は見ない
 使い方: python3 night/etf30_check.py → out/etf30_check.json
+追記（2026-11-04・ユーザー「VBR ITA XLV から回すとどうなるかも確認して」）: --src VBR|ITA|XLV で 5% を回す元を替える
+  （→ out/etf30_check_{src}.json）。決まり・物差し・30本は同じ。X が回す元と同じ本なら測らない（今と同じ）。
+  QQQ は元が NASDAQ100 以外なら NASDAQ100 を +5 する形として普通に測る。この追記は結果を見る前にコミットする
 """
 import contextlib, io, json, math, os, sys, time
 import numpy as np
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(BASE, 'night'))
-OUT = os.path.join(BASE, 'out', 'etf30_check.json')
+SRC = sys.argv[sys.argv.index('--src') + 1] if '--src' in sys.argv else 'QQQM'
+assert SRC in ('QQQM', 'VBR', 'ITA', 'XLV'), SRC
+OUT = os.path.join(BASE, 'out', 'etf30_check.json' if SRC == 'QQQM' else f'etf30_check_{SRC}.json')
 
 LIST30 = ('FTXL QTEC VGT BBH FXL IXN MGK FDN SMH FBT QQQ CIBR VOOG VONG EWY XLK VUG ITA IJR SKYY '
           'FPX TDIV IJH AIRR HACK RTH XLY MGC XLI XLE').split()
@@ -91,9 +96,10 @@ def main():
 
     def real_form(x):
         f = dict(real_now)
-        if x == 'QQQ':
+        rs = REAL[SRC]
+        if x == rs:
             return f
-        f['QQQ'] -= 5
+        f[rs] -= 5
         f[x] = f.get(x, 0) + 5
         return f
     res = {}
@@ -169,9 +175,9 @@ def main():
             return dict(NOW)
         f = dict(NOW)
         p = stand[x]['本']
-        if p == 'QQQM':
+        if p == SRC:
             return f
-        f['QQQM'] -= 5
+        f[SRC] -= 5
         f[p] = f.get(p, 0) + 5
         return f
     W = np.array([[fform(k).get(c, 0) for c in P] for k in keys], dtype=np.float64)
@@ -196,8 +202,8 @@ def main():
     # 決まり
     verdict = {}
     for x in LIST30:
-        if x == 'QQQ':
-            verdict[x] = '今と同じ（NASDAQ100 そのもの）'
+        if x == REAL[SRC]:
+            verdict[x] = '今と同じ（回す元そのもの）'
             continue
         r10, r20 = res['W10'].get(x), res['W20'].get(x)
         okr = None
@@ -213,7 +219,7 @@ def main():
             verdict[x] = {(True, True): '候補に残る', (True, False): '過去だけ通る', (False, True): '未来の物差しだけ通る',
                           (False, False): '通らない'}[(okr, okf)]
     out = dict(generated=time.strftime('%Y-%m-%d'), tool='night/etf30_check.py', kind='参考（配分は変えない・決まりは道具の頭に固定）',
-               question='有力な過去リターンを高くだしたETF 30本を全て調べ上げて', 今=NOW,
+               question='有力な過去リターンを高くだしたETF 30本を全て調べ上げて', 回す元=SRC, 今=NOW,
                判定=verdict, 実績=res, 単体=single, 未来の物差しの本=stand, 未来の物差し=fut, secs=round(time.time() - t0))
     json.dump(out, open(OUT, 'w'), ensure_ascii=False, indent=1, default=str)
     for x in LIST30:
