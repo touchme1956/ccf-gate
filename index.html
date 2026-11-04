@@ -659,6 +659,7 @@ html[data-site="etf"] .etf-hide{display:none!important}
  <button id="grp5" onclick="showGroup(5)">📚 台帳</button>
  <button id="grp6" onclick="showGroup(6)">☰ その他</button>
  <button id="grpEtfA" class="site-etf-only" onclick="location.href='ami.html'">📊 分析</button>
+ <button id="grpEtfI" class="site-etf-only" onclick="window.ccfEtfInstallPaint&&ccfEtfInstallPaint(true)" title="ホーム画面・デスクトップにアプリとして置く">📲 アプリ</button>
  <button id="grpEtfG" class="site-etf-only" onclick="location.href='index.html'" title="個別株の門（通常の門）を開く">🏯 門Ω</button>
 </nav>
 <!-- 章のチップ。**常にDOMに在る**（群が閉じていても getElementById で見つかる＝検査器が壊れない）。
@@ -9960,16 +9961,20 @@ function ccfDownload(btn){
   function eiSet(v){ try{localStorage.setItem('etf:installAsk',v);}catch(e){} }
   function eiStandalone(){ try{ return matchMedia('(display-mode: standalone)').matches||matchMedia('(display-mode: window-controls-overlay)').matches||navigator.standalone===true; }catch(e){return false;} }
   function eiClose(v){ if(v)eiSet(v); const b=document.getElementById('etfInstall'); if(b)b.remove(); }
-  window.ccfEtfInstallPaint=function(){
-    if(eiStandalone()||eiGet())return eiClose();
+  window.ccfEtfInstallPaint=function(force){
+    /* force＝ナビの「📲 アプリ」から押した（「もう出さない」・アプリで開いている、を問わず出す） */
+    if(!force&&(eiStandalone()||eiGet()))return eiClose();
     const ua=navigator.userAgent||'';
     const ios=/iPhone|iPad|iPod/.test(ua)||(/Macintosh/.test(ua)&&navigator.maxTouchPoints>1);
     const macSafari=!ios&&/Macintosh/.test(ua)&&/Safari/.test(ua)&&!/Chrome|Chromium|Edg|Firefox/.test(ua);
     let body, go='';
     if(window.__etfBIP){ body='押すと確認の窓が出ます。「インストール」でデスクトップ・スタートメニュー（Mac は Launchpad）に「ETF」のアプリが入ります。'; go='<button class="ei-go" type="button">🖥 デスクトップに置く</button>'; }
+    else if(force&&eiStandalone()) body='いまアプリとして開いています（もう置いてあります）。';
+    else if(ios&&/CriOS/.test(ua)) body='Chrome の右上（アドレスバーの右）の共有ボタン <b>⎋</b> →「ホーム画面に追加」で「ETF」のアプリになります（出ないときは Safari で開いて 共有 →「ホーム画面に追加」）。';
     else if(ios) body='画面下（iPad は上）の共有ボタン <b>⎋</b> →「ホーム画面に追加」で「ETF」のアプリになります。';
     else if(macSafari) body='メニューの「ファイル」→「Dockに追加」で「ETF」のアプリになります（デスクトップへはアプリケーションフォルダから option＋command でドラッグ）。';
-    else body='ブラウザのメニュー（Chrome は「︙」→「キャスト、保存、共有」→「ページをアプリとしてインストール」／Edge は「…」→「アプリ」→「このサイトをアプリとしてインストール」）で「ETF」のアプリになります。';
+    else if(/Android/.test(ua)) body='Chrome の右上「︙」→「ホーム画面に追加」（または「アプリをインストール」）で「ETF」のアプリになります。';
+    else body='アドレスバーの右端のインストールのアイコン（画面に矢印）か、Chrome は「︙」→「キャスト、保存、共有」→「ページをアプリとしてインストール」／Edge は「…」→「アプリ」→「このサイトをアプリとしてインストール」で「ETF」のアプリになります（もう入れてあるときはアイコンが出ません）。';
     let b=document.getElementById('etfInstall');
     if(!b){ b=document.createElement('div'); b.id='etfInstall'; b.setAttribute('role','dialog'); b.setAttribute('aria-label','アプリとして置く'); document.body.appendChild(b); }
     b.innerHTML='<b>◈ ETFの門をアプリとして置きますか？</b><div>'+body+'</div><div class="ei-row">'+go+'<button class="ei-later" type="button">あとで</button><button class="ei-no" type="button">もう出さない</button></div>';
