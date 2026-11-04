@@ -214,6 +214,7 @@ def blocks(M):
     idx = {c: i for i, c in enumerate(M.P)}
     m0 = M.eval(M.W_of([dict(NOW)]))
     cnt, keep, n = {}, [], 0
+    nworse = {}                                    # 報告だけ（2026-11-04 追記・分け方は不変）: 幅を超えて悪い物差しの数ごとの通り数
     buf = []
 
     def flush():
@@ -229,6 +230,7 @@ def blocks(M):
         for j, comb in enumerate(buf):
             cls, worse, better, diff, cok = classify(m, j, m0)
             cnt[cls] = cnt.get(cls, 0) + 1
+            nworse[len(worse)] = nworse.get(len(worse), 0) + 1
             if cls not in ('替えないほうがいい',):
                 f = dict(FIXED)
                 for c, u in comb:
@@ -250,7 +252,8 @@ def blocks(M):
                     flush()
     flush()
     good = sorted([r for r in keep if r['分け方'] == '良い'], key=lambda r: (-r['良い数'], r['動かす量'], -r['基礎率の平均_主の差']))
-    return dict(通り=n, 分け方の数=cnt, 良い_上位30=good[:30], 良い_動かす量が小さい順_上位15=sorted(good, key=lambda r: (r['動かす量'], -r['良い数']))[:15],
+    return dict(通り=n, 分け方の数=cnt, 悪い物差しの数ごとの通り数=dict(sorted(nworse.items())),
+                替えないほうがいい以外の全部=sorted(keep, key=lambda r: (r['分け方'], r['動かす量'])), 良い_上位30=good[:30], 良い_動かす量が小さい順_上位15=sorted(good, key=lambda r: (r['動かす量'], -r['良い数']))[:15],
                 同等以上_100年は測れない_上位15=sorted([r for r in keep if r['分け方'] == '同等以上（100年は測れない）'],
                                                key=lambda r: (-r['良い数'], r['動かす量']))[:15])
 
