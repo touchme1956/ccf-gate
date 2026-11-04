@@ -7,7 +7,9 @@
 document.addEventListener('DOMContentLoaded',function(){try{document.title='ETFの門 ｜ CCF Ω';
 var set=function(sel,attr,v){var e=document.querySelector(sel);if(e)e.setAttribute(attr,v);};
 set('link[rel="manifest"]','href','manifest-etf.webmanifest');set('meta[name="apple-mobile-web-app-title"]','content','ETF');
-set('link[rel="apple-touch-icon"]','href','assets/icon-etf-180.png');set('link[rel="icon"]','href','assets/icon-etf-192.png');}catch(e){}});}catch(e){}})();</script><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#ffffff"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="門"><meta name="apple-mobile-web-app-status-bar-style" content="default"><link rel="apple-touch-icon" href="assets/icon-180.png"><link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
+set('link[rel="apple-touch-icon"]','href','assets/icon-etf-180.png');set('link[rel="icon"]','href','assets/icon-etf-192.png');}catch(e){}});
+/* デスクトップ・ホーム画面に置く案内（2026-11-04）: Chrome・Edge の「インストールできます」を早めに受け取っておく（下の ccfEtfInstall が使う） */
+window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__etfBIP=e;try{window.ccfEtfInstallPaint&&window.ccfEtfInstallPaint();}catch(x){}});}catch(e){}})();</script><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#ffffff"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="門"><meta name="apple-mobile-web-app-status-bar-style" content="default"><link rel="apple-touch-icon" href="assets/icon-180.png"><link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
 <title>CCF Ω — 壊れない複利の門 × 未来の門（完全版・詳解）</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -632,6 +634,11 @@ html[data-site="etf"] #grp1,html[data-site="etf"] #grp5,html[data-site="etf"] #g
 html[data-site="etf"] .gate-hero{display:none!important}
 html[data-site="etf"] #pg10{display:none!important}
 html[data-site="etf"] .etf-hide{display:none!important}
+#etfInstall{position:fixed;right:16px;bottom:16px;z-index:9500;max-width:360px;background:var(--rb-card,#fff);color:inherit;border:1px solid rgba(0,0,0,.14);border-radius:16px;box-shadow:0 8px 28px rgba(0,0,0,.18);padding:14px 16px;font-size:14px;line-height:1.6}
+#etfInstall b{font-size:15px}#etfInstall .ei-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+#etfInstall button{font:inherit;font-weight:700;border-radius:999px;padding:7px 14px;cursor:pointer;border:1px solid rgba(0,0,0,.18);background:transparent;color:inherit}
+#etfInstall button.ei-go{background:#1f8a4c;border-color:#1f8a4c;color:#fff}
+@media (max-width:700px){#etfInstall{left:12px;right:12px;max-width:none;bottom:124px}}
 .site-etf-badge{display:inline-flex;align-items:center;font-weight:800;font-size:14px;padding:0 10px 0 4px;white-space:nowrap}
 </style><script src="state.js?v=20261010-2"></script><script src="icon.js"></script></head><body><div id="pgBg" aria-hidden="true"></div>
 <!-- v9.9.177 息づく地（表示だけ・判定に不使用）。三つの淡い光が別々の周期で漂う＝追加ダウンロード0バイトで「裏で動く背景」を作る -->
@@ -9946,12 +9953,40 @@ function ccfDownload(btn){
     });
   }
   window.ccfEtfFilter=ccfEtfFilter;
+  /* ③ 最初に開いたら「デスクトップ（ホーム画面）に置く」を案内する（2026-11-04 ユーザー指示「最初に開いたら自動でアプリをデスクトップに表示できるようにして」）。
+     ⚠ ブラウザの決まりで、ページが自分でアプリを入れることはできない——人が1回押す必要がある。Chrome・Edge は押すと確認の窓が出る（beforeinstallprompt）。
+     Safari には押して入れる仕組みが無いので手順を出す。アプリとして開いている（standalone）・入れた・「もう出さない」を押したら出さない（印 localStorage etf:installAsk）。表示だけ。 */
+  function eiGet(){ try{return localStorage.getItem('etf:installAsk');}catch(e){return null;} }
+  function eiSet(v){ try{localStorage.setItem('etf:installAsk',v);}catch(e){} }
+  function eiStandalone(){ try{ return matchMedia('(display-mode: standalone)').matches||matchMedia('(display-mode: window-controls-overlay)').matches||navigator.standalone===true; }catch(e){return false;} }
+  function eiClose(v){ if(v)eiSet(v); const b=document.getElementById('etfInstall'); if(b)b.remove(); }
+  window.ccfEtfInstallPaint=function(){
+    if(eiStandalone()||eiGet())return eiClose();
+    const ua=navigator.userAgent||'';
+    const ios=/iPhone|iPad|iPod/.test(ua)||(/Macintosh/.test(ua)&&navigator.maxTouchPoints>1);
+    const macSafari=!ios&&/Macintosh/.test(ua)&&/Safari/.test(ua)&&!/Chrome|Chromium|Edg|Firefox/.test(ua);
+    let body, go='';
+    if(window.__etfBIP){ body='押すと確認の窓が出ます。「インストール」でデスクトップ・スタートメニュー（Mac は Launchpad）に「ETF」のアプリが入ります。'; go='<button class="ei-go" type="button">🖥 デスクトップに置く</button>'; }
+    else if(ios) body='画面下（iPad は上）の共有ボタン <b>⎋</b> →「ホーム画面に追加」で「ETF」のアプリになります。';
+    else if(macSafari) body='メニューの「ファイル」→「Dockに追加」で「ETF」のアプリになります（デスクトップへはアプリケーションフォルダから option＋command でドラッグ）。';
+    else body='ブラウザのメニュー（Chrome は「︙」→「キャスト、保存、共有」→「ページをアプリとしてインストール」／Edge は「…」→「アプリ」→「このサイトをアプリとしてインストール」）で「ETF」のアプリになります。';
+    let b=document.getElementById('etfInstall');
+    if(!b){ b=document.createElement('div'); b.id='etfInstall'; b.setAttribute('role','dialog'); b.setAttribute('aria-label','アプリとして置く'); document.body.appendChild(b); }
+    b.innerHTML='<b>◈ ETFの門をアプリとして置きますか？</b><div>'+body+'</div><div class="ei-row">'+go+'<button class="ei-later" type="button">あとで</button><button class="ei-no" type="button">もう出さない</button></div>';
+    const g=b.querySelector('.ei-go');
+    if(g)g.onclick=async function(){ const e=window.__etfBIP; if(!e)return; try{ e.prompt(); const r=await e.userChoice; window.__etfBIP=null; if(r&&r.outcome==='accepted')eiClose('done'); else eiClose(); }catch(x){ eiClose(); } };
+    b.querySelector('.ei-later').onclick=function(){ eiClose(); };
+    b.querySelector('.ei-no').onclick=function(){ eiClose('no'); };
+  };
+  window.addEventListener('appinstalled',function(){ eiClose('done'); });
   let want=5; try{ const g=+new URLSearchParams(location.search).get('pg'); if([5,6,7,12].includes(g))want=g; }catch(e){}
   function go(){ try{ if(typeof showPage==='function')showPage(want); }catch(e){} }
   document.addEventListener('DOMContentLoaded',function(){
     const box=document.getElementById('planBox');
     if(box){ new MutationObserver(()=>ccfEtfFilter(box)).observe(box,{childList:true}); ccfEtfFilter(box); }
     go();
+    /* Chrome・Edge の合図を少し待ってから案内を出す（合図が来れば押すだけで入る形に描き直す） */
+    setTimeout(function(){ try{ window.ccfEtfInstallPaint(); }catch(e){} },2500);
     /* 門の起動（台帳・state.json の読み込み）が終わったら、まだ同じページなら描き直す */
     let n=0; const t=setInterval(function(){ n++;
       if(window.__ccfBooted||n>120){ clearInterval(t); const p=window.__ccfPage; if(p===want||p===10||!p)go(); } },250);
