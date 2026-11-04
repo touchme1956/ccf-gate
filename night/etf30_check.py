@@ -182,14 +182,15 @@ def main():
                    '1位の業種を強く': lambda: fbr.eval(W, adj['1位の業種を強く（10年の値・Chips −4.0）']),
                    '主の半分': lambda: fbr.eval(W, adj['主の半分']), '分散の上乗せなし': lambda: fbr.eval(W, a0, nobonus=True),
                    '共分散をA2の窓から': lambda: fbr.eval(W, a0, cov2=True)}[v]()
-    fut = {}
+    fut, raw = {}, {}
+    P100 = lambda v: round(float(v) * 100, 3)   # 小数→%（2026-11-04 是正: 初回は小数のまま丸めて差が0に潰れた・決まりは不変）
     for j, k in enumerate(keys):
-        fut[k] = dict(元の平均=round(float(e['mean_pi'][j]), 2), 元の15パーセント以上=round(float(e['P15'][j]), 1),
-                      元の最大下落=round(float(e['mdd'][j]), 1), 基礎率の平均=round(float(b['mean_pi'][j]), 2),
-                      百年の三十年の中央=round(float(c['c30med'][j]), 3),
-                      差=dict(元の平均=round(float(e['mean_pi'][j] - e['mean_pi'][0]), 3), 元の15パーセント以上=round(float(e['P15'][j] - e['P15'][0]), 2),
-                             元の最大下落=round(float(e['mdd'][j] - e['mdd'][0]), 1),
-                             基礎率の平均_感度6本={v: round(float(vres[v]['mean_pi'][j] - vres[v]['mean_pi'][0]), 3) for v in BR.VARS},
+        raw[k] = dict(m=float(e['mean_pi'][j] - e['mean_pi'][0]), b={v: float(vres[v]['mean_pi'][j] - vres[v]['mean_pi'][0]) for v in BR.VARS})
+        fut[k] = dict(元の平均=P100(e['mean_pi'][j]), 元の15パーセント以上=P100(e['P15'][j]), 元の最大下落=P100(e['mdd'][j]),
+                      基礎率の平均=P100(b['mean_pi'][j]), 百年の三十年の中央=round(float(c['c30med'][j]), 3),
+                      差=dict(元の平均=P100(e['mean_pi'][j] - e['mean_pi'][0]), 元の15パーセント以上=P100(e['P15'][j] - e['P15'][0]),
+                             元の最大下落=P100(e['mdd'][j] - e['mdd'][0]),
+                             基礎率の平均_感度6本={v: P100(raw[k]['b'][v]) for v in BR.VARS},
                              百年の中央=round(float(c['c30med'][j] - c['c30med'][0]), 3)))
 
     # 決まり
@@ -203,7 +204,7 @@ def main():
         if r10:
             okr = r10['年率の差'] > 0 and r10['最大下落の差'] >= -1.0 and (r20 is None or (r20['年率の差'] > 0 and r20['最大下落の差'] >= -1.0))
         f_ = fut.get(x)
-        okf = None if f_ is None else (f_['差']['元の平均'] >= -1e-9 and all(v >= -1e-9 for v in f_['差']['基礎率の平均_感度6本'].values()))
+        okf = None if f_ is None else (raw[x]['m'] >= -1e-12 and all(v >= -1e-12 for v in raw[x]['b'].values()))
         if okr is None:
             verdict[x] = '実績が取れない'
         elif okf is None:
