@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ja"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ETFの門 ｜ CCF Ω</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ETF"><meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="../assets/icon-etf-180.png"><link rel="icon" type="image/png" sizes="192x192" href="../assets/icon-etf-192.png">
+<!--
+  ETFの門のアプリの入口（2026-11-04 ユーザー「ホーム画面に追加できない」）。
+  門のアプリ（../manifest.webmanifest・scope ./）が ccf-gate/ の全部を覆っていたので、ETF版のページを門と同じ場所で開くと
+  ブラウザは「もう入っている門のアプリ」と見て ETF を別のアプリとして置けなかった。
+  → ETF版は自分の場所（ccf-gate/etf/・scope ./）に置き、中身は門そのもの（../index.html?site=etf）を画面いっぱいの iframe で読む
+  ＝注文書・区分の比率・口座 A/B の計算は門の1つの実装のまま（写さない・v9.9.65）。保存場所（localStorage）も門と同じ origin。
+  インストールの合図（beforeinstallprompt）はこの外側の窓に来るので、受け取って iframe の中の案内に渡す。
+-->
+<style>
+html,body{margin:0;height:100%;background:#fff;overflow:hidden}
+#app{position:fixed;inset:0;width:100%;height:100%;border:0;display:block}
+</style>
+<script>
+window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__etfBIP=e;
+  try{var f=document.getElementById('app');f&&f.contentWindow&&f.contentWindow.ccfEtfInstallPaint&&f.contentWindow.ccfEtfInstallPaint();}catch(x){}});
+window.addEventListener('appinstalled',function(){window.__etfBIP=null;
+  try{var f=document.getElementById('app');f&&f.contentWindow&&f.contentWindow.ccfEtfInstallDone&&f.contentWindow.ccfEtfInstallDone();}catch(x){}});
+</script>
+</head><body>
+<iframe id="app" title="ETFの門"></iframe>
+<script>
+(function(){var pg=new URLSearchParams(location.search).get('pg');
+ document.getElementById('app').src='../index.html?site=etf&v=20261104b'+(pg&&/^\d+$/.test(pg)?'&pg='+pg:'');})();
+</script>
+</body></html>

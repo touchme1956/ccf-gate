@@ -3,10 +3,13 @@
    index.html?site=etf（etf.html から来る）なら門を「ETF版」で開く——タブは 🏦保有・📈成績・🛒買付順位（今月の買付プランと ◈ETF だけ）・📊分析（ami.html）。
    **計算は門と同じ1つの実装**（注文書・区分の比率・口座 A/B・iDeCo は門の関数をそのまま使う＝写さない）。変えるのは見せ方だけ（採点・四関門・配分・売却規律は不変）。
    この頭で名前・アイコン・manifest を差し替える（ホーム画面に追加するときに読まれる）。 */
-(function(){try{var q=new URLSearchParams(location.search);if(q.get('site')!=='etf')return;var d=document.documentElement;d.setAttribute('data-site','etf');
+(function(){try{var q=new URLSearchParams(location.search);if(q.get('site')!=='etf')return;
+/* 2026-11-04「ホーム画面に追加できない」: 門のアプリ（manifest の scope ./）がこのページを覆うので、ETF版は自分の場所 etf/ で開く（そこが iframe でこのページを読む） */
+if(window.top===window){var pg=q.get('pg');location.replace('etf/'+(pg&&/^\d+$/.test(pg)?'?pg='+pg:''));return;}
+var d=document.documentElement;d.setAttribute('data-site','etf');
 document.addEventListener('DOMContentLoaded',function(){try{document.title='ETFの門 ｜ CCF Ω';
 var set=function(sel,attr,v){var e=document.querySelector(sel);if(e)e.setAttribute(attr,v);};
-set('link[rel="manifest"]','href','manifest-etf.webmanifest');set('meta[name="apple-mobile-web-app-title"]','content','ETF');
+set('meta[name="apple-mobile-web-app-title"]','content','ETF');
 set('link[rel="apple-touch-icon"]','href','assets/icon-etf-180.png');set('link[rel="icon"]','href','assets/icon-etf-192.png');}catch(e){}});
 /* デスクトップ・ホーム画面に置く案内（2026-11-04）: Chrome・Edge の「インストールできます」を早めに受け取っておく（下の ccfEtfInstall が使う） */
 window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__etfBIP=e;try{window.ccfEtfInstallPaint&&window.ccfEtfInstallPaint();}catch(x){}});}catch(e){}})();</script><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#ffffff"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="門"><meta name="apple-mobile-web-app-status-bar-style" content="default"><link rel="apple-touch-icon" href="assets/icon-180.png"><link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
@@ -660,7 +663,7 @@ html[data-site="etf"] .etf-hide{display:none!important}
  <button id="grp6" onclick="showGroup(6)">☰ その他</button>
  <button id="grpEtfA" class="site-etf-only" onclick="location.href='ami.html'">📊 分析</button>
  <button id="grpEtfI" class="site-etf-only" onclick="window.ccfEtfInstallPaint&&ccfEtfInstallPaint(true)" title="ホーム画面・デスクトップにアプリとして置く">📲 アプリ</button>
- <button id="grpEtfG" class="site-etf-only" onclick="location.href='index.html'" title="個別株の門（通常の門）を開く">🏯 門Ω</button>
+ <button id="grpEtfG" class="site-etf-only" onclick="ccfEtfGoGate()" title="個別株の門（通常の門）を開く">🏯 門Ω</button>
 </nav>
 <!-- 章のチップ。**常にDOMに在る**（群が閉じていても getElementById で見つかる＝検査器が壊れない）。
      ⚠ v9.9.173 で**章が1つの群でも出す**ようにした（隠すと二段目の存在が画面から消えるため）。 -->
@@ -9954,12 +9957,21 @@ function ccfDownload(btn){
     });
   }
   window.ccfEtfFilter=ccfEtfFilter;
+  /* 🏯 門Ω: ETF版は etf/ の iframe の中なので、門は外側の窓ごと開く（iframe の中に門を重ねない）。
+     ⚠ inline の onclick には書かない——そこでは URL が document.URL（文字列）を指して new URL が落ちる */
+  window.ccfEtfGoGate=function(){
+    var u=String(window.location.href).replace(/[?#].*$/,'').replace(/[^\/]*$/,'index.html');
+    try{ window.top.location.href=u; }catch(e){ window.location.href=u; }
+  };
   /* ③ 最初に開いたら「デスクトップ（ホーム画面）に置く」を案内する（2026-11-04 ユーザー指示「最初に開いたら自動でアプリをデスクトップに表示できるようにして」）。
      ⚠ ブラウザの決まりで、ページが自分でアプリを入れることはできない——人が1回押す必要がある。Chrome・Edge は押すと確認の窓が出る（beforeinstallprompt）。
      Safari には押して入れる仕組みが無いので手順を出す。アプリとして開いている（standalone）・入れた・「もう出さない」を押したら出さない（印 localStorage etf:installAsk）。表示だけ。 */
   function eiGet(){ try{return localStorage.getItem('etf:installAsk');}catch(e){return null;} }
   function eiSet(v){ try{localStorage.setItem('etf:installAsk',v);}catch(e){} }
-  function eiStandalone(){ try{ return matchMedia('(display-mode: standalone)').matches||matchMedia('(display-mode: window-controls-overlay)').matches||navigator.standalone===true; }catch(e){return false;} }
+  /* ETF版は etf/ の中の iframe で動く——アプリかどうか・インストールの合図は外側（etf/index.html）の窓で見る */
+  function eiTop(){ try{ return window.top||window; }catch(e){ return window; } }
+  function eiBIP(){ try{ return window.__etfBIP||eiTop().__etfBIP||null; }catch(e){ return window.__etfBIP||null; } }
+  function eiStandalone(){ try{ const w=eiTop(); return w.matchMedia('(display-mode: standalone)').matches||w.matchMedia('(display-mode: window-controls-overlay)').matches||w.navigator.standalone===true; }catch(e){return false;} }
   function eiClose(v){ if(v)eiSet(v); const b=document.getElementById('etfInstall'); if(b)b.remove(); }
   window.ccfEtfInstallPaint=function(force){
     /* force＝ナビの「📲 アプリ」から押した（「もう出さない」・アプリで開いている、を問わず出す） */
@@ -9968,7 +9980,7 @@ function ccfDownload(btn){
     const ios=/iPhone|iPad|iPod/.test(ua)||(/Macintosh/.test(ua)&&navigator.maxTouchPoints>1);
     const macSafari=!ios&&/Macintosh/.test(ua)&&/Safari/.test(ua)&&!/Chrome|Chromium|Edg|Firefox/.test(ua);
     let body, go='';
-    if(window.__etfBIP){ body='押すと確認の窓が出ます。「インストール」でデスクトップ・スタートメニュー（Mac は Launchpad）に「ETF」のアプリが入ります。'; go='<button class="ei-go" type="button">🖥 デスクトップに置く</button>'; }
+    if(eiBIP()){ body='押すと確認の窓が出ます。「インストール」でデスクトップ・スタートメニュー（Mac は Launchpad）に「ETF」のアプリが入ります。'; go='<button class="ei-go" type="button">🖥 デスクトップに置く</button>'; }
     else if(force&&eiStandalone()) body='いまアプリとして開いています（もう置いてあります）。';
     else if(ios&&/CriOS/.test(ua)) body='Chrome の右上（アドレスバーの右）の共有ボタン <b>⎋</b> →「ホーム画面に追加」で「ETF」のアプリになります（出ないときは Safari で開いて 共有 →「ホーム画面に追加」）。';
     else if(ios) body='画面下（iPad は上）の共有ボタン <b>⎋</b> →「ホーム画面に追加」で「ETF」のアプリになります。';
@@ -9979,11 +9991,12 @@ function ccfDownload(btn){
     if(!b){ b=document.createElement('div'); b.id='etfInstall'; b.setAttribute('role','dialog'); b.setAttribute('aria-label','アプリとして置く'); document.body.appendChild(b); }
     b.innerHTML='<b>◈ ETFの門をアプリとして置きますか？</b><div>'+body+'</div><div class="ei-row">'+go+'<button class="ei-later" type="button">あとで</button><button class="ei-no" type="button">もう出さない</button></div>';
     const g=b.querySelector('.ei-go');
-    if(g)g.onclick=async function(){ const e=window.__etfBIP; if(!e)return; try{ e.prompt(); const r=await e.userChoice; window.__etfBIP=null; if(r&&r.outcome==='accepted')eiClose('done'); else eiClose(); }catch(x){ eiClose(); } };
+    if(g)g.onclick=async function(){ const e=eiBIP(); if(!e)return; try{ e.prompt(); const r=await e.userChoice; window.__etfBIP=null; try{ eiTop().__etfBIP=null; }catch(x){} if(r&&r.outcome==='accepted')eiClose('done'); else eiClose(); }catch(x){ eiClose(); } };
     b.querySelector('.ei-later').onclick=function(){ eiClose(); };
     b.querySelector('.ei-no').onclick=function(){ eiClose('no'); };
   };
   window.addEventListener('appinstalled',function(){ eiClose('done'); });
+  window.ccfEtfInstallDone=function(){ eiClose('done'); };
   let want=5; try{ const g=+new URLSearchParams(location.search).get('pg'); if([5,6,7,12].includes(g))want=g; }catch(e){}
   function go(){ try{ if(typeof showPage==='function')showPage(want); }catch(e){} }
   document.addEventListener('DOMContentLoaded',function(){
