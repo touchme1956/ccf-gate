@@ -62,6 +62,7 @@ def main():
         res = U.build()
     rows, chains = res['rows'], res['chains']
     P = BR.POOL
+    B.century_extend(U)   # VBR ほかの100年の写し（ndx40_form_check と同じ）
     fast, cent = B.Fast(U, rows, chains, P), B.Cent(U, P)
     fbr = BR.FastBR(fast)
     vec, _ = BR.industry_vectors(U, rows)
