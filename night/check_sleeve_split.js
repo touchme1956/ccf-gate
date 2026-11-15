@@ -47,6 +47,10 @@
  *      再び2つ（iFreeNEXT と SMT 米国株式モメンタム）になったので、正本に2つ以上あれば正本の形のまま見る（楽天・プラス・SOX を足して3つにしない）。
  *      同日の最終「… 個別株10％ これが最終で」で SMT を外して1本に戻った＝旧の設定から2本の形を作る道へ戻る（コードは変えていない）
  *
+ *   ㉕ 別枠＝比率の計算に入れない（2026-11-15 ユーザー明示指示「マイクロソフトとASMLはもう別枠として計算して」→ 選択「比率の計算から外す」・v9.9.223）:
+ *         target.ratio_outside の本は区分の比率の分母にも、どの区分の「今」にも数えない（ami_same_bucket に名前があっても別枠が先）。
+ *         合成: 分母・各区分の%・区分の取り分・席の入れ替わりの帯の文／実データ: 区分の表の「⊘ 別枠」の行・個別株の節の「⊘ 別枠」・引き継ぎに出さない・
+ *         🛒買付順位の印「・別枠」・目標ポートフォリオの「別枠」・設定を外すと個別株の区分（引き継ぎ）へ戻る
  *   ㉔ 個別株の MSFT を NASDAQ100 の区分に数える（2026-11-02 ユーザー明示指示「MSFTはNASDAQ100に入れて」・v9.9.222）:
  *      ① 合成: 数える先の表示名（cinNm）は投資信託の本なら指数の名前（IFREE-NDX → NASDAQ100）・ETF はティッカー（SMH）。
  *         席の入れ替わりの帯は、区分に数える社が出ても「引き継ぐ」と言わず「売らずに持ち続ける・NASDAQ100 の区分に数える」
@@ -135,8 +139,11 @@ const srv = http.createServer((q, r) => {
   //   個別株（state.json の castle の行）を ETF の区分に数えない形（11-02 より前の数え方）で見る
   const CASTLE_T = (() => { try { const st = JSON.parse(fs.readFileSync(path.join(ROOT, 'state.json'), 'utf8')).data || {};
       return (JSON.parse(st['pf:portfolio'] || '{}').positions || []).filter(p => p.sleeve === 'castle').map(p => String(p.t).toUpperCase()); } catch (e) { return []; } })();
+  //   ★2026-11-15（v9.9.223）: 正本は MSFT・ASML を別枠（target.ratio_outside＝比率の計算に入れない）にした——同じ理由で、この形では別枠からも外す（個別株の区分に数える）
   const ownCastle = (o) => { const sb = o && o.target && o.target.ami_same_bucket;
-    if (sb) for (const k of Object.keys(sb)) if (Array.isArray(sb[k])) sb[k] = sb[k].filter(t => !CASTLE_T.includes(String(t).toUpperCase())); return o; };
+    if (sb) for (const k of Object.keys(sb)) if (Array.isArray(sb[k])) sb[k] = sb[k].filter(t => !CASTLE_T.includes(String(t).toUpperCase()));
+    if (o && o.target && Array.isArray(o.target.ratio_outside)) o.target.ratio_outside = o.target.ratio_outside.filter(t => !CASTLE_T.includes(String(t).toUpperCase()));
+    return o; };
   // ★2026-10-27: 正本の個別株が0%（ETFだけ）のとき、持っていない個別株を先に買う検査（⑱・⑳ の castle）は個別株10%・ETF×0.9 の形で見る
   //   （個別株の目標が0なら先に買う個別株は無いのが正しい＝検査の前提が成り立たない）
   const castleSim = (o) => { if (+o.target.shiro_castle_pct === 0) { o.target.shiro_castle_pct = 10; o.target.ami_net_pct = 90;
@@ -410,7 +417,7 @@ const srv = http.createServer((q, r) => {
         .map(e => ({ t: e.querySelector('.bctl').dataset.t, buy: /今月 買う/.test(e.innerText), none: /今月なし/.test(e.innerText) }))
         .filter(x => x.buy || x.none);
       const lines = [...document.querySelectorAll('#pg5 div')].filter(d => /区分の比率が最優先・1株単位/.test(d.innerText) && d.innerText.length < 400).map(d => d.innerText);
-      const rows = [...document.querySelectorAll('#pg5 .catrow')].filter(e => e.dataset.cat !== 'zero')
+      const rows = [...document.querySelectorAll('#pg5 .catrow')].filter(e => e.dataset.cat !== 'zero' && e.dataset.cat !== 'outside')   // 目標0%の行・別枠（v9.9.223）の行は区分ではない
         .map(e => ({ g: e.dataset.cat, yen: +((e.innerText.match(/今月 ¥([\d,]+)/) || [0, '0'])[1].replace(/,/g, '')) }));
       const tot = [...document.querySelectorAll('#pg5 div')].map(d => d.innerText).find(x => /^合計 約¥/.test(x.trim()) && x.length < 200) || '';
       const CI = window.__ccfCat || {}, labs = {};
@@ -1252,6 +1259,86 @@ const srv = http.createServer((q, r) => {
          + '（外すと ' + off.carry.join('・') + '）・印「' + on.chip + '」・目標ポートフォリオの MSFT「' + on.pft.replace(/\s+/g, ' ').slice(-24) + '」・画面に「IFREE-NDX に数える」は無い');
       OVER = null;
     } else ok(true, '   （正本に ami_same_bucket の IFREE-NDX:[MSFT] が無いので ㉔ の実データの部分は飛ばす）');
+  }
+  // ㉕ 別枠＝比率の計算に入れない（2026-11-15 ユーザー明示指示「マイクロソフトとASMLはもう別枠として計算して」→ 選択「比率の計算から外す」・v9.9.223）
+  {
+    await pg.goto('http://localhost:' + PORT + '/index.html'); await pg.waitForTimeout(600);
+    const q25 = await pg.evaluate(() => {
+      localStorage.clear();
+      const mk = (ro, sb) => ({ asof: '2026-11-15', positions: [
+          { ticker: 'IFREE-NDX', value_jpy: 300000, sleeve: '網' }, { ticker: 'XLK', value_jpy: 150000, sleeve: '網' },
+          { ticker: 'SMH', value_jpy: 150000, sleeve: '網' }, { ticker: 'MSFT', value_jpy: 200000, sleeve: '城' },
+          { ticker: 'ASML', value_jpy: 100000, sleeve: '城' }],
+        target: { ami_net_pct: 100, ami_names: ['IFREE-NDX', 'XLK', 'SMH'], ami_weights: { 'IFREE-NDX': 80, XLK: 0, SMH: 20 },
+          ami_funds: { 'IFREE-NDX': { name: 'iFreeNEXT NASDAQ100インデックス', short: 'iFreeNEXT NASDAQ100', index: 'NASDAQ100' } },
+          ami_same_bucket: sb || { 'IFREE-NDX': ['XLK'] }, ...(ro ? { ratio_outside: ro } : {}) } });
+      // 別枠が先: 区分に数える設定（MSFT→NASDAQ100・ASML→SMH）があっても数えない。小文字の名前も読む
+      const on = ccfNetRows(null, mk(['msft', 'ASML'], { 'IFREE-NDX': ['XLK', 'MSFT'], SMH: ['ASML'] }));
+      const off = ccfNetRows(null, mk(null));
+      const I = on.rows.find(y => y.t === 'IFREE-NDX'), S = on.rows.find(y => y.t === 'SMH'), Io = off.rows.find(y => y.t === 'IFREE-NDX');
+      const K = { tot: on.live.total, 'n:IFREE-NDX': { t: 80, now: I.pos }, 'n:SMH': { t: 20, now: S.pos }, c: { t: 0, now: on.live.c } };
+      const cb = ccfCatBudget(K, 300000);
+      localStorage.setItem('ccf:seats', JSON.stringify({ seats: ['CW', 'MSFT', 'LRCX'], at: '2026-11-01T00:00:00Z' }));
+      const ban = ccfSeatBannerHTML(['CW', 'LRCX', 'KLAC'], { pos: { MSFT: 22.2 }, castlePct: 0, out: { MSFT: true } });
+      localStorage.removeItem('ccf:seats');
+      const txt = h => { const d = document.createElement('div'); d.innerHTML = h; return d.innerText || d.textContent; };
+      return { tot: on.live.total, totAll: on.live.totalAll, out: on.live.out, outW: on.live.outW, c: on.live.c, n: on.live.n,
+        nI: I.pos, nS: S.pos, parts: I.alParts.map(p => p.t), msOut: !!on.live.byT.MSFT.out, msW: on.live.byT.MSFT.w,
+        msCin: on.live.byT.MSFT.cin || null, asCin: on.live.byT.ASML.cin || null,
+        offTot: off.live.total, offTotAll: off.live.totalAll, offOut: off.live.out, offC: off.live.c, offI: Io.pos,
+        bI: cb['n:IFREE-NDX'].b, bS: cb['n:SMH'].b, bC: cb.c.b, ban: txt(ban) };
+    });
+    const r1 = v => Math.round(v * 100) / 100;
+    ok(q25.tot === 600000 && q25.totAll === 900000 && q25.out.join(',') === 'MSFT,ASML' && r1(q25.outW) === 33.33 && r1(q25.c) === 0 && r1(q25.n) === 100
+       && r1(q25.nI) === 75 && r1(q25.nS) === 25 && q25.parts.join(',') === 'XLK' && q25.msOut && r1(q25.msW) === 22.22 && !q25.msCin && !q25.asCin,
+       '㉕ 合成: 別枠（MSFT・ASML）を除いた合計 ' + q25.tot + '（総資産 ' + q25.totAll + '）・NASDAQ100 ' + r1(q25.nI) + '%・SMH ' + r1(q25.nS) + '%・個別株 ' + r1(q25.c)
+       + '%・MSFT は総資産の ' + r1(q25.msW) + '%・区分に数える設定（MSFT→NASDAQ100・ASML→SMH）があっても数えない');
+    ok(q25.offTot === 900000 && q25.offTotAll === 900000 && q25.offOut.length === 0 && r1(q25.offC) === 33.33 && r1(q25.offI) === 50,
+       '   設定が無ければ従来どおり（合計 ' + q25.offTot + '・個別株 ' + r1(q25.offC) + '%・NASDAQ100 ' + r1(q25.offI) + '%）');
+    // 入金30万: 分母は別枠を除いた 60万＋30万＝90万 → NASDAQ100 目標72万−今45万＝27万・SMH 18万−15万＝3万（合計＝入金ちょうど）
+    ok(q25.bI === 270000 && q25.bS === 30000 && q25.bC === 0, `   区分の取り分（入金30万）: NASDAQ100 ¥${q25.bI}・SMH ¥${q25.bS}・個別株 ¥${q25.bC}＝別枠を除いた合計で割る`);
+    ok(/出 MSFT（総資産の 22\.2%→売らずに持ち続ける・別枠＝比率の計算に入れない）/.test(q25.ban) && /別枠の社〔MSFT〕は比率の計算に入れないまま/.test(q25.ban) && !/MSFT（保有 22\.2%→売らずに引き継ぐ/.test(q25.ban),
+       '   席の入れ替わりの帯: 別枠の社は「' + ((q25.ban.match(/出 MSFT（[^）]*）/) || [''])[0]) + '」');
+    const RO = (base.target || {}).ratio_outside;
+    if (Array.isArray(RO) && RO.length) {
+      const ROU = RO.map(t => String(t).toUpperCase());
+      const load25 = async (over) => {
+        OVER = over;
+        await pg.goto('http://localhost:' + PORT + '/index.html'); await pg.waitForTimeout(600);
+        await pg.evaluate(stt => { localStorage.clear(); for (const k in stt.data) localStorage.setItem(k, stt.data[k]);
+          localStorage.setItem('ccf:stateSavedAt', stt.savedAt); }, ST);
+        await pg.reload(); await pg.waitForTimeout(1500);
+        await pg.evaluate(() => ccfImportAllPacks()); await pg.waitForTimeout(1800);
+        await pg.evaluate(() => { localStorage.setItem('pf:monthly_total', '200000'); showPage(5); }); await pg.waitForTimeout(3200);
+        const a = await pg.evaluate(() => {
+          const C = window.__ccfCat || {}, txt = ((document.querySelector('#pg5') || {}).innerText || '');
+          const orow = ((document.querySelector('#pg5 .catrow[data-cat="outside"]') || {}).innerText || '');
+          return { ndx: C['n:IFREE-NDX'] ? C['n:IFREE-NDX'].now : null, smh: C['n:SMH'] ? C['n:SMH'].now : null, c: C.c ? C.c.now : null,
+            sum: (window.ccfCatKeys ? window.ccfCatKeys(C) : []).reduce((s, k) => s + (+C[k].now || 0), 0),
+            carry: (window.__ccfCarry || []).map(x => x.t), outs: (window.__ccfOutside || []).map(x => x.t), outW: C._out ? C._out.now : null,
+            orow, sec: /⊘ 別枠（比率の計算に入れない・売らずに持ち続ける）/.test(txt), note: /区分の「今」は別枠を除いた合計に対する%/.test(txt),
+            chip: (txt.match(/◆保有\d+%・別枠/g) || []).length, cinChip: /◆保有\d+%・(NASDAQ100|SMH) に数える/.test(txt),
+            tot: +((txt.match(/合計 約?¥([\d,]+)/) || [0, '0'])[1]).replace(/,/g, '') };
+        });
+        await pg.evaluate(() => showPage(6)); await pg.waitForTimeout(3000);
+        const b6 = await pg.evaluate(ts => { const g = t => { const e = document.querySelector('#pftCard [data-k="c:' + t + '"]'); return e ? e.innerText.replace(/\s+/g, ' ') : ''; };
+          const n = document.querySelector('#pftCard .pft-outnote'); return { pft: ts.map(g), note: n ? n.innerText : '' }; }, ROU);
+        return Object.assign(a, b6);
+      };
+      const on = await load25(withMode('cat'));
+      const offC = withMode('cat'); delete offC.target.ratio_outside;
+      const off = await load25(offC);
+      ok(on.ndx != null && off.ndx != null && on.ndx > off.ndx && Math.abs(on.c) < 0.05 && off.c > 1 && Math.abs(on.sum - 100) < 0.05 && Math.abs(off.sum - 100) < 0.05
+         && Math.abs(off.c - on.outW) < 0.05 && ROU.every(t => on.outs.includes(t) && !on.carry.includes(t) && off.carry.includes(t)) && !off.outs.length,
+         '㉕ 実データ（正本・cat・入金20万）: NASDAQ100 の区分 ' + (off.ndx != null ? off.ndx.toFixed(1) : '?') + ' → ' + (on.ndx != null ? on.ndx.toFixed(1) : '?')
+         + '%・SMH ' + (off.smh != null ? off.smh.toFixed(1) : '?') + ' → ' + (on.smh != null ? on.smh.toFixed(1) : '?') + '%・個別株 ' + (off.c != null ? off.c.toFixed(1) : '?') + ' → ' + (on.c != null ? on.c.toFixed(1) : '?')
+         + '%（区分の合計はどちらも100%）・別枠 ' + on.outs.join('・') + ' は総資産の ' + (on.outW != null ? on.outW.toFixed(1) : '?') + '%（外すと引き継ぎ ' + off.carry.join('・') + '）');
+      ok(ROU.every(t => on.orow.includes(t)) && /総資産の[\d.]+%・売らない・新規なし/.test(on.orow) && on.sec && on.note && on.chip >= 1 && !on.cinChip
+         && on.pft.every(x => /別枠/.test(x) && /総資産の [\d.]+%/.test(x) && !/引き継ぎ|多い|あと/.test(x)) && ROU.every(t => on.note.includes(t))
+         && !off.orow && !off.sec && !off.note && on.tot > 0 && off.tot > 0,
+         '   表示: 区分の表「' + on.orow.replace(/\s+/g, ' ') + '」・個別株の節の「⊘ 別枠」・印「・別枠」' + on.chip + '件・目標ポートフォリオ「' + (on.pft[0] || '').slice(-26) + '」・設定を外すと出ない');
+      OVER = null;
+    } else ok(true, '   （正本に target.ratio_outside が無いので ㉕ の実データの部分は飛ばす）');
   }
   await pg.evaluate(() => localStorage.removeItem('pf:monthly_total'));
   await b.close(); srv.close();

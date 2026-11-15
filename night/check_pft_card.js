@@ -47,7 +47,9 @@ const POS = [
 ];
 const VAL = Object.fromEntries(POS.map(p => [p.t, p.sh * p.npx * FX]));
 const TOT = Object.values(VAL).reduce((a, b) => a + b, 0);
-const W = t => (VAL[t] || 0) / TOT * 100;
+// ★2026-11-15（v9.9.223・ユーザー明示指示「マイクロソフトとASMLはもう別枠として計算して」→「比率の計算から外す」）: 別枠（target.ratio_outside）の本は
+//   門の ccfPfLive と同じく比率の分母から外す——今の%は別枠を除いた合計（TOTR）に対する%・別枠の行だけ総資産（TOT）に対する%（OUTS と TOTR は下で T から作る）
+const W = t => OUTS.has(t) ? (VAL[t] || 0) / TOT * 100 : (VAL[t] || 0) / TOTR * 100;
 const DASH = { asof: '2026-10-09T01:00:00+00:00', fx: { USDJPY: FX }, news: {},
   quotes: Object.fromEntries(POS.map(p => [p.t, { px: p.npx, prev: p.npx, chgPct: 0, src: 'fixture' }])) };
 const jr = (r, o) => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(o) });
@@ -56,6 +58,8 @@ const jr = (r, o) => r.fulfill({ status: 200, contentType: 'application/json', b
 const PF = JSON.parse(fs.readFileSync(path.join(ROOT, 'portfolio.json'), 'utf8'));
 const T = PF.target || {};
 const U = s => String(s || '').trim().toUpperCase();
+const OUTS = new Set((Array.isArray(T.ratio_outside) ? T.ratio_outside : []).map(U).filter(Boolean));
+const TOTR = Object.entries(VAL).filter(([t]) => !OUTS.has(t)).reduce((a, [, v]) => a + v, 0);
 const REAL_CT = (T.shiro_castle_pct !== undefined && T.shiro_castle_pct !== null && T.shiro_castle_pct !== '' && +T.shiro_castle_pct >= 0) ? +T.shiro_castle_pct : null;   // 0 は 0（門の ccfPctOf と同じ）
 // ★2026-10-27: 正本の個別株が0%のとき、個別株の重みの検査（A3〜A8）は個別株10%・ETF 90%（ETF の比はそのまま×0.9）の形を検査の中で作って見る。
 //   正本の姿（個別株0%）は A0 で別に見る（席の社は目標0%・「席が空いている分」の行を作らない）
@@ -67,15 +71,16 @@ const SIMPF = SIM0 ? (() => { const q = JSON.parse(JSON.stringify(PF)); q.target
 // 同じ区分に数える本＝同じ指数の本（ami_same_index・QQQM）と同じ扱いの本（ami_same_bucket・XLK・v9.9.214）。門の ccfSameAll と同じ読み方
 const SAMEOF = {}, SKIND = {};
 for (const [src, kind] of [[T.ami_same_index || {}, 'idx'], [T.ami_same_bucket || {}, 'bucket']])
-  for (const k in src) if (Array.isArray(src[k])) for (const a of src[k]) { const A = U(a); if (A && A !== U(k) && !SAMEOF[A]) { SAMEOF[A] = U(k); SKIND[A] = kind; } }
+  for (const k in src) if (Array.isArray(src[k])) for (const a of src[k]) { const A = U(a); if (A && A !== U(k) && !SAMEOF[A] && !OUTS.has(A)) { SAMEOF[A] = U(k); SKIND[A] = kind; } }   // 別枠が先（門と同じ）
 const NAMES = (T.ami_names || []).map(U);
 const ETF_EXP = NAMES.filter(t => (WN[t] || 0) > 0 && !SAMEOF[t]);            // 円グラフに出る ETF の区分（ami_names の順）
 const OB = (T.ami_other && T.ami_other.buy) ? U(T.ami_other.buy) : '';
-const heldNet = POS.filter(p => p.sleeve === 'net').map(p => p.t);
+const heldNet = POS.filter(p => p.sleeve === 'net' && !OUTS.has(p.t)).map(p => p.t);
 // ★2026-11-02 ユーザー明示指示「ASMLはSMHに入れて」: 個別株の保有でも ami_same_bucket に名前があれば、その ETF の区分に数える（門の ccfPfLive の cin）
 //   ＝区分の注記に名前が出て、個別株の「今」からは引く。名前が無ければ従来どおり個別株
-const heldIn = POS.filter(p => p.sleeve === 'net' || (p.sleeve === 'castle' && SAMEOF[p.t])).map(p => p.t);
-const castleOwn = POS.filter(p => p.sleeve === 'castle' && !SAMEOF[p.t]).map(p => p.t);
+const heldIn = POS.filter(p => !OUTS.has(p.t) && (p.sleeve === 'net' || (p.sleeve === 'castle' && SAMEOF[p.t]))).map(p => p.t);
+const castleOwn = POS.filter(p => p.sleeve === 'castle' && !SAMEOF[p.t] && !OUTS.has(p.t)).map(p => p.t);
+const outOwn = POS.filter(p => OUTS.has(p.t)).sort((a, b) => VAL[b.t] - VAL[a.t]).map(p => p.t);   // 別枠の保有（評価額の大きい順＝門の LV.out と同じ並び）
 const nowEtf = k => {                                                         // 区分の今（注文書と同じ数え方）
   let v = W(k); for (const a in SAMEOF) if (SAMEOF[a] === k) v += W(a);
   if (k === OB) heldNet.forEach(t => { if (!ETF_EXP.includes(t) && !SAMEOF[t]) v += W(t); });
@@ -123,6 +128,7 @@ const RANK = String(T.castle_weighting || '').toLowerCase() === 'rank' && Array.
     if (o.mut === 'equal') pfJ.target.castle_weighting = 'equal';
     if (o.mut === 'badRank') pfJ.target.castle_rank_weights = [5, 0, 'x'];
     if (o.mut === 'noSnap') pfJ.positions = [];
+    if (o.mut === 'noOut') delete pfJ.target.ratio_outside;                                          // 別枠（v9.9.223）を外した形
     const led = {}; (o.led || []).forEach(t => { led[t] = { nm: t, d: {}, r: {} }; });
     const buy = (o.seats || []).map((t, i) => ({ t, s: 85 - i, nm: t }));
     const M = ccfPftModel(pfJ, o.exJ || { items: [] }, led, buy, o.fx, o.pfRows || [], o.nmOf || {});
@@ -231,7 +237,9 @@ const RANK = String(T.castle_weighting || '').toLowerCase() === 'rank' && Array.
       const seats = ['CW', 'LRCX', 'MSFT', 'GOOGL', 'KLAC'];                     // ASML は席の外
       const r = await model(p, { pf: base, led: ledAll, seats, fx: FX, pfRows, nmOf });
       const a = r.M.castleExtra.find(x => x.k === 'c:ASML');
-      ok(!!a && a.tw === 0 && near(a.now, W('ASML'), 0.001) && /席の外/.test(a.sub) && r.rows.some(q => q.k === 'c:ASML' && q.z), `ASML は目標0%の行（今 ${a ? a.now.toFixed(2) : '—'}%・売らずに持ち続ける）`);
+      const aOut = OUTS.has('ASML');
+      ok(!!a && a.tw === 0 && near(a.now, W('ASML'), 0.001) && (aOut ? (!!a.out && /別枠/.test(a.sub)) : /席の外/.test(a.sub)) && r.rows.some(q => q.k === 'c:ASML' && q.z),
+         `ASML は目標0%の行（${aOut ? '別枠・総資産の' : '今'} ${a ? a.now.toFixed(2) : '—'}%・売らずに持ち続ける）`);
       ok(r.n === ETF_EXP.length + 5, '目標0%の行は円グラフに入れない');
       const empty = { asof: '2026-10-09', fx: FX, positions: [] };
       const r1 = await model(p, { pf: empty, led: ledAll, seats, fx: FX, pfRows: [], nmOf: {} });
@@ -240,6 +248,22 @@ const RANK = String(T.castle_weighting || '').toLowerCase() === 'rank' && Array.
       ok(!r2.M.live && !/今 \d/.test(r2.text) && /読めないので出していない/.test(r2.text), '保有がどこにも無ければ「今」を出さず、注記でそう言う（0%と読まない）');
       const cw = r.M.castle.find(x => x.k === 'c:CW'), ms = r.M.castle.find(x => x.k === 'c:MSFT');
       ok(cw && near(cw.now, 0, 1e-9) && ms && ms.nm === 'Microsoft' && /^MSFT・席3位/.test(ms.sub), `持っていない席の社は今0%・持っている社は保有の名前（${ms ? ms.nm + '／' + ms.sub : '—'}）`);
+    }
+
+    if (OUTS.size) {
+      console.log(`■ A5b. 別枠（target.ratio_outside: ${[...OUTS].join('・')}）＝比率の計算に入れない（v9.9.223）`);
+      const r = await model(p, { pf: base, led: ledAll, seats: SEATS10.slice(0, 5), fx: FX, pfRows, nmOf });
+      const outRows = r.M.castle.concat(r.M.castleExtra).filter(x => outOwn.includes(x.k.slice(2)));
+      ok(outRows.length === outOwn.length && outRows.every(x => x.out && near(x.now, W(x.k.slice(2)), 0.001)),
+         `別枠の行は out・今は総資産に対する%（${outRows.map(x => x.k.slice(2) + ' ' + x.now.toFixed(2)).join('・')}）`);
+      ok(outOwn.every(t => { const q = r.rows.find(y => y.k === 'c:' + t); return q && /別枠/.test(q.txt) && /総資産の [\d.]+%/.test(q.txt) && !/引き継ぎ|多い|あと |に数える/.test(q.txt); }),
+         `別枠の行の表示は「総資産の x%・別枠」（差・引き継ぎ・「に数える」を出さない: ${(r.rows.find(y => y.k === 'c:' + outOwn[0]) || {}).txt || '—'}）`);
+      ok(JSON.stringify(r.M.outNm) === JSON.stringify(outOwn) && near(r.M.outW, outOwn.reduce((a, t) => a + W(t), 0), 0.001) && /別枠＝比率の計算に入れない保有/.test(r.text),
+         `注記に別枠の名前と総資産の%（${r.M.outNm.join('・')}・${r.M.outW.toFixed(2)}%）`);
+      const r0 = await model(p, { pf: base, led: ledAll, seats: SEATS10.slice(0, 5), fx: FX, pfRows, nmOf, mut: 'noOut' });
+      const ms0 = r0.M.castle.find(x => x.k === 'c:MSFT');
+      ok(!r0.M.outNm.length && !/別枠＝/.test(r0.text) && ms0 && !ms0.out && near(r0.M.etfNow + r0.M.castleNow, 100, 1e-6) && r0.M.castleNow > 1,
+         `設定を外すと別枠は無く、個別株の区分に数える（個別株 ${r0.M.castleNow.toFixed(2)}%）`);
     }
 
     console.log('■ A6. 色（今のカードと同じ保有は同じ色）');
