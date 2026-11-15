@@ -499,9 +499,15 @@ function homeRender(){
  if(castle>0)tgt.push(['個別株',castle]);
  /* 今: state.json の株数 × 盤の値段（ドル建ては × ドル円）。区分は門と同じ数え方（同じ指数・同じ扱いの本を寄せる） */
  let cur=null,curNote='',miss=[];
+ /* ★2026-11-15（門 v9.9.223・ユーザー明示指示「マイクロソフトとASMLはもう別枠として計算して」→「比率の計算から外す」）: 別枠（target.ratio_outside）の本は
+    門の ccfPfLive と同じく比率の計算に入れない＝「今」の分母にも区分にも数えず、総資産に対する%だけを別に出す */
+ const OUTS=new Set((Array.isArray(T.ratio_outside)?T.ratio_outside:[]).map(x=>String(x).trim().toUpperCase()));
+ let outV=0,totAll=0;const outL=[];
  try{const pf=JSON.parse(DATA.ST.data['pf:portfolio']);const q=(DATA.Q&&DATA.Q.quotes)||{},fx=(DATA.Q&&DATA.Q.fx&&DATA.Q.fx.USDJPY)||pf.fx;
   cur={};let tot=0;(pf.positions||[]).forEach(p=>{const qq=q[p.t];let px=qq&&qq.px!=null?qq.px:p.npx;if(px==null||!(p.sh>0)){miss.push(p.t);return;}
-   let v=p.sh*px*(p.ccy==='USD'?fx:1);const b=(p.sleeve==='castle'&&bucketOf(p.t)===p.t)?'個別株':bucketOf(p.t);cur[b]=(cur[b]||0)+v;tot+=v;});
+   let v=p.sh*px*(p.ccy==='USD'?fx:1);totAll+=v;
+   if(OUTS.has(String(p.t).toUpperCase())){outV+=v;outL.push(p.t);return;}
+   const b=(p.sleeve==='castle'&&bucketOf(p.t)===p.t)?'個別株':bucketOf(p.t);cur[b]=(cur[b]||0)+v;tot+=v;});
   for(const k in cur)cur[k]=cur[k]/tot*100;
   curNote=`repo の state.json の株数（保存 ${String(DATA.ST.savedAt||'').slice(0,10)}）× 盤の値段（${esc((DATA.Q&&DATA.Q.asof)||'')}）・$1=¥${fx}。端末で記録して repo に入れていない売り買いは入らない。`;
  }catch(e){cur=null;}
@@ -536,7 +542,7 @@ function homeRender(){
   <td><div style="position:relative;height:10px;background:var(--line);border-radius:5px"><div style="position:absolute;left:0;top:0;height:10px;border-radius:5px;width:${Math.min(100,c||0)}%;background:${colOf(k)}"></div><div style="position:absolute;top:-3px;width:2px;height:16px;background:var(--ink);left:${Math.min(100,t)}%"></div></div></td></tr>`;}).join('')}
  </tbody></table></div>
  ${miss.length?`<p class="small warn">値段が無く数えていない: ${esc(miss.join('・'))}</p>`:''}
- <p class="small mute">個別株の MSFT・ASML は門と同じく NASDAQ100・SMH の区分に数える（target.ami_same_bucket）。棒の黒い線が目標。</p></div>
+ <p class="small mute">${outL.length?`別枠（比率の計算に入れない・target.ratio_outside）: ${esc(outL.join('・'))}＝総資産の ${(totAll>0?outV/totAll*100:0).toFixed(1)}%（売らない・新しいお金は回らない）。「今」は別枠を除いた合計に対する%（門と同じ数え方）。`:'個別株の保有は門と同じく区分に数える（target.ami_same_bucket に名前のある本はその ETF の区分・無ければ個別株）。'}棒の黒い線が目標。</p></div>
  <div class="card"><h3>中身まで分解すると（目標の形・ETF 側）</h3>
   <p class="small mute">ETFの上位の掲載分を目標の比で足した（out/etf_profiles.json・iFreeNEXT は QQQM の中身で代用）。${lmiss.length?'中身の無い本: '+esc(lmiss.join('・'))+'＝数えていない。':''}</p>
   <div id="lookChart"></div></div>

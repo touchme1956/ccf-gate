@@ -21,6 +21,8 @@
  * ★2026-11-02 から正本の portfolio.json は個別株の MSFT・ASML を ETF の区分に数える（target.ami_same_bucket・v9.9.221〜222）＝席を出ても「引き継ぎ」に
  *   ならない。この検査は**席の入れ替わりと引き継ぎの仕組み**を見るので、配る portfolio.json から MSFT だけを外す（MSFT を個別株の区分に数える形）。
  *   区分に数える社の帯の文（「売らずに持ち続ける・NASDAQ100 の区分に数える」）は check_sleeve_split.js ㉔ が見る。
+ * ★2026-11-15（v9.9.223）から正本は MSFT・ASML を別枠（target.ratio_outside＝比率の計算に入れない）にした——同じ理由で、配る portfolio.json の別枠からも
+ *   MSFT を外す（個別株の区分に数える形）。別枠の社の帯の文（「売らずに持ち続ける・別枠＝比率の計算に入れない」）は check_sleeve_split.js ㉕ が見る。
  *
  * playwright が要るので CI には入れていない（check_auto_import.js と同じ扱い）。
  *   使い方: NODE_PATH=$(npm root -g) node night/check_seat_switch.js
@@ -52,6 +54,7 @@ const srv = http.createServer((q, r) => {
     if (rel === '/out/today.json' && TODAY_BUY) { const j = JSON.parse(fs.readFileSync(f, 'utf8')); j.buy = TODAY_BUY.slice(); return send(Buffer.from(JSON.stringify(j)), 'application/json'); }
     if (rel === '/portfolio.json') { const j = JSON.parse(fs.readFileSync(f, 'utf8')), sb = j.target && j.target.ami_same_bucket;   // 頭注の★: MSFT を個別株の区分に数える形で配る
       if (sb) for (const k of Object.keys(sb)) if (Array.isArray(sb[k])) sb[k] = sb[k].filter(t => String(t).toUpperCase() !== 'MSFT');
+      if (j.target && Array.isArray(j.target.ratio_outside)) j.target.ratio_outside = j.target.ratio_outside.filter(t => String(t).toUpperCase() !== 'MSFT');   // v9.9.223: 別枠からも外す
       return send(Buffer.from(JSON.stringify(j)), 'application/json'); }
     if (rel === '/index.html' && SIG_MARK) { const h = fs.readFileSync(f, 'utf8').replace('const $=id=>document.getElementById(id);', 'const $=id=>document.getElementById(id);// ' + SIG_MARK); return send(Buffer.from(h), 'text/html'); }
     send(fs.readFileSync(f));
