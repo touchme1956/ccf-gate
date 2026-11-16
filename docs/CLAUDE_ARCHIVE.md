@@ -21179,3 +21179,14 @@ XLK・VUG・ITA・IJR・SKYY・FPX・TDIV・IJH・AIRR・HACK・RTH・XLY・MGC�
 - 検査: `check_sleeve_split.js` に ㉕（合成: 分母・各区分の%・区分の取り分・帯の文／実データ: 区分の表と個別株の節の「⊘ 別枠」・引き継ぎに出さない・印・目標ポートフォリオ・設定を外すと個別株の区分へ戻る）を足し、個別株の区分が目標を超える月を見る項目の形（ownCastle）は別枠からも2社を外す形にした／`check_pft_card.js` は今の%を別枠を除いた合計で計算し、A5b（別枠の行・注記・外すと戻る）を足した／`check_seat_switch.js` は配る portfolio.json の別枠からも MSFT を外して引き継ぎの仕組みを見続ける。結果は下の追記。
 - 戻し方: `portfolio.json` の `target.ratio_outside` から名前を消す（その本は個別株の区分＝目標0%・引き継ぎへ戻る）。区分に数える形に戻すなら ami_same_bucket に名前を足す。
 - 追記（検査の結果）: `check_pft_card.js` 56/0・`--full` 61/0・`check_seat_switch.js` 32/0・`check_gate_parity.js`（Ω 376/376・投下可5社一致）・`check_fund_trade.js` 49/0・`check_mobile_fit.js` 20/0・`check_pfc_card.js` 67/0・`check_hold_detail.js` 82/0・`check_html.py` ✓・`audit_docs.py` ✓・`validate_state.py` ✓。`check_sleeve_split.js` は初回 111/1——落ちたのは ⑫ の1件で、区分の比率の表に足した「⊘ 別枠」の行を区分の1つとして数えていた（検査の側の数え方。目標0%の行 zero と同じく数えないように直した）→ 回し直して 113/0（㉕ の合成・実データとも通過）。ETF の門（ami.html）は 390px の幅ではみ出しなし・ページの誤りなし・NASDAQ100 77.2 / SMH 22.8 / ITA 0 / FBT 0。
+
+## 2026-11-16 株価を米国の取引時間中は約1時間ごとに自動で更新するようにした（v9.9.224・ユーザー「全然最新にならない。自動で価格を最新にできないの？」）
+
+- 原因: market.yml は平日 21:30 UTC（米国の引けの後）に1回だけ予約していたが、**GitHub の予約実行は毎回 3.5〜6時間遅れていた**（実測 2026-10-22〜11-13 の開始 00:06〜03:44 UTC＝日本時間の9時〜12時台。events.yml・ops.yml も同じく約4時間遅れ）。日本時間の朝に開くと、まだ前の前の取引日の値だった。遅れは GitHub の側にあり時刻をずらしても消えない。
+- 採らなかった道: ブラウザから直接株価を取りに行く——鍵の要らない配信元（Yahoo の chart）はブラウザからの読み取りを許していない（応答に Access-Control-Allow-Origin が無い・2026-11-16 に確かめた）。Finnhub は許すが鍵がブラウザに出る（market.yml の頭注の方針・ユーザー「鍵はいらない」）。Cloudflare の中継は設定が repo の外。
+- やったこと: market.yml を**毎時に予約**（平日 13:07〜23:07 UTC・火〜土 00:07〜03:07 UTC）し、中身を `night/market_mode.py` が時刻で分ける——light＝米国の取引時間中（NY 9:30〜16:20）は株価・為替・投資信託の基準価額だけ（`fetch_dashboard.py --light`・**株価が動いたときだけ** out/dashboard.json を書く・ニュースと fullSession は引き継ぐ・取れなかった銘柄は前回の値を残し carried に名前・market_data.json とパックには触れない）／full＝引けの後でその取引日の全部の更新がまだ（従来の market.yml の全部・`--session` で out/dashboard.json に fullSession を書く）／skip＝もう済んだ（何もしない）。同じワークフローは重ならない（concurrency）。手動の実行は既定で full（従来どおり）。
+- 門（表示だけ）: 画面に戻ったとき・開いている間は10分ごとに out/dashboard.json の asof を見て、変わっていれば🏦保有・見えている🛒買付順位・📋今日・📈成績・📚台帳を描き直す（`ccfMktWatch`）。株価の時刻を端末の時刻で「株価 11/17 06:07 時点（引けの値／取引時間中の値）」と出す。
+- コミットの数: 株価が動いたときだけ＝米国の取引時間中に実行が当たった回数（遅れしだいで1日3〜7回）＋引けの後の1回。引けの後と週末は株価が動かないので書かない。
+- 変えていないもの: 採点・四関門・席・配分・割り方の式・売却規律。パックへの反映（per など）・📈成績・配当は今までどおり1取引日に1回（引けの後）。
+- 検査: `night/market_mode.py --selftest`（11項目・ci.yml に足した）・`fetch_dashboard.py --light` を本物の値で2回（1回目 74社が動いて書く／2回目 動いた0社で書かない・market_data.json は不変）・実ブラウザで画面に戻ると新しい asof で描き直す・actionlint 0件・check_html・audit_docs・check_pfc_card 67/0。
+- 戻し方: market.yml の schedule を `'30 21 * * 1-5'` の1行に戻す（mode の job は auto で full を返すので従来と同じになる）。

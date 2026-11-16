@@ -391,7 +391,75 @@ def fund_quotes():
     return out
 
 
+def _px_map(d):
+    return {t: q.get("px") for t, q in ((d or {}).get("quotes") or {}).items() if isinstance(q, dict)}
+
+
+def light():
+    """場中の軽い更新（2026-11-16新設・night/market_mode.py が light と決めたとき）。
+
+    株価・為替・投資信託の基準価額だけを引き、**株価が1つでも動いたときだけ** out/dashboard.json を書く
+    （動かなければ書かない＝コミットもしない）。ニュース・fullSession は前回のファイルから引き継ぐ。
+    market_data.json には触れない（パックへの反映は引けの後の full だけ）。
+    取れなかった銘柄は前回の値を残し、名前を carried に書く（場中の一時的な失敗で注文書の価格が消えないように）。
+    前回の値も無い銘柄だけを missing に書く（ゼロで埋めない＝ルール7）。
+    """
+    cur = {}
+    try:
+        cur = json.load(open("out/dashboard.json", encoding="utf-8")) or {}
+    except Exception:
+        cur = {}
+    fxo = fetch_fx()
+    ALL = tickers()
+    JP = [t for t in ALL if t.isdigit()]
+    US = [t for t in ALL if not t.isdigit()]
+    q = {}
+    if JP:
+        q.update(jp_quotes(JP))
+    if KEY:
+        for i, t in enumerate(US, 1):
+            r = _get(f"{API}/quote?symbol={t}&token={KEY}")
+            if r and r.get("c"):
+                q[t] = {"px": r.get("c"), "prev": r.get("pc"), "chg": r.get("d"), "chgPct": r.get("dp"),
+                        "high": r.get("h"), "low": r.get("l"), "src": "finnhub"}
+            time.sleep(1.05)         # 無料枠の分あたり制限（ニュースを引かないので1社1回）
+    miss = [t for t in US if t not in q]
+    if miss:
+        q.update(yahoo_quotes(miss))
+    q.update(fund_quotes())
+    old = cur.get("quotes") or {}
+    carried = sorted(t for t in ALL if t not in q and t in old)
+    for t in carried:
+        q[t] = old[t]
+    a, b = _px_map({"quotes": q}), _px_map(cur)
+    moved = sorted(t for t in a if a.get(t) != b.get(t))
+    print(f"  場中の更新: 株価 {len(q)}社（前回の値を残した {len(carried)}社）・前回から動いた {len(moved)}社")
+    if not moved:
+        print("  → 株価が動いていない＝書かない（コミットなし）")
+        return 0
+    out = {"asof": datetime.now(timezone.utc).isoformat(timespec="seconds"), "quotes": q,
+           "news": cur.get("news") or {}, "fx": fxo or dict(cur.get("fx") or {}),
+           "missing": sorted(t for t in ALL if t not in q), "mode": "light"}
+    if not fxo and out["fx"].get("USDJPY"):
+        out["fx"]["stale"] = True
+    if carried:
+        out["carried"] = carried
+    for k in ("fullSession", "noKey"):
+        if cur.get(k):
+            out[k] = cur[k]
+    out["newsAsof"] = cur.get("newsAsof") or (cur.get("asof") if cur.get("mode") != "light" else "") or ""
+    os.makedirs("out", exist_ok=True)
+    json.dump(out, open("out/dashboard.json", "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    print(f"→ out/dashboard.json（場中・株価{len(q)}社 / USDJPY={out['fx'].get('USDJPY')}）")
+    if not KEY and os.environ.get("GITHUB_ACTIONS") == "true":
+        print("::error::FINNHUB_KEY が空（株価は Yahoo で引いた）")
+        return 1
+    return 0
+
+
 def main():
+    if LIGHT:
+        return light()
     if not KEY:
         # ★2026-08-18 の是正（ユーザーの問い「為替を自動更新できるようにしたほうがよい?」で発覚）——
         #   **ドル円は鍵が要らないのに、鍵の検問の後ろに置かれていた**。
@@ -432,7 +500,9 @@ def main():
             out2 = {"asof": datetime.now(timezone.utc).isoformat(timespec="seconds"),
                     "quotes": yq, "news": nw, "fx": fxo or (cur.get("fx") or {}),
                     "missing": sorted(t for t in ALL if t not in yq),
-                    "noKey": True}
+                    "noKey": True, "mode": "full"}
+            if SESSION:
+                out2["fullSession"] = SESSION
             if nw:
                 out2["newsStale"] = (cur.get("asof") or "")   # 見出しは前回のもの＝いつのか判るようにする
             if not fxo and (cur.get("fx") or {}).get("USDJPY"):
@@ -540,6 +610,9 @@ def main():
     #   一切書いていなかった——だから**網の5本が消えていることがどこからも見えなかった**。
     #   「測れなかった」と「無い」を取り違えないために、要求したのに取れなかった銘柄を名前で書く。
     out["quotes"].update(fund_quotes())
+    out["mode"] = "full"
+    if SESSION:
+        out["fullSession"] = SESSION      # night/market_mode.py が「この取引日の全部の更新は済んだ」と読む
     got = set(out["quotes"])
     out["missing"] = sorted(t for t in ALL if t not in got)
     if out["missing"]:
@@ -562,6 +635,12 @@ def main():
           f"USDJPY={out['fx'].get('USDJPY')}）")
     return 0
 
+
+LIGHT = "--light" in sys.argv[1:]
+SESSION = ""
+if "--session" in sys.argv[1:]:
+    _i = sys.argv.index("--session")
+    SESSION = sys.argv[_i + 1] if _i + 1 < len(sys.argv) and re.match(r"^\d{4}-\d{2}-\d{2}$", sys.argv[_i + 1]) else ""
 
 if __name__ == "__main__":
     sys.exit(main())
