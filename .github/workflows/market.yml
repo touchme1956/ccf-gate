@@ -11,14 +11,71 @@
 # 設定: リポジトリの Settings → Secrets and variables → Actions で FINNHUB_KEY を登録する
 #   （無料鍵は https://finnhub.io/register。Alpha Vantage の1日25回と違い分あたり制限なので全社回せる）
 name: market data
+#
+# ★2026-11-16（ユーザー「全然最新にならない。自動で価格を最新にできないの？」）: **毎時に予約し、中身を時刻で分ける**。
+#   旧は 21:30 UTC の1回だけだったが、GitHub の予約実行は毎回 3.5〜6時間遅れていた（実測 10-22〜11-13・
+#   開始 00:06〜03:44 UTC＝日本時間の昼前）。遅れは GitHub の側にあり時刻をずらしても消えない。
+#   毎時に予約すれば遅れても、どれかが米国の引けの直後に当たる。何をするかは night/market_mode.py が決める:
+#     light … 米国の取引時間中（NY 9:30〜16:20）＝株価と為替だけ。株価が動いたときだけ out/dashboard.json を書く
+#     full  … 引けの後で、その取引日の全部の更新がまだ＝従来の market.yml の全部（1取引日に1回）
+#     skip  … その取引日の全部の更新はもう済んだ＝何もしない（コミットなし）
+#   同じワークフローの実行は重ならない（concurrency）——待ちの古い実行は GitHub が取り消すが、
+#   何をするかは実行の時に決めるので取り消されても抜けない。手動の実行は既定で full（従来どおり）。
 on:
   schedule:
-    - cron: '30 21 * * 1-5'   # 平日 21:30 UTC ＝ 米国市場クローズ後
-  workflow_dispatch:          # 手動実行も可
+    - cron: '7 13-23 * * 1-5'   # 平日 13:07〜23:07 UTC 毎時（米国の取引時間と引けの後）
+    - cron: '7 0-3 * * 2-6'     # 火〜土 00:07〜03:07 UTC（前夜の引けの保険・金曜の引けは土曜に）
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'full＝全部（従来の手動実行）／auto＝時刻で決める／light＝株価だけ'
+        type: choice
+        default: full
+        options: [full, auto, light]
 permissions:
   contents: write
+concurrency:
+  group: market-data
+  cancel-in-progress: false
 jobs:
+  mode:
+    runs-on: ubuntu-latest
+    outputs:
+      mode: ${{ steps.m.outputs.mode }}
+      session: ${{ steps.m.outputs.session }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: m
+        run: python3 night/market_mode.py "${{ github.event.inputs.mode || 'auto' }}" >> "$GITHUB_OUTPUT"
+
+  light:
+    needs: mode
+    if: needs.mode.outputs.mode == 'light'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - name: 株価・為替（場中・株価が動いたときだけ書く）
+        env:
+          FINNHUB_KEY: ${{ secrets.FINNHUB_KEY }}
+        run: python3 night/fetch_dashboard.py --light
+      - name: コミット（out/dashboard.json だけ）
+        run: |
+          git config user.name  "ccf-gate bot"
+          git config user.email "noreply@github.com"
+          git add out/dashboard.json
+          git diff --staged --quiet && { echo "株価に変化なし＝コミットしない"; exit 0; }
+          git commit -m "market prices (場中) $(date -u +%Y-%m-%d\ %H:%M) UTC"
+          . night/git_push_safe.sh
+          ccf_git_push
+
   fetch:
+    needs: mode
+    if: needs.mode.outputs.mode == 'full'
     runs-on: ubuntu-latest
     # v9.9.140: **`| tail` が失敗を緑に化かすのを止める。**
     #   宣言が無いと pipefail が付かず、`検査 | tail -25` は tail の成功だけを見る
@@ -34,7 +91,7 @@ jobs:
       - name: 株価・為替・ニュースを取得
         env:
           FINNHUB_KEY: ${{ secrets.FINNHUB_KEY }}
-        run: python3 night/fetch_dashboard.py
+        run: python3 night/fetch_dashboard.py --session "${{ needs.mode.outputs.session }}"
       # 鍵なしの市場データ採取（2026-08-10接続）
       #   market_data.json は px だけが毎日書き戻され、**per/shy/mcap/evebit/beta は
       #   market_fetch.py 以外に書き手がおらず凍結**していた（実測 104銘柄中 per 29 / shy 26）。

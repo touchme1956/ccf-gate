@@ -320,7 +320,7 @@ def build():
     items = [
         ("market",  "株価データ",          "毎営業日", 4,
          json_field("out/dashboard.json", "asof") or git_date("out/dashboard.json"),
-         "market.yml 21:30UTC（FINNHUB_KEY）", True),
+         "market.yml 毎時（米国の取引時間中は株価だけ・引けの後に全部・FINNHUB_KEY）", True),
         ("events",  "8-K・臨報監視",           "毎営業日", 4,
          json_field("out/events_watch.json", "asof"),
          "events.yml 22:10UTC（米国は鍵不要・日本株はEDINET_API_KEY）", True),
@@ -392,13 +392,13 @@ def build():
         #   価格が毎営業日動くので market.yml に置いてある＝毎営業日の錨。
         ("returns", "トータルリターン",        "毎営業日", 4,
          json_field("out/returns.json", "generated"),
-         "market.yml 平日21:30UTC／手動 python3 night/fetch_returns.py", True),
+         "market.yml 米国の引けの後／手動 python3 night/fetch_returns.py", True),
         # v9.9.156(2026-08-18): 📈成績タブの推移。**同じ道具が同時に書く**が別に数える——
         #   買付日が判る行が消えると推移だけ作れなくなり、returns.json は更新され続けるので
         #   「グラフだけ静かに古くなる」形になる。別の錨にすればそれが赤くなる。
         ("returnseries", "成績の推移(グラフ)", "毎営業日", 4,
          json_field("out/returns_series.json", "generated"),
-         "market.yml 平日21:30UTC／手動 python3 night/fetch_returns.py", True),
+         "market.yml 米国の引けの後／手動 python3 night/fetch_returns.py", True),
         # v9.9.125(2026-08-09): 銘柄ごとの企業説明（📚台帳・🛒買付順位の🏢チップ／表示専用）。
         #   止まっても判定は動かないが、**新しく審査した社の説明が出ないまま気づかれない**ので盤に載せる。
         ("profiles", "企業説明(原本Item1)",   "月1",     40,

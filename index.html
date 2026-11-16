@@ -753,7 +753,7 @@ html[data-site="etf"] .etf-hide{display:none!important}
 </div>
 <!-- 📈成績（v9.9.156・2026-08-18 ユーザー要望「別のタブでグラフ込みで作れる？もちろん自動更新で」）:
      **計算は端末の単一実装 night/fetch_returns.py**（out/returns.json ＋ out/returns_series.json）。
-     門は描くだけ＝dashboard.json と同じ作法（v9.9.65）。market.yml が平日21:30UTCに更新する。
+     門は描くだけ＝dashboard.json と同じ作法（v9.9.65）。market.yml が米国の引けの後に更新する。
      ⚠**表示専用**——Ω・四関門・売却規律・配分のどれにも触れない。
      ⚠ グラフは外部ライブラリを使わない素のSVG（CSPで外部スクリプトは読めない・二重実装も作らない）。 -->
 <div id="pg12" class="pg">
@@ -1190,7 +1190,7 @@ html[data-site="etf"] .etf-hide{display:none!important}
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.223</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.224</span></h1>
     <div style="margin:6px 0 2px"><button id="hintBtn" onclick="ccfToggleHints()" style="padding:5px 11px;background:none;border:1px solid var(--line);border-radius:7px;color:var(--dim);font-size:11.5px;cursor:pointer">欄の注記を出す</button></div>
   <div class="sub"><details class="why plain" data-fold="6"><summary>ℹ この画面について</summary><div class="why-body"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——絶対MOAT指数をΩの直接項に加え(実効≒22%)、<b>四関門の一つ（絶対MOAT指数75+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%。⚠率そのものは退場社の抜けた母集団で測った下限の側で、2013年の質実証プールでは4.2〜19.2%の幅がある〔2026-09-23 に退場日を是正した後の値・是正前は2.0〜25.7%〕）。</div></details></div>
   </div>
@@ -5654,7 +5654,7 @@ function ccfPerfHTML(R,S){
     +`<div style="font-size:11px;color:var(--muted,#94a0b4);margin-bottom:8px;line-height:1.7">${String(sub).replace(/<[^>]+>/g,'').length<=60 ? sub : `<details class="why plain" data-fold="5"><summary>説明</summary><div class="why-body">${sub}</div></details>`}</div>${body}</div>`;
   if(!R) return '<div style="font-size:12.5px;color:var(--muted,#94a0b4)">out/returns.json が読めない——'
     + '<b>「リターンがゼロ」ではなく「測れていない」</b>。端末で <code>python3 night/fetch_returns.py</code> を回すか、'
-    + 'market.yml（平日21:30UTC）の実行を待つ。</div>';
+    + 'market.yml（米国の引けの後）の実行を待つ。</div>';
   const pc=n=>(n==null||!isFinite(n))?'——':(n>0?'+':'')+(n*100).toFixed(2)+'%';
   const pt=n=>(n==null||!isFinite(n))?'——':(n>0?'+':'')+(n*100).toFixed(1)+'pt';
   const yen=ccfYenM;   // 金額を隠す切替に従う
@@ -6572,6 +6572,25 @@ function ccfHoldingsChanged(){
   },120);
 }
 window.addEventListener('ccf:holdings',ccfHoldingsChanged);
+// v9.9.224（2026-11-16 ユーザー「全然最新にならない。自動で価格を最新にできないの？」）: 株価が新しくなったら描き直す。
+//   market.yml は米国の取引時間中は毎時（night/market_mode.py の light）に out/dashboard.json を更新するようになった。
+//   ホーム画面のアプリは閉じずに残るので、**画面に戻ったとき・開いている間は10分ごと**に asof を見て、変わっていれば
+//   🏦保有・見えている🛒買付順位・📋今日・📈成績・📚台帳を描き直す（表示だけ・判定に不使用）。
+function ccfMktTime(a){ const d=new Date(a); if(!a||isNaN(d))return String(a||'');
+  const p=n=>String(n).padStart(2,'0'); return `${d.getMonth()+1}/${d.getDate()} ${p(d.getHours())}:${p(d.getMinutes())}`; }
+let _mktSeen=null;
+async function ccfMktWatch(){
+  if(document.visibilityState==='hidden')return;
+  let a=null; try{ const r=await fetch('out/dashboard.json?t='+Date.now(),{cache:'no-store'}); if(r.ok)a=((await r.json())||{}).asof||null; }catch(e){}
+  if(!a)return;
+  if(_mktSeen===null){ _mktSeen=a; return; }
+  if(a===_mktSeen)return;
+  _mktSeen=a; ccfHoldingsChanged();
+  try{ if(window.__ccfPage===3&&typeof renderLedger==='function')renderLedger(); }catch(e){}
+}
+document.addEventListener('visibilitychange',ccfMktWatch);
+setInterval(ccfMktWatch,10*60e3);
+ccfMktWatch();
 window.addEventListener('ccf:synced',ccfHoldingsChanged);   // v9.9.210: Issue 経由で repo に追いついたとき（赤い帯・📈成績の差の表示・買付順位を今の姿に）
 
 async function ccfDash(btn){
@@ -6627,7 +6646,7 @@ async function ccfDash(btn){
   if(btn){btn.disabled=false;btn.textContent=lab;}
   const asof=$('dashAsof');
   if(asof)asof.innerHTML = mkt&&mkt.asof
-    ? `市場データ ${mkt.asof.slice(0,16).replace('T',' ')} UTC　${fxAuto?`$1=¥${fxAuto}（自動${fxChgP!=null?`・前日比 ${sign(fxChgP)}%`:''}${mkt.fx.stale?'・<b style="color:#d69a3c">取得失敗＝前回値</b>':''}）`:(fxMan?`$1=¥${fxMan}（🏦保有の手入力）`:'<b style="color:#d69a3c">為替未取得</b>')}`
+    ? `株価 ${ccfMktTime(mkt.asof)} 時点（${mkt.mode==='light'?'取引時間中の値':'引けの値'}・米国の取引時間中は約1時間ごとに自動更新）　${fxAuto?`$1=¥${fxAuto}（自動${fxChgP!=null?`・前日比 ${sign(fxChgP)}%`:''}${mkt.fx.stale?'・<b style="color:#d69a3c">取得失敗＝前回値</b>':''}）`:(fxMan?`$1=¥${fxMan}（🏦保有の手入力）`:'<b style="color:#d69a3c">為替未取得</b>')}`
     : '<b style="color:#d69a3c">out/dashboard.json が未生成</b>——GitHub Actions（.github/workflows/market.yml）に FINNHUB_KEY を設定すると毎営業日入る。それまで価格・前日比・ニュースは空欄';
 
   // ── 保有（評価額・含み損益・円換算）
@@ -6692,7 +6711,7 @@ async function ccfDash(btn){
     dayJ:dayJ, dayP:dayP, dayFxJ:dayFxJ, fxIn:fxPrev>0,
     fx:FX>0?{px:FX, chg:fxChgP, auto:!!fxAuto, stale:!!(mkt&&mkt.fx&&mkt.fx.stale)}:null, plAll:plAll, plP:(plAll!=null&&totCost>0)?(totCostVal/totCost-1)*100:null,
     ytd:ccfPfcYtd(rsr,pos.filter(p=>(+p.sh||0)>0).map(p=>String(p.t||'').toUpperCase()),totJ),
-    asof:(mkt&&mkt.asof)?String(mkt.asof).slice(0,10):new Date().toISOString().slice(0,10)};
+    asof:(mkt&&mkt.asof)?'株価 '+ccfMktTime(mkt.asof)+' 時点':new Date().toISOString().slice(0,10)};
   // v9.9.209: 銘柄の詳細（ccfPfdModel）が読む材料。ccfDash が集計をし直すたびに差し替わる＝記録・価格の更新・金額を隠すが詳細にも同じ数字で届く
   window.__pfEnv={pos:pos, Q:Q, FX:FX, fxPrev:fxPrev, div:(dvj&&dvj.div)||null, divAsof:(dvj&&dvj.asof)||''};
   const pfcHtml=ccfPfcHTML(window.__pfcData);

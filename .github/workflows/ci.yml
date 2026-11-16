@@ -35,7 +35,7 @@ on:
   #   ⚠ bot の push は GITHUB_TOKEN なので（GitHubの再帰防止で）このCIを起動しない。
   #     だから push トリガでは代わりにならず、schedule が要る。
   schedule:
-    - cron: '0 22 * * 1-5'   # 平日 22:00 UTC＝market.yml(21:30)の後・events.yml(22:10)の前
+    - cron: '0 22 * * 1-5'   # 平日 22:00 UTC＝market.yml（引けの後）の後・events.yml(22:10)の前
   push:
     branches: ['**']
     paths:
@@ -239,6 +239,8 @@ jobs:
       # ── 2-a''. NASDAQ100 を超える作り方の総当たり（bx・2026-10-12・night/beatndx.py）の部品 ──────
       #   倍率の式・10年債の値・テックの合成の重み・年齢の倍率・勢いの信号に先読みが無いこと・回す規則・
       #   持ち方を変えた量・積立の倍率と年率・判定と提案の選び方・事前登録との一致。ネット不要・1秒。
+      - name: 価格の更新の時刻の決め方 market_mode（場中は株価だけ・引けの後に1回だけ全部）
+        run: python3 night/market_mode.py --selftest
       - name: NASDAQ100 を超える作り方の部品 check_beatndx
         run: python3 night/check_beatndx.py
 

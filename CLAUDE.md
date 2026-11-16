@@ -444,6 +444,7 @@ awk '/^## /{p=0} /^## .*キーワード/{p=1} p' docs/CLAUDE_ARCHIVE.md  # 節�
 | 21151 | 2026-11-09 | 配分を NASDAQ100 50 / SMH 20 / ITA 15 / FBT 15 / 個別株 0 にした（ユーザー明示指示「NASDAQ100 50／SMH 20／ITA 15／FBT 15でマージして」）——XLV・VBR を外し（一度も買っていない）NASDAQ100 40→50・FBT 15。15%以上 25.4→27.0%・20%以上 10.3→12.2%・過去26年の20年積立で15%以上 60→81%、代わりに最大下落 −60→−70%・基礎率の平均 8.53→8.25%・100年の代用 1.45→1.27・NVDA 7.9→8.7%。今月（入金140万円）SMH 2株・ITA 33株・FBT 9株＋iFreeNEXT ¥512,800（1人の月の上限を超える分は QNDX） |
 | 21158 | 2026-11-12 | MSFT を NASDAQ100 の区分に戻して数えた（ユーザー明示指示「マイクロソフトをQQQにいれて」）——ami_same_bucket の IFREE-NDX に MSFT（11-02 の v9.9.222 と同じ・11-03 に外したのを戻した）。今 NASDAQ100 46.6→75.4%・個別株 28.8→0%。今月（入金140万）SMH 2株・ITA 48株・FBT 13株＋iFreeNEXT ¥104,900（前 SMH 1株・ITA 32株・FBT 9株＋iFreeNEXT ¥548,900）。1年で iFreeNEXT に入る新しいお金は約¥31万減る。MSFT は売らない |
 | 21169 | 2026-11-15 | MSFT と ASML を別枠にした——比率の計算に入れない（v9.9.223・ユーザー明示指示「マイクロソフトとASMLはもう別枠として計算して」→ 選択「比率の計算から外す」）——新しい設定 target.ratio_outside＝[MSFT, ASML]・ami_same_bucket は XLK だけ。門の ccfPfLive が2社を区分の比率の分母と各区分の「今」から外す＝ETF の中だけで 50/20/15/15。今 ETF の中 NASDAQ100 77.2・SMH 22.8・別枠は総資産の39.9%。今月（入金140万）SMH 3株・ITA 36株・FBT 10株＋iFreeNEXT ¥322,900（前 SMH 2株・ITA 48株・FBT 13株＋¥133,700）。2社は売らない・新しいお金は回さない |
+| 21183 | 2026-11-16 | 株価を米国の取引時間中は約1時間ごとに自動で更新するようにした（v9.9.224）——GitHub の予約実行が毎回約4時間遅れ朝は前の前の取引日の値だった。market.yml を毎時に予約し night/market_mode.py が light（場中は株価だけ・動いたときだけ書く）／full（引けの後に1回だけ全部）／skip を決める。門は画面に戻ると新しい株価で描き直す |
 
 ## コマンド
 - 年1回（1-2月）発掘: `python run_gate0_local.py`
@@ -679,7 +680,7 @@ awk '/^## /{p=0} /^## .*キーワード/{p=1} p' docs/CLAUDE_ARCHIVE.md  # 節�
   現在価格／前日比／保有評価額／含み損益／Ωスコア／最新ニュース／次回決算日／円換算資産。
   **判定には一切使わない**（売りはS1/S2/S3・買いは三段関門のみ。株価が判断に触れる唯一の経路は
   門Xの開通判定）。データ源: 台帳`g7:` ／ 保有`pf:portfolio` ／ `out/dashboard.json` ／ `out/next_earnings.json`。
-  - **配管は GitHub Actions（Firebaseではない）**: `.github/workflows/market.yml` が平日21:30UTCに
+  - **配管は GitHub Actions（Firebaseではない）**: `.github/workflows/market.yml` が（★2026-11-16〜 毎時に予約・米国の取引時間中は株価だけ〔`night/market_mode.py` が light/full/skip を決める・`fetch_dashboard.py --light`〕・引けの後に1回だけ全部。旧は）平日21:30UTCに
     `night/fetch_dashboard.py` を回し、`out/dashboard.json` と `market_data.json` をコミットする。
     **鍵は GitHub Secrets の `FINNHUB_KEY`＝ブラウザに一度も出ない**。門は同一オリジンの静的JSONを
     読むだけなのでCORSも認証もサーバーも不要。
