@@ -63,11 +63,18 @@ jobs:
         env:
           FINNHUB_KEY: ${{ secrets.FINNHUB_KEY }}
         run: python3 night/fetch_dashboard.py --light
-      - name: コミット（out/dashboard.json だけ）
+      # ★2026-11-16（ユーザー「成績も最新にして」）: 📈成績も場中に作り直す。株価が動かなかった回は作り直さない
+      #   （dashboard.json が書かれなかった＝作り直しても同じ値・時刻だけ変わるコミットを作らない）。
+      - name: トータルリターン（場中・株価が動いたときだけ）
+        continue-on-error: true
+        run: |
+          if git diff --quiet -- out/dashboard.json; then echo "株価に変化なし＝成績は作り直さない"; exit 0; fi
+          timeout 300 python3 night/fetch_returns.py | tail -8
+      - name: コミット（out/dashboard.json と成績だけ）
         run: |
           git config user.name  "ccf-gate bot"
           git config user.email "noreply@github.com"
-          git add out/dashboard.json
+          git add out/dashboard.json out/returns.json out/returns_series.json
           git diff --staged --quiet && { echo "株価に変化なし＝コミットしない"; exit 0; }
           git commit -m "market prices (場中) $(date -u +%Y-%m-%d\ %H:%M) UTC"
           . night/git_push_safe.sh

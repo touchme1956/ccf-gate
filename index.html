@@ -1190,7 +1190,7 @@ html[data-site="etf"] .etf-hide{display:none!important}
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.224</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.225</span></h1>
     <div style="margin:6px 0 2px"><button id="hintBtn" onclick="ccfToggleHints()" style="padding:5px 11px;background:none;border:1px solid var(--line);border-radius:7px;color:var(--dim);font-size:11.5px;cursor:pointer">欄の注記を出す</button></div>
   <div class="sub"><details class="why plain" data-fold="6"><summary>ℹ この画面について</summary><div class="why-body"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——絶対MOAT指数をΩの直接項に加え(実効≒22%)、<b>四関門の一つ（絶対MOAT指数75+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%。⚠率そのものは退場社の抜けた母集団で測った下限の側で、2013年の質実証プールでは4.2〜19.2%の幅がある〔2026-09-23 に退場日を是正した後の値・是正前は2.0〜25.7%〕）。</div></details></div>
   </div>
@@ -6589,7 +6589,7 @@ async function ccfMktWatch(){
   try{ if(window.__ccfPage===3&&typeof renderLedger==='function')renderLedger(); }catch(e){}
 }
 document.addEventListener('visibilitychange',ccfMktWatch);
-setInterval(ccfMktWatch,10*60e3);
+setInterval(ccfMktWatch,5*60e3);   // v9.9.225: 10→5分（ユーザー「買付順位も常に価格が最新に」）
 ccfMktWatch();
 window.addEventListener('ccf:synced',ccfHoldingsChanged);   // v9.9.210: Issue 経由で repo に追いついたとき（赤い帯・📈成績の差の表示・買付順位を今の姿に）
 
@@ -6646,7 +6646,7 @@ async function ccfDash(btn){
   if(btn){btn.disabled=false;btn.textContent=lab;}
   const asof=$('dashAsof');
   if(asof)asof.innerHTML = mkt&&mkt.asof
-    ? `株価 ${ccfMktTime(mkt.asof)} 時点（${mkt.mode==='light'?'取引時間中の値':'引けの値'}・米国の取引時間中は約1時間ごとに自動更新）　${fxAuto?`$1=¥${fxAuto}（自動${fxChgP!=null?`・前日比 ${sign(fxChgP)}%`:''}${mkt.fx.stale?'・<b style="color:#d69a3c">取得失敗＝前回値</b>':''}）`:(fxMan?`$1=¥${fxMan}（🏦保有の手入力）`:'<b style="color:#d69a3c">為替未取得</b>')}`
+    ? `株価 ${ccfMktTime(mkt.asof)} 時点（${mkt.mode==='light'?'取引時間中の値':'引けの値'}・米国の取引時間中は株価と成績を約1時間ごとに自動更新）　${fxAuto?`$1=¥${fxAuto}（自動${fxChgP!=null?`・前日比 ${sign(fxChgP)}%`:''}${mkt.fx.stale?'・<b style="color:#d69a3c">取得失敗＝前回値</b>':''}）`:(fxMan?`$1=¥${fxMan}（🏦保有の手入力）`:'<b style="color:#d69a3c">為替未取得</b>')}`
     : '<b style="color:#d69a3c">out/dashboard.json が未生成</b>——GitHub Actions（.github/workflows/market.yml）に FINNHUB_KEY を設定すると毎営業日入る。それまで価格・前日比・ニュースは空欄';
 
   // ── 保有（評価額・含み損益・円換算）
