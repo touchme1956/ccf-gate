@@ -21190,3 +21190,9 @@ XLK・VUG・ITA・IJR・SKYY・FPX・TDIV・IJH・AIRR・HACK・RTH・XLY・MGC�
 - 変えていないもの: 採点・四関門・席・配分・割り方の式・売却規律。パックへの反映（per など）・📈成績・配当は今までどおり1取引日に1回（引けの後）。
 - 検査: `night/market_mode.py --selftest`（11項目・ci.yml に足した）・`fetch_dashboard.py --light` を本物の値で2回（1回目 74社が動いて書く／2回目 動いた0社で書かない・market_data.json は不変）・実ブラウザで画面に戻ると新しい asof で描き直す・actionlint 0件・check_html・audit_docs・check_pfc_card 67/0。
 - 戻し方: market.yml の schedule を `'30 21 * * 1-5'` の1行に戻す（mode の job は auto で full を返すので従来と同じになる）。
+
+## 2026-11-16 📈成績も場中に作り直し、買付順位の価格の読み直しを5分ごとにした（v9.9.225・ユーザー「成績も最新にして買付順位も常に価格が最新になるように」）
+
+- market.yml の light（米国の取引時間中・毎時）で、株価が動いて out/dashboard.json を書いた回だけ `night/fetch_returns.py` も回し、out/returns.json・returns_series.json を同じコミットに入れる（約5秒・動かなかった回は作り直さない＝時刻だけ変わるコミットを作らない）。引けの後の full は従来どおり。
+- 🛒買付順位の価格はもともと out/dashboard.json（場中は毎時）を読んでいる。門の読み直し（ccfMktWatch）を10分→5分ごとにし、画面に戻ったときも読み直す（変わっていれば🏦保有・見えている🛒買付順位・📋今日・📈成績・📚台帳を描き直す）。
+- 限界: 配信元の更新は約1時間ごと（GitHub の予約の都合）＝門が5分ごとに見ても、新しい値が入るのはその間隔。採点・配分・売却規律は不変。
