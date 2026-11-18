@@ -21196,3 +21196,9 @@ XLK・VUG・ITA・IJR・SKYY・FPX・TDIV・IJH・AIRR・HACK・RTH・XLY・MGC�
 - market.yml の light（米国の取引時間中・毎時）で、株価が動いて out/dashboard.json を書いた回だけ `night/fetch_returns.py` も回し、out/returns.json・returns_series.json を同じコミットに入れる（約5秒・動かなかった回は作り直さない＝時刻だけ変わるコミットを作らない）。引けの後の full は従来どおり。
 - 🛒買付順位の価格はもともと out/dashboard.json（場中は毎時）を読んでいる。門の読み直し（ccfMktWatch）を10分→5分ごとにし、画面に戻ったときも読み直す（変わっていれば🏦保有・見えている🛒買付順位・📋今日・📈成績・📚台帳を描き直す）。
 - 限界: 配信元の更新は約1時間ごと（GitHub の予約の都合）＝門が5分ごとに見ても、新しい値が入るのはその間隔。採点・配分・売却規律は不変。
+
+## 2026-11-18 配分を NASDAQ100 45 / SMH 20 / ITA 10 / FBT 15 / VBR 10 / 個別株 0 にした（ユーザー明示指示「NDX45 / SMH20 / ITA10/ FBT15 / VBR10 これでマージして」）
+- 変更: `portfolio.json` の `ami_names` に VBR（FBT の後）・`ami_weights` の IFREE-NDX 50→45・ITA 15→10・VBR 10・物差しの袖 `castle_rule_measure.sleeve`（QQQM 45 : SMH 20 : ITA 10 : FBT 15 : VBR 10）・`nisa.rule`（成長投資枠に VBR）。旧の姿は `target.ami_mix_superseded_2026_11_18`。📖解説の配分の文・todo `xlv_nisa_check`（VBR を確かめる対象へ）。門のコード・採点・四関門・席・割り方の式・売却規律・castle_rule の線は不変。
+- 経緯（同日の会話・参考・判定なし・道具は scratchpad で repo に入れていない）: 「本気で選ぶなら」に私は 40/20/15/XLV10/VBR15 と答えた → 50/20/10/XLV10/VBR10・50/20/10/FBT10/VBR10・45/20/15/FBT10/VBR10・45/20/10/FBT15/VBR10 を同じ物差し（best15_check.Fast・best15r_check.FastBR の感度6本・Cent・five_mix_ndx の realized）で並べた。上振れを残す最適（今より守りが悪くならない形の中で年15%以上の確率が最大）は SMH を上限まで増やす形で、SMH 20 のままではほぼ今と同じ（1%刻み9.5万通り）。この形を全物差しで下回らない形は SMH 20 以下では1つだけ（NDX41/SMH20/ITA9/FBT22/VBR8・差は雑音の中）＝SMH 20 ならほぼ天井。私の最後の推しは ITA15/FBT10（下落が1.5pt浅い）で、ITA10/FBT15 は人の判断（差は雑音の中）。
+- 前後（今＝50/20/ITA15/FBT15 → 新）: 年15%以上 27.0→26.8%・真ん中の年率 10.83% 同じ・年5%未満 19.2→18.5%・最悪の世界 7.81→7.92%・最大下落 −70.1→−67.5%・業種の基礎率の平均 8.25→8.45%（前提6通りすべてで +0.18〜+0.27）・100年の代用 30年の中央 1.27→1.39・最悪 1.01→1.12、代わりに過去26年の毎月の積立で年15%以上の窓 81→72%・年率の中央 16.2→15.8%。
+- ⚠ 盤（out/dashboard.json）に VBR の値段が入るのは main に入ったあとの market.yml から（VBR は 11-09 に ami_names から外れて値段が引かれていない）——それまで注文書は VBR を「価格未取得」とし取り分は投資信託へ回る。NISA の印は最初に買う前に（todo `xlv_nisa_check`）。
