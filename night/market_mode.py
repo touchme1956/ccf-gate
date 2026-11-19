@@ -19,6 +19,8 @@
   16:20 は引けの値が配信元でそろうまでの余裕（16:00 ちょうどでは最後の約定のことがある）。
   祝日は数えない（その日の full は値が変わらないだけで害がない）。
 
+    wait  … 寄りの前で、全部の更新が済み、寄りまで5時間30分以内＝寄りまで待って light を続ける（2026-11-19）
+
 使い方: python3 night/market_mode.py [auto|full|light]  → 標準出力に mode=… と session=…（GITHUB_OUTPUT の形）
         python3 night/market_mode.py --selftest
 """
@@ -28,6 +30,7 @@ from zoneinfo import ZoneInfo
 
 NY = ZoneInfo("America/New_York")
 OPEN, SETTLE = time(9, 30), time(16, 20)
+WAIT_MAX = 5 * 3600 + 30 * 60          # 寄りまでこの秒数以内なら待つ（GitHub のジョブは6時間まで）
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
@@ -46,6 +49,17 @@ def latest_session(ny):
     return d
 
 
+def secs_to_open(now_utc):
+    """寄りまでの秒数（取引時間中は0・今日の寄りの前でなければ None）。"""
+    ny = now_utc.astimezone(NY)
+    if is_open(ny):
+        return 0
+    if ny.weekday() < 5 and ny.time() < OPEN:
+        o = datetime.combine(ny.date(), OPEN, tzinfo=NY)
+        return int((o - ny).total_seconds())
+    return None
+
+
 def decide(now_utc, forced="auto", full_session=None):
     ny = now_utc.astimezone(NY)
     s = latest_session(ny).isoformat()
@@ -53,7 +67,12 @@ def decide(now_utc, forced="auto", full_session=None):
         return forced, s
     if is_open(ny):
         return "light", s
-    return ("skip" if full_session == s else "full"), s
+    if full_session != s:
+        return "full", s
+    w = secs_to_open(now_utc)
+    # ★2026-11-19: 予約は1日に数回しか動かない（実測 03:14・07:14・21:24 UTC）ので、
+    #   寄りの前に当たった実行は寄りまで待ってそのまま場中の更新を続ける（wait）。
+    return ("wait" if w is not None and w <= WAIT_MAX else "skip"), s
 
 
 def selftest():
@@ -67,7 +86,10 @@ def selftest():
         (U(2026, 11, 17, 2, 7), "2026-11-16", "skip", "2026-11-16"),    # 火曜の朝（NY 前夜）
         (U(2026, 11, 17, 2, 7), "2026-11-13", "full", "2026-11-16"),    # 前夜の full が遅れに飲まれた
         (U(2026, 11, 14, 1, 7), "2026-11-12", "full", "2026-11-13"),    # 土曜 UTC＝金曜の夜 NY
-        (U(2026, 11, 16, 13, 7), "2026-11-13", "skip", "2026-11-13"),   # 月曜 8:07 NY＝寄りの前
+        (U(2026, 11, 16, 13, 7), "2026-11-13", "wait", "2026-11-13"),   # 月曜 8:07 NY＝寄りの前・1.4時間で寄り
+        (U(2026, 11, 16, 7, 14), "2026-11-13", "skip", "2026-11-13"),   # 月曜 2:14 NY＝寄りまで7.3時間（待たない）
+        (U(2026, 11, 16, 9, 14), "2026-11-13", "wait", "2026-11-13"),   # 月曜 4:14 NY＝寄りまで5.3時間
+        (U(2026, 11, 14, 15, 7), "2026-11-13", "skip", "2026-11-13"),   # 土曜の昼 NY＝待たない
         (U(2026, 7, 15, 13, 37), None, "light", "2026-07-14"),          # 夏時間 9:37 NY
         (U(2026, 7, 15, 20, 27), "2026-07-14", "full", "2026-07-15"),   # 夏時間 16:27 NY
     ]
@@ -87,6 +109,10 @@ def selftest():
 def main(argv):
     if "--selftest" in argv:
         return selftest()
+    if "--secs-to-open" in argv:
+        w = secs_to_open(datetime.now(timezone.utc))
+        print("" if w is None else w)
+        return 0
     forced = (argv[0] if argv else "auto").strip() or "auto"
     if forced not in ("auto", "full", "light"):
         forced = "auto"
