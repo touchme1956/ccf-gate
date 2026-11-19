@@ -320,7 +320,7 @@ def build():
     items = [
         ("market",  "株価データ",          "毎営業日", 4,
          json_field("out/dashboard.json", "asof") or git_date("out/dashboard.json"),
-         "market.yml 毎時（米国の取引時間中は株価だけ・引けの後に全部・FINNHUB_KEY）", True),
+         "market.yml（1回動けば取引時間中は30分ごとに株価だけ・引けの後に全部・FINNHUB_KEY）", True),
         ("events",  "8-K・臨報監視",           "毎営業日", 4,
          json_field("out/events_watch.json", "asof"),
          "events.yml 22:10UTC（米国は鍵不要・日本株はEDINET_API_KEY）", True),

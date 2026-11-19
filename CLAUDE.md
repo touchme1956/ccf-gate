@@ -447,6 +447,7 @@ awk '/^## /{p=0} /^## .*キーワード/{p=1} p' docs/CLAUDE_ARCHIVE.md  # 節�
 | 21183 | 2026-11-16 | 株価を米国の取引時間中は約1時間ごとに自動で更新するようにした（v9.9.224）——GitHub の予約実行が毎回約4時間遅れ朝は前の前の取引日の値だった。market.yml を毎時に予約し night/market_mode.py が light（場中は株価だけ・動いたときだけ書く）／full（引けの後に1回だけ全部）／skip を決める。門は画面に戻ると新しい株価で描き直す |
 | 21194 | 2026-11-16 | 📈成績も場中に作り直し、買付順位の価格の読み直しを5分ごとにした（v9.9.225）——light で株価が動いた回だけ fetch_returns も回して同じコミットに |
 | 21200 | 2026-11-18 | 配分を NASDAQ100 45 / SMH 20 / ITA 10 / FBT 15 / VBR 10 / 個別株 0 にした（ユーザー明示指示「NDX45 / SMH20 / ITA10/ FBT15 / VBR10 これでマージして」）——NASDAQ100 の5と ITA の5を VBR へ。年15%以上 27.0→26.8%・真ん中 10.83% 同じ・最大下落 −70.1→−67.5%・基礎率の平均 8.25→8.45%・100年の代用 1.27→1.39、代わりに過去26年の20年積立で15%以上 81→72%。VBR の値段は main に入ったあとの market.yml から |
+| 21206 | 2026-11-19 | 取引時間中は1回の実行が30分ごとに株価を取り続けるようにした（v9.9.226）——毎時の予約は GitHub が落とし取引時間中に1回も当たらなかった。light ジョブが場中ずっと回り5時間40分で自分を呼び直し、引けたら全部の更新へ。寄りの前に当たれば寄りまで待つ（market_mode の wait） |
 
 ## コマンド
 - 年1回（1-2月）発掘: `python run_gate0_local.py`
@@ -682,7 +683,7 @@ awk '/^## /{p=0} /^## .*キーワード/{p=1} p' docs/CLAUDE_ARCHIVE.md  # 節�
   現在価格／前日比／保有評価額／含み損益／Ωスコア／最新ニュース／次回決算日／円換算資産。
   **判定には一切使わない**（売りはS1/S2/S3・買いは三段関門のみ。株価が判断に触れる唯一の経路は
   門Xの開通判定）。データ源: 台帳`g7:` ／ 保有`pf:portfolio` ／ `out/dashboard.json` ／ `out/next_earnings.json`。
-  - **配管は GitHub Actions（Firebaseではない）**: `.github/workflows/market.yml` が（★2026-11-16〜 毎時に予約・米国の取引時間中は株価だけ〔`night/market_mode.py` が light/full/skip を決める・`fetch_dashboard.py --light`〕・引けの後に1回だけ全部。旧は）平日21:30UTCに
+  - **配管は GitHub Actions（Firebaseではない）**: `.github/workflows/market.yml` が（★2026-11-19〜 1回動けば取引時間中は30分ごとに株価だけを取り続け5時間40分で自分を呼び直す〔wait＝寄りまで待つ〕・★2026-11-16〜 毎時に予約・米国の取引時間中は株価だけ〔`night/market_mode.py` が light/full/skip を決める・`fetch_dashboard.py --light`〕・引けの後に1回だけ全部。旧は）平日21:30UTCに
     `night/fetch_dashboard.py` を回し、`out/dashboard.json` と `market_data.json` をコミットする。
     **鍵は GitHub Secrets の `FINNHUB_KEY`＝ブラウザに一度も出ない**。門は同一オリジンの静的JSONを
     読むだけなのでCORSも認証もサーバーも不要。

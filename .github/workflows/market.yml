@@ -25,10 +25,11 @@ on:
   schedule:
     - cron: '7 13-23 * * 1-5'   # 平日 13:07〜23:07 UTC 毎時（米国の取引時間と引けの後）
     - cron: '7 0-3 * * 2-6'     # 火〜土 00:07〜03:07 UTC（前夜の引けの保険・金曜の引けは土曜に）
+    - cron: '17 9-12 * * 1-5'   # 平日 09:17〜12:17 UTC（寄りの前・当たれば寄りまで待って場中を続ける）
   workflow_dispatch:
     inputs:
       mode:
-        description: 'full＝全部（従来の手動実行）／auto＝時刻で決める／light＝株価だけ'
+        description: 'full＝全部（従来の手動実行）／auto＝時刻で決める（場中なら30分ごとに続ける）／light＝株価だけ'
         type: choice
         default: full
         options: [full, auto, light]
@@ -48,10 +49,21 @@ jobs:
       - id: m
         run: python3 night/market_mode.py "${{ github.event.inputs.mode || 'auto' }}" >> "$GITHUB_OUTPUT"
 
+  # ★2026-11-19（ユーザー「直して」）: 予約は1日に3〜4回しか動かず（実測 11-17〜19: 03:14・07:14・21:24 UTC ほか）、
+  #   毎時の予約の大半は GitHub が落としていた＝取引時間中に1回も当たらない日があった。
+  #   → **1回動いた実行が、取引時間中ずっと30分ごとに株価を取り続ける**（寄りの前に当たれば寄りまで待つ＝wait）。
+  #   GitHub のジョブは6時間までなので5時間40分で区切り、まだ取引時間中なら自分を workflow_dispatch で呼び直す。
+  #   引けたら auto で呼び直す＝その取引日の全部の更新（fetch）へつながる。
+  #   GITHUB_TOKEN からの workflow_dispatch は新しい実行を起こせる（push と違い例外）。
+  #   1回の書き込みは従来の light と同じ（株価が動いたときだけ dashboard.json と成績をコミット）。
   light:
     needs: mode
-    if: needs.mode.outputs.mode == 'light'
+    if: needs.mode.outputs.mode == 'light' || needs.mode.outputs.mode == 'wait'
     runs-on: ubuntu-latest
+    timeout-minutes: 355
+    permissions:
+      contents: write
+      actions: write
     defaults:
       run:
         shell: bash
@@ -59,26 +71,41 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: {python-version: '3.11'}
-      - name: 株価・為替（場中・株価が動いたときだけ書く）
+      - name: 取引時間中は30分ごとに株価・為替・成績を更新する（寄りの前なら寄りまで待つ）
         env:
           FINNHUB_KEY: ${{ secrets.FINNHUB_KEY }}
-        run: python3 night/fetch_dashboard.py --light
-      # ★2026-11-16（ユーザー「成績も最新にして」）: 📈成績も場中に作り直す。株価が動かなかった回は作り直さない
-      #   （dashboard.json が書かれなかった＝作り直しても同じ値・時刻だけ変わるコミットを作らない）。
-      - name: トータルリターン（場中・株価が動いたときだけ）
-        continue-on-error: true
-        run: |
-          if git diff --quiet -- out/dashboard.json; then echo "株価に変化なし＝成績は作り直さない"; exit 0; fi
-          timeout 300 python3 night/fetch_returns.py | tail -8
-      - name: コミット（out/dashboard.json と成績だけ）
+          GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name  "ccf-gate bot"
           git config user.email "noreply@github.com"
-          git add out/dashboard.json out/returns.json out/returns_series.json
-          git diff --staged --quiet && { echo "株価に変化なし＝コミットしない"; exit 0; }
-          git commit -m "market prices (場中) $(date -u +%Y-%m-%d\ %H:%M) UTC"
           . night/git_push_safe.sh
-          ccf_git_push
+          INTERVAL=1800
+          DEADLINE=$(( $(date +%s) + 340*60 ))
+          next=""
+          while :; do
+            w=$(python3 night/market_mode.py --secs-to-open)
+            if [ -z "$w" ]; then
+              echo "取引時間の外（今日の寄りの前でもない）＝ここで終わり"; next=auto; break
+            fi
+            if [ "$w" -gt 0 ]; then
+              if [ $(( $(date +%s) + w )) -ge "$DEADLINE" ]; then echo "寄りまで待つとジョブの時間を超える"; next=auto; break; fi
+              echo "寄りまで ${w} 秒 待つ"; sleep "$w"; continue
+            fi
+            git fetch -q origin main && git reset -q --hard origin/main
+            python3 night/fetch_dashboard.py --light || echo "::warning::株価の取得に失敗（次の回にもう一度）"
+            if ! git diff --quiet -- out/dashboard.json; then
+              timeout 300 python3 night/fetch_returns.py | tail -3 || echo "::warning::成績の作り直しに失敗"
+              git add out/dashboard.json out/returns.json out/returns_series.json
+              git diff --staged --quiet || { git commit -q -m "market prices (場中) $(date -u +%Y-%m-%d\ %H:%M) UTC" && ccf_git_push || true; }
+            else
+              echo "株価に変化なし＝コミットしない"
+            fi
+            if [ $(( $(date +%s) + INTERVAL )) -ge "$DEADLINE" ]; then echo "ジョブの時間の区切り＝呼び直す"; next=auto; break; fi
+            sleep "$INTERVAL"
+          done
+          if [ -n "$next" ]; then
+            gh workflow run market.yml --ref main -f mode="$next" && echo "✓ 次の実行を呼んだ（mode=$next）" || echo "::warning::次の実行を呼べなかった（次の予約を待つ）"
+          fi
 
   fetch:
     needs: mode
