@@ -433,7 +433,7 @@ def main():
         else:
             best = None
             for p, pr in preal.items():
-                if pr not in ry or not all(m in ry[pr] for m in pk10):
+                if pr not in ry or not usable(rawp.get(pr, {}), pk10):      # 壊れた値の検問も当てる（回したあとの是正・下の deviations）
                     continue
                 c_ = xcorr(d, ry[y], ymeta[pr], ry[pr], pk10)
                 if best is None or c_ > best[1]:
@@ -528,7 +528,12 @@ def main():
         A5='配分は変えない')
     for r in recs.values():
         r.pop('_ok', None)
+    bad_pool = {p: pr for p, pr in preal.items() if pr in rawp and not usable(rawp[pr], pk10)}
+    deviations = ['1回目の実行（a7da950）では、代わりに使う物差しの本の器の系列に壊れた値の検問（頭の「壊れた値」）を当てていなかった'
+                  '（TOPIX の器 1306.T の Yahoo の月足に 2015-01 −90%・2026-03 −91%・2026-04 +961% の分割の誤り）→ 決まりどおり当てて回し直した。'
+                  f'器が W10 で使えない物差しの本: {bad_pool or "なし"}']
     doc = dict(generated=datetime.date.today().isoformat(), tool='night/etf_more_check.py', kind='参考（配分は変えない・決まりは道具の頭に固定）',
+               deviations=deviations,
                question='他に検討すべきETFがないか調べて', 今=NOW, 今_全体=dict(NOW_TOTAL, 個別株=CASTLE),
                母集団=dict(src='楽天証券 ETFD.csv 2026-11-22', sha256=sha, rows=nrows, 米国上場と東証=len(uni), 残り=len(cands),
                         外した本={k: dict(数=len(v), 本=v) for k, v in out_list.items()}),
