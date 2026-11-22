@@ -239,7 +239,8 @@ def main():
         t = tab[k]
         q, pr_ = UC.upside(sim, t['_raw'], pi)
         try:
-            lk = N.lookthrough(DET[k])
+            # ★資産全体で渡す（ETF 側×0.9＋個別株10%）。2026-11-22 夜まで ETF 側100%＋個別株10%＝110%で渡していた（balance_check で発見）
+            lk = N.lookthrough({c: v * (100 - CASTLE_PCT) / 100 for c, v in DET[k].items() if v})
         except Exception as ex:   # 参考だけ・読めなければ名指し
             lk = dict(読めず=str(ex)[:200])
         detail[k] = dict(
