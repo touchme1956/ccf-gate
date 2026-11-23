@@ -26,6 +26,7 @@ spec の欄:
 併せて出す（判定に使わない）: 年15%以上の確率を3通りで（元・直近15年の世界を外す・未来の3つの世界だけ）と基礎率の物差しの P15／
   年20%以上・元本割れ・ぶれ・分位・世界ごとの年率と相手との差／小型バリューの上乗せが消えたら（five_mix の S2 と同じ置き方）／
   中身の集中（線形・中身がそろう形は lookthrough.py でも）
+一本ごとの値動き（説明用・判定に使わない）: 使った本の世界ごとの年率・ぶれ・最大下落・相関・期間ごとの年率・暦年
 回帰の検査（どれかが外れれば止める）: (a) 今の形・R の13の物差し（V0・V1）が out/ndx_recon_check.json と一致
   (b) すべての形で Fast と感度の主が measure と 1e-9 以内・実績の割合が past20 と一致 (c) 線形の集中が lookthrough.py と一致（中身がそろう形）
 ⚠ 限界: 5%前後の入れ替えの差は雑音に近い（判定は 1e-9 の差でも上回る・下回るに数える）／未来の世界は予想・分散の上乗せは仮定／
@@ -221,6 +222,34 @@ def main(spec_path):
     pi, _, _ = E.load_pi()
     log('測った', len(keys), '形', f'{time.time() - t0:.0f}s')
 
+    # ── 一本ごとの値動き（説明用・判定に使わない。2026-11-23 に最初の結果を見たあとで足した＝事後） ──
+    import math
+    import etf_forward_combo as CB
+    Rk = U.R
+    A1_0, A2_0, END = 200009, 201110, 202609
+    if len(Rk.months(A1_0, END)) != fast.T1 or len(Rk.months(A2_0, END)) != fast.T2:
+        raise SystemExit('窓の月数が Fast と違う（一本ごとの値動きの窓を直す）')
+    Cr = np.corrcoef(np.log1p(fast.G1[[P.index(c) for c in used]]))
+
+    def geo1(c, m0, m1):
+        ks = Rk.months(m0, m1)
+        return float(np.expm1(np.log1p(np.array([chains[c][m] for m in ks])).sum() * 12 / len(ks)))
+    PER = [(A1_0, 200605, '2000-09〜2006-05'), (200606, 201109, '2006-06〜2011-09'), (A2_0, 201507, '2011-10〜2015-07'),
+           (201508, END, '2015-08〜2026-09'), (202110, END, '直近5年（2021-10〜2026-09）'), (201610, END, '直近10年（2016-10〜2026-09）'),
+           (A2_0, END, '直近15年（2011-10〜2026-09）'), (A1_0, END, '直近26年（2000-09〜2026-09）')]
+    single = {}
+    for a_, c in enumerate(used):
+        i = P.index(c)
+        ps = CB.path_stats(fast.G1[i][None, :], fast.T1)
+        single[c] = dict(
+            世界ごとの年率=dict(A1=r(100 * rows[c]['A1']), A2=r(100 * (float(np.expm1(np.log1p(fast.G2[i]).sum() * 12 / fast.T2)) + float(fast.adj[i]))),
+                         B=r(100 * rows[c]['B']), C=r(100 * rows[c]['C']), D=r(100 * float(np.expm1(fast.lD[i])))),
+            ぶれ=r(100 * math.sqrt(fast.S1[i, i]), 1), 最大下落=r(100 * float(ps[2][0]), 1),
+            相関={d: round(float(Cr[a_, b_]), 2) for b_, d in enumerate(used) if d != c},
+            期間ごとの年率={lab: r(100 * geo1(c, m0, m1)) for m0, m1, lab in PER},
+            暦年={str(y): r(100 * float(np.prod([1 + chains[c][m] for m in Rk.months(y * 100 + 1, y * 100 + 12)]) - 1), 1) for y in range(2001, 2026)},
+            代わりの系列はこの月の前まで=rows[c].get('proxy_until'))
+
     # ── 小型バリューの上乗せなし（S2） ──
     sv_off = None
     if 'VBR' in P and 'VOO' in P:
@@ -341,6 +370,7 @@ def main(spec_path):
         question=spec.get('question'), 読み方=spec.get('reading'), 勧めへのつなぎ方=spec.get('recommend'),
         Rの正本とのずれ=stale.get(K_R), 対ごとの判定=[judge(a, bn) for a, bn in pairs],
         形ごと={k: detail(k) for k in keys}, 世界の重み=pi,
+        一本ごとの値動き_説明用=dict(注='判定に使わない。年率は配当込み・ETF の費用の後・NISA で戻らない配当の税の前（世界ごとの年率は物差しに入る値）。相関は直近26年の毎月の値動き', 本=single),
         一本ごとの中身={c: dict(半導体=round(100 * share[c]['semi'], 2), NVDA=round(100 * share[c]['nvda'], 2), 未取得=round(100 * share[c]['unk'], 2)) for c in used},
         regression=dict(差=reg, 中身の検算=lkchk, 通過=True), 席=dict(社=seats, 一社=per, 半導体=c_semi), secs=round(time.time() - t0, 1))
     with open(out_path, 'w') as fh:
