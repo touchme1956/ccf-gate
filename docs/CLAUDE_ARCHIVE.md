@@ -22047,3 +22047,4 @@ XLE は上位2社（Exxon 24.0%・Chevron 18.1%）に42%が集まる（out/etf_f
 - NISA の目安（nisa_frame_check と同じ置き方・NASDAQ100 36%＝枝の案と同じ）: 2人の成長投資枠が埋まるのは2041年ごろ・20年で課税口座へ約890万円。
 - 検査: check_pft_card 53/53・check_fund_trade・check_node_exit・audit_docs・check_html 通過。check_gate_parity の食い違い1件は前からの古い score_all.json（:21885）で投下可5社は一致。check_sleeve_split は下の追記。
 - ⚠ 道具の照合: beat_ret_check の NOWF（main の形）・RF（枝の案）で今の形を照合する道具（form_eval・seat_scan・field_exposure ほか）は、main がこの形になると「正本と違う」で止まる——次に回すときは NOWF を 40/25/15/10/10 に直す。
+- 追記: check_sleeve_split は全項目通過（約15分かかり、最初の10分の制限で打ち切られたので回し直した）。
