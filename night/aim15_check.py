@@ -138,7 +138,7 @@ def reach():
     return out
 
 
-def main():
+def main(write=True):
     t0 = time.time()
     live = json.loads(subprocess.run(['git', 'show', 'origin/main:portfolio.json'], capture_output=True, text=True,
                                      cwd=BASE, check=True).stdout)['target']
@@ -425,13 +425,15 @@ def main():
         今の形=dict(形=NOWF, 名前=nm(NOWF), 物差し13=got[K_NOW]), R=dict(形=RF, 名前=nm(RF), 物差し13=got[K_R]),
         主=main_res, 参考=refs, SMHの比ごとの最良_G1とG2だけ=by_smh, 詳しい物差し=detail, 世界の重み=pi,
         regression=dict(差=reg, 中身の検算=lkchk, 通過=True), 席=dict(社=seats, 一社=per, 半導体=c_semi), secs=round(time.time() - t0, 1))
-    with open(OUT, 'w') as fh:
-        json.dump(out, fh, ensure_ascii=False, indent=1)
-    log('書いた', OUT, f'{time.time() - t0:.0f}s')
-    a_ = main_res.get('答え')
-    print(json.dumps(dict(条件を通った形=main_res.get('条件を通った形'), 決まり方=main_res.get('答えの決まり方'),
-                          答え=(a_['名前'] if isinstance(a_, dict) else a_), 物差し=(a_['物差し'] if isinstance(a_, dict) else None)),
-                     ensure_ascii=False, indent=1))
+    if write:
+        with open(OUT, 'w') as fh:
+            json.dump(out, fh, ensure_ascii=False, indent=1)
+        log('書いた', OUT, f'{time.time() - t0:.0f}s')
+        a_ = main_res.get('答え')
+        print(json.dumps(dict(条件を通った形=main_res.get('条件を通った形'), 決まり方=main_res.get('答えの決まり方'),
+                              答え=(a_['名前'] if isinstance(a_, dict) else a_), 物差し=(a_['物差し'] if isinstance(a_, dict) else None)),
+                         ensure_ascii=False, indent=1))
+    return locals()   # 事後の診断（night/aim15_posthoc.py）が同じ部品を使うため。計算と出力は変えない
 
 
 if __name__ == '__main__':
