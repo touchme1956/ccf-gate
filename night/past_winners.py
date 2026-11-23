@@ -66,6 +66,16 @@
   （消えた本は入らない＝生き残りの偏り）／10年・20年の窓は米国のテックが勝った一つの時代／③は紙の上の指数（費用・税の前）／
   円の年率は為替を含む（1976-10 は1ドル294円・2026-10 は157円）／Yahoo の値の誤り／投資信託の10年はふるいの上位からだけ測る／
   楽天で買える＝ NISA の対象とは限らない（投資信託は印あり・ETF は印なし）／同じ賭けの線0.95は目安
+★回したあとの是正（2026-11-23・1回目の結果を見た後・決まりの当て方の穴＝どちらも「外すもの」の趣旨どおりに当て直しただけ）:
+  是正1 X1（投資信託）: 名前の語だけでは、協会の分類が「特殊型」（ブル・ベア型など）なのに名前に語が無い本を外せなかった
+    （1回目は日経平均の約2.5倍で動く『ハイパー・ウェイブ（日本トレンド・セレクト）』が10年の4位・20年の21位に入り、逆向きの
+    『リバース・トレンド・オープン』も測る候補に入っていた）→ 協会の分類が特殊型（supplementKindCd=2＝nx_jpfunds_data の special_kind）も X1 にする。
+    名前の語は固定のまま（愛称に「ダブル」「トリプル」がある普通の本を外す向きの誤りは残る＝外した本の上位は名前で出す）。
+  是正2 X4（ETF）: etf_more_check.why_out は米国上場の7本だけを「今の本と同じ指数」にしていて、東証の NASDAQ100 連動 ETF
+    （指数名が NASDAQ 100 TR／同 JPYH＝1545・2568・2569・2631・2632・2840・2841・2845・2087・534A）が並びの母数に入っていた → X4 にする。
+  1回目の出力との違いは書庫の節に書く。ほかの決まり（窓・物差し・ふるい・家族・印）は変えていない。
+  注の追加（並びは変えない）: 楽天の一覧の設定日が窓の始まりより後の米国 ETF には「前身の本の記録を含む」と書く
+    （BBH・RTH・PPH は 2011-12 に今の形になり、それより前の Yahoo の値段は前身の HOLDRS＝固定の籠）。
 使い方: python3 night/past_winners.py → out/past_winners.json（投資信託の CSV を約1,000本取るので初回は約20分）
 """
 import json, math, os, re, sys, time
@@ -149,6 +159,8 @@ def fund_out(r):
         return 'F3 確定拠出年金・ラップ専用'
     if LEVF.search(nm):
         return 'X1 レバレッジ・インバース'
+    if r.get('supplementKindCd') == '2':
+        return 'X1 レバレッジ・インバース（協会の分類が特殊型）'
     if NDXF.search(nm):
         return 'X4 今の本と同じ指数（NASDAQ100）'
     if EM.GOLD.search(nm):
@@ -305,6 +317,14 @@ def label(it):
     return f"{it['key']} {it['nm']}"
 
 
+def pre_note(it, a):
+    """楽天の一覧の設定日が窓の始まりより後なら、それより前の値段は前身の本の記録（例: BBH・RTH・PPH の2011-12 より前は HOLDRS＝固定の籠）"""
+    s = it.get('設定')
+    if it.get('kind') == '米国ETF' and s and int(s[:4]) * 100 + int(s[5:7]) > a:
+        return f'設定（{s}）より前の値段を含む＝前身の本の記録'
+    return None
+
+
 def row_of(it, st, extra=None):
     o = {'名札': it['key'], '名前': it['nm'], '種類': it['kind']}
     o.update(st)
@@ -326,7 +346,8 @@ def main():
     if max(lv) < END:
         raise SystemExit(f'為替が {max(lv)} までしか無い')
     res = {'generated': time.strftime('%Y-%m-%d'), 'tool': 'night/past_winners.py',
-           '注意': '参考・判定なし・配分は変えない。過去の成績で予想ではない。測り方はこの道具の頭の文（回す前にコミット）',
+           '注意': '参考・判定なし・配分は変えない。過去の成績で予想ではない。測り方はこの道具の頭の文（回す前にコミット f8bb851）',
+           '回したあとの是正': '是正1 協会の分類が特殊型の投資信託を X1 に／是正2 東証の NASDAQ100 連動 ETF を X4 に（道具の頭の文）',
            '窓': {**{k: f'{a}〜{b}（{len(E.months(a, b))}か月）' for k, (a, b) in WIN.items()},
                  **{f'{k}（長い記録）': f'{a}〜{b}（{len(E.months(a, b))}か月）' for k, (a, b) in WINL.items()}},
            '為替（円/ドル・月末）': {str(k): lv[k] for k in (197610, 199610, 200611, 201610, 202609, 202610)}}
@@ -334,6 +355,9 @@ def main():
     # ── ① ETF
     uni, nrows, sha = EM.load(EM.ETFD, EM.ETFD_SHA)
     why = {d['t']: EM.why_out(d) for d in uni}
+    for d in uni:
+        if not why[d['t']] and not d['us'] and (d['idx'] or '').startswith('NASDAQ 100 TR'):
+            why[d['t']] = 'X4 今の本と同じ指数（東証の NASDAQ100 連動）'
     need = [d for d in uni if not why[d['t']] or why[d['t']][:2] in ('X4', 'X5')]
     log(f'ETFD {nrows} 行 → 米国上場・東証 {len(uni)} 本・値段を取る {len(need)} 本')
     raw, err = EM.fetch([d['y'] for d in need])
@@ -468,7 +492,7 @@ def main():
         show = []
         for i, f in enumerate(fams[:SHOW]):
             rep = f[0]
-            show.append(row_of(rep, rep['_st'], {'順位': i + 1, '同じ賭け': same_bet(rep, five, ks10), '家族の本の数': len(f),
+            show.append(row_of(rep, rep['_st'], {'順位': i + 1, '同じ賭け': same_bet(rep, five, ks10), '注': pre_note(rep, a), '家族の本の数': len(f),
                                                 '家族のほかの本': [f"{label(x)}（{x['kind']}・{x['_st']['年率（円）']}%）" for x in f[1:7]]}))
         ref = []
         for t in ['SPY'] + FIVE:
@@ -608,7 +632,7 @@ def main():
             print('   相手', x.get('名札'), str(x.get('名前'))[:34], x.get('年率（円）'), x.get('年率（ドル）'), x.get('最大下落（円）'), x.get('測れない', ''))
         for x in o['並び（ETF と楽天で買える投資信託・家族ごと・上位30）']:
             print(f"  {x['順位']:>2} {x['名札']:<9} {x['名前'][:30]:<30} {x['種類']:<5} 円{x['年率（円）']:>6} ドル{str(x.get('年率（ドル）', '—')):>6} 下落{x['最大下落（円）']:>6}"
-                  f" 差{x.get('S&P500 との差', 0):+6.2f} 家族{x['家族の本の数']:>2} {x.get('同じ賭け') or ''}")
+                  f" 差{x.get('S&P500 との差', 0):+6.2f} 家族{x['家族の本の数']:>2} {x.get('同じ賭け') or ''} {x.get('注') or ''}")
         print('  楽天で買えない投資信託:', [(x['名前'][:24], x['年率（円）']) for x in o['楽天で買えない投資信託の上位10']][:6])
         print('  方針で外した本:', [(x['名札'], x['名前'][:20], x['年率（円）']) for x in o['方針で外した本の上位10（金・国債）']][:6])
     for h in WINL:
