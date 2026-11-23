@@ -12,7 +12,7 @@
 出力: out/industry_trends.json（門の industry.html が読む）
 使い方: python3 night/industry_trends.py [--no-fetch]   （--no-fetch は手元の frames のキャッシュだけで回す）
 """
-import io, json, math, os, sys, time, zipfile, datetime, urllib.request, statistics as S
+import io, json, math, os, sys, time, zipfile, datetime, urllib.request, urllib.parse, statistics as S
 from collections import defaultdict
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -55,10 +55,21 @@ JA = {'Agric': '農業', 'Food': '食品', 'Soda': '清涼飲料', 'Beer': '酒�
       'RlEst': '不動産', 'Fin': '金融（その他）', 'Other': 'その他'}
 
 
+HDRS_PLAIN = {"User-Agent": "Mozilla/5.0 (research script)"}
+
+
+def hdrs_for(url):
+    """連絡先入りの名乗り（HDRS）は SEC にだけ送る（SEC は連絡先を求める＝絶対のルール5）。
+    それ以外のサイト（Ken French の配布元など）へは一般的な名乗りだけ（2026-11-23 是正:
+    旧は get が全部のサイトへ HDRS を送っていた＝ff49_map が業種コード表を取るたびに連絡先が French の配布元にも渡っていた）"""
+    host = (urllib.parse.urlparse(url).hostname or '').lower()
+    return HDRS if (host == 'sec.gov' or host.endswith('.sec.gov')) else HDRS_PLAIN
+
+
 def get(url, tries=4):
     for i in range(tries):
         try:
-            return urllib.request.urlopen(urllib.request.Request(url, headers=HDRS), timeout=90).read()
+            return urllib.request.urlopen(urllib.request.Request(url, headers=hdrs_for(url)), timeout=90).read()
         except urllib.error.HTTPError as e:
             if e.code == 404:
                 return None
