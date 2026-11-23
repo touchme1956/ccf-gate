@@ -66,6 +66,10 @@ permissions:
 jobs:
   check:
     runs-on: ubuntu-latest
+    # 2026-11-23: ジョブ全体の上限（ふつうは push 約6分・schedule 約12分）。
+    #   実害: 11-16〜11-23、採点の道具が終わっても抜けず、毎回 GitHub の既定の上限 6時間まで止まって取り消されていた
+    #   （赤くならず『取り消し』になるだけなので気づきにくい）。止まる検査は下の段ごとの上限で10分で赤くする。これは最後の歯止め。
+    timeout-minutes: 60
     # v9.9.140: **`| tail` が失敗を緑に化かすのを止める。**
     #   宣言が無いと pipefail が付かず、`検査 | tail -25` は tail の成功だけを見る
     #   ＝「検査を回したつもりで回っていない」が緑のまま通る。
@@ -165,6 +169,15 @@ jobs:
         continue-on-error: true
         run: python3 night/check_workflow_add.py
 
+      # ── 1-c1'. push のやり直しの道 ccf_git_push（2026-11-23 新設）──────────────────────────
+      #   実害: ops.yml（月次）が 2026-11-03、387ファイルをコミットしたあと push を弾かれ、やり直しの rebase が
+      #   "cannot rebase: You have unstaged changes." で始まりもせず、**11月の月次の成果がまるごと main に届かなかった**。
+      #   是正は night/git_push_safe.sh（コミットしなかった変更を退避してから rebase し、終わったら戻す）。
+      #   ここは一時ディレクトリの中の remote と clone で5つの場合を通す（ネットワークに出ない・約15秒）。
+      - name: push のやり直しの道 check_git_push_safe
+        timeout-minutes: 5
+        run: bash night/check_git_push_safe.sh
+
       # ── 1-c2'. ワークフローの文法 actionlint（v9.9.210・2026-10-10 新設）──────────────────
       #   **不正な workflow ファイルは、この CI の check を通ったまま main に入れてしまう**——GitHub は不正なファイルを
       #   「0秒で失敗した run」として別に立てるだけ（実害: state_from_issue.yml の job の env に使えない `runner`
@@ -251,8 +264,17 @@ jobs:
       - name: 納品検査FAIL表の再生成 validate_packs --json
         run: python3 night/validate_packs.py --json --summary | tail -4
 
+      # ── 3-0. 採点の道具が『終わったら抜ける』か（2026-11-23新設）──────────────────
+      #   v9.9.224 で門に入った繰り返しの見張り（setInterval）が素の node に残り、採点が終わってもプロセスが抜けず、
+      #   下の『全パック採点』が毎回6時間止まっていた（11-16〜11-23・CI が1度も最後まで走らなかった）。
+      #   是正は night/score_all.js の差し替え。門に新しい見張りが入ってまた抜けなくなれば、ここが2〜3分で赤くなる。
+      - name: 採点の道具が終わったら抜ける check_node_exit
+        timeout-minutes: 10
+        run: node night/check_node_exit.js
+
       # ── 3. 門を実際に走らせる（compute() をDOMシムで実行＝再実装ではない）──────
       - name: 全パック採点 score_all
+        timeout-minutes: 10      # ふつうは数秒。止まったら6時間待たずに赤くする（2026-11-23）
         run: node night/score_all.js
 
       # ── 4. 台帳の破損（要修正＝取込で化けた/列挙違反/内部矛盾/不可能値）────────
@@ -349,6 +371,7 @@ jobs:
       #   （今日は buy=False のままで判定は動かないが、**新しく pending が立った社では投下可がずれる**）。
       #   ＝2026-08-11 に「market.yml が古い validate_fail を読んで採点していた」と同じ型。1秒で済む。
       - name: 第四の関門の入力を反映して score_all を回し直す（コミットの内部整合）
+        timeout-minutes: 10      # 同上（2026-11-23）
         run: node night/score_all.js | tail -4
 
       # ── 5-b3. irr=85 をユーザーの基準で採点（2026-08-11新設）─────────────────────

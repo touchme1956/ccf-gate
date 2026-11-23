@@ -83,6 +83,15 @@ global.localStorage = {
 global.alert = () => {}; global.confirm = () => true; global.prompt = () => null;
 global.fetch = () => Promise.reject(new Error('no network'));
 global.requestAnimationFrame = fn => fn();
+// ⚠ 2026-11-23 是正: 門のスクリプトが起動時に張る「繰り返しの見張り」（setInterval）を、素の node では張らない。
+//   v9.9.224（2026-11-16）で門に `setInterval(ccfMktWatch, …)`（開いている間、数分ごとに株価の日付を見る）が入った。
+//   下の eval は node の本物の setInterval を使うので、**採点が終わっても見張りが残り、プロセスが終わらなくなった**
+//   ——ci.yml の「全パック採点 score_all」が毎回 6時間の上限まで止まり、11-16 から CI が1度も最後まで走っていなかった。
+//   見張りはブラウザの画面のためのもので、端末の採点には要らない。張らない差し替えにする（一度きりの setTimeout はそのまま）。
+//   この道具を require する道具（audit_gate・explain_score・audit_cliffs・v11_gate ほか）も同じ差し替えを受け取る。
+//   検査: node night/check_node_exit.js（採点が終わったらプロセスが抜けること）。
+global.setInterval = () => ({ unref() {}, ref() {}, hasRef: () => false });
+global.clearInterval = () => {};
 
 // ---- 門のスクリプトを読み込む ----
 const js = [...HTML.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)].map(m => m[1]).join('\n;\n');
