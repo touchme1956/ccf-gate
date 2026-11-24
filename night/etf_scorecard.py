@@ -54,6 +54,12 @@
  K9 NASDAQ100 の100年を V0（業種を固定した写し）にする
  読み方: 主の上位10を答えにし、9つの確かめで上位10に残った回数と順位の幅を並べる（確かめで答えは変えない）。
 
+事後の診断（2026-11-24 に1回目の結果を見たあとで足した・答えは変えない）:
+ 1位の VBR の強さは主に未来の物差しで、その中身は世界B（100年の平均）の小型バリューの上乗せ（0.5×X）。
+ 9つの確かめはこの前提を動かしていなかったので、form_eval の「小型バリューの上乗せなし」と同じ作り方を当てる:
+ X1 VBR の世界Bから 0.5×X を引き、世界C・D は VOO の値にする ／ X2 同じことを米国の型4本（VBR・VTV・IJR・VUG）に
+ 併せて、業種の基礎率の当て方（本ごとの年率の補正 a）を並べる
+
 回帰の検査（外れれば止める）:
  (a) QQQM・SMH・ITA・XLV・VBR・VOO の1本ずつの値（元の物差しの P15π・平均・5%未満・最大下落・ぶれ／基礎率の P15π・平均・5%未満／
      100年 V0 の中央・最悪／実績の割合・中央・最悪）が five_mix_ndx の ①1本ずつ と表示の桁で一致
@@ -221,7 +227,9 @@ def path_yen(rets):
     for u in under:
         cur = cur + 1 if u else 0
         best = max(best, cur)
-    return float(dd.min()), best, bool(under[-1])
+    # 3つ目＝最長の水没が窓の終わりまで続いている（数が打ち切られている）か。
+    # （1回目の実行では「終わりにまだ高値の下にいるか」を返しており、直近の短い下げでもほぼ全部の本に印が付いた＝表示の誤り・点は不変）
+    return float(dd.min()), best, bool(under[-1]) and cur == best
 
 
 def months_between(a, b):
@@ -424,6 +432,53 @@ def main():
         return dict(pts=pts, ax=ax, total=total, order=order, rank=rank)
 
     main_s = score()
+
+    # ── 事後の診断（型の上乗せなし・答えは変えない） ──
+    def no_style(funds):
+        iv_ = P.index('VOO')
+        jv_ = PB.index('VOO')
+        f2, ff2, fb2 = copy.copy(fast), copy.copy(fastf), copy.copy(fbr)
+        for o in (f2, ff2):
+            o.lB, o.lC, o.lD = fast.lB.copy(), fast.lC.copy(), fast.lD.copy()
+        fb2.gB, fb2.gC, fb2.gD = fbr.gB.copy(), fbr.gC.copy(), fbr.gD.copy()
+        cut = {}
+        for c in funds:
+            bx = 0.5 * float(rows[c]['B_X'])
+            cut[c] = round(100 * bx, 2)
+            i, j = P.index(c), PB.index(c)
+            for o in (f2, ff2):
+                o.lB[i] = np.log1p(np.expm1(fast.lB[i]) - bx)
+                o.lC[i], o.lD[i] = fast.lC[iv_], fast.lD[iv_]
+            fb2.gB[j] = fbr.gB[j] - bx
+            fb2.gC[j], fb2.gD[j] = fbr.gC[jv_], fbr.gD[jv_]
+        e2, ef2, bs2 = f2.eval(W), ff2.eval(W), fb2.eval(WB, a0)
+        keep = {c: dict(raw[c]) for c in P}
+        try:
+            for i, c in enumerate(P):
+                j = bidx.get(c)
+                raw[c]['F1'] = float(ef2['mean_pi'][i])
+                raw[c]['F2'] = float(bs2['mean_pi'][j]) if j is not None else float(ef2['mean_pi'][i])
+                raw[c]['F3'] = float(bs2['P15'][j]) if j is not None else float(ef2['P15'][i])
+                raw[c]['D2'] = float(e2['P5'][i])
+                raw[c]['D3'] = float(bs2['P5'][j]) if j is not None else float(ef2['P5'][i])
+            s2 = score()
+        finally:
+            for c in P:
+                raw[c] = keep[c]
+        if score()['total'] != main_s['total']:
+            raise SystemExit('事後の診断のあとで主の点が戻らない')
+        return dict(引いた上乗せ=cut, 上位10=s2['order'][:10], 順位={c: s2['rank'][c] for c in main_s['order']},
+                    総合={c: round(s2['total'][c], 2) for c in s2['order'][:12]},
+                    主の上位10から出た本=[c for c in main_s['order'][:10] if s2['rank'][c] > 10],
+                    入った本=[c for c in s2['order'][:10] if main_s['rank'][c] > 10],
+                    変えた本の新しい値={c: dict(期待の年率_元=round(100 * float(ef2['mean_pi'][P.index(c)]), 2),
+                                         期待の年率_基礎率=round(100 * float(bs2['mean_pi'][PB.index(c)]), 2)) for c in funds})
+    posthoc = {'X1 VBR の小型バリューの上乗せなし': no_style(['VBR']),
+               'X2 米国の型4本（VBR・VTV・IJR・VUG）の上乗せなし': no_style(['VBR', 'VTV', 'IJR', 'VUG'])}
+    posthoc['業種の基礎率の補正（本ごとの年率・主の値）'] = {c: round(100 * float(a0[PB.index(c)]), 3) for c in inB}
+    for k_, v_ in posthoc.items():
+        log('事後', k_, json.dumps(v_.get('上位10', v_), ensure_ascii=False)[:300])
+
     ks = {}
     for nm, kw in KS.items():
         kw2 = dict(axes=kw.get('axes', AXES), scale=kw.get('scale', 'pct'), cent=kw.get('cent', 'V1'),
@@ -515,7 +570,7 @@ def main():
         if c == 'TOPIX':
             flags.append('上位10社は MSCI Japan（EWJ）で代えた')
         if yen[c]['still']:
-            flags.append('A1 の窓の終わりでもまだ円の高値を取り戻していない（最長の年数は終わりまで）')
+            flags.append('最長の水没が A1 の窓の終わりまで続いている（年数はそこで打ち切り＝実際はもっと長い）')
         per[c] = dict(
             名前=rw.get('ja'), 器=rw.get('vehicle'), データ=rw.get('data'),
             生の値={
@@ -555,6 +610,7 @@ def main():
         確かめ=sens, 確かめで上位10に残った回数=dict(sorted(kin.items(), key=lambda t: (-t[1], main_s['rank'][t[0]]))),
         順位の幅={c: rng[c] for c in main_s['order']},
         確かめごとの順位={nm: {c: k['rank'][c] for c in main_s['order']} for nm, k in ks.items()},
+        事後の診断=posthoc,
         regression=reg, secs=round(time.time() - t0, 1))
     json.dump(out, open(OUT, 'w'), ensure_ascii=False, indent=1)
     log('書いた', OUT, f'{out["secs"]}s')
