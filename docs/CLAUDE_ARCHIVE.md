@@ -22048,3 +22048,12 @@ XLE は上位2社（Exxon 24.0%・Chevron 18.1%）に42%が集まる（out/etf_f
 - 検査: check_pft_card 53/53・check_fund_trade・check_node_exit・audit_docs・check_html 通過。check_gate_parity の食い違い1件は前からの古い score_all.json（:21885）で投下可5社は一致。check_sleeve_split は下の追記。
 - ⚠ 道具の照合: beat_ret_check の NOWF（main の形）・RF（枝の案）で今の形を照合する道具（form_eval・seat_scan・field_exposure ほか）は、main がこの形になると「正本と違う」で止まる——次に回すときは NOWF を 40/25/15/10/10 に直す。
 - 追記: check_sleeve_split は全項目通過（約15分かかり、最初の10分の制限で打ち切られたので回し直した）。
+
+## 個別株を0%にした（2026-11-24・ユーザー明示指示「個別株なくして」）——ETF100%・ETF の中は NASDAQ100 40 / SMH 25 / ITA 15 / FBT 10 / VBR 10 のまま
+
+- 変えたもの（portfolio.json）: `shiro_castle_pct` 10→0・`ami_net_pct` 90→100・`ami_weights` を ETF の中の比のまま100%へ（IFREE-NDX 36→40・SMH 22.5→25・ITA 13.5→15・FBT 9→10・VBR 9→10）・`castle_rule_params.start_level_pct` 10→0（判定までは0%・線はそのまま・2029-09 に規則が示す水準を人が見る）。物差しの袖は同じ比。旧の姿は `target.ami_mix_superseded_2026_11_24`。index.html の解説の配分の表（ETF 100%・個別 0%）。
+- **MSFT・ASML は売らない**——個別株の区分（目標0%）で引き継ぐ。新しいお金は回らない。売りは S1/S2/S3 だけ。2026-10-27 の個別株0%と同じ扱い（別枠 ratio_outside は使わない・`ami_same_bucket` は XLK→NASDAQ100 だけ）。
+- 今月の注文（入金 ¥1,400,000・2026-11-23 の値段・門そのもの `night/shadow_seats.js --seats 10 --monthly 1400000 --then 200000`）: SMH 6株・ITA 30株・FBT 6株・VBR 6株＋iFreeNEXT ¥239,800・個別株 ¥0。個別株は今 40.9% で、目標10%でも0%でも今月は ¥0＝**今月の注文は10%のときと同じ**（ITA 32→30株・iFreeNEXT ¥218,800→¥239,800 は値段の差）。
+- 違いが出るのは先: 10%なら個別株に新しいお金が入るのは約5か月目からだった。0%では12か月のうちに入らない（12か月後の区分 NASDAQ100 32.9 / SMH 22.7 / ITA 12.6 / FBT 8.7 / VBR 8.5 / 個別株 14.6）。
+- 物差しの前後は測っていない（個別株の銘柄ごとのぶれと選ぶ上乗せは物差しに映らない・前の比べは :20791 の etfonly_check＝個別株を業種の写しで代えた形とほぼ同じ）。
+- 検査: check_pft_card 55/55 ✓・check_fund_trade ✓・audit_docs ✓・check_html ✓。採点・四関門・席・割り方の式・売却規律・castle_rule の線は不変。
