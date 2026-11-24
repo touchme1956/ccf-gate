@@ -56,7 +56,11 @@
 
 回帰の検査（外れれば止める）:
  (a) QQQM・SMH・ITA・XLV・VBR・VOO の1本ずつの値（元の物差しの P15π・平均・5%未満・最大下落・ぶれ／基礎率の P15π・平均・5%未満／
-     100年 V0 の中央・最悪／実績の割合・中央・最悪）が out/five_mix_ndx_check.json の ①1本ずつ と表示の桁で一致
+     100年 V0 の中央・最悪／実績の割合・中央・最悪）が five_mix_ndx の ①1本ずつ と表示の桁で一致
+     ⚠ 回したあとの是正（1回目の実行で外れた・採点の決まりは変えていない）: 最初は out/five_mix_ndx_check.json（2026-11-01）と比べたが、
+     その後 Ken French の表を 2026-11-22 に取り直した（49業種は今 2026-09 まで）ので世界B・C が少し動き、元の物差し・基礎率の値が
+     小数第2位で外れた（A1・A2・100年・実績・最大下落・ぶれは一致）。→ five_mix_ndx_check を今日のデータで一時ファイルへ回し
+     （今の形の照合 check_now だけ外す＝①は今の形を使わない）、その ①と比べる形に直した。11-01 の出力とのずれは参考に残す
  (b) 未来の世界だけの π で回した Fast の平均が、行の B・C と D の世界から手で作った値と一致
  (c) QQQM の100年 V0・V1 が out/ndx_recon_check.json の NASDAQ100だけ_版ごと と一致
  (d) 業種の基礎率を当てない FastBR（a=0）が、未来の世界だけの Fast と同じ値（米国外の本を同じ道で測っている確かめ）
@@ -227,6 +231,26 @@ def months_between(a, b):
 def top10_of(h):
     ws = sorted([float(w) for _, w in h if w not in (None, 'n/a') and float(w) > 0], reverse=True)
     return sum(ws[:10]), sum(ws)
+
+
+def ref_five_mix_today():
+    """five_mix_ndx_check を今日のデータで一時ファイルへ回し、①1本ずつを返す（正本の out/five_mix_ndx_check.json は書かない）"""
+    import subprocess
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        run = os.path.join(td, 'run_f5.py')
+        dst = os.path.join(td, 'five_mix_ndx_today.json')
+        open(run, 'w').write(
+            'import sys\n'
+            f'sys.path.insert(0, {HERE!r})\n'
+            'import five_mix_ndx_check as F\n'
+            'F.OUT = sys.argv[1]\n'
+            'F.B.check_now = lambda: None\n'
+            'F.main()\n')
+        p = subprocess.run([sys.executable, run, dst], capture_output=True, text=True, cwd=BASE)
+        if p.returncode != 0 or not os.path.exists(dst):
+            raise SystemExit(f'five_mix_ndx_check を今日のデータで回せない: {p.stdout[-800:]} {p.stderr[-800:]}')
+        return json.load(open(dst))['①1本ずつ']
 
 
 def main():
@@ -408,8 +432,15 @@ def main():
 
     # ── 回帰の検査 ──
     reg = {}
-    ref = json.load(open(REF5))['①1本ずつ']
+    ref, ref_old = ref_five_mix_today(), json.load(open(REF5))['①1本ずつ']
     JAM = {'QQQM': 'NASDAQ100', 'SMH': 'SMH', 'ITA': 'ITA', 'XLV': 'XLV', 'VBR': 'VBR', 'VOO': 'S&P500'}
+    drift = {}
+    for c, ja in JAM.items():
+        for grp in ('元の物差し', '基礎率の物差し', '百年', '実績'):
+            for kk, v in ref_old[ja][grp].items():
+                if v != ref[ja][grp][kk]:
+                    drift[f'{c}・{grp}・{kk}'] = dict(十一月一日=v, 今日=ref[ja][grp][kk])
+    reg['参考_11月1日の出力とのずれ（上流の French の表の更新）'] = drift
     bad = []
     for c, ja in JAM.items():
         i, j, o = P.index(c), bidx[c], ref[ja]
@@ -430,7 +461,7 @@ def main():
         chk('実績割合', 100 * rz['share'][i], o['実績']['年15パーセント以上の割合'], 1)
         chk('実績中央', 100 * rz['med'][i], o['実績']['年率の中央'], 2)
         chk('実績最悪', 100 * rz['worst'][i], o['実績']['最悪'], 2)
-    reg['a_five_mix_ndx_の1本ずつと一致'] = dict(一致=not bad, 外れ=bad)
+    reg['a_five_mix_ndx_の1本ずつ（今日のデータで回した）と一致'] = dict(一致=not bad, 外れ=bad)
     # (b) 未来の世界だけの平均＝手で作った値
     pi = fast.pi
     fw = {k: pi[k] for k in ('B', 'C', 'D')}
@@ -455,7 +486,7 @@ def main():
     # (e)
     holes = [(c, k) for c in P for k, v in main_s['pts'][c].items() if v is None or not np.isfinite(v)]
     reg['e_対象と欠け'] = dict(一致=(n == 26 and not holes), 対象=n, 欠け=holes)
-    allok = all(v['一致'] for v in reg.values())
+    allok = all(v['一致'] for k, v in reg.items() if not k.startswith('参考'))
     reg['全部一致'] = allok
     log('回帰の検査', json.dumps(reg, ensure_ascii=False)[:1500])
     if not allok:
