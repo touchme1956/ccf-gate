@@ -1,5 +1,8 @@
 """form_eval を XLV の壊れた初期の値だけ直して回す（参考・2026-11-25 新設・読むだけ）
 
+★同日に共有の直し night/sector_spdr_fix.py（XLV・XLP・XLU・物差しの大元 etf_forward_rank から効く）へ置き換えた。
+  A1 の窓（2000-09〜）ではこの道具と同じ値になる（out/form_eval_ndx45_xlv5_spdrfix.json と1ビットも同じ）＝新しく使う理由は無い。記録として残す。
+
 使い方: python3 night/form_eval_xlvfix.py out/form_eval_<key>_spec.json → out/form_eval_<key>.json
 
 【なぜ】Yahoo（と Alpha Vantage・それを写した各サイト）の XLV の 2000〜2002年の値は、同じ業種の器と合わない。
