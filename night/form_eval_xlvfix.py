@@ -7,7 +7,7 @@
     XLV と IYH（iShares US Healthcare・2000-06 設定）の月次の相関  2000-07〜2002-12: 0.386 ／ 2003〜2010: 0.991
     暦年 2001: XLV −0.8%・IYH −13.3%・FSPHX −15.0%／2002: XLV −0.7%・IYH −21.3%・FSPHX −18.1%・VGHCX −11.4%
     IYH と FSPHX（Fidelity Select Health Care）の相関は 2000-07〜2002-12 も 0.95〜0.97＝IYH は当時のヘルスケアを写している
-    XLV と IYH の月の差は 2002-07 から ±0.5pt 以内（2000-07〜2002-06 は 1〜16pt の月が続く）
+    XLV と IYH の月の差は 2000-07〜2002-06 の24か月のうち21か月で 1pt 超（最大 15.9pt）・2002-07〜2002-12 は ±0.5pt 以内・2003年以降は大きい月でも 1.5pt
   出たばかりで売買の少なかった時期の終値が壊れている（XLP・XLU・XLY の初期にも同じ形のずれ。XLK・XLE・XLF・XLI・XLB は合う）。
 
 【直し方（回す前に固定）】chains['XLV'] の 2000-07〜2002-06 の月次を、IYH の月次＋費用の差 (0.60−0.28)%/12 に替える。
@@ -26,7 +26,7 @@ import unx_assets as U  # noqa: E402
 import form_eval as FE  # noqa: E402
 
 FIX_FROM, FIX_TO = 200007, 200206
-ER_DIFF = 0.0060 - 0.0028          # IYH の当時の経費率 0.60% − XLV の当時の経費率 0.28%
+ER_DIFF = 0.0060 - 0.0028          # IYH の当時の経費率 0.60% − XLV の当時の経費率 約0.28%（目安・2年で0.6pt ほど）
 A1_0, END = 200009, 202609         # form_eval の A1 の窓（Fast と同じ）
 
 _orig_build = U.build
