@@ -77,7 +77,8 @@ def grid():
     return out
 
 
-def main(out_path=OUT):
+def main(out_path=OUT, extra=None):
+    """extra: 追加の集計（night/xlp_xlu_both_check.py が使う・既定 None ならこの道具の出力は前と同じ）"""
     t0 = time.time()
     import lookthrough as L
     import unx_assets as U
@@ -225,6 +226,8 @@ def main(out_path=OUT):
         上位10=[row(i) for i in ok_idx[:10]], 直した3本を含む形=incl,
         十一月二十三日の範囲だけの答え=(row(old_idx[0]) if old_idx else None),
         条件を外した天井=row(ceil[0]), secs=round(time.time() - t0, 1))
+    if extra:
+        out['追加'] = extra(dict(G=G, names=names, Y=Y, mJ=mJ, cond=cond, meas=meas, order=order, row=row, iM=iM, yM=yM, mJM=mJM, EPS=EPS))
     with open(out_path, 'w') as fh:
         json.dump(out, fh, ensure_ascii=False, indent=1)
     log('書いた', out_path, f'{time.time() - t0:.0f}s')
