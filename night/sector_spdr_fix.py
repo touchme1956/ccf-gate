@@ -86,7 +86,8 @@ def source_for(t, m):
 
 
 def repair(t, series):
-    if t not in BROKEN:
+    # 比べるためだけに直しを外す口（子のプロセスにも効く）: CCF_SPDR_FIX=off
+    if t not in BROKEN or os.environ.get('CCF_SPDR_FIX') == 'off':
         return series
     m0, m1 = BROKEN[t]
     out = dict(series)
