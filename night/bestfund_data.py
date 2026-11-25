@@ -20,6 +20,7 @@ BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(BASE, 'night'))
 import mw_common as M          # noqa: E402
 import gaps_common as G        # noqa: E402
+import sector_spdr_fix as SF   # noqa: E402  2026-11-25 XLV・XLP・XLU の初期の壊れた月
 
 END = 202609                      # 最後の完全な月（2026-10-11 に作成）
 A1, A2 = (200009, 202609), (201110, 202609)
@@ -528,7 +529,7 @@ def source(spec):
     """→ (月次リターン dict, 補足 dict)"""
     kind = spec[0]
     if kind == 'yahoo':
-        return yahoo_tr(spec[1]), {}
+        return SF.repair(spec[1], yahoo_tr(spec[1])), ({'repair': SF.info(spec[1])} if SF.info(spec[1]) else {})
     if kind == 'yahoo_from':
         return {k: v for k, v in yahoo_tr(spec[1]).items() if k >= spec[2]}, {
             'note': f'{spec[2]} より前は指数の発表前の試算（後から選んだ銘柄での計算）なので使わない'}

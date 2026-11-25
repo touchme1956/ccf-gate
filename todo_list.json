@@ -1,6 +1,6 @@
 {
  "note": "スケジュールに乗せた『人のやるべきこと』の正本（2026-08-04新設）。回転盤(ops_status)が測るのは機械の周期作業だけで、宿題・決断待ち・機械で測れない定期ルーチンはここに載る。⚙自動化タブが表示する。完了したら done:true にする（消さない——やった記録も資産）。追加・完了はClaudeに頼めばよい",
- "updated": "2026-11-23",
+ "updated": "2026-11-25",
  "items": [
   {
    "id": "edinet_key",
@@ -2454,6 +2454,16 @@
    "added": "2026-11-23",
    "title": "連絡先入りの名乗り（User-Agent）が SEC 以外のサイトへ送られていないかを全ファイルで点検する",
    "note": "2026-11-23 に業種の道具の get が French の配布元にも連絡先を送っていたのを直した（sec.gov にだけ送る）。連絡先入りの名乗りを持つ道具は60本を超える（ほとんどは SEC だけに使う）。SEC 以外の宛先（Yahoo・French・投資信託協会・EDINET・Alpha Vantage ほか）へ同じ見出しで出ている道が無いかを1本ずつ見る。既知: fetch_tsumitate_funds.py（投資信託協会・書庫:20089 の G3）。直すなら『SEC の宛先のときだけ連絡先入り』にそろえる。書庫:21885"
+  },
+  {
+   "id": "sector_spdr_early_data_1125",
+   "kind": "宿題",
+   "done": true,
+   "due": "2026-12-31",
+   "owner": "道具",
+   "added": "2026-11-25",
+   "title": "XLV・XLP・XLU（と XLY の2001年）の2000〜2002年の値の誤りを共有の系列で直し、それらを測った過去の結論を確かめ直す",
+   "note": "2026-11-25 に「45/25/15/10/XLV5」を測る途中で判明。Yahoo（と Alpha Vantage）のセクター SPDR の初期の終値が、同じ業種の iShares（IYH・IYK・IDU・IYC・2000-06 設定）と合わない——2000-07〜2002-12 の月次の相関 XLV 0.386・XLP 0.71・XLU 0.756・XLY 0.939（2003〜2010 は 0.94〜0.99）。暦年の例 XLV 2002 −0.7% 対 IYH −21.3%・XLP 2002 −20.1% 対 IYK −5.5%・XLU 2001 −13.0% 対 IDU −25.9%。XLK・XLE・XLF・XLI・XLB は 0.95〜0.99 で合う。この問いでは XLV を IYH で直して測り直し（night/form_eval_xlvfix.py）、判定は同じ・数字の動きは ±0.15 以内だった。直すなら unx_assets（か bestpf_ext）の系列を作る所で、その4本の誤った月を iShares の同じ業種の器（費用の差を足す）に替える。直したあと、XLV・XLP・XLU を測った節（:19497・:21549・:22111・:22154 の XLV、:20089・:20367・:20677 の XLU、:20847・:21071 の XLP ほか）の 2000年からの実績・最大下落・共分散を確かめ直す。今の main はどれも持たないので今の配分には影響しない。⚠ 凍結の前向きの検定（mw_forward・nx_forward）の道具は触らない。書庫:22220 ★2026-11-25 済み（ユーザー明示指示「XLV・XLP・XLUのデータ直して」）: night/sector_spdr_fix.py を etf_forward_rank・ami_series・bestfund_data から呼ぶ形で直し、今の main に依らない出力（ETF の門の系列・25本の順位・単体の採点表）と form_eval の5つ（58対）を測り直した＝判定の変化0。five_mix 系・etf_add・unx・better_mix・century_cand・defense_swap・etf_more_check・seat_scan・bestfund・etf_longest・nx の業種 ETF の勢いは測り直していない（その時の main に照らす作り）。XLY は対象外。書庫:22245"
   }
  ]
 }

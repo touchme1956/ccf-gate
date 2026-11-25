@@ -18,6 +18,7 @@ import datetime, json, math, os, sys, statistics as S
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(BASE, 'night'))
 import mw_common as M                                   # noqa: E402
+import sector_spdr_fix as SF                            # noqa: E402  2026-11-25 XLV・XLP・XLU の初期の壊れた月
 from industry_exposure import sic_lookup, FRENCH_LIKE   # noqa: E402
 from industry_trends import ff49_map                    # noqa: E402
 
@@ -188,6 +189,7 @@ def build_chains(log):
                     r[k] = v
             for k in [k for k in r if k <= last and k not in p]:
                 del r[k]
+        r = SF.repair(main, r)   # 2026-11-25: XLV・XLP・XLU の 1999-01〜2002-06 の壊れた終値を同じ業種の器で直す（night/sector_spdr_fix.py）
         chains[c] = r
     spy = y('SPY')
     return chains, checks, spy

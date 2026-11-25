@@ -462,6 +462,7 @@ function histList(){
 /* ═══════════════ 計算（月次・毎月組み直し） ═══════════════ */
 function serAt(k,ym){const a=DATA.S.assets[k];if(!a)return null;const i=ym2i(ym)-ym2i(a.start);return i>=0&&i<a.r.length?a.r[i]:null;}
 function fxAt(ym){const f=DATA.S.fx;const i=ym2i(ym)-ym2i(f.start);return i>=0&&i<f.r.length?f.r[i]:null;}
+function repSegs(rp,s0){return rp.segments.filter(g=>!s0||g.to>=s0).map(g=>`${fYM(s0&&g.frm<s0?s0:g.frm)}〜${fYM(g.to)} は ${g.src}`).join('・');}
 function realStart(k){const a=DATA.S.assets[k];return a.proxy?i2ym(ym2i(a.proxy.until)+1):a.start;}
 function mixStart(w,real){let s=0;for(const k in w){if(!(w[k]>0))continue;const a=DATA.S.assets[k];if(!a)return null;s=Math.max(s,real?realStart(k):a.start);}return s||null;}
 /* 形の月次リターン（ym0〜ym1）。1か月でも欠ければその月は null＝0で埋めない */
@@ -608,10 +609,12 @@ function amiSimRun(){
  const lines=[{name:'試す形',color:cssv('--s1'),st:A,r:rA}];if(C)lines.push({name:'比べる形',color:cssv('--s2'),st:C,r:rC,dash:true});
  lines.push({name:'S&P500',color:cssv('--s6'),st:Sx,r:rS});if(N)lines.push({name:'NASDAQ100',color:cssv('--s7'),st:N,r:rN,dash:true});
  const proxies=Object.keys(w).filter(k=>w[k]>0&&DATA.S.assets[k].proxy&&realStart(k)>s0).map(k=>`${k}（${fYM(s0)}〜${fYM(DATA.S.assets[k].proxy.until)} は ${DATA.S.assets[k].proxy.t}＝${DATA.S.assets[k].proxy.nm}）`);
+ const repaired=Object.keys(w).filter(k=>w[k]>0&&DATA.S.assets[k].repair&&s0<=DATA.S.assets[k].repair.to).map(k=>`${k}（${repSegs(DATA.S.assets[k].repair,s0)}）`);
  const yrs=(A.n/12).toFixed(1),xs0=ym2i(s0);
  const dc=lines.map(l=>dca(l.r));
  let h=`<p class="small mute">${fYM(s0)}〜${fYM(last)}（${yrs}年・${SIM.ccy==='JPY'?'円建て':'ドル建て'}・毎月組み直し・配当込み・税と売買の費用は引いていない）</p>
  ${proxies.length?`<div class="note w small">代理を使っている期間: ${esc(proxies.join('／'))}。代理は能動の投資信託で、実物の成績ではない。「実物だけ」で見るなら期間を 2006-06〜 にする。</div>`:''}
+ ${repaired.length?`<div class="note small">壊れていた値を直した期間: ${esc(repaired.join('／'))}。出たばかりの時期の終値が同じ業種の器と合わなかった月を、同じ業種の iShares か French の業種の値で置き換えた（2026-11-25）。</div>`:''}
  <div class="scroll"><table><thead><tr><th></th>${lines.map(l=>`<th><span style="color:${l.color}">●</span> ${esc(l.name)}</th>`).join('')}</tr></thead><tbody>
  <tr><td>一括の年率</td>${lines.map(l=>`<td><b>${pct(l.st.cagr)}</b></td>`).join('')}</tr>
  <tr><td>1が何倍に</td>${lines.map(l=>`<td>${l.st.mult.toFixed(2)}倍</td>`).join('')}</tr>
@@ -730,7 +733,7 @@ function amiEnc(k){const box=$('#encBox');$('#encSel').value=k;const E=(DATA.E&&
    <div>${kills.map(([t,ok])=>`<span class="pill ${ok==null?'w':ok?'ok':'ng'}" style="margin:2px 4px 2px 0">${ok==null?'?':ok?'✓':'✕'} ${t}</span>`).join('')}</div>
    <p class="small mute" style="margin-top:6px">論外線（📏）をそのまま当てた。順位や点数は作らない（v1 の採点の廃止）。中身の日付 ${esc(e.asof||DATA.E.asof||'')}。</p>
    <div class="grid2"><div><h3 style="margin-top:8px">上位の保有</h3><div id="encH"></div></div><div><h3 style="margin-top:8px">業種</h3><div id="encS"></div></div></div></div>`;}
- if(a){h+=`<div class="card"><h3>値動きの記録（${esc(a.nm)}）</h3><p class="small mute">${fYM(realStart(k))}〜${fYM(a.end)} が実物${a.proxy?`・それより前（${fYM(a.start)}〜${fYM(a.proxy.until)}）は代理 ${esc(a.proxy.t)}＝${esc(a.proxy.nm)}`:''}。ドル建て・配当込み。</p><div id="encT"></div>
+ if(a){h+=`<div class="card"><h3>値動きの記録（${esc(a.nm)}）</h3><p class="small mute">${fYM(realStart(k))}〜${fYM(a.end)} が実物${a.proxy?`・それより前（${fYM(a.start)}〜${fYM(a.proxy.until)}）は代理 ${esc(a.proxy.t)}＝${esc(a.proxy.nm)}`:''}${a.repair?`・壊れていた終値を直した月（${esc(repSegs(a.repair))}）`:''}。ドル建て・配当込み。</p><div id="encT"></div>
   <h3 style="margin-top:10px">暦年（S&amp;P500 と）</h3>${legend([{label:k,color:colOf(k)==cssv('--sx')?cssv('--s1'):colOf(k)},{label:'S&P500',color:cssv('--s6')}])}<div id="encY"></div>
   <button class="btn" style="margin-top:8px" onclick="SIM.w={'${k}':100};amiShow(2,document.querySelectorAll('#tabs button')[1]);simSyncInputs();amiSimRun()">🧪 この本だけで試す</button></div>`;}
  else h+='<div class="note small">値動きの系列はこの画面に入れていない（out/ami_series.json の ASSETS に足すと出る）。</div>';

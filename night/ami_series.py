@@ -16,6 +16,7 @@
 import json, os, sys, datetime
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import mw_common as M
+import sector_spdr_fix as SF   # 2026-11-25 XLV・XLP・XLU の初期の壊れた月
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, 'out', 'ami_series.json')
@@ -68,7 +69,7 @@ def main():
     last = None
     for key, yt, nm, px in ASSETS:
         try:
-            r = M.yahoo(yt)
+            r = SF.repair(yt, M.yahoo(yt))   # 2026-11-25: 1999-01〜2002-06 の壊れた終値を直す（night/sector_spdr_fix.py）
         except Exception as e:
             out['failed'].append(f'{key}: {e}'[:160])
             continue
@@ -90,7 +91,7 @@ def main():
                 out['failed'].append(f'{key} の代理 {px[0]}: {e}'[:160])
         e = madd(s, len(v) - 1)
         last = e if last is None else min(last, e)
-        out['assets'][key] = dict(nm=nm, start=s, end=e, r=[round(x, 5) for x in v], proxy=proxy)
+        out['assets'][key] = dict(nm=nm, start=s, end=e, r=[round(x, 5) for x in v], proxy=proxy, **({'repair': SF.info(yt)} if SF.info(yt) else {}))
     fx = M.yahoo('JPY=X')
     fs, fv = block(fx)
     out['fx'] = dict(nm='ドル円（JPY=X の月末）', start=fs, end=madd(fs, len(fv) - 1), r=[round(x, 5) for x in fv])

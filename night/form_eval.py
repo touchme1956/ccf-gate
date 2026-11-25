@@ -84,7 +84,10 @@ def main(spec_path):
     for a, b in pairs:
         if a not in forms or b not in forms:
             raise SystemExit(f'pairs の名前が forms に無い: {a} / {b}')
-    live = json.loads(subprocess.run(['git', 'show', 'origin/main:portfolio.json'], capture_output=True, text=True,
+    # spec の main_ref: 自動で足す『今の形（main）』（NOWF）と照らす版。既定は origin/main。
+    # main の配分が NOWF より新しくなった日は、NOWF が main だった時点の版を書いて回す（今の main は forms に名前をつけて足す）。
+    ref_main = spec.get('main_ref', 'origin/main')
+    live = json.loads(subprocess.run(['git', 'show', f'{ref_main}:portfolio.json'], capture_output=True, text=True,
                                      cwd=BASE, check=True).stdout)['target']
     brt = json.load(open(os.path.join(BASE, 'portfolio.json')))['target']
     stale = {}
